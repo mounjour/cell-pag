@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}{% endblock %}
+
+{% block content %}
+<h1>{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}</h1>
+
+<p class="card">
+  A geração automática dos vencimentos e o cálculo da parcela entram na Fase 2.
+  Por enquanto, <strong>valor da parcela</strong>, <strong>nº de parcelas</strong> e
+  <strong>data prevista de quitação</strong> são preenchidos à mão e podem ficar em branco.
+</p>
+
+<form method="post" class="form-grid">
+  {% csrf_token %}
+  {% include "_form.html" %}
+  <div class="form-actions">
+    <button type="submit" class="btn">Salvar</button>
+    <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

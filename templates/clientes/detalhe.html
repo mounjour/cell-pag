@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ cliente.nome }}{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <h1 style="margin:0">{{ cliente.nome }}</h1>
+  <span class="spacer"></span>
+  <a class="btn secondary" href="{% url 'clientes:editar' cliente.pk %}">Editar</a>
+  <a class="btn" href="{% url 'contratos:novo' %}?cliente={{ cliente.pk }}">Novo contrato</a>
+</div>
+
+<dl class="meta">
+  <div><dt>CPF</dt><dd>{{ cliente.cpf_formatado }}</dd></div>
+  <div><dt>Telefone / WhatsApp</dt><dd>{{ cliente.telefone_whatsapp }}</dd></div>
+  <div><dt>Endereço</dt><dd>{{ cliente.endereco|default:"—" }}</dd></div>
+  <div><dt>Cadastrado em</dt><dd>{{ cliente.criado_em|date:"d/m/Y" }}</dd></div>
+</dl>
+
+<h2>Contratos</h2>
+{% if contratos %}
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Apelido</th><th>Aparelho</th><th>Estrutura</th><th>Valor total</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for ct in contratos %}
+          <tr>
+            <td><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
+            <td>{{ ct.aparelho_modelo }}</td>
+            <td>{{ ct.get_estrutura_display }}</td>
+            <td>R$ {{ ct.valor_total }}</td>
+            <td><span class="pill {{ ct.status }}">{{ ct.get_status_display }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="empty">Nenhum contrato para este cliente.</p>
+{% endif %}
+{% endblock %}

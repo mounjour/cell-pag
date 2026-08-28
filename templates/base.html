@@ -1,0 +1,36 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Acompanhamento de Pagamentos{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'clientes:lista' %}">Acompanhamento de Pagamentos</a>
+    {% if user.is_authenticated %}
+      <nav class="nav">
+        <a href="{% url 'clientes:lista' %}">Clientes</a>
+        <a href="{% url 'contratos:lista' %}">Contratos</a>
+        {% if user.is_staff %}<a href="/admin/">Admin</a>{% endif %}
+      </nav>
+      <form class="logout" method="post" action="{% url 'usuarios:logout' %}">
+        {% csrf_token %}
+        <span class="whoami">{{ user }}</span>
+        <button type="submit" class="linkish">Sair</button>
+      </form>
+    {% endif %}
+  </header>
+
+  <main class="wrap">
+    {% if messages %}
+      <ul class="messages">
+        {% for m in messages %}<li class="msg {{ m.tags }}">{{ m }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Clientes{% endblock %}
+
+{% block content %}
+<h1>Clientes</h1>
+
+<div class="toolbar">
+  <form method="get">
+    <input type="search" name="q" value="{{ busca }}" placeholder="Buscar por nome ou CPF">
+    <button class="btn secondary" type="submit">Buscar</button>
+  </form>
+  <span class="spacer"></span>
+  <a class="btn" href="{% url 'clientes:novo' %}">Novo cliente</a>
+</div>
+
+{% if clientes %}
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Contratos</th></tr>
+      </thead>
+      <tbody>
+        {% for c in clientes %}
+          <tr>
+            <td><a href="{% url 'clientes:detalhe' c.pk %}">{{ c.nome }}</a></td>
+            <td>{{ c.cpf_formatado }}</td>
+            <td>{{ c.telefone_whatsapp }}</td>
+            <td>{{ c.num_contratos }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "_pagination.html" %}
+{% else %}
+  <p class="empty">Nenhum cliente {% if busca %}encontrado para “{{ busca }}”{% else %}cadastrado ainda{% endif %}.</p>
+{% endif %}
+{% endblock %}

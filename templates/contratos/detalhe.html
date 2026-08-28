@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ contrato }}{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <h1 style="margin:0">{{ contrato.cliente.nome }} — {{ contrato.apelido }}</h1>
+  <span class="spacer"></span>
+  <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Ver cliente</a>
+  <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">Editar</a>
+</div>
+
+<dl class="meta">
+  <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}{% if contrato.imei %} · IMEI {{ contrato.imei }}{% endif %}</dd></div>
+  <div><dt>Estrutura</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
+  <div><dt>Status</dt><dd><span class="pill {{ contrato.status }}">{{ contrato.get_status_display }}</span></dd></div>
+  <div><dt>Valor total</dt><dd>R$ {{ contrato.valor_total }}</dd></div>
+  <div><dt>Valor da parcela</dt><dd>{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
+  <div><dt>Nº de parcelas</dt><dd>{{ contrato.num_parcelas|default:"—" }}</dd></div>
+  <div><dt>Data de início</dt><dd>{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
+  <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"—" }}</dd></div>
+  <div><dt>Previsão de quitação</dt><dd>{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
+  <div><dt>Fiador</dt><dd>{{ contrato.fiador|default:"—" }}</dd></div>
+</dl>
+
+{% if contrato.observacoes %}<p class="card">{{ contrato.observacoes|linebreaksbr }}</p>{% endif %}
+
+<h2>Documentos</h2>
+{% if contrato.documentos.all %}
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Tipo</th><th>Descrição</th><th>Arquivo</th><th>Enviado</th></tr></thead>
+      <tbody>
+        {% for d in contrato.documentos.all %}
+          <tr>
+            <td>{{ d.get_tipo_display }}</td>
+            <td>{{ d.descricao|default:"—" }}</td>
+            <td><a href="{{ d.arquivo.url }}" target="_blank" rel="noopener">abrir</a></td>
+            <td>{{ d.enviado_em|date:"d/m/Y H:i" }}{% if d.enviado_por %} · {{ d.enviado_por }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="empty">Nenhum documento anexado.</p>
+{% endif %}
+
+<form class="form-grid" style="margin-top:1rem" method="post"
+      action="{% url 'contratos:documento_novo' contrato.pk %}" enctype="multipart/form-data">
+  {% csrf_token %}
+  {% include "_form.html" with form=form_documento %}
+  <div class="form-actions"><button type="submit" class="btn">Anexar documento</button></div>
+</form>
+{% endblock %}

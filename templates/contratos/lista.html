@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Contratos{% endblock %}
+
+{% block content %}
+<h1>Contratos</h1>
+
+<div class="toolbar">
+  <form method="get">
+    <select name="status" onchange="this.form.submit()">
+      <option value="">Todos os status</option>
+      {% for valor, rotulo in status_opcoes %}
+        <option value="{{ valor }}" {% if valor == status_atual %}selected{% endif %}>{{ rotulo }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button class="btn secondary" type="submit">Filtrar</button></noscript>
+  </form>
+  <span class="spacer"></span>
+  <a class="btn" href="{% url 'contratos:novo' %}">Novo contrato</a>
+</div>
+
+{% if contratos %}
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Cliente</th><th>Apelido</th><th>Estrutura</th><th>Valor total</th><th>Início</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for ct in contratos %}
+          <tr>
+            <td><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></td>
+            <td><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
+            <td>{{ ct.get_estrutura_display }}</td>
+            <td>R$ {{ ct.valor_total }}</td>
+            <td>{{ ct.data_inicio|date:"d/m/Y" }}</td>
+            <td><span class="pill {{ ct.status }}">{{ ct.get_status_display }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "_pagination.html" %}
+{% else %}
+  <p class="empty">Nenhum contrato cadastrado{% if status_atual %} com esse status{% endif %}.</p>
+{% endif %}
+{% endblock %}

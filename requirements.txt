@@ -1,23 +1,23 @@
-# Instalado agora (criação inicial)
+# Runtime — instalar com: pip install -r requirements.txt
 Django==5.2.17
 django-environ==0.14.0
+django-phonenumber-field==8.5.0
+phonenumbers==9.0.38
+validate-docbr==2.0.0
+django-import-export==4.4.1
+whitenoise==6.12.0
 
 # Dependências transitivas
 asgiref==3.12.1
 sqlparse==0.6.0
 tzdata==2026.3
+tablib==3.10.0
+diff-match-patch==20241021
 
-# ── A adicionar nas próximas fases (ver PLANO-DO-PROJETO.md, seção 13) ─────────
-# psycopg[binary]            # driver PostgreSQL (produção)
-# django-q2                  # tarefas agendadas / job diário de cobrança
-# python-dateutil            # recorrência de vencimentos das 5 estruturas
-# validate-docbr             # validação de CPF
-# django-phonenumber-field[phonenumbers]
-# django-auditlog            # trilha de quem deu baixa e quando
-# django-crispy-forms + crispy-tailwind
-# django-import-export       # migração da planilha atual
-# django-unfold             # skin do admin
-# weasyprint                # relatórios em PDF
-# openpyxl                  # relatórios em Excel
-# sentry-sdk               # monitoramento de erros
-# pytest-django + model-bakery  # testes
+# ── Próximas fases (ver PLANO-DO-PROJETO.md, seção 13) ────────────────────────
+# psycopg[binary]      # PostgreSQL em produção
+# django-q2            # job diário de cobrança (Fase 2)
+# python-dateutil      # recorrência de vencimentos (Fase 2)
+# django-auditlog      # trilha de baixa (Fase 3)
+# weasyprint / openpyxl # relatórios (Fase 5)
+# sentry-sdk

@@ -32,7 +32,10 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
 ]
 
-THIRD_PARTY_APPS = []
+THIRD_PARTY_APPS = [
+    "phonenumber_field",
+    "import_export",
+]
 
 LOCAL_APPS = [
     "apps.usuarios",
@@ -45,6 +48,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -87,16 +91,16 @@ else:
 # ── Autenticação ──────────────────────────────────────────────────────────────
 AUTH_USER_MODEL = "usuarios.Usuario"
 
+LOGIN_URL = "usuarios:login"
+LOGIN_REDIRECT_URL = "clientes:lista"
+LOGOUT_REDIRECT_URL = "usuarios:login"
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
-
-LOGIN_URL = "admin:login"
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
 
 # ── Internacionalização ───────────────────────────────────────────────────────
 LANGUAGE_CODE = "pt-br"
@@ -112,7 +116,19 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# WhiteNoise serve os estáticos em produção a partir de STATIC_ROOT (após
+# collectstatic). O storage com hash/manifesto entra no endurecimento de deploy.
+if not DEBUG:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+    }
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ── Telefone (django-phonenumber-field) ───────────────────────────────────────
+PHONENUMBER_DEFAULT_REGION = "BR"
+PHONENUMBER_DB_FORMAT = "E164"  # guarda +55... — formato exigido pela API do WhatsApp
 
 # ── Segurança (aplicada quando DEBUG=False) ───────────────────────────────────
 if not DEBUG:
