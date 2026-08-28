@@ -1,0 +1,15 @@
+# Normaliza fim de linha: no repositório sempre LF; no working tree o Git converte
+# conforme a plataforma. Evita ruído de CRLF vindo do Windows.
+* text=auto eol=lf
+
+# Arquivos binários — nunca tratar como texto.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
+*.woff  binary
+*.woff2 binary
+*.sqlite3 binary
