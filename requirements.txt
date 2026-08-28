@@ -1,0 +1,23 @@
+# Instalado agora (criação inicial)
+Django==5.2.17
+django-environ==0.14.0
+
+# Dependências transitivas
+asgiref==3.12.1
+sqlparse==0.6.0
+tzdata==2026.3
+
+# ── A adicionar nas próximas fases (ver PLANO-DO-PROJETO.md, seção 13) ─────────
+# psycopg[binary]            # driver PostgreSQL (produção)
+# django-q2                  # tarefas agendadas / job diário de cobrança
+# python-dateutil            # recorrência de vencimentos das 5 estruturas
+# validate-docbr             # validação de CPF
+# django-phonenumber-field[phonenumbers]
+# django-auditlog            # trilha de quem deu baixa e quando
+# django-crispy-forms + crispy-tailwind
+# django-import-export       # migração da planilha atual
+# django-unfold             # skin do admin
+# weasyprint                # relatórios em PDF
+# openpyxl                  # relatórios em Excel
+# sentry-sdk               # monitoramento de erros
+# pytest-django + model-bakery  # testes
