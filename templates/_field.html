@@ -1,6 +1,6 @@
 {# Renderiza um campo de formulário. Espera `field` (BoundField). #}
 {% with cls=field.field.widget.attrs.class %}
-<div class="form-row{% if field.name == 'observacoes' %} full{% endif %}">
+<div class="form-row">
   {{ field.label_tag }}
   {% if cls and 'money' in cls %}
     <span class="money-wrap">{{ field }}</span>

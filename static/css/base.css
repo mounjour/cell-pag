@@ -109,15 +109,24 @@ h2 { font-size: 1.05rem; margin: 1.5rem 0 0.7rem; }
 .btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: #fff; }
 .btn-block { width: 100%; font-size: 1rem; }
 
-/* ---------- Campos ---------- */
-input[type=text], input[type=search], input[type=number], input[type=date],
-input[type=file], input[type=password], input:not([type]), select, textarea {
+/* ---------- Campos ----------
+   Um único padrão para todos os inputs de digitação (text, tel, email, number,
+   date, password, search, file…), select e textarea. A exclusão dentro de
+   :where() (especificidade zero) evita pegar checkbox/radio/botões sem atrapalhar
+   regras mais específicas como .money-wrap input. */
+input:where(:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]):not([type=button]):not([type=reset]):not([type=range]):not([type=color]):not([type=image])),
+select,
+textarea {
+  box-sizing: border-box;
   font: inherit; font-size: 16px;
-  min-height: var(--tap);
-  padding: 0.5rem 0.6rem; border: 1px solid var(--line);
-  background: var(--surface); color: var(--ink); border-radius: 2px; width: 100%;
+  width: 100%;
+  height: var(--tap);
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line); border-radius: 2px;
+  background: var(--surface); color: var(--ink);
 }
-textarea { min-height: 4.5rem; }
+textarea { height: auto; min-height: 4.5rem; padding: 0.5rem 0.6rem; }
+input[type=file] { padding: 0.45rem 0.6rem; }
 .toolbar input[type=search] { flex: 1; }
 
 /* ---------- Tabelas ---------- */
@@ -144,16 +153,17 @@ tbody tr:hover { background: var(--surface-2); }
   .form-actions .btn { width: auto; }
 }
 
-fieldset { border: 1px solid var(--line); border-radius: 2px; padding: 0.85rem; margin: 0; display: grid; gap: 0.9rem; }
-fieldset legend {
-  padding: 0 0.4rem; font-size: 0.72rem; text-transform: uppercase;
+/* Seções do formulário — só um rótulo e um traço, sem caixa, para os campos
+   ficarem exatamente com a mesma largura dos outros formulários. */
+.form-section { display: grid; gap: 0.9rem; }
+.form-section + .form-section { border-top: 1px solid var(--line); padding-top: 0.9rem; }
+.form-section-title {
+  margin: 0; font-size: 0.72rem; text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--accent-ink); font-weight: 600;
 }
 @media (min-width: 640px) {
-  fieldset { padding: 1rem; gap: 1rem; }
-  .fieldset-2col { grid-template-columns: 1fr 1fr; }
-  .fieldset-2col legend { grid-column: 1 / -1; }
-  .fieldset-2col .form-row.full { grid-column: 1 / -1; }
+  .form-section { gap: 1rem; }
+  .form-section + .form-section { padding-top: 1rem; }
 }
 
 /* Prefixo "R$" nos campos de dinheiro */
