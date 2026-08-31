@@ -19,7 +19,7 @@ class ClienteListView(LoginRequiredMixin, ListView):
         self.busca = self.request.GET.get("q", "").strip()
         if self.busca:
             qs = qs.filter(Q(nome__icontains=self.busca) | Q(cpf__icontains=self.busca))
-        return qs
+        return qs.order_by("nome")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

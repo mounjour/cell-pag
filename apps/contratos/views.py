@@ -21,7 +21,7 @@ class ContratoListView(LoginRequiredMixin, ListView):
         self.status = self.request.GET.get("status", "").strip()
         if self.status:
             qs = qs.filter(status=self.status)
-        return qs
+        return qs.order_by("cliente__nome", "apelido")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

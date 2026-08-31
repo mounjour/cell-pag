@@ -12,7 +12,40 @@
 
 <form method="post" class="form-grid">
   {% csrf_token %}
-  {% include "_form.html" %}
+  {% if form.non_field_errors %}
+    <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  <fieldset class="fieldset-2col">
+    <legend>Cliente e aparelho</legend>
+    {% include "_field.html" with field=form.cliente %}
+    {% include "_field.html" with field=form.apelido %}
+    {% include "_field.html" with field=form.aparelho_modelo %}
+    {% include "_field.html" with field=form.imei %}
+  </fieldset>
+
+  <fieldset class="fieldset-2col">
+    <legend>Valores e estrutura</legend>
+    {% include "_field.html" with field=form.valor_total %}
+    {% include "_field.html" with field=form.estrutura %}
+    {% include "_field.html" with field=form.valor_parcela %}
+    {% include "_field.html" with field=form.num_parcelas %}
+  </fieldset>
+
+  <fieldset class="fieldset-2col">
+    <legend>Datas</legend>
+    {% include "_field.html" with field=form.data_inicio %}
+    {% include "_field.html" with field=form.dia_referencia %}
+    {% include "_field.html" with field=form.data_prevista_quitacao %}
+  </fieldset>
+
+  <fieldset class="fieldset-2col">
+    <legend>Outros</legend>
+    {% include "_field.html" with field=form.fiador %}
+    {% include "_field.html" with field=form.status %}
+    {% include "_field.html" with field=form.observacoes %}
+  </fieldset>
+
   <div class="form-actions">
     <button type="submit" class="btn">Salvar</button>
     <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">Cancelar</a>

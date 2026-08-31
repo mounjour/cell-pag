@@ -1,6 +1,31 @@
 from django.contrib import admin
+from import_export import fields, resources
+from import_export.admin import ImportExportModelAdmin
+from import_export.widgets import ForeignKeyWidget
+
+from apps.clientes.models import Cliente
 
 from .models import Contrato, DocumentoContrato
+
+
+class ContratoResource(resources.ModelResource):
+    """Export/import de contratos. O cliente é referenciado pelo CPF."""
+
+    cliente = fields.Field(
+        column_name="cliente_cpf",
+        attribute="cliente",
+        widget=ForeignKeyWidget(Cliente, field="cpf"),
+    )
+
+    class Meta:
+        model = Contrato
+        import_id_fields = ("id",)
+        fields = (
+            "id", "cliente", "apelido", "aparelho_modelo", "imei", "valor_total",
+            "estrutura", "valor_parcela", "num_parcelas", "data_inicio",
+            "dia_referencia", "fiador", "status", "data_prevista_quitacao",
+        )
+        export_order = fields
 
 
 class DocumentoContratoInline(admin.TabularInline):
@@ -11,7 +36,8 @@ class DocumentoContratoInline(admin.TabularInline):
 
 
 @admin.register(Contrato)
-class ContratoAdmin(admin.ModelAdmin):
+class ContratoAdmin(ImportExportModelAdmin):
+    resource_classes = [ContratoResource]
     list_display = ("cliente", "apelido", "estrutura", "valor_total", "status", "data_inicio")
     list_filter = ("estrutura", "status")
     search_fields = ("cliente__nome", "cliente__cpf", "apelido", "aparelho_modelo", "imei")

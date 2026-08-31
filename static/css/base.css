@@ -1,3 +1,5 @@
+/* Mobile-first. Estilos base valem para celular; @media (min-width: 640px) amplia. */
+
 :root {
   --paper: #f7f6f2;
   --surface: #ffffff;
@@ -13,84 +15,147 @@
   --amber-wash: #f4ead6;
   --critical: #a23829;
   --critical-wash: #f2e1dd;
+  --tap: 44px; /* alvo mínimo de toque */
 }
 
 * { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font: 15px/1.55 "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* 16px evita o zoom automático do iOS ao focar um input */
+  font: 16px/1.55 "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 a { color: var(--accent-ink); }
 
+/* ---------- Barra do topo ---------- */
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1.25rem;
-  padding: 0.75rem 1.25rem;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 1rem;
   background: var(--surface);
   border-bottom: 2px solid var(--accent);
-  flex-wrap: wrap;
 }
-.brand { font-weight: 600; text-decoration: none; color: var(--ink); }
-.nav { display: flex; gap: 1rem; }
-.nav a { text-decoration: none; color: var(--ink-soft); }
+.brand {
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 0.98rem;
+  flex: 1 1 auto;
+}
+.nav { display: flex; gap: 1.1rem; order: 3; width: 100%; }
+.nav a {
+  text-decoration: none;
+  color: var(--ink-soft);
+  padding: 0.35rem 0;
+}
 .nav a:hover { color: var(--accent-ink); }
-.logout { margin-left: auto; display: flex; align-items: center; gap: 0.6rem; }
-.whoami { color: var(--ink-faint); font-size: 0.85rem; }
+.logout { display: flex; align-items: center; gap: 0.6rem; }
+.whoami { color: var(--ink-faint); font-size: 0.82rem; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .linkish {
   background: none; border: none; color: var(--accent-ink);
-  cursor: pointer; font: inherit; padding: 0; text-decoration: underline;
+  cursor: pointer; font: inherit; padding: 0.35rem 0; text-decoration: underline;
 }
 
-.wrap { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+@media (min-width: 640px) {
+  .topbar { flex-wrap: nowrap; gap: 1.25rem; padding: 0.75rem 1.25rem; }
+  .brand { flex: 0 0 auto; }
+  .nav { order: 0; width: auto; }
+  .logout { margin-left: auto; }
+  .whoami { max-width: none; }
+}
 
-h1 { font-size: 1.5rem; margin: 0 0 1rem; }
-h2 { font-size: 1.1rem; margin: 1.75rem 0 0.75rem; }
+/* ---------- Layout ---------- */
+.wrap { max-width: 960px; margin: 0 auto; padding: 1rem 1rem 3.5rem; }
+@media (min-width: 640px) { .wrap { padding: 1.5rem 1.25rem 4rem; } }
 
+h1 { font-size: 1.3rem; margin: 0 0 1rem; }
+h2 { font-size: 1.05rem; margin: 1.5rem 0 0.7rem; }
+@media (min-width: 640px) { h1 { font-size: 1.5rem; } h2 { font-size: 1.1rem; } }
+
+/* ---------- Mensagens ---------- */
 .messages { list-style: none; padding: 0; margin: 0 0 1.25rem; display: grid; gap: 0.4rem; }
 .msg { padding: 0.6rem 0.85rem; border: 1px solid var(--line); background: var(--surface); }
 .msg.success { background: var(--accent-wash); border-color: var(--accent); }
 .msg.error { background: var(--critical-wash); border-color: var(--critical); }
 
-.toolbar { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+/* ---------- Toolbar (busca + ações) ---------- */
+.toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
 .toolbar form { display: flex; gap: 0.4rem; }
-.spacer { flex: 1; }
+.toolbar .btn { width: 100%; }
+.spacer { display: none; }
+@media (min-width: 640px) {
+  .toolbar { flex-direction: row; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .toolbar .btn { width: auto; }
+  .spacer { display: block; flex: 1; }
+}
 
+/* ---------- Botões ---------- */
 .btn {
-  display: inline-block; padding: 0.5rem 0.9rem; border: 1px solid var(--accent);
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--tap);
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--accent);
   background: var(--accent); color: #fff; text-decoration: none; cursor: pointer;
   font: inherit; border-radius: 2px;
 }
 .btn.secondary { background: var(--surface); color: var(--accent-ink); }
 .btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: #fff; }
+.btn-block { width: 100%; font-size: 1rem; }
 
+/* ---------- Campos ---------- */
 input[type=text], input[type=search], input[type=number], input[type=date],
-input[type=file], input:not([type]), select, textarea {
-  font: inherit; padding: 0.45rem 0.55rem; border: 1px solid var(--line);
+input[type=file], input[type=password], input:not([type]), select, textarea {
+  font: inherit; font-size: 16px;
+  min-height: var(--tap);
+  padding: 0.5rem 0.6rem; border: 1px solid var(--line);
   background: var(--surface); color: var(--ink); border-radius: 2px; width: 100%;
 }
-input[type=search] { min-width: 240px; width: auto; }
+textarea { min-height: 4.5rem; }
+.toolbar input[type=search] { flex: 1; }
 
-table { border-collapse: collapse; width: 100%; background: var(--surface); border: 1px solid var(--line); }
-th, td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--line); }
-th { background: var(--surface-2); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
+/* ---------- Tabelas ---------- */
+.tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1rem 0 1.25rem; border: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; background: var(--surface); font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td.wrap-cell { white-space: normal; min-width: 12rem; }
+th { background: var(--surface-2); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover { background: var(--surface-2); }
-.tbl-wrap { overflow-x: auto; }
 
-.empty { padding: 2rem; text-align: center; color: var(--ink-faint); background: var(--surface); border: 1px dashed var(--line); }
+.empty { padding: 2rem 1rem; text-align: center; color: var(--ink-faint); background: var(--surface); border: 1px dashed var(--line); }
 
+/* ---------- Formulários ---------- */
 .form-grid { display: grid; gap: 1rem; max-width: 620px; }
 .form-row { display: grid; gap: 0.3rem; }
 .form-row label { font-weight: 600; font-size: 0.85rem; }
 .form-row .helptext { color: var(--ink-faint); font-size: 0.8rem; }
 .form-row .errorlist { color: var(--critical); margin: 0.2rem 0 0; padding-left: 1rem; font-size: 0.85rem; }
-.form-actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
+.form-actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
+.form-actions .btn { width: 100%; }
+@media (min-width: 640px) {
+  .form-actions { flex-direction: row; }
+  .form-actions .btn { width: auto; }
+}
 
+fieldset { border: 1px solid var(--line); border-radius: 2px; padding: 1rem; margin: 0; display: grid; gap: 1rem; }
+fieldset legend {
+  padding: 0 0.4rem; font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--accent-ink); font-weight: 600;
+}
+@media (min-width: 640px) {
+  .fieldset-2col { grid-template-columns: 1fr 1fr; }
+  .fieldset-2col legend { grid-column: 1 / -1; }
+  .fieldset-2col .form-row.full { grid-column: 1 / -1; }
+}
+
+/* ---------- Pills de status ---------- */
 .pill {
   display: inline-block; padding: 0.1em 0.55em; border-radius: 999px;
   font-size: 0.72rem; border: 1px solid var(--line); text-transform: uppercase; letter-spacing: 0.04em;
@@ -100,24 +165,26 @@ tbody tr:hover { background: var(--surface-2); }
 .pill.inadimplente { background: var(--critical-wash); border-color: var(--critical); color: var(--critical); }
 .pill.quitado { background: var(--surface-2); color: var(--ink-soft); }
 
-.meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem 1.5rem; margin: 1rem 0; }
-.meta div { display: grid; gap: 0.15rem; }
+/* ---------- Detalhe (grade de dados) ---------- */
+.meta { display: grid; grid-template-columns: 1fr; gap: 0.75rem 1.5rem; margin: 1rem 0; }
+.meta > div { display: grid; gap: 0.15rem; }
 .meta dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); }
 .meta dd { margin: 0; }
+@media (min-width: 520px) { .meta { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); } }
 
-.pagination { display: flex; gap: 0.5rem; align-items: center; margin-top: 1rem; color: var(--ink-faint); }
+.pagination { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; color: var(--ink-faint); }
 
 .card { background: var(--surface); border: 1px solid var(--line); padding: 1rem 1.15rem; margin: 1rem 0; }
 
+/* ---------- Login ---------- */
 .login-box {
   max-width: 420px;
-  margin: 4rem auto;
+  margin: 2rem auto;
   background: var(--surface);
   border: 1px solid var(--line);
-  padding: 2.25rem 2rem;
+  padding: 1.75rem 1.25rem;
 }
 .login-box h1 { font-size: 1.4rem; text-align: center; margin: 0 0 1.5rem; }
 .login-box .form-grid { gap: 1.15rem; max-width: none; }
 .login-box .msg { margin-bottom: 0.25rem; }
-
-.btn-block { width: 100%; text-align: center; padding: 0.65rem 0.9rem; font-size: 1rem; }
+@media (min-width: 640px) { .login-box { margin: 4rem auto; padding: 2.25rem 2rem; } }

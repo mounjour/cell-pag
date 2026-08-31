@@ -1,12 +1,5 @@
-{# Renderiza um form como grade de campos. Espera a variável `form`. #}
+{# Renderiza um form inteiro como grade de campos. Espera a variável `form`. #}
 {% if form.non_field_errors %}
   <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
 {% endif %}
-{% for field in form %}
-  <div class="form-row">
-    {{ field.label_tag }}
-    {{ field }}
-    {% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}
-    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-  </div>
-{% endfor %}
+{% for field in form %}{% include "_field.html" %}{% endfor %}
