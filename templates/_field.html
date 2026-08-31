@@ -1,7 +1,13 @@
 {# Renderiza um campo de formulário. Espera `field` (BoundField). #}
-<div class="form-row{% if field.field.widget.input_type == 'textarea' or field.name == 'observacoes' %} full{% endif %}">
+{% with cls=field.field.widget.attrs.class %}
+<div class="form-row{% if field.name == 'observacoes' %} full{% endif %}">
   {{ field.label_tag }}
-  {{ field }}
+  {% if cls and 'money' in cls %}
+    <span class="money-wrap">{{ field }}</span>
+  {% else %}
+    {{ field }}
+  {% endif %}
   {% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}
   {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
 </div>
+{% endwith %}

@@ -144,16 +144,25 @@ tbody tr:hover { background: var(--surface-2); }
   .form-actions .btn { width: auto; }
 }
 
-fieldset { border: 1px solid var(--line); border-radius: 2px; padding: 1rem; margin: 0; display: grid; gap: 1rem; }
+fieldset { border: 1px solid var(--line); border-radius: 2px; padding: 0.85rem; margin: 0; display: grid; gap: 0.9rem; }
 fieldset legend {
   padding: 0 0.4rem; font-size: 0.72rem; text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--accent-ink); font-weight: 600;
 }
 @media (min-width: 640px) {
+  fieldset { padding: 1rem; gap: 1rem; }
   .fieldset-2col { grid-template-columns: 1fr 1fr; }
   .fieldset-2col legend { grid-column: 1 / -1; }
   .fieldset-2col .form-row.full { grid-column: 1 / -1; }
 }
+
+/* Prefixo "R$" nos campos de dinheiro */
+.money-wrap { position: relative; display: block; }
+.money-wrap::before {
+  content: "R$"; position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%);
+  color: var(--ink-faint); font-size: 0.9rem; pointer-events: none;
+}
+.money-wrap input { padding-left: 2.3rem; }
 
 /* ---------- Pills de status ---------- */
 .pill {
