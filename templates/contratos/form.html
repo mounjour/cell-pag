@@ -5,13 +5,16 @@
 <div class="form-centered">
 <h1>{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}</h1>
 
-<p class="note">
-  A geração automática dos vencimentos e o cálculo da parcela entram na Fase 2.
-  Por enquanto, <strong>valor da parcela</strong>, <strong>nº de parcelas</strong>,
-  <strong>próximo vencimento</strong> e <strong>data prevista de quitação</strong> são
-  preenchidos à mão e podem ficar em branco. O <strong>próximo vencimento</strong> é o que
-  liga o contrato ao cálculo de atraso e juros.
-</p>
+<details class="note">
+  <summary>Sobre os campos preenchidos à mão (Fase 2)</summary>
+  <p>
+    A geração automática dos vencimentos e o cálculo da parcela entram na Fase 2.
+    Por enquanto, <strong>valor da parcela</strong>, <strong>nº de parcelas</strong>,
+    <strong>próximo vencimento</strong> e <strong>data prevista de quitação</strong> são
+    preenchidos à mão e podem ficar em branco. O <strong>próximo vencimento</strong> é o que
+    liga o contrato ao cálculo de atraso e juros.
+  </p>
+</details>
 
 <form method="post" class="form-grid form-page">
   {% csrf_token %}

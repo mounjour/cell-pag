@@ -297,8 +297,8 @@ tbody tr:hover td { background: var(--accent-wash); }
 }
 
 .empty {
-  display: grid; justify-items: center; gap: 0.9rem;
-  padding: 2.75rem 1.25rem; text-align: center;
+  display: grid; justify-items: center; gap: 0.8rem;
+  padding: 1.5rem 1.25rem; text-align: center;
   color: var(--ink-soft);
   background: var(--surface);
   border: 1px solid var(--line-strong); border-radius: 2px;
@@ -326,6 +326,27 @@ tbody tr:hover td { background: var(--accent-wash); }
   font-size: 0.92rem;
 }
 .note strong { font-weight: 600; }
+
+/* Versão recolhível do aviso — usada em formulários longos (celular) para o
+   texto não empurrar os campos para baixo da dobra. */
+details.note { padding: 0; }
+details.note > summary {
+  padding: 0.7rem 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+details.note > summary::-webkit-details-marker { display: none; }
+details.note > summary::before { content: "▸ "; color: var(--accent-ink); }
+details.note[open] > summary::before { content: "▾ "; }
+details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
+
+/* Link para o WhatsApp ao lado do telefone. */
+.zap {
+  font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em; margin-left: 0.15rem; white-space: nowrap;
+}
+.zap::before { content: "·\00a0"; color: var(--ink-faint); font-weight: 400; margin-right: 0.15rem; }
 
 /* Ações do formulário: no celular ficam grudadas na base da tela para o "Salvar"
    nunca sumir num formulário longo. No desktop voltam ao fluxo normal. */

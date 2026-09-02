@@ -58,5 +58,27 @@ class Cliente(models.Model):
         return f"{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}" if len(c) == 11 else c
 
     @property
+    def telefone_exibicao(self) -> str:
+        """Telefone legível: ``(83) 98888-7777`` para BR, E.164 para o resto."""
+        tel = self.telefone_whatsapp
+        if not tel:
+            return ""
+        try:
+            return tel.as_national if tel.country_code == 55 else tel.as_international
+        except Exception:
+            return str(tel)
+
+    @property
+    def whatsapp_url(self) -> str:
+        """Link ``wa.me`` a partir do telefone (só dígitos do E.164)."""
+        tel = self.telefone_whatsapp
+        if not tel:
+            return ""
+        try:
+            return f"https://wa.me/{so_digitos(tel.as_e164)}"
+        except Exception:
+            return ""
+
+    @property
     def contratos_ativos(self):
         return self.contratos.exclude(status=self.contratos.model.Status.QUITADO)

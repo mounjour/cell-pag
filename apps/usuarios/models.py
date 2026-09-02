@@ -27,3 +27,12 @@ class Usuario(AbstractUser):
 
     def __str__(self) -> str:
         return self.get_full_name() or self.username
+
+    @property
+    def is_dono(self) -> bool:
+        """Perfil dono (ou superusuário). Vê tudo que o financeiro vê e mais."""
+        return self.is_superuser or self.perfil == self.Perfil.DONO
+
+    @property
+    def is_financeiro(self) -> bool:
+        return self.perfil == self.Perfil.FINANCEIRO

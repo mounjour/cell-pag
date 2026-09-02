@@ -17,11 +17,15 @@ class ContratoListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("cliente")
+        qs = super().get_queryset().select_related("cliente").order_by("cliente__nome", "apelido")
         self.status = self.request.GET.get("status", "").strip()
-        if self.status:
-            qs = qs.filter(status=self.status)
-        return qs.order_by("cliente__nome", "apelido")
+        if not self.status:
+            return qs
+        # O filtro trabalha com o status CALCULADO hoje (status_efetivo), o
+        # mesmo que a tela mostra — não com o `status` salvo, que só é
+        # atualizado quando o job diário da Fase 2 rodar `sincronizar_status`.
+        # São poucos contratos; filtrar em memória é aceitável por enquanto.
+        return [ct for ct in qs if ct.status_efetivo == self.status]
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

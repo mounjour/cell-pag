@@ -12,6 +12,10 @@
 <dl class="meta">
   <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}{% if contrato.imei %} · IMEI <span class="num">{{ contrato.imei }}</span>{% endif %}</dd></div>
   <div><dt>Estrutura</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
+  <div><dt>Telefone</dt><dd>
+    <a class="num" href="tel:{{ contrato.cliente.telefone_whatsapp.as_e164 }}">{{ contrato.cliente.telefone_exibicao }}</a>
+    <a class="zap" href="{{ contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+  </dd></div>
   <div><dt>Status</dt><dd><span class="pill {{ contrato.status_efetivo }}">{{ contrato.status_efetivo_label }}</span></dd></div>
   <div><dt>Valor total</dt><dd class="num">R$ {{ contrato.valor_total }}</dd></div>
   <div><dt>Valor da parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>

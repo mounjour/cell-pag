@@ -193,6 +193,27 @@ def test_lista_filtra_por_status(auth_client, cliente):
 
 
 @pytest.mark.django_db
+def test_lista_usa_status_calculado_no_badge_e_no_filtro(auth_client, cliente):
+    # `status` salvo diz "em dia", mas o vencimento está bem no passado:
+    # a lista deve mostrar/filtrar pelo status calculado (inadimplente).
+    novo_contrato(
+        cliente,
+        apelido="Atrasadão",
+        status=Contrato.Status.EM_DIA,
+        estrutura=Contrato.Estrutura.MENSAL,
+        proximo_vencimento=datetime.date(2020, 1, 1),
+    )
+    corpo = auth_client.get(reverse("contratos:lista")).content.decode()
+    assert "INADIMPLENTE" in corpo.upper()
+
+    achados = auth_client.get(reverse("contratos:lista"), {"status": "inadimplente"})
+    assert [c.apelido for c in achados.context["contratos"]] == ["Atrasadão"]
+
+    vazio = auth_client.get(reverse("contratos:lista"), {"status": "em_dia"})
+    assert list(vazio.context["contratos"]) == []
+
+
+@pytest.mark.django_db
 def test_detalhe_renderiza(auth_client, cliente):
     ct = novo_contrato(cliente)
     resp = auth_client.get(reverse("contratos:detalhe", args=[ct.pk]))

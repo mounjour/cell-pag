@@ -11,7 +11,10 @@
 
 <dl class="meta">
   <div><dt>CPF</dt><dd class="num">{{ cliente.cpf_formatado }}</dd></div>
-  <div><dt>Telefone / WhatsApp</dt><dd class="num">{{ cliente.telefone_whatsapp }}</dd></div>
+  <div><dt>Telefone / WhatsApp</dt><dd>
+    <a class="num" href="tel:{{ cliente.telefone_whatsapp.as_e164 }}">{{ cliente.telefone_exibicao }}</a>
+    <a class="zap" href="{{ cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+  </dd></div>
   <div><dt>Endereço</dt><dd>{{ cliente.endereco|default:"—" }}</dd></div>
   <div><dt>Cadastrado em</dt><dd class="num">{{ cliente.criado_em|date:"d/m/Y" }}</dd></div>
 </dl>
@@ -30,7 +33,7 @@
             <td data-label="Aparelho">{{ ct.aparelho_modelo }}</td>
             <td data-label="Estrutura">{{ ct.get_estrutura_display }}</td>
             <td class="num" data-label="Valor total">R$ {{ ct.valor_total }}</td>
-            <td data-label="Status"><span class="pill {{ ct.status }}">{{ ct.get_status_display }}</span></td>
+            <td data-label="Status"><span class="pill {{ ct.status_efetivo }}">{{ ct.status_efetivo_label }}</span></td>
           </tr>
         {% endfor %}
       </tbody>

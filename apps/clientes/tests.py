@@ -36,6 +36,22 @@ def test_cpf_normalizado_para_digitos():
     assert c.cpf_formatado == formatado
 
 
+@pytest.mark.django_db
+def test_telefone_exibicao_e_whatsapp_url():
+    c = novo_cliente(telefone_whatsapp="83 98888-7777")
+    assert c.telefone_exibicao == "(83) 98888-7777"
+    assert c.whatsapp_url == "https://wa.me/5583988887777"
+
+
+@pytest.mark.django_db
+def test_detalhe_mostra_telefone_clicavel(auth_client):
+    c = novo_cliente(nome="Zé", telefone_whatsapp="83 98888-7777")
+    corpo = auth_client.get(reverse("clientes:detalhe", args=[c.pk])).content.decode()
+    assert 'href="tel:+5583988887777"' in corpo
+    assert "(83) 98888-7777" in corpo
+    assert "https://wa.me/5583988887777" in corpo
+
+
 # ---------- Telas ----------
 
 @pytest.mark.django_db
