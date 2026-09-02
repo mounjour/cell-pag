@@ -352,6 +352,17 @@ tbody tr:hover td { background: var(--accent-wash); }
   }
 }
 
+/* Formulário centralizado na página — cadastro/edição de cliente.
+   O formulário de contrato é longo e continua alinhado à esquerda. */
+.form-centered { max-width: 720px; margin-inline: auto; }
+.form-centered h1 { text-align: center; margin-bottom: 1.75rem; }
+.form-centered .form-grid { max-width: none; }
+@media (min-width: 640px) {
+  .form-centered { padding-top: 2rem; }
+  .form-centered .form-actions { gap: 1rem; }
+  .form-centered .form-actions .btn { flex: 1; }
+}
+
 /* Seções do formulário — um rótulo, um traço firme, sem caixa, para os campos
    ficarem com a mesma largura dos outros formulários. */
 .form-section { display: grid; gap: 0.9rem; }

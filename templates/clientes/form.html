@@ -2,14 +2,16 @@
 {% block title %}{% if form.instance.pk %}Editar cliente{% else %}Novo cliente{% endif %}{% endblock %}
 
 {% block content %}
-<h1>{% if form.instance.pk %}Editar cliente{% else %}Novo cliente{% endif %}</h1>
+<div class="form-centered">
+  <h1>{% if form.instance.pk %}Editar cliente{% else %}Novo cliente{% endif %}</h1>
 
-<form method="post" class="form-grid form-page">
-  {% csrf_token %}
-  {% include "_form.html" %}
-  <div class="form-actions">
-    <button type="submit" class="btn">Salvar</button>
-    <a class="btn secondary" href="{% if form.instance.pk %}{% url 'clientes:detalhe' form.instance.pk %}{% else %}{% url 'clientes:lista' %}{% endif %}">Cancelar</a>
-  </div>
-</form>
+  <form method="post" class="form-grid form-page">
+    {% csrf_token %}
+    {% include "_form.html" %}
+    <div class="form-actions">
+      <button type="submit" class="btn">Salvar</button>
+      <a class="btn secondary" href="{% if form.instance.pk %}{% url 'clientes:detalhe' form.instance.pk %}{% else %}{% url 'clientes:lista' %}{% endif %}">Cancelar</a>
+    </div>
+  </form>
+</div>
 {% endblock %}
