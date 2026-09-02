@@ -48,16 +48,16 @@
 
 <h2>Documentos</h2>
 {% if contrato.documentos.all %}
-  <div class="tbl-wrap">
+  <div class="tbl-wrap cards">
     <table>
       <thead><tr><th>Tipo</th><th>Descrição</th><th>Arquivo</th><th>Enviado</th></tr></thead>
       <tbody>
         {% for d in contrato.documentos.all %}
           <tr>
             <td>{{ d.get_tipo_display }}</td>
-            <td>{{ d.descricao|default:"—" }}</td>
-            <td><a href="{{ d.arquivo.url }}" target="_blank" rel="noopener">abrir</a></td>
-            <td>{{ d.enviado_em|date:"d/m/Y H:i" }}{% if d.enviado_por %} · {{ d.enviado_por }}{% endif %}</td>
+            <td data-label="Descrição">{{ d.descricao|default:"—" }}</td>
+            <td data-label="Arquivo"><a href="{{ d.arquivo.url }}" target="_blank" rel="noopener">abrir</a></td>
+            <td data-label="Enviado">{{ d.enviado_em|date:"d/m/Y H:i" }}{% if d.enviado_por %} · {{ d.enviado_por }}{% endif %}</td>
           </tr>
         {% endfor %}
       </tbody>
