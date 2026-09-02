@@ -54,7 +54,6 @@ class Contrato(models.Model):
         help_text="Ex.: quinzenal — data acordada com o Alisson.",
     )
 
-    fiador = models.CharField("fiador / avalista", max_length=150, blank=True)
     status = models.CharField(
         "status", max_length=12, choices=Status.choices, default=Status.EM_DIA
     )

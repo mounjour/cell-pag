@@ -19,7 +19,6 @@
   <div><dt>Data de início</dt><dd class="num">{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
   <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"—" }}</dd></div>
   <div><dt>Previsão de quitação</dt><dd class="num">{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
-  <div><dt>Fiador</dt><dd>{{ contrato.fiador|default:"—" }}</dd></div>
 </dl>
 
 {% if contrato.observacoes %}<p class="card">{{ contrato.observacoes|linebreaksbr }}</p>{% endif %}

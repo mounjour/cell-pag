@@ -50,7 +50,6 @@ class ContratoForm(forms.ModelForm):
             "num_parcelas",
             "data_inicio",
             "dia_referencia",
-            "fiador",
             "status",
             "data_prevista_quitacao",
             "observacoes",
@@ -69,7 +68,6 @@ class ContratoForm(forms.ModelForm):
             "data_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "data_prevista_quitacao": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "dia_referencia": forms.TextInput(attrs={"placeholder": "Ex.: dia 15  ·  a cada 10 dias"}),
-            "fiador": forms.TextInput(attrs={"placeholder": "Opcional", "autocapitalize": "words"}),
             "observacoes": forms.Textarea(attrs={"rows": 3}),
         }
 

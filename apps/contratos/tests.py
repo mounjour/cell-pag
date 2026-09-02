@@ -23,7 +23,6 @@ def dados_form(cliente, **over):
         "num_parcelas": "",
         "data_inicio": "2026-08-01",
         "dia_referencia": "",
-        "fiador": "",
         "status": Contrato.Status.EM_DIA,
         "data_prevista_quitacao": "",
         "observacoes": "",
