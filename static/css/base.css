@@ -316,7 +316,7 @@ tbody tr:hover td { background: var(--accent-wash); }
 
 /* Aviso do sistema dentro do formulário (ex.: o que fica para a Fase 2). */
 .note {
-  margin: 0;
+  margin: 0 0 1.25rem;
   padding: 0.8rem 0.95rem;
   background: var(--accent-wash);
   border: 1px solid var(--accent);
@@ -352,8 +352,8 @@ tbody tr:hover td { background: var(--accent-wash); }
   }
 }
 
-/* Formulário centralizado na página — cadastro/edição de cliente.
-   O formulário de contrato é longo e continua alinhado à esquerda. */
+/* Formulário centralizado na página. Padrão (cliente): coluna estreita, título
+   centralizado, um respiro no topo. Salvar/Cancelar dividem a largura em dois. */
 .form-centered { max-width: 720px; margin-inline: auto; }
 .form-centered h1 { text-align: center; margin-bottom: 1.75rem; }
 .form-centered .form-grid { max-width: none; }
@@ -361,6 +361,13 @@ tbody tr:hover td { background: var(--accent-wash); }
   .form-centered { padding-top: 2rem; }
   .form-centered .form-actions { gap: 1rem; }
   .form-centered .form-actions .btn { flex: 1; }
+}
+
+/* Variante larga (contrato): coluna maior, título à esquerda, sem respiro extra. */
+.form-centered.wide { max-width: 920px; }
+.form-centered.wide h1 { text-align: left; margin-bottom: 1rem; }
+@media (min-width: 640px) {
+  .form-centered.wide { padding-top: 0; }
 }
 
 /* Seções do formulário — um rótulo, um traço firme, sem caixa, para os campos

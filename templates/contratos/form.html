@@ -2,6 +2,7 @@
 {% block title %}{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}{% endblock %}
 
 {% block content %}
+<div class="form-centered wide">
 <h1>{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}</h1>
 
 <p class="note">
@@ -53,4 +54,5 @@
     <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">Cancelar</a>
   </div>
 </form>
+</div>
 {% endblock %}
