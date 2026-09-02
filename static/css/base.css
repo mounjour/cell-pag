@@ -352,22 +352,20 @@ tbody tr:hover td { background: var(--accent-wash); }
   }
 }
 
-/* Formulário centralizado na página. Padrão (cliente): coluna estreita, título
-   centralizado, um respiro no topo. Salvar/Cancelar dividem a largura em dois. */
-.form-centered { max-width: 720px; margin-inline: auto; }
-.form-centered h1 { text-align: center; margin-bottom: 1.75rem; }
+/* Formulário centralizado na página (cadastro/edição de cliente e contrato).
+   Coluna de 920px; título à esquerda; Salvar/Cancelar dividem a largura em dois. */
+.form-centered { max-width: 920px; margin-inline: auto; }
+.form-centered h1 { margin-bottom: 1rem; }
 .form-centered .form-grid { max-width: none; }
 @media (min-width: 640px) {
-  .form-centered { padding-top: 2rem; }
   .form-centered .form-actions { gap: 1rem; }
   .form-centered .form-actions .btn { flex: 1; }
 }
 
-/* Variante larga (contrato): coluna maior, título à esquerda, sem respiro extra. */
-.form-centered.wide { max-width: 920px; }
-.form-centered.wide h1 { text-align: left; margin-bottom: 1rem; }
+/* Variante do cadastro de cliente: título centralizado e um respiro no topo. */
+.form-centered.centrado h1 { text-align: center; margin-bottom: 1.75rem; }
 @media (min-width: 640px) {
-  .form-centered.wide { padding-top: 0; }
+  .form-centered.centrado { padding-top: 2rem; }
 }
 
 /* Seções do formulário — um rótulo, um traço firme, sem caixa, para os campos
