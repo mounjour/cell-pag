@@ -23,7 +23,7 @@ class ContratoResource(resources.ModelResource):
         fields = (
             "id", "cliente", "apelido", "aparelho_modelo", "imei", "valor_total",
             "estrutura", "valor_parcela", "num_parcelas", "data_inicio",
-            "dia_referencia", "status", "data_prevista_quitacao",
+            "dia_referencia", "proximo_vencimento", "status", "data_prevista_quitacao",
         )
         export_order = fields
 
@@ -38,12 +38,25 @@ class DocumentoContratoInline(admin.TabularInline):
 @admin.register(Contrato)
 class ContratoAdmin(ImportExportModelAdmin):
     resource_classes = [ContratoResource]
-    list_display = ("cliente", "apelido", "estrutura", "valor_total", "status", "data_inicio")
+    list_display = (
+        "cliente", "apelido", "estrutura", "valor_total",
+        "status", "proximo_vencimento", "atraso_hoje", "data_inicio",
+    )
     list_filter = ("estrutura", "status")
     search_fields = ("cliente__nome", "cliente__cpf", "apelido", "aparelho_modelo", "imei")
     autocomplete_fields = ("cliente",)
     readonly_fields = ("criado_em", "atualizado_em")
     inlines = [DocumentoContratoInline]
+
+    @admin.display(description="atraso hoje")
+    def atraso_hoje(self, obj: Contrato) -> str:
+        situacao = obj.situacao_atraso()
+        if situacao is None:
+            return "—"
+        if not situacao.dias_atraso:
+            return "em dia"
+        aviso = " ⚠ bloquear" if situacao.alertar_bloqueio else ""
+        return f"{situacao.dias_atraso}d · R$ {situacao.juros}{aviso}"
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)

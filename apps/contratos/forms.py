@@ -50,6 +50,7 @@ class ContratoForm(forms.ModelForm):
             "num_parcelas",
             "data_inicio",
             "dia_referencia",
+            "proximo_vencimento",
             "status",
             "data_prevista_quitacao",
             "observacoes",
@@ -66,6 +67,7 @@ class ContratoForm(forms.ModelForm):
             ),
             "num_parcelas": forms.NumberInput(attrs={"inputmode": "numeric", "min": "1", "step": "1"}),
             "data_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "proximo_vencimento": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "data_prevista_quitacao": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "dia_referencia": forms.TextInput(attrs={"placeholder": "Ex.: dia 15  ·  a cada 10 dias"}),
             "observacoes": forms.Textarea(attrs={"rows": 3}),
@@ -73,7 +75,7 @@ class ContratoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for campo in ("data_inicio", "data_prevista_quitacao"):
+        for campo in ("data_inicio", "proximo_vencimento", "data_prevista_quitacao"):
             self.fields[campo].input_formats = ["%Y-%m-%d"]
         # Ao editar, mostra os valores de dinheiro já formatados com vírgula.
         if self.instance and self.instance.pk:

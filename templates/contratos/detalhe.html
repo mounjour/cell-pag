@@ -12,14 +12,37 @@
 <dl class="meta">
   <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}{% if contrato.imei %} · IMEI <span class="num">{{ contrato.imei }}</span>{% endif %}</dd></div>
   <div><dt>Estrutura</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
-  <div><dt>Status</dt><dd><span class="pill {{ contrato.status }}">{{ contrato.get_status_display }}</span></dd></div>
+  <div><dt>Status</dt><dd><span class="pill {{ contrato.status_efetivo }}">{{ contrato.status_efetivo_label }}</span></dd></div>
   <div><dt>Valor total</dt><dd class="num">R$ {{ contrato.valor_total }}</dd></div>
   <div><dt>Valor da parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
   <div><dt>Nº de parcelas</dt><dd class="num">{{ contrato.num_parcelas|default:"—" }}</dd></div>
   <div><dt>Data de início</dt><dd class="num">{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
   <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"—" }}</dd></div>
+  <div><dt>Próximo vencimento</dt><dd class="num">{{ contrato.proximo_vencimento|date:"d/m/Y"|default:"—" }}</dd></div>
   <div><dt>Previsão de quitação</dt><dd class="num">{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
 </dl>
+
+{% with s=contrato.situacao_atraso %}
+  {% if s %}
+    <div class="card">
+      <h2 style="margin-top:0">Situação hoje</h2>
+      {% if s.dias_atraso %}
+        <p>
+          <span class="pill {{ s.status }}">{{ contrato.status_efetivo_label }}</span>
+          {{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }} de atraso ·
+          juros acumulados <strong class="num">R$ {{ s.juros }}</strong>
+        </p>
+        {% if s.alertar_bloqueio %}
+          <p class="pill inadimplente">⚠ {{ s.dias_atraso }} dias — hora de bloquear o aparelho (ação manual do vendedor).</p>
+        {% endif %}
+      {% else %}
+        <p><span class="pill em_dia">Em dia</span> Sem atraso. Próximo vencimento em {{ contrato.proximo_vencimento|date:"d/m/Y" }}.</p>
+      {% endif %}
+    </div>
+  {% else %}
+    <p class="note">Informe o <strong>próximo vencimento</strong> no contrato para acompanhar atraso e juros.</p>
+  {% endif %}
+{% endwith %}
 
 {% if contrato.observacoes %}<p class="card">{{ contrato.observacoes|linebreaksbr }}</p>{% endif %}
 

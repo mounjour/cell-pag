@@ -53,6 +53,15 @@ class Contrato(models.Model):
         blank=True,
         help_text="Ex.: quinzenal — data acordada com o Alisson.",
     )
+    proximo_vencimento = models.DateField(
+        "próximo vencimento",
+        null=True,
+        blank=True,
+        help_text=(
+            "Data da próxima parcela a receber. Manual por enquanto; a Fase 2 vai "
+            "gerar os vencimentos automaticamente. É a base do cálculo de atraso."
+        ),
+    )
 
     status = models.CharField(
         "status", max_length=12, choices=Status.choices, default=Status.EM_DIA
@@ -74,6 +83,50 @@ class Contrato(models.Model):
     @property
     def quitado(self) -> bool:
         return self.status == self.Status.QUITADO
+
+    # ── Fase 4: atraso, juros e status ───────────────────────────────────────
+    # A lógica pura vive em apps/pagamentos/atraso.py. Aqui só ligamos ao
+    # contrato (estrutura + próximo vencimento + se está quitado). O import é
+    # feito dentro dos métodos para evitar import circular com aquele módulo.
+
+    def situacao_atraso(self, hoje=None):
+        """`SituacaoAtraso` calculada a partir de `proximo_vencimento`.
+
+        Devolve ``None`` quando não há `proximo_vencimento` informado — sem uma
+        data de referência não dá para medir atraso.
+        """
+        if self.proximo_vencimento is None:
+            return None
+        from apps.pagamentos import atraso
+
+        return atraso.avaliar(
+            self.proximo_vencimento,
+            self.estrutura,
+            hoje=hoje,
+            quitado=self.quitado,
+        )
+
+    @property
+    def status_efetivo(self) -> str:
+        """Status calculado hoje; cai no status salvo se não houver `proximo_vencimento`."""
+        situacao = self.situacao_atraso()
+        return situacao.status if situacao else self.status
+
+    @property
+    def status_efetivo_label(self) -> str:
+        return self.Status(self.status_efetivo).label
+
+    def sincronizar_status(self, hoje=None) -> bool:
+        """Grava em `status` o status calculado. Devolve True se algo mudou.
+
+        Não é chamado automaticamente — é o gancho para o job diário da Fase 2.
+        """
+        situacao = self.situacao_atraso(hoje=hoje)
+        if situacao is None or situacao.status == self.status:
+            return False
+        self.status = situacao.status
+        self.save(update_fields=["status", "atualizado_em"])
+        return True
 
 
 def caminho_documento(instance: "DocumentoContrato", filename: str) -> str:

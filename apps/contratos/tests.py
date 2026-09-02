@@ -23,6 +23,7 @@ def dados_form(cliente, **over):
         "num_parcelas": "",
         "data_inicio": "2026-08-01",
         "dia_referencia": "",
+        "proximo_vencimento": "",
         "status": Contrato.Status.EM_DIA,
         "data_prevista_quitacao": "",
         "observacoes": "",
@@ -59,8 +60,118 @@ def test_contrato_minimo(cliente):
     ct = novo_contrato(cliente)
     assert ct.status == Contrato.Status.EM_DIA
     assert ct.valor_parcela is None  # cálculo é da Fase 2
+    assert ct.proximo_vencimento is None
     assert not ct.quitado
     assert str(ct) == "Cliente Teste — iPhone 11"
+
+
+# ---------- Modelo: ligação com o cálculo de atraso (Fase 4) ----------
+
+@pytest.mark.django_db
+def test_situacao_atraso_sem_proximo_vencimento_e_none(cliente):
+    ct = novo_contrato(cliente)
+    assert ct.situacao_atraso() is None
+    # status_efetivo cai no status salvo quando não há data de referência
+    assert ct.status_efetivo == ct.status
+
+
+@pytest.mark.django_db
+def test_situacao_atraso_em_dia(cliente):
+    hoje = datetime.date(2026, 9, 10)
+    ct = novo_contrato(cliente, proximo_vencimento=hoje, estrutura=Contrato.Estrutura.MENSAL)
+    s = ct.situacao_atraso(hoje=hoje)
+    assert s.dias_atraso == 0
+    assert s.status == Contrato.Status.EM_DIA
+    assert s.juros == Decimal("0.00")
+    assert s.alertar_bloqueio is False
+
+
+@pytest.mark.django_db
+def test_situacao_atraso_atrasado_com_juros(cliente):
+    ct = novo_contrato(
+        cliente,
+        proximo_vencimento=datetime.date(2026, 9, 10),
+        estrutura=Contrato.Estrutura.MENSAL,
+    )
+    s = ct.situacao_atraso(hoje=datetime.date(2026, 9, 13))
+    assert s.dias_atraso == 3
+    assert s.juros == Decimal("15.00")
+    assert s.status == Contrato.Status.ATRASADO
+    assert s.alertar_bloqueio is False
+
+
+@pytest.mark.django_db
+def test_situacao_atraso_inadimplente_dispara_alerta(cliente):
+    ct = novo_contrato(
+        cliente,
+        proximo_vencimento=datetime.date(2026, 9, 1),
+        estrutura=Contrato.Estrutura.DIARIA,
+    )
+    s = ct.situacao_atraso(hoje=datetime.date(2026, 9, 11))
+    assert s.dias_atraso == 10
+    assert s.status == Contrato.Status.INADIMPLENTE
+    assert s.alertar_bloqueio is True
+
+
+@pytest.mark.django_db
+def test_situacao_atraso_semanal_usa_a_janela(cliente):
+    # Vencimento numa quarta (2026-01-07); a semana fecha no domingo 2026-01-11.
+    ct = novo_contrato(
+        cliente,
+        proximo_vencimento=datetime.date(2026, 1, 7),
+        estrutura=Contrato.Estrutura.SEMANAL,
+    )
+    assert ct.situacao_atraso(hoje=datetime.date(2026, 1, 11)).dias_atraso == 0
+    assert ct.situacao_atraso(hoje=datetime.date(2026, 1, 12)).dias_atraso == 1
+
+
+@pytest.mark.django_db
+def test_situacao_atraso_quitado_nao_cobra(cliente):
+    ct = novo_contrato(
+        cliente,
+        proximo_vencimento=datetime.date(2026, 1, 1),
+        status=Contrato.Status.QUITADO,
+    )
+    s = ct.situacao_atraso(hoje=datetime.date(2026, 6, 1))
+    assert s.status == Contrato.Status.QUITADO
+    assert s.juros == Decimal("0.00")
+    assert s.alertar_bloqueio is False
+
+
+@pytest.mark.django_db
+def test_sincronizar_status_grava_o_calculado(cliente):
+    ct = novo_contrato(
+        cliente,
+        proximo_vencimento=datetime.date(2026, 9, 1),
+        estrutura=Contrato.Estrutura.MENSAL,
+    )
+    mudou = ct.sincronizar_status(hoje=datetime.date(2026, 9, 5))
+    assert mudou is True
+    ct.refresh_from_db()
+    assert ct.status == Contrato.Status.ATRASADO
+    # segunda chamada no mesmo dia não muda nada
+    assert ct.sincronizar_status(hoje=datetime.date(2026, 9, 5)) is False
+
+
+@pytest.mark.django_db
+def test_sincronizar_status_sem_data_nao_mexe(cliente):
+    ct = novo_contrato(cliente, status=Contrato.Status.ATRASADO)
+    assert ct.sincronizar_status() is False
+    ct.refresh_from_db()
+    assert ct.status == Contrato.Status.ATRASADO
+
+
+@pytest.mark.django_db
+def test_detalhe_mostra_situacao_hoje(auth_client, cliente):
+    ct = novo_contrato(
+        cliente,
+        proximo_vencimento=datetime.date(2020, 1, 1),  # bem no passado
+        estrutura=Contrato.Estrutura.MENSAL,
+    )
+    resp = auth_client.get(reverse("contratos:detalhe", args=[ct.pk]))
+    corpo = resp.content.decode()
+    assert "Situação hoje" in corpo
+    assert "de atraso" in corpo
 
 
 # ---------- Telas ----------
