@@ -14,18 +14,19 @@
 </div>
 
 {% if clientes %}
-  <div class="tbl-wrap">
+  <p class="count">{{ page_obj.paginator.count }} cliente{{ page_obj.paginator.count|pluralize }}{% if busca %} para “{{ busca }}”{% endif %}</p>
+  <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Contratos</th></tr>
+        <tr><th>Nome</th><th>CPF</th><th>Telefone</th><th class="num">Contratos</th></tr>
       </thead>
       <tbody>
         {% for c in clientes %}
           <tr>
             <td><a href="{% url 'clientes:detalhe' c.pk %}">{{ c.nome }}</a></td>
-            <td>{{ c.cpf_formatado }}</td>
-            <td>{{ c.telefone_whatsapp }}</td>
-            <td>{{ c.num_contratos }}</td>
+            <td data-label="CPF">{{ c.cpf_formatado }}</td>
+            <td data-label="Telefone">{{ c.telefone_whatsapp }}</td>
+            <td class="num" data-label="Contratos">{{ c.num_contratos }}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -33,6 +34,9 @@
   </div>
   {% include "_pagination.html" %}
 {% else %}
-  <p class="empty">Nenhum cliente {% if busca %}encontrado para “{{ busca }}”{% else %}cadastrado ainda{% endif %}.</p>
+  <div class="empty">
+    <p>Nenhum cliente {% if busca %}encontrado para “{{ busca }}”{% else %}cadastrado ainda{% endif %}.</p>
+    {% if not busca %}<a class="btn" href="{% url 'clientes:novo' %}">Cadastrar o primeiro cliente</a>{% endif %}
+  </div>
 {% endif %}
 {% endblock %}

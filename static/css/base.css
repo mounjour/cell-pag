@@ -1,21 +1,29 @@
-/* Mobile-first. Estilos base valem para celular; @media (min-width: 640px) amplia. */
+/* Mobile-first. Estilos base valem para celular; @media (min-width: 640px) amplia.
+   Personalidade: papelaria / caderno de controle. Verde-pinho é a cor da casa;
+   a cor forte fica reservada para status. Nada de firula — o que muda aqui em
+   relação à versão anterior é execução: foco visível, hierarquia mais firme,
+   tabelas que se leem no celular e uma barra de ação que não some na rolagem. */
 
 :root {
-  --paper: #f7f6f2;
-  --surface: #ffffff;
-  --surface-2: #f0efe8;
-  --ink: #1b211e;
-  --ink-soft: #545a55;
-  --ink-faint: #888d86;
-  --line: #dad9cf;
-  --accent: #1e6e5a;
-  --accent-ink: #14513f;
-  --accent-wash: #e6efea;
-  --amber: #8f5e0e;
-  --amber-wash: #f4ead6;
-  --critical: #a23829;
-  --critical-wash: #f2e1dd;
-  --tap: 44px; /* alvo mínimo de toque */
+  --paper: #edeae0;        /* fundo da página — papel morno, um tom mais fundo que o branco */
+  --surface: #ffffff;      /* cartões, tabelas, campos, barra do topo */
+  --surface-2: #f1efe6;    /* faixa alternada de tabela, cabeçalho de tabela, :hover neutro */
+  --ink: #1b211e;          /* texto principal */
+  --ink-soft: #4f554f;     /* texto de apoio */
+  --ink-faint: #7a7f78;    /* só rótulos em maiúsculas pequenas (th, dt, helptext) */
+  --line: #d6d4c8;         /* bordas e divisórias finas */
+  --line-strong: #c2c0b1;  /* contorno de cartão/tabela e divisória de seção */
+  --accent: #1e6e5a;       /* verde da casa — ação, foco, marca */
+  --accent-ink: #124e3d;   /* verde escuro — texto sobre wash, links, hover de botão */
+  --accent-wash: #e3ede8;  /* fundo verde suave — sucesso, pill "em dia", :hover de linha */
+  --amber: #86560f;        /* âmbar — aviso intermediário */
+  --amber-wash: #f3e8d2;
+  --critical: #9d3526;     /* terracota — erro, inadimplência */
+  --critical-wash: #f0ded9;
+  --focus: #1e6e5a;        /* anel de foco */
+  --raise: 0 1px 2px rgba(27, 33, 30, 0.05);  /* elevação de papel — só um respiro, sem sombra pesada */
+  --tap: 44px;             /* alvo mínimo de toque */
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -31,36 +39,91 @@ body {
 }
 
 a { color: var(--accent-ink); }
+a:focus-visible,
+.linkish:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Dados numéricos (dinheiro, CPF, IMEI, datas em coluna): dígitos de largura fixa
+   para as colunas alinharem como num caderno de contas. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 600;
+  color: var(--accent-ink);
+}
 
 /* ---------- Barra do topo ---------- */
 .topbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1rem;
+  gap: 0.4rem 1rem;
   padding: 0.6rem 1rem;
   background: var(--surface);
   border-bottom: 2px solid var(--accent);
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
   text-decoration: none;
   color: var(--ink);
   font-size: 0.98rem;
   flex: 1 1 auto;
+  min-width: 0;
 }
-.nav { display: flex; gap: 1.1rem; order: 3; width: 100%; }
+/* pequena "aba" verde — a marca do caderno */
+.brand::before {
+  content: "";
+  width: 0.7rem;
+  height: 1.1rem;
+  background: var(--accent);
+  border-radius: 1px;
+  flex: none;
+}
+.nav { display: flex; gap: 1.25rem; order: 3; width: 100%; }
 .nav a {
   text-decoration: none;
   color: var(--ink-soft);
   padding: 0.35rem 0;
 }
 .nav a:hover { color: var(--accent-ink); }
-.logout { display: flex; align-items: center; gap: 0.6rem; }
-.whoami { color: var(--ink-faint); font-size: 0.82rem; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav a.active {
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+.logout { display: flex; align-items: center; gap: 0.55rem; flex: none; }
+/* no celular o nome do usuário sai — brand + "Sair" cabem numa linha só,
+   e a navegação fica logo abaixo com alvos de toque folgados */
+.whoami { display: none; }
+@media (min-width: 640px) {
+  .whoami {
+    display: inline;
+    color: var(--ink-faint);
+    font-size: 0.82rem;
+    max-width: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
 .linkish {
   background: none; border: none; color: var(--accent-ink);
   cursor: pointer; font: inherit; padding: 0.35rem 0; text-decoration: underline;
+  flex: none;
 }
 
 @media (min-width: 640px) {
@@ -72,41 +135,68 @@ a { color: var(--accent-ink); }
 }
 
 /* ---------- Layout ---------- */
-.wrap { max-width: 960px; margin: 0 auto; padding: 1rem 1rem 3.5rem; }
-@media (min-width: 640px) { .wrap { padding: 1.5rem 1.25rem 4rem; } }
+.wrap { max-width: 960px; margin: 0 auto; padding: 1.1rem 1rem 3.5rem; }
+@media (min-width: 640px) { .wrap { padding: 1.75rem 1.25rem 4rem; } }
 
-h1 { font-size: 1.3rem; margin: 0 0 1rem; }
-h2 { font-size: 1.05rem; margin: 1.5rem 0 0.7rem; }
+h1 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin: 0 0 1rem;
+}
+h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.75rem 0 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--line);
+}
 @media (min-width: 640px) { h1 { font-size: 1.5rem; } h2 { font-size: 1.1rem; } }
 
 /* ---------- Mensagens ---------- */
 .messages { list-style: none; padding: 0; margin: 0 0 1.25rem; display: grid; gap: 0.4rem; }
-.msg { padding: 0.6rem 0.85rem; border: 1px solid var(--line); background: var(--surface); }
+.msg {
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: 2px;
+  background: var(--surface);
+}
 .msg.success { background: var(--accent-wash); border-color: var(--accent); }
 .msg.error { background: var(--critical-wash); border-color: var(--critical); }
 
 /* ---------- Toolbar (busca + ações) ---------- */
-.toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
+.toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.75rem; }
 .toolbar form { display: flex; gap: 0.4rem; }
-.toolbar .btn { width: 100%; }
+.toolbar input[type=search] { flex: 1; min-width: 0; }
+/* o botão de busca acompanha o campo; só a ação primária ocupa a linha toda */
+.toolbar form .btn { width: auto; flex: none; }
+.toolbar > .btn { width: 100%; }
 .spacer { display: none; }
 @media (min-width: 640px) {
   .toolbar { flex-direction: row; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-  .toolbar .btn { width: auto; }
+  .toolbar > .btn { width: auto; }
   .spacer { display: block; flex: 1; }
 }
+
+/* contagem de resultados — linha discreta abaixo da toolbar */
+.count { margin: 0 0 1rem; color: var(--ink-soft); font-size: 0.85rem; }
 
 /* ---------- Botões ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: var(--tap);
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.1rem;
   border: 1px solid var(--accent);
   background: var(--accent); color: #fff; text-decoration: none; cursor: pointer;
-  font: inherit; border-radius: 2px;
+  font: inherit; font-weight: 600; border-radius: 2px;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
 .btn.secondary { background: var(--surface); color: var(--accent-ink); }
 .btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: #fff; }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn[disabled], .btn:disabled { opacity: 0.55; pointer-events: none; }
 .btn-block { width: 100%; font-size: 1rem; }
 
 /* ---------- Campos ----------
@@ -121,89 +211,241 @@ textarea {
   font: inherit; font-size: 16px;
   width: 100%;
   height: var(--tap);
-  padding: 0.5rem 0.6rem;
-  border: 1px solid var(--line); border-radius: 2px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line-strong); border-radius: 2px;
   background: var(--surface); color: var(--ink);
 }
-textarea { height: auto; min-height: 4.5rem; padding: 0.5rem 0.6rem; }
+textarea { height: auto; min-height: 4.5rem; padding: 0.55rem 0.65rem; line-height: 1.5; }
 input[type=file] { padding: 0.45rem 0.6rem; }
-.toolbar input[type=search] { flex: 1; }
+::placeholder { color: var(--ink-faint); opacity: 1; }
+
+/* Campo em foco: anel sempre visível (ferramenta de digitação — o foco por
+   clique também mostra). Botões e links usam :focus-visible mais adiante. */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 
 /* ---------- Tabelas ---------- */
-.tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1rem 0 1.25rem; border: 1px solid var(--line); }
+.tbl-wrap {
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  margin: 0 0 1.25rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  box-shadow: var(--raise);
+}
 table { border-collapse: collapse; width: 100%; background: var(--surface); font-size: 0.92rem; }
-th, td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th, td { text-align: left; padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
 td.wrap-cell { white-space: normal; min-width: 12rem; }
-th { background: var(--surface-2); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
+th {
+  background: var(--surface-2);
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--ink-faint); font-weight: 600;
+}
+th.num, td.num { text-align: right; }
+td a { font-weight: 600; }
+tbody tr:nth-child(even) td { background: var(--surface-2); }
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: var(--surface-2); }
+tbody tr:hover td { background: var(--accent-wash); }
 
-.empty { padding: 2rem 1rem; text-align: center; color: var(--ink-faint); background: var(--surface); border: 1px dashed var(--line); }
+/* No celular, tabelas marcadas com .cards viram lista de fichas empilhadas —
+   assim o status e o valor nunca ficam escondidos numa rolagem lateral.
+   No desktop (>=640px) continuam tabelas normais. */
+@media (max-width: 639px) {
+  .tbl-wrap.cards {
+    border: none; box-shadow: none; overflow: visible; background: transparent;
+  }
+  .tbl-wrap.cards table,
+  .tbl-wrap.cards tbody,
+  .tbl-wrap.cards tr,
+  .tbl-wrap.cards td { display: block; width: 100%; }
+  .tbl-wrap.cards thead {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .tbl-wrap.cards tr {
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    box-shadow: var(--raise);
+    margin-bottom: 0.6rem;
+    padding: 0.2rem 0.9rem 0.35rem;
+  }
+  .tbl-wrap.cards td {
+    border: none;
+    padding: 0.32rem 0;
+    white-space: normal;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  }
+  .tbl-wrap.cards td::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--ink-faint);
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+  }
+  .tbl-wrap.cards td.num { text-align: right; }
+  .tbl-wrap.cards td:first-child {
+    font-size: 1rem; padding: 0.45rem 0 0.6rem; margin-bottom: 0.35rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .tbl-wrap.cards td:first-child::before { display: none; }
+  .tbl-wrap.cards tr:nth-child(even) td,
+  .tbl-wrap.cards tr:hover td { background: var(--surface); }
+}
+
+.empty {
+  display: grid; justify-items: center; gap: 0.9rem;
+  padding: 2.75rem 1.25rem; text-align: center;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: 2px;
+  box-shadow: var(--raise);
+}
+.empty p { margin: 0; }
 
 /* ---------- Formulários ---------- */
 .form-grid { display: grid; gap: 1rem; max-width: 620px; }
 .form-row { display: grid; gap: 0.3rem; }
-.form-row label { font-weight: 600; font-size: 0.85rem; }
+.form-row label { font-weight: 600; font-size: 0.82rem; color: var(--ink); }
+.form-row:focus-within label { color: var(--accent-ink); }
 .form-row .helptext { color: var(--ink-faint); font-size: 0.8rem; }
 .form-row .errorlist { color: var(--critical); margin: 0.2rem 0 0; padding-left: 1rem; font-size: 0.85rem; }
+
+/* Aviso do sistema dentro do formulário (ex.: o que fica para a Fase 2). */
+.note {
+  margin: 0;
+  padding: 0.8rem 0.95rem;
+  background: var(--accent-wash);
+  border: 1px solid var(--accent);
+  border-left-width: 3px;
+  border-radius: 2px;
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+.note strong { font-weight: 600; }
+
+/* Ações do formulário: no celular ficam grudadas na base da tela para o "Salvar"
+   nunca sumir num formulário longo. No desktop voltam ao fluxo normal. */
 .form-actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
 .form-actions .btn { width: 100%; }
+.form-page .form-actions {
+  position: sticky;
+  bottom: 0;
+  margin: 1.25rem -1rem 0;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  background: var(--paper);
+  border-top: 1px solid var(--line-strong);
+  z-index: 5;
+}
 @media (min-width: 640px) {
   .form-actions { flex-direction: row; }
   .form-actions .btn { width: auto; }
+  .form-page .form-actions {
+    position: static;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    background: none;
+    border-top: none;
+  }
 }
 
-/* Seções do formulário — só um rótulo e um traço, sem caixa, para os campos
-   ficarem exatamente com a mesma largura dos outros formulários. */
+/* Seções do formulário — um rótulo, um traço firme, sem caixa, para os campos
+   ficarem com a mesma largura dos outros formulários. */
 .form-section { display: grid; gap: 0.9rem; }
-.form-section + .form-section { border-top: 1px solid var(--line); padding-top: 0.9rem; }
+.form-section + .form-section {
+  border-top: 1px solid var(--line-strong);
+  padding-top: 1.35rem;
+  margin-top: 0.25rem;
+}
 .form-section-title {
-  margin: 0; font-size: 0.72rem; text-transform: uppercase;
-  letter-spacing: 0.08em; color: var(--accent-ink); font-weight: 600;
+  margin: 0 0 0.1rem;
+  font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.09em; color: var(--accent-ink); font-weight: 600;
 }
 @media (min-width: 640px) {
   .form-section { gap: 1rem; }
-  .form-section + .form-section { padding-top: 1rem; }
+  .form-section + .form-section { padding-top: 1.5rem; }
 }
 
 /* Prefixo "R$" nos campos de dinheiro */
 .money-wrap { position: relative; display: block; }
 .money-wrap::before {
-  content: "R$"; position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%);
+  content: "R$"; position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%);
   color: var(--ink-faint); font-size: 0.9rem; pointer-events: none;
 }
-.money-wrap input { padding-left: 2.3rem; }
+.money-wrap input { padding-left: 2.4rem; }
 
-/* ---------- Pills de status ---------- */
+/* ---------- Pills de status ----------
+   Etiqueta quadrada (2px) — o formato de carnê combina mais com "caderno de
+   controle" que a cápsula redonda. O ponto antes do texto dá a leitura de status
+   sem depender só da cor. */
 .pill {
-  display: inline-block; padding: 0.1em 0.55em; border-radius: 999px;
-  font-size: 0.72rem; border: 1px solid var(--line); text-transform: uppercase; letter-spacing: 0.04em;
+  display: inline-flex; align-items: center; gap: 0.4em;
+  padding: 0.16em 0.6em; border-radius: 2px;
+  font-size: 0.7rem; font-weight: 600;
+  border: 1px solid; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.pill::before {
+  content: ""; width: 0.5em; height: 0.5em; border-radius: 50%;
+  background: currentColor; flex: none;
 }
 .pill.em_dia { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink); }
 .pill.atrasado { background: var(--amber-wash); border-color: var(--amber); color: var(--amber); }
 .pill.inadimplente { background: var(--critical-wash); border-color: var(--critical); color: var(--critical); }
-.pill.quitado { background: var(--surface-2); color: var(--ink-soft); }
+.pill.quitado { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink-soft); }
+/* contrato encerrado — ponto vazado */
+.pill.quitado::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 
-/* ---------- Detalhe (grade de dados) ---------- */
-.meta { display: grid; grid-template-columns: 1fr; gap: 0.75rem 1.5rem; margin: 1rem 0; }
+/* ---------- Ficha (grade de dados do detalhe) ---------- */
+.meta {
+  display: grid; grid-template-columns: 1fr; gap: 0.85rem 1.75rem;
+  margin: 1rem 0 1.25rem;
+  padding: 1rem 1.15rem;
+  background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: 2px;
+  box-shadow: var(--raise);
+}
 .meta > div { display: grid; gap: 0.15rem; }
-.meta dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); }
-.meta dd { margin: 0; }
+.meta dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
+.meta dd { margin: 0; color: var(--ink); font-size: 0.95rem; }
 @media (min-width: 520px) { .meta { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); } }
 
-.pagination { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; color: var(--ink-faint); }
+.pagination { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; color: var(--ink-soft); font-size: 0.9rem; }
 
-.card { background: var(--surface); border: 1px solid var(--line); padding: 1rem 1.15rem; margin: 1rem 0; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 0.95rem 1.1rem;
+  margin: 1rem 0;
+  box-shadow: var(--raise);
+}
 
 /* ---------- Login ---------- */
 .login-box {
-  max-width: 420px;
-  margin: 2rem auto;
+  max-width: 380px;
+  margin: 1.75rem auto;
   background: var(--surface);
-  border: 1px solid var(--line);
-  padding: 1.75rem 1.25rem;
+  border: 1px solid var(--line-strong);
+  border-top: 3px solid var(--accent);
+  border-radius: 2px;
+  padding: 1.75rem 1.5rem 2rem;
+  box-shadow: var(--raise);
 }
-.login-box h1 { font-size: 1.4rem; text-align: center; margin: 0 0 1.5rem; }
-.login-box .form-grid { gap: 1.15rem; max-width: none; }
+.login-box .eyebrow { display: block; margin-bottom: 0.15rem; }
+.login-box h1 { font-size: 1.35rem; text-align: left; margin: 0.15rem 0 1.4rem; }
+.login-box .form-grid { gap: 1.1rem; max-width: none; }
 .login-box .msg { margin-bottom: 0.25rem; }
-@media (min-width: 640px) { .login-box { margin: 4rem auto; padding: 2.25rem 2rem; } }
+.login-box .fineprint {
+  margin: 1.1rem 0 0; text-align: center;
+  color: var(--ink-faint); font-size: 0.8rem;
+}
+@media (min-width: 640px) { .login-box { margin: 3.5rem auto; padding: 2rem 1.9rem 2.25rem; } }
+
+/* ---------- Movimento ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}

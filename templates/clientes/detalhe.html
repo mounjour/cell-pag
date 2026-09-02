@@ -10,27 +10,27 @@
 </div>
 
 <dl class="meta">
-  <div><dt>CPF</dt><dd>{{ cliente.cpf_formatado }}</dd></div>
-  <div><dt>Telefone / WhatsApp</dt><dd>{{ cliente.telefone_whatsapp }}</dd></div>
+  <div><dt>CPF</dt><dd class="num">{{ cliente.cpf_formatado }}</dd></div>
+  <div><dt>Telefone / WhatsApp</dt><dd class="num">{{ cliente.telefone_whatsapp }}</dd></div>
   <div><dt>Endereço</dt><dd>{{ cliente.endereco|default:"—" }}</dd></div>
-  <div><dt>Cadastrado em</dt><dd>{{ cliente.criado_em|date:"d/m/Y" }}</dd></div>
+  <div><dt>Cadastrado em</dt><dd class="num">{{ cliente.criado_em|date:"d/m/Y" }}</dd></div>
 </dl>
 
 <h2>Contratos</h2>
 {% if contratos %}
-  <div class="tbl-wrap">
+  <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th>Apelido</th><th>Aparelho</th><th>Estrutura</th><th>Valor total</th><th>Status</th></tr>
+        <tr><th>Apelido</th><th>Aparelho</th><th>Estrutura</th><th class="num">Valor total</th><th>Status</th></tr>
       </thead>
       <tbody>
         {% for ct in contratos %}
           <tr>
             <td><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
-            <td>{{ ct.aparelho_modelo }}</td>
-            <td>{{ ct.get_estrutura_display }}</td>
-            <td>R$ {{ ct.valor_total }}</td>
-            <td><span class="pill {{ ct.status }}">{{ ct.get_status_display }}</span></td>
+            <td data-label="Aparelho">{{ ct.aparelho_modelo }}</td>
+            <td data-label="Estrutura">{{ ct.get_estrutura_display }}</td>
+            <td class="num" data-label="Valor total">R$ {{ ct.valor_total }}</td>
+            <td data-label="Status"><span class="pill {{ ct.status }}">{{ ct.get_status_display }}</span></td>
           </tr>
         {% endfor %}
       </tbody>

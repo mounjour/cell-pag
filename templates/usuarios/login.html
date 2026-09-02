@@ -3,7 +3,8 @@
 
 {% block content %}
 <div class="login-box">
-  <h1>Login</h1>
+  <span class="eyebrow">Acesso restrito</span>
+  <h1>Entrar</h1>
   {% if form.errors %}
     <p class="msg error">Usuário ou senha inválidos.</p>
   {% endif %}
@@ -13,5 +14,6 @@
     <button type="submit" class="btn btn-block">Entrar</button>
     <input type="hidden" name="next" value="{{ next }}">
   </form>
+  <p class="fineprint">Uso interno — Yslane e Alisson.</p>
 </div>
 {% endblock %}

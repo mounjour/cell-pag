@@ -11,11 +11,13 @@
   <header class="topbar">
     <a class="brand" href="{% url 'clientes:lista' %}">Acompanhamento de Pagamentos</a>
     {% if user.is_authenticated %}
+      {% with secao=request.resolver_match.app_name %}
       <nav class="nav">
-        <a href="{% url 'clientes:lista' %}">Clientes</a>
-        <a href="{% url 'contratos:lista' %}">Contratos</a>
+        <a href="{% url 'clientes:lista' %}"{% if secao == 'clientes' %} class="active" aria-current="page"{% endif %}>Clientes</a>
+        <a href="{% url 'contratos:lista' %}"{% if secao == 'contratos' %} class="active" aria-current="page"{% endif %}>Contratos</a>
         {% if user.is_staff %}<a href="/admin/">Admin</a>{% endif %}
       </nav>
+      {% endwith %}
       <form class="logout" method="post" action="{% url 'usuarios:logout' %}">
         {% csrf_token %}
         <span class="whoami">{{ user }}</span>

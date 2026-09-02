@@ -19,20 +19,21 @@
 </div>
 
 {% if contratos %}
-  <div class="tbl-wrap">
+  <p class="count">{{ page_obj.paginator.count }} contrato{{ page_obj.paginator.count|pluralize }}{% if status_atual %} · filtro ativo{% endif %}</p>
+  <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th>Cliente</th><th>Apelido</th><th>Estrutura</th><th>Valor total</th><th>Início</th><th>Status</th></tr>
+        <tr><th>Apelido</th><th>Cliente</th><th>Estrutura</th><th class="num">Valor total</th><th class="num">Início</th><th>Status</th></tr>
       </thead>
       <tbody>
         {% for ct in contratos %}
           <tr>
-            <td><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></td>
             <td><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
-            <td>{{ ct.get_estrutura_display }}</td>
-            <td>R$ {{ ct.valor_total }}</td>
-            <td>{{ ct.data_inicio|date:"d/m/Y" }}</td>
-            <td><span class="pill {{ ct.status }}">{{ ct.get_status_display }}</span></td>
+            <td data-label="Cliente"><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></td>
+            <td data-label="Estrutura">{{ ct.get_estrutura_display }}</td>
+            <td class="num" data-label="Valor total">R$ {{ ct.valor_total }}</td>
+            <td class="num" data-label="Início">{{ ct.data_inicio|date:"d/m/Y" }}</td>
+            <td data-label="Status"><span class="pill {{ ct.status }}">{{ ct.get_status_display }}</span></td>
           </tr>
         {% endfor %}
       </tbody>
@@ -40,6 +41,9 @@
   </div>
   {% include "_pagination.html" %}
 {% else %}
-  <p class="empty">Nenhum contrato cadastrado{% if status_atual %} com esse status{% endif %}.</p>
+  <div class="empty">
+    <p>Nenhum contrato {% if status_atual %}com esse status{% else %}cadastrado ainda{% endif %}.</p>
+    {% if not status_atual %}<a class="btn" href="{% url 'contratos:novo' %}">Cadastrar o primeiro contrato</a>{% endif %}
+  </div>
 {% endif %}
 {% endblock %}

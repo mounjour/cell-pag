@@ -10,15 +10,15 @@
 </div>
 
 <dl class="meta">
-  <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}{% if contrato.imei %} · IMEI {{ contrato.imei }}{% endif %}</dd></div>
+  <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}{% if contrato.imei %} · IMEI <span class="num">{{ contrato.imei }}</span>{% endif %}</dd></div>
   <div><dt>Estrutura</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
   <div><dt>Status</dt><dd><span class="pill {{ contrato.status }}">{{ contrato.get_status_display }}</span></dd></div>
-  <div><dt>Valor total</dt><dd>R$ {{ contrato.valor_total }}</dd></div>
-  <div><dt>Valor da parcela</dt><dd>{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
-  <div><dt>Nº de parcelas</dt><dd>{{ contrato.num_parcelas|default:"—" }}</dd></div>
-  <div><dt>Data de início</dt><dd>{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
+  <div><dt>Valor total</dt><dd class="num">R$ {{ contrato.valor_total }}</dd></div>
+  <div><dt>Valor da parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
+  <div><dt>Nº de parcelas</dt><dd class="num">{{ contrato.num_parcelas|default:"—" }}</dd></div>
+  <div><dt>Data de início</dt><dd class="num">{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
   <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"—" }}</dd></div>
-  <div><dt>Previsão de quitação</dt><dd>{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
+  <div><dt>Previsão de quitação</dt><dd class="num">{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
   <div><dt>Fiador</dt><dd>{{ contrato.fiador|default:"—" }}</dd></div>
 </dl>
 
