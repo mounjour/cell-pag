@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.urls import reverse
 from validate_docbr import CPF as CPFGen
 
@@ -301,3 +302,38 @@ def test_anexar_documento_registra_enviado_por(auth_client, operador, cliente, s
     doc = ct.documentos.get()
     assert doc.enviado_por == operador
     assert doc.tipo == "contrato_assinado"
+
+
+# ---------- Comando seed_demo ----------
+
+@pytest.mark.django_db
+def test_seed_demo_cria_massa_variada():
+    call_command("seed_demo")
+    assert Cliente.objects.count() == 10
+    assert Contrato.objects.count() == 10
+
+    # Um cliente fica sem contrato de propósito.
+    assert Cliente.objects.filter(contratos__isnull=True).count() == 1
+
+    # As 5 estruturas aparecem.
+    estruturas = set(Contrato.objects.values_list("estrutura", flat=True))
+    assert estruturas == {e.value for e in Contrato.Estrutura}
+
+    # Situações-chave: um quitado, um sem próximo vencimento, e pelo menos um
+    # inadimplente com alerta de bloqueio pelo cálculo de hoje.
+    assert Contrato.objects.filter(status=Contrato.Status.QUITADO).count() == 1
+    assert Contrato.objects.filter(proximo_vencimento__isnull=True).count() == 1
+    situacoes = [ct.situacao_atraso() for ct in Contrato.objects.all()]
+    assert any(s and s.alertar_bloqueio for s in situacoes)
+
+
+@pytest.mark.django_db
+def test_seed_demo_idempotente_e_reset():
+    call_command("seed_demo")
+    call_command("seed_demo")  # rodar de novo não duplica
+    assert Cliente.objects.count() == 10
+    assert Contrato.objects.count() == 10
+
+    call_command("seed_demo", "--reset")
+    assert Cliente.objects.count() == 10
+    assert Contrato.objects.count() == 10
