@@ -32,6 +32,18 @@ from django.db import transaction
 
 from apps.clientes.models import Cliente
 from apps.contratos.models import Contrato
+from apps.pagamentos.models import Pagamento
+
+# Baixas de demonstração: (cpf, apelido do contrato, nº da parcela, valor, forma).
+# Um contrato com histórico limpo, um parcial (mostra o transporte de saldo) e
+# um Pix com observação.
+PAGAMENTOS_DEMO = [
+    ("10433218100", "iPhone 11", 1, Decimal("40.00"), Pagamento.Forma.DINHEIRO),
+    ("10433218100", "iPhone 11", 2, Decimal("40.00"), Pagamento.Forma.PIX),
+    ("10433218100", "iPhone 11", 3, Decimal("40.00"), Pagamento.Forma.PIX),
+    ("96001338914", "Moto G54", 1, Decimal("100.00"), Pagamento.Forma.PIX),  # parcial
+    ("92832764851", "iPhone 14", 1, Decimal("350.00"), Pagamento.Forma.PIX),
+]
 
 # 10 clientes — CPFs válidos (dígito verificador correto), telefones em E.164.
 # Alguns sem endereço de propósito (campo opcional). O último não tem contrato.
@@ -295,6 +307,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         if options["reset"]:
+            Pagamento.objects.filter(contrato__cliente__cpf__in=CPFS_DEMO).delete()
             n_ct, _ = Contrato.objects.filter(cliente__cpf__in=CPFS_DEMO).delete()
             n_cl, _ = Cliente.objects.filter(cpf__in=CPFS_DEMO).delete()
             self.stdout.write(f"reset: removidos {n_cl} cliente(s) e {n_ct} contrato(s) de demo.")
@@ -315,20 +328,45 @@ class Command(BaseCommand):
 
         hoje = datetime.date.today()
         criados_ct = 0
+        contratos_por_chave: dict[tuple[str, str], Contrato] = {}
         for dados in contratos_demo(hoje):
             cpf = dados.pop("cpf")
             apelido = dados.pop("apelido")
-            _, criou = Contrato.objects.get_or_create(
+            obj, criou = Contrato.objects.get_or_create(
                 cliente=clientes_por_cpf[cpf],
                 apelido=apelido,
                 defaults=dados,
             )
+            contratos_por_chave[(cpf, apelido)] = obj
             criados_ct += criou
+
+        # Fase 3: umas poucas baixas de demonstração. Precisa dos vencimentos —
+        # gera para os contratos com valor_parcela antes de dar baixa.
+        criados_pg = 0
+        for cpf, apelido, numero, valor, forma in PAGAMENTOS_DEMO:
+            contrato = contratos_por_chave.get((cpf, apelido))
+            if contrato is None or contrato.valor_parcela is None:
+                continue
+            contrato.gerar_vencimentos(hoje=hoje)
+            venc = contrato.vencimentos.filter(numero=numero).first()
+            if venc is None or venc.pagamentos.exists():
+                continue
+            pagamento = Pagamento(
+                contrato=contrato,
+                vencimento=venc,
+                data_pagamento=venc.data_vencimento,
+                valor_pago=valor,
+                forma=forma,
+                observacao="Baixa de demonstração." if forma == Pagamento.Forma.PIX else "",
+            )
+            pagamento.registrar()
+            criados_pg += 1
 
         self.stdout.write(
             self.style.SUCCESS(
                 f"OK — clientes: {criados_cli} novo(s) / {len(CLIENTES)} no total de demo; "
-                f"contratos: {criados_ct} novo(s) / 10 no total de demo. "
+                f"contratos: {criados_ct} novo(s) / 10 no total de demo; "
+                f"pagamentos: {criados_pg} novo(s) de demo. "
                 "'Marcos Antônio Pereira' fica sem contrato de propósito."
             )
         )

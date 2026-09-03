@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Histórico de pagamentos{% endblock %}
+
+{% block content %}
+<h1>Histórico de pagamentos</h1>
+
+{% if filtrado %}
+  <p class="count">Filtrado · <a href="{% url 'pagamentos:historico' %}">ver todos</a></p>
+{% endif %}
+
+{% if pagamentos %}
+  <div class="tbl-wrap cards">
+    <table>
+      <thead>
+        <tr><th class="num">Data</th><th>Cliente</th><th>Contrato</th><th>Parcela</th><th class="num">Valor</th><th>Forma</th><th>Baixa</th></tr>
+      </thead>
+      <tbody>
+        {% for p in pagamentos %}
+          <tr>
+            <td class="num">{{ p.data_pagamento|date:"d/m/Y" }}</td>
+            <td data-label="Cliente"><a href="{% url 'clientes:detalhe' p.contrato.cliente.pk %}">{{ p.contrato.cliente.nome }}</a></td>
+            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.apelido }}</a></td>
+            <td data-label="Parcela">{% if p.vencimento %}nº {{ p.vencimento.numero }}{% else %}—{% endif %}</td>
+            <td class="num" data-label="Valor">R$ {{ p.valor_pago }}</td>
+            <td data-label="Forma">{{ p.get_forma_display }}</td>
+            <td data-label="Baixa">{{ p.usuario_baixa|default:"—" }} · {{ p.criado_em|date:"d/m/Y H:i" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a class="btn secondary" href="?{% if request.GET.cliente %}cliente={{ request.GET.cliente }}&{% endif %}{% if request.GET.contrato %}contrato={{ request.GET.contrato }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+      {% endif %}
+      <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a class="btn secondary" href="?{% if request.GET.cliente %}cliente={{ request.GET.cliente }}&{% endif %}{% if request.GET.contrato %}contrato={{ request.GET.contrato }}&{% endif %}page={{ page_obj.next_page_number }}">Próxima</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% else %}
+  <p class="empty">Nenhum pagamento registrado.</p>
+{% endif %}
+{% endblock %}

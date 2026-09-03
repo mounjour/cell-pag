@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from apps.clientes.models import Cliente
@@ -57,12 +58,25 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
             super()
             .get_queryset()
             .select_related("cliente")
-            .prefetch_related("documentos", "vencimentos")
+            .prefetch_related(
+                "documentos",
+                "vencimentos",
+                "pagamentos__vencimento",
+                "pagamentos__usuario_baixa",
+            )
         )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["form_documento"] = DocumentoContratoForm()
+        contrato = self.object
+        vencimentos = list(contrato.vencimentos.all())
+        pagas = sum(1 for v in vencimentos if v.status == v.Status.PAGO)
+        ctx["pode_quitar"] = (
+            not contrato.quitado
+            and bool(contrato.num_parcelas)
+            and pagas >= contrato.num_parcelas
+        )
         return ctx
 
 
@@ -101,6 +115,25 @@ class ContratoUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("contratos:detalhe", args=[self.object.pk])
+
+
+class ContratoQuitarView(LoginRequiredMixin, View):
+    """Marca o contrato como quitado (ação manual da Yslane — POST).
+
+    A baixa nunca quita sozinha (decisão do Alisson); aqui o contrato passa a
+    `quitado`, para de cobrar e ganha a data prevista de quitação calculada.
+    """
+
+    def post(self, request, pk):
+        contrato = get_object_or_404(Contrato, pk=pk)
+        if contrato.quitado:
+            messages.info(request, "Este contrato já estava quitado.")
+        else:
+            contrato.status = Contrato.Status.QUITADO
+            contrato.save(update_fields=["status", "atualizado_em"])
+            contrato.atualizar_data_prevista_quitacao()
+            messages.success(request, "Contrato marcado como quitado. A cobrança para aqui.")
+        return redirect("contratos:detalhe", pk=pk)
 
 
 class DocumentoCreateView(LoginRequiredMixin, CreateView):

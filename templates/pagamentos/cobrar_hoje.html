@@ -11,7 +11,7 @@
     <div><dt>Alerta de bloqueio</dt><dd class="num">{{ n_bloqueio }}</dd></div>
     <div><dt>Total previsto (parcela + juros)</dt><dd class="num">R$ {{ total_previsto }}</dd></div>
   </dl>
-  <p class="note">O registro dos pagamentos recebidos entra na Fase 3 — por ora esta é só a lista de quem cobrar.</p>
+  <p class="note">Use “registrar pagamento” em cada linha para dar baixa. O painel segue a data de <strong>próximo vencimento</strong> do contrato (ainda manual).</p>
 
   <div class="tbl-wrap cards">
     <table>
@@ -44,6 +44,7 @@
             <td data-label="Contato">
               <a class="num" href="tel:{{ l.contrato.cliente.telefone_whatsapp.as_e164 }}">{{ l.contrato.cliente.telefone_exibicao }}</a>
               <a class="zap" href="{{ l.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+              · <a href="{% url 'pagamentos:novo' l.contrato.pk %}">registrar pagamento</a>
             </td>
           </tr>
         {% endfor %}

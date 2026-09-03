@@ -10,7 +10,12 @@ urlpatterns = [
     path("", include("apps.usuarios.urls")),
     path("clientes/", include("apps.clientes.urls")),
     path("contratos/", include("apps.contratos.urls")),
-    path("cobrar-hoje/", include("apps.pagamentos.urls")),
+    path("pagamentos/", include("apps.pagamentos.urls")),
+    # compat: o link antigo /cobrar-hoje/ segue funcionando
+    path(
+        "cobrar-hoje/",
+        RedirectView.as_view(pattern_name="pagamentos:cobrar_hoje", permanent=False),
+    ),
 ]
 
 if settings.DEBUG:

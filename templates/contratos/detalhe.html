@@ -7,7 +7,20 @@
   <span class="spacer"></span>
   <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Ver cliente</a>
   <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">Editar</a>
+  {% if not contrato.quitado %}
+    <a class="btn" href="{% url 'pagamentos:novo' contrato.pk %}">Registrar pagamento</a>
+  {% endif %}
 </div>
+
+{% if pode_quitar %}
+  <div class="note">
+    <strong>Todas as {{ contrato.num_parcelas }} parcelas estão pagas.</strong>
+    <form method="post" action="{% url 'contratos:quitar' contrato.pk %}" style="margin-top:0.6rem">
+      {% csrf_token %}
+      <button type="submit" class="btn">Marcar como quitado</button>
+    </form>
+  </div>
+{% endif %}
 
 <dl class="meta">
   <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}{% if contrato.imei %} · IMEI <span class="num">{{ contrato.imei }}</span>{% endif %}</dd></div>
@@ -64,14 +77,21 @@
     <p class="count">{{ total_venc }} parcela{{ total_venc|pluralize }} gerada{{ total_venc|pluralize }}{% if total_venc > 24 %} · mostrando as 24 primeiras{% endif %}.</p>
     <div class="tbl-wrap cards">
       <table>
-        <thead><tr><th>Nº</th><th class="num">Vencimento</th><th class="num">Previsto</th><th>Status</th></tr></thead>
+        <thead><tr><th>Nº</th><th class="num">Vencimento</th><th class="num">Previsto</th><th class="num">Pago</th><th class="num">Saldo</th><th>Status</th><th></th></tr></thead>
         <tbody>
           {% for v in vencimentos|slice:":24" %}
             <tr>
               <td>{{ v.numero }}</td>
               <td class="num" data-label="Vencimento">{{ v.data_vencimento|date:"d/m/Y" }}</td>
               <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}</td>
-              <td data-label="Status">{{ v.get_status_display }}</td>
+              <td class="num" data-label="Pago">R$ {{ v.valor_pago }}</td>
+              <td class="num" data-label="Saldo">R$ {{ v.saldo }}</td>
+              <td data-label="Status"><span class="pill {{ v.status }}">{{ v.get_status_display }}</span></td>
+              <td data-label="" class="num">
+                {% if not contrato.quitado and v.status != 'pago' %}
+                  <a href="{% url 'pagamentos:novo' contrato.pk %}">dar baixa</a>
+                {% endif %}
+              </td>
             </tr>
           {% endfor %}
         </tbody>
@@ -82,6 +102,47 @@
       Nenhuma parcela gerada ainda.
       {% if not contrato.valor_parcela %}Informe o <strong>valor da parcela</strong> e rode a geração (<code>manage.py gerar_vencimentos</code>).{% else %}Rode <code>manage.py gerar_vencimentos</code>.{% endif %}
     </p>
+  {% endif %}
+{% endwith %}
+
+{% if contrato.saldo_transportado %}
+  <p class="note">
+    <strong>Saldo transportado:</strong>
+    <span class="num">R$ {{ contrato.saldo_transportado }}</span>
+    de um pagamento parcial sem parcela seguinte onde cair. Entra na próxima
+    parcela gerada.
+  </p>
+{% endif %}
+
+<h2>Pagamentos</h2>
+{% with pagamentos=contrato.pagamentos.all %}
+  {% if pagamentos %}
+    <div class="tbl-wrap cards">
+      <table>
+        <thead><tr><th class="num">Data</th><th>Parcela</th><th class="num">Valor</th><th>Forma</th><th>Baixa</th><th>Comprovante</th><th></th></tr></thead>
+        <tbody>
+          {% for p in pagamentos %}
+            <tr>
+              <td class="num">{{ p.data_pagamento|date:"d/m/Y" }}</td>
+              <td data-label="Parcela">{% if p.vencimento %}nº {{ p.vencimento.numero }}{% else %}—{% endif %}</td>
+              <td class="num" data-label="Valor">R$ {{ p.valor_pago }}</td>
+              <td data-label="Forma">{{ p.get_forma_display }}</td>
+              <td data-label="Baixa">{{ p.usuario_baixa|default:"—" }} · {{ p.criado_em|date:"d/m/Y H:i" }}</td>
+              <td data-label="Comprovante">{% if p.comprovante %}<a href="{{ p.comprovante.url }}" target="_blank" rel="noopener">abrir</a>{% else %}—{% endif %}</td>
+              <td data-label="" class="num">
+                <form method="post" action="{% url 'pagamentos:estornar' contrato.pk p.pk %}"
+                      onsubmit="return confirm('Estornar esta baixa da parcela {{ p.vencimento.numero|default:'' }}?')">
+                  {% csrf_token %}
+                  <button type="submit" class="linkish">estornar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">Nenhum pagamento registrado neste contrato.</p>
   {% endif %}
 {% endwith %}
 

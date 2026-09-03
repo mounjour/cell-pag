@@ -5,6 +5,7 @@ django-phonenumber-field==8.5.0
 phonenumbers==9.0.38
 validate-docbr==2.0.0
 django-import-export==4.4.1
+django-auditlog==3.4.1         # trilha de baixa / quem fez o quê (Fase 3)
 whitenoise==6.12.0
 python-dateutil==2.9.0.post0   # recorrência de vencimentos (Fase 2)
 
@@ -19,6 +20,5 @@ six==1.17.0                    # dependência do python-dateutil
 # ── Próximas fases (ver PLANO-DO-PROJETO.md, seção 13) ────────────────────────
 # psycopg[binary]      # PostgreSQL em produção
 # django-q2            # job diário de cobrança (Fase 2 — hoje é management command)
-# django-auditlog      # trilha de baixa (Fase 3)
 # weasyprint / openpyxl # relatórios (Fase 5)
 # sentry-sdk

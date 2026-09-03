@@ -13,6 +13,7 @@ como gerar vencimentos, e sem `num_parcelas` não há data de quitação.
 """
 
 import datetime
+from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
@@ -77,6 +78,17 @@ class Contrato(models.Model):
         null=True,
         blank=True,
         help_text="Calculada pelo sistema (data da última parcela) quando há valor e nº de parcelas.",
+    )
+    saldo_transportado = models.DecimalField(
+        "saldo transportado",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text=(
+            "Saldo de um pagamento parcial (positivo = ainda devido; negativo = "
+            "crédito) que não teve parcela em aberto seguinte onde cair. É "
+            "somado à próxima parcela gerada por gerar_vencimentos(). Fase 3."
+        ),
     )
     observacoes = models.TextField("observações", blank=True)
 
@@ -160,6 +172,23 @@ class Contrato(models.Model):
                         valor_previsto=self.valor_parcela,
                     )
                 )
+        # Fase 3: drena o saldo de um parcial que não achou parcela onde cair
+        # (ver Pagamento.registrar). Soma na primeira parcela nova, cascateando
+        # se for um crédito maior que ela.
+        if novos and self.saldo_transportado:
+            restante = self.saldo_transportado
+            for venc in novos:
+                novo_valor = venc.valor_previsto + restante
+                if novo_valor < 0:
+                    venc.valor_previsto = Decimal("0.00")
+                    restante = novo_valor
+                else:
+                    venc.valor_previsto = novo_valor
+                    restante = Decimal("0.00")
+                    break
+            self.saldo_transportado = restante
+            self.save(update_fields=["saldo_transportado", "atualizado_em"])
+
         if novos:
             Vencimento.objects.bulk_create(novos)
         return novos

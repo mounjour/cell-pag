@@ -5,5 +5,16 @@ from . import views
 app_name = "pagamentos"
 
 urlpatterns = [
-    path("", views.CobrarHojeView.as_view(), name="cobrar_hoje"),
+    path("cobrar-hoje/", views.CobrarHojeView.as_view(), name="cobrar_hoje"),
+    path("historico/", views.HistoricoPagamentosView.as_view(), name="historico"),
+    path(
+        "contrato/<int:contrato_pk>/novo/",
+        views.PagamentoCreateView.as_view(),
+        name="novo",
+    ),
+    path(
+        "contrato/<int:contrato_pk>/<int:pk>/estornar/",
+        views.PagamentoEstornarView.as_view(),
+        name="estornar",
+    ),
 ]

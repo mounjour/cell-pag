@@ -42,4 +42,33 @@
 {% else %}
   <p class="empty">Nenhum contrato para este cliente.</p>
 {% endif %}
+
+<h2>Pagamentos</h2>
+{% if pagamentos %}
+  <p class="count">
+    {{ pagamentos_total }} pagamento{{ pagamentos_total|pluralize }} no total
+    {% if pagamentos_total > 50 %}· mostrando os 50 mais recentes{% endif %}
+    · <a href="{% url 'pagamentos:historico' %}?cliente={{ cliente.pk }}">ver histórico</a>
+  </p>
+  <div class="tbl-wrap cards">
+    <table>
+      <thead>
+        <tr><th class="num">Data</th><th>Contrato</th><th>Parcela</th><th class="num">Valor</th><th>Forma</th></tr>
+      </thead>
+      <tbody>
+        {% for p in pagamentos %}
+          <tr>
+            <td class="num">{{ p.data_pagamento|date:"d/m/Y" }}</td>
+            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.apelido }}</a></td>
+            <td data-label="Parcela">{% if p.vencimento %}nº {{ p.vencimento.numero }}{% else %}—{% endif %}</td>
+            <td class="num" data-label="Valor">R$ {{ p.valor_pago }}</td>
+            <td data-label="Forma">{{ p.get_forma_display }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="empty">Nenhum pagamento registrado para este cliente.</p>
+{% endif %}
 {% endblock %}

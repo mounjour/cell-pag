@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Registrar pagamento — {{ contrato }}{% endblock %}
+
+{% block content %}
+<div class="form-centered">
+<h1>Registrar pagamento</h1>
+
+<dl class="meta">
+  <div><dt>Cliente</dt><dd>{{ contrato.cliente.nome }}</dd></div>
+  <div><dt>Contrato</dt><dd>{{ contrato.apelido }} · {{ contrato.get_estrutura_display }}</dd></div>
+  <div><dt>Valor da parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
+</dl>
+
+{% if parcelas_abertas %}
+  <form method="post" class="form-grid form-page" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% include "_form.html" %}
+    <div class="form-actions">
+      <button type="submit" class="btn">Registrar baixa</button>
+      <a class="btn secondary" href="{% url 'contratos:detalhe' contrato.pk %}">Cancelar</a>
+    </div>
+  </form>
+
+  <h2>Parcelas em aberto</h2>
+  {% with n_abertas=parcelas_abertas|length %}
+  <p class="count">{{ n_abertas }} parcela{{ n_abertas|pluralize }} em aberto{% if n_abertas > 8 %} · mostrando as 8 primeiras{% endif %}.</p>
+  <div class="tbl-wrap cards">
+    <table>
+      <thead><tr><th>Nº</th><th class="num">Vencimento</th><th class="num">Previsto</th><th class="num">Pago</th><th class="num">Falta</th></tr></thead>
+      <tbody>
+        {% for v in parcelas_abertas|slice:":8" %}
+          <tr>
+            <td>{{ v.numero }}</td>
+            <td class="num" data-label="Vencimento">{{ v.data_vencimento|date:"d/m/Y" }}</td>
+            <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}</td>
+            <td class="num" data-label="Pago">R$ {{ v.valor_pago }}</td>
+            <td class="num" data-label="Falta">R$ {{ v.saldo }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endwith %}
+{% else %}
+  <p class="empty">
+    Não há parcela em aberto neste contrato.
+    <a href="{% url 'contratos:detalhe' contrato.pk %}">Voltar ao contrato</a>.
+  </p>
+{% endif %}
+</div>
+{% endblock %}

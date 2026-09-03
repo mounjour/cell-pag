@@ -4,6 +4,8 @@ from django.db.models import Count, Q
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
+from apps.pagamentos.models import Pagamento
+
 from .forms import ClienteForm
 from .models import Cliente
 
@@ -35,6 +37,11 @@ class ClienteDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["contratos"] = self.object.contratos.all()
+        pagamentos = Pagamento.objects.filter(
+            contrato__cliente=self.object
+        ).select_related("contrato", "vencimento", "usuario_baixa")
+        ctx["pagamentos"] = pagamentos[:50]
+        ctx["pagamentos_total"] = pagamentos.count()
         return ctx
 
 

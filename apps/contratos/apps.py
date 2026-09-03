@@ -5,3 +5,11 @@ class ContratosConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.contratos"
     verbose_name = "Contratos"
+
+    def ready(self):
+        from auditlog.registry import auditlog
+
+        from .models import Contrato, DocumentoContrato
+
+        auditlog.register(Contrato)
+        auditlog.register(DocumentoContrato)
