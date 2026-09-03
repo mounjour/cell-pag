@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Cobrar hoje{% endblock %}
+
+{% block content %}
+<h1>Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
+
+{% if linhas %}
+  <dl class="meta">
+    <div><dt>Para cobrar</dt><dd class="num">{{ linhas|length }}</dd></div>
+    <div><dt>Atrasados</dt><dd class="num">{{ n_atraso }}</dd></div>
+    <div><dt>Alerta de bloqueio</dt><dd class="num">{{ n_bloqueio }}</dd></div>
+    <div><dt>Total previsto (parcela + juros)</dt><dd class="num">R$ {{ total_previsto }}</dd></div>
+  </dl>
+  <p class="note">O registro dos pagamentos recebidos entra na Fase 3 — por ora esta é só a lista de quem cobrar.</p>
+
+  <div class="tbl-wrap cards">
+    <table>
+      <thead>
+        <tr><th>Cliente</th><th>Contrato</th><th>Situação</th><th class="num">A cobrar</th><th>Contato</th></tr>
+      </thead>
+      <tbody>
+        {% for l in linhas %}
+          <tr>
+            <td><a href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a></td>
+            <td data-label="Contrato">
+              <a href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a>
+              · {{ l.contrato.get_estrutura_display }}
+            </td>
+            <td data-label="Situação">
+              {% if l.vence_hoje %}
+                <span class="pill em_dia">Vence hoje</span>
+              {% else %}
+                <span class="pill {{ l.situacao.status }}">{{ l.contrato.status_efetivo_label }}</span>
+                <span class="atraso-dias">{{ l.situacao.dias_atraso }} dia{{ l.situacao.dias_atraso|pluralize }} de atraso</span>
+                {% if l.situacao.alertar_bloqueio %}<span class="pill inadimplente">⚠ bloquear aparelho</span>{% endif %}
+              {% endif %}
+            </td>
+            <td class="num" data-label="A cobrar">
+              {% if l.parcela %}
+                R$ {{ l.a_cobrar }}
+                {% if l.situacao.juros %}<span class="helptext">parcela R$ {{ l.parcela }} + juros R$ {{ l.situacao.juros }}</span>{% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td data-label="Contato">
+              <a class="num" href="tel:{{ l.contrato.cliente.telefone_whatsapp.as_e164 }}">{{ l.contrato.cliente.telefone_exibicao }}</a>
+              <a class="zap" href="{{ l.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty">
+    <p>Nada para cobrar hoje. 🎉</p>
+    <p class="helptext">Aparecem aqui os contratos atrasados ou com vencimento no dia.</p>
+  </div>
+{% endif %}
+{% endblock %}

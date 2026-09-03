@@ -26,6 +26,14 @@
   <div><dt>Previsão de quitação</dt><dd class="num">{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
 </dl>
 
+{% if contrato.parcelas_conferem is False %}
+  <p class="note">
+    <strong>Confira as parcelas:</strong> valor da parcela × nº de parcelas =
+    <span class="num">R$ {{ contrato.total_das_parcelas }}</span>, diferente do valor total
+    (<span class="num">R$ {{ contrato.valor_total }}</span>). O sistema não recalcula — é só um aviso.
+  </p>
+{% endif %}
+
 {% with s=contrato.situacao_atraso %}
   {% if s %}
     <div class="card">
@@ -49,6 +57,33 @@
 {% endwith %}
 
 {% if contrato.observacoes %}<p class="card">{{ contrato.observacoes|linebreaksbr }}</p>{% endif %}
+
+<h2>Parcelas</h2>
+{% with vencimentos=contrato.vencimentos.all total_venc=contrato.vencimentos.count %}
+  {% if vencimentos %}
+    <p class="count">{{ total_venc }} parcela{{ total_venc|pluralize }} gerada{{ total_venc|pluralize }}{% if total_venc > 24 %} · mostrando as 24 primeiras{% endif %}.</p>
+    <div class="tbl-wrap cards">
+      <table>
+        <thead><tr><th>Nº</th><th class="num">Vencimento</th><th class="num">Previsto</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for v in vencimentos|slice:":24" %}
+            <tr>
+              <td>{{ v.numero }}</td>
+              <td class="num" data-label="Vencimento">{{ v.data_vencimento|date:"d/m/Y" }}</td>
+              <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}</td>
+              <td data-label="Status">{{ v.get_status_display }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">
+      Nenhuma parcela gerada ainda.
+      {% if not contrato.valor_parcela %}Informe o <strong>valor da parcela</strong> e rode a geração (<code>manage.py gerar_vencimentos</code>).{% else %}Rode <code>manage.py gerar_vencimentos</code>.{% endif %}
+    </p>
+  {% endif %}
+{% endwith %}
 
 <h2>Documentos</h2>
 {% if contrato.documentos.all %}

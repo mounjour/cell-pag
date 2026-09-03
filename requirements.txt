@@ -6,6 +6,7 @@ phonenumbers==9.0.38
 validate-docbr==2.0.0
 django-import-export==4.4.1
 whitenoise==6.12.0
+python-dateutil==2.9.0.post0   # recorrência de vencimentos (Fase 2)
 
 # Dependências transitivas
 asgiref==3.12.1
@@ -13,11 +14,11 @@ sqlparse==0.6.0
 tzdata==2026.3
 tablib==3.10.0
 diff-match-patch==20241021
+six==1.17.0                    # dependência do python-dateutil
 
 # ── Próximas fases (ver PLANO-DO-PROJETO.md, seção 13) ────────────────────────
 # psycopg[binary]      # PostgreSQL em produção
-# django-q2            # job diário de cobrança (Fase 2)
-# python-dateutil      # recorrência de vencimentos (Fase 2)
+# django-q2            # job diário de cobrança (Fase 2 — hoje é management command)
 # django-auditlog      # trilha de baixa (Fase 3)
 # weasyprint / openpyxl # relatórios (Fase 5)
 # sentry-sdk

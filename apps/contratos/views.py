@@ -10,6 +10,19 @@ from .forms import ContratoForm, DocumentoContratoForm
 from .models import Contrato
 
 
+def _avisar_se_parcela_nao_bate(request, contrato):
+    """Aviso não-bloqueante quando ``valor_parcela × num_parcelas`` diverge do
+    valor total (o cálculo da parcela é feito fora do sistema — seção 5 do plano)."""
+    if contrato.parcelas_conferem is False:
+        soma = f"{contrato.total_das_parcelas:.2f}".replace(".", ",")
+        total = f"{contrato.valor_total:.2f}".replace(".", ",")
+        messages.warning(
+            request,
+            f"Parcela × nº de parcelas dá R$ {soma}, "
+            f"diferente do valor total (R$ {total}). Confira os números.",
+        )
+
+
 class ContratoListView(LoginRequiredMixin, ListView):
     model = Contrato
     template_name = "contratos/lista.html"
@@ -40,7 +53,12 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
     context_object_name = "contrato"
 
     def get_queryset(self):
-        return super().get_queryset().select_related("cliente").prefetch_related("documentos")
+        return (
+            super()
+            .get_queryset()
+            .select_related("cliente")
+            .prefetch_related("documentos", "vencimentos")
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -61,8 +79,10 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
         return initial
 
     def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, "Contrato cadastrado.")
-        return super().form_valid(form)
+        _avisar_se_parcela_nao_bate(self.request, self.object)
+        return response
 
     def get_success_url(self):
         return reverse("contratos:detalhe", args=[self.object.pk])
@@ -74,8 +94,10 @@ class ContratoUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "contratos/form.html"
 
     def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, "Contrato atualizado.")
-        return super().form_valid(form)
+        _avisar_se_parcela_nao_bate(self.request, self.object)
+        return response
 
     def get_success_url(self):
         return reverse("contratos:detalhe", args=[self.object.pk])

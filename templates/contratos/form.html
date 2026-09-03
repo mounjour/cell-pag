@@ -6,13 +6,14 @@
 <h1>{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}</h1>
 
 <details class="note">
-  <summary>Sobre os campos preenchidos à mão (Fase 2)</summary>
+  <summary>Como os campos de parcela e datas funcionam</summary>
   <p>
-    A geração automática dos vencimentos e o cálculo da parcela entram na Fase 2.
-    Por enquanto, <strong>valor da parcela</strong>, <strong>nº de parcelas</strong>,
-    <strong>próximo vencimento</strong> e <strong>data prevista de quitação</strong> são
-    preenchidos à mão e podem ficar em branco. O <strong>próximo vencimento</strong> é o que
-    liga o contrato ao cálculo de atraso e juros.
+    <strong>Valor da parcela</strong> e <strong>nº de parcelas</strong> são digitados à mão
+    (o cálculo é feito fora do sistema). Se estiverem preenchidos, o sistema gera os
+    <strong>vencimentos</strong> a partir da <strong>data de início</strong> + estrutura e
+    calcula a <strong>data prevista de quitação</strong> — se <code>parcela × nº</code> não
+    bater com o valor total, aparece um aviso. O <strong>próximo vencimento</strong> segue
+    manual e é o que liga o contrato ao cálculo de atraso e juros.
   </p>
 </details>
 

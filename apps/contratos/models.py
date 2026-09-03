@@ -1,12 +1,18 @@
 """Contrato de venda a prazo de um aparelho e seus documentos anexos.
 
-ESCOPO DESTA FASE (Fase 1 — Cadastros): apenas o cadastro do contrato e o anexo
-de documentos. A geração de `Vencimento` e o cálculo da parcela / data de
-quitação são da Fase 2 e dependem de regras ainda em aberto
-(PLANO-DO-PROJETO.md, seção 10): cálculo da parcela (R10) e regra de vencimento
-de "por dezena" e "mensal" (R9). Por isso `valor_parcela`, `num_parcelas` e
-`data_prevista_quitacao` são, por ora, preenchidos à mão e podem ficar em branco.
+Fase 1 (Cadastros): cadastro do contrato + anexo de documentos.
+
+Fase 2 (Estruturas e agenda): a geração de `Vencimento` e a `data_prevista_quitacao`
+já são automáticas — ver `gerar_vencimentos()` / `atualizar_data_prevista_quitacao()`
+aqui e a recorrência de datas em `apps.pagamentos.recorrencia`. O job diário
+`manage.py gerar_vencimentos` roda os dois em massa + `sincronizar_status()`.
+`valor_parcela` e `num_parcelas` continuam **manuais** por decisão (o cálculo é
+feito fora do sistema — PLANO-DO-PROJETO.md, seção 5); sem `valor_parcela` não há
+como gerar vencimentos, e sem `num_parcelas` não há data de quitação.
+`proximo_vencimento` segue manual: ligá-lo à parcela em aberto é da Fase 4.
 """
+
+import datetime
 
 from django.conf import settings
 from django.db import models
@@ -51,22 +57,27 @@ class Contrato(models.Model):
         "dia(s) de referência",
         max_length=40,
         blank=True,
-        help_text="Ex.: quinzenal — data acordada com o Alisson.",
+        help_text="Anotação livre (ex.: quinzenal — data combinada com o Alisson). Não entra no cálculo.",
     )
     proximo_vencimento = models.DateField(
         "próximo vencimento",
         null=True,
         blank=True,
         help_text=(
-            "Data da próxima parcela a receber. Manual por enquanto; a Fase 2 vai "
-            "gerar os vencimentos automaticamente. É a base do cálculo de atraso."
+            "Data da próxima parcela a receber — base do cálculo de atraso e juros. "
+            "Continua manual; ligá-la à parcela em aberto é da Fase 4."
         ),
     )
 
     status = models.CharField(
         "status", max_length=12, choices=Status.choices, default=Status.EM_DIA
     )
-    data_prevista_quitacao = models.DateField("data prevista de quitação", null=True, blank=True)
+    data_prevista_quitacao = models.DateField(
+        "data prevista de quitação",
+        null=True,
+        blank=True,
+        help_text="Calculada pelo sistema (data da última parcela) quando há valor e nº de parcelas.",
+    )
     observacoes = models.TextField("observações", blank=True)
 
     criado_em = models.DateTimeField("criado em", auto_now_add=True)
@@ -83,6 +94,93 @@ class Contrato(models.Model):
     @property
     def quitado(self) -> bool:
         return self.status == self.Status.QUITADO
+
+    # ── Fase 2: parcela × total (aviso no cadastro) ──────────────────────────
+
+    @property
+    def total_das_parcelas(self):
+        """``valor_parcela × num_parcelas`` quando ambos existem; senão ``None``."""
+        if self.valor_parcela is None or not self.num_parcelas:
+            return None
+        return self.valor_parcela * self.num_parcelas
+
+    @property
+    def parcelas_conferem(self):
+        """``True``/``False`` se ``valor_parcela × num_parcelas`` bate com
+        ``valor_total``; ``None`` quando faltam dados para comparar.
+
+        O sistema não calcula a parcela (é feita fora — seção 5 do plano), só
+        confere: divergência vira um aviso, não um erro de validação.
+        """
+        total = self.total_das_parcelas
+        if total is None:
+            return None
+        return total == self.valor_total
+
+    # ── Fase 2: geração de vencimentos ──────────────────────────────────────
+
+    #: Teto de parcelas geradas quando o contrato não informa `num_parcelas`
+    #: (~1 ano de diária). Evita laço gigante; o job roda todo dia e completa.
+    MAX_PARCELAS_SEM_TETO = 400
+
+    def gerar_vencimentos(self, dias_a_frente: int = 60, hoje=None) -> list:
+        """Cria os `Vencimento` que faltam, das parcelas vencidas até
+        ``hoje + dias_a_frente``.
+
+        Precisa de ``valor_parcela`` (vira ``valor_previsto``). Respeita
+        ``num_parcelas`` como teto quando informado. Idempotente — usa o
+        ``UniqueConstraint(contrato, numero)`` e só cria o que falta. Contrato
+        quitado não gera nada. Devolve a lista de `Vencimento` criados.
+        """
+        from apps.pagamentos import recorrencia
+        from apps.pagamentos.models import Vencimento
+
+        if self.quitado or self.valor_parcela is None:
+            return []
+        if hoje is None:
+            from django.utils import timezone
+
+            hoje = timezone.localdate()
+        horizonte = hoje + datetime.timedelta(days=dias_a_frente)
+
+        ja_existem = set(self.vencimentos.values_list("numero", flat=True))
+        teto = self.num_parcelas or self.MAX_PARCELAS_SEM_TETO
+
+        novos = []
+        for numero in range(1, teto + 1):
+            data = recorrencia.data_da_parcela(self.data_inicio, self.estrutura, numero)
+            if data > horizonte:
+                break
+            if numero not in ja_existem:
+                novos.append(
+                    Vencimento(
+                        contrato=self,
+                        numero=numero,
+                        data_vencimento=data,
+                        valor_previsto=self.valor_parcela,
+                    )
+                )
+        if novos:
+            Vencimento.objects.bulk_create(novos)
+        return novos
+
+    def atualizar_data_prevista_quitacao(self, salvar: bool = True) -> bool:
+        """Recalcula ``data_prevista_quitacao`` (= data da parcela nº
+        ``num_parcelas``). Devolve ``True`` se o valor mudou.
+
+        Sem ``num_parcelas`` o resultado é ``None`` (não dá para saber a data).
+        """
+        from apps.pagamentos import recorrencia
+
+        nova = recorrencia.data_prevista_quitacao(
+            self.data_inicio, self.estrutura, self.num_parcelas
+        )
+        if nova == self.data_prevista_quitacao:
+            return False
+        self.data_prevista_quitacao = nova
+        if salvar:
+            self.save(update_fields=["data_prevista_quitacao", "atualizado_em"])
+        return True
 
     # ── Fase 4: atraso, juros e status ───────────────────────────────────────
     # A lógica pura vive em apps/pagamentos/atraso.py. Aqui só ligamos ao
