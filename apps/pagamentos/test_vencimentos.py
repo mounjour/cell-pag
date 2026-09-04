@@ -363,3 +363,91 @@ def test_cobrar_hoje_vazio(auth_client, cliente):
     resp = auth_client.get(reverse("pagamentos:cobrar_hoje"))
     assert list(resp.context["linhas"]) == []
     assert "Nada para cobrar hoje" in resp.content.decode()
+
+
+# ── Fase 4: atraso ligado à parcela em aberto (Vencimento) ─────────────────
+
+@pytest.mark.django_db
+def test_parcela_em_aberto_e_a_de_menor_numero_nao_paga(cliente):
+    ct = _contrato(cliente)
+    Vencimento.objects.create(
+        contrato=ct, numero=1, data_vencimento=date(2026, 3, 2),
+        valor_previsto=Decimal("40.00"), valor_pago=Decimal("40.00"),
+        status=Vencimento.Status.PAGO,
+    )
+    v2 = Vencimento.objects.create(
+        contrato=ct, numero=2, data_vencimento=date(2026, 3, 12), valor_previsto=Decimal("40.00")
+    )
+    Vencimento.objects.create(
+        contrato=ct, numero=3, data_vencimento=date(2026, 3, 22), valor_previsto=Decimal("40.00")
+    )
+    assert ct.parcela_em_aberto() == v2
+
+
+@pytest.mark.django_db
+def test_situacao_atraso_usa_a_parcela_em_aberto_e_nao_o_campo_manual(cliente):
+    # proximo_vencimento manual está desatualizado; a parcela em aberto manda.
+    ct = _contrato(
+        cliente,
+        estrutura=Contrato.Estrutura.MENSAL,
+        proximo_vencimento=date(2026, 1, 1),
+    )
+    Vencimento.objects.create(
+        contrato=ct, numero=1, data_vencimento=date(2026, 3, 10), valor_previsto=Decimal("40.00")
+    )
+    s = ct.situacao_atraso(hoje=date(2026, 3, 13))
+    assert s.dias_atraso == 3
+    assert ct.data_referencia_atraso() == date(2026, 3, 10)
+
+
+@pytest.mark.django_db
+def test_situacao_atraso_pula_parcela_paga_para_a_proxima_em_aberto(cliente):
+    ct = _contrato(cliente, estrutura=Contrato.Estrutura.MENSAL)
+    Vencimento.objects.create(
+        contrato=ct, numero=1, data_vencimento=date(2026, 3, 1),
+        valor_previsto=Decimal("40.00"), valor_pago=Decimal("40.00"),
+        status=Vencimento.Status.PAGO,
+    )
+    Vencimento.objects.create(
+        contrato=ct, numero=2, data_vencimento=date(2026, 4, 1), valor_previsto=Decimal("40.00")
+    )
+    s = ct.situacao_atraso(hoje=date(2026, 3, 20))
+    assert s.status == Contrato.Status.EM_DIA
+    assert s.dias_atraso == 0
+
+
+@pytest.mark.django_db
+def test_situacao_atraso_sem_vencimentos_cai_no_proximo_vencimento_manual(cliente):
+    ct = _contrato(
+        cliente,
+        estrutura=Contrato.Estrutura.MENSAL,
+        proximo_vencimento=date(2026, 3, 10),
+    )
+    assert ct.parcela_em_aberto() is None
+    s = ct.situacao_atraso(hoje=date(2026, 3, 13))
+    assert s.dias_atraso == 3
+
+
+@pytest.mark.django_db
+def test_cobrar_hoje_usa_vencimento_gerado_em_vez_do_proximo_vencimento_manual(auth_client, cliente):
+    hoje = date.today()
+    ct = _contrato(
+        cliente,
+        apelido="ComVencimento",
+        estrutura=Contrato.Estrutura.MENSAL,
+        # campo manual aponta para o passado, mas já foi superado por um pagamento;
+        # a parcela em aberto de verdade só vence daqui a 10 dias.
+        proximo_vencimento=hoje - timedelta(days=60),
+    )
+    Vencimento.objects.create(
+        contrato=ct, numero=1, data_vencimento=hoje - timedelta(days=30),
+        valor_previsto=Decimal("40.00"), valor_pago=Decimal("40.00"),
+        status=Vencimento.Status.PAGO,
+    )
+    Vencimento.objects.create(
+        contrato=ct, numero=2, data_vencimento=hoje + timedelta(days=10),
+        valor_previsto=Decimal("40.00"),
+    )
+    resp = auth_client.get(reverse("pagamentos:cobrar_hoje"))
+    apelidos = {linha["contrato"].apelido for linha in resp.context["linhas"]}
+    assert "ComVencimento" not in apelidos

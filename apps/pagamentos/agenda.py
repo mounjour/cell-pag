@@ -5,9 +5,9 @@ lembrete diário (`apps.pagamentos.lembrete`) — a tela e a mensagem da Yslane
 usam exatamente os mesmos contratos e totais, sem duplicar a regra.
 
 Um contrato entra na agenda quando está atrasado (qualquer estrutura) ou
-quando o `proximo_vencimento` é hoje. Reaproveita `Contrato.situacao_atraso`
-(Fase 4), que hoje trabalha com `proximo_vencimento` — ligá-la à parcela em
-aberto (`Vencimento`) é trabalho futuro da própria Fase 4.
+quando a data de referência (`Contrato.data_referencia_atraso()` — a parcela
+em aberto mais antiga, ou o `proximo_vencimento` manual sem vencimentos
+gerados) é hoje. Reaproveita `Contrato.situacao_atraso` (Fase 4).
 """
 
 import datetime
@@ -43,8 +43,8 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None) -> dict:
     for ct in contratos:
         situacao = ct.situacao_atraso(hoje=hoje)
         if situacao is None:
-            continue  # sem próximo vencimento — nada a cobrar ainda
-        vence_hoje = ct.proximo_vencimento == hoje
+            continue  # sem data de referência — nada a cobrar ainda
+        vence_hoje = ct.data_referencia_atraso() == hoje
         if not situacao.dias_atraso and not vence_hoje:
             continue
 

@@ -47,21 +47,25 @@
   </p>
 {% endif %}
 
-{% with s=contrato.situacao_atraso %}
+{% with s=contrato.situacao_atraso p=contrato.parcela_em_aberto ref=contrato.data_referencia_atraso %}
   {% if s %}
     <div class="card">
       <h2 style="margin-top:0">Situação hoje</h2>
       {% if s.dias_atraso %}
         <p>
           <span class="pill {{ s.status }}">{{ contrato.status_efetivo_label }}</span>
-          {{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }} de atraso ·
+          {{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }} de atraso
+          {% if p %}(parcela nº {{ p.numero }}){% endif %} ·
           juros acumulados <strong class="num">R$ {{ s.juros }}</strong>
         </p>
         {% if s.alertar_bloqueio %}
           <p class="pill inadimplente">⚠ {{ s.dias_atraso }} dias — hora de bloquear o aparelho (ação manual do vendedor).</p>
         {% endif %}
       {% else %}
-        <p><span class="pill em_dia">Em dia</span> Sem atraso. Próximo vencimento em {{ contrato.proximo_vencimento|date:"d/m/Y" }}.</p>
+        <p>
+          <span class="pill em_dia">Em dia</span> Sem atraso.
+          {% if p %}Parcela nº {{ p.numero }} vence em {{ ref|date:"d/m/Y" }}.{% else %}Próximo vencimento em {{ ref|date:"d/m/Y" }}.{% endif %}
+        </p>
       {% endif %}
     </div>
   {% else %}

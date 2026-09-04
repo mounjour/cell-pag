@@ -9,7 +9,11 @@ aqui e a recorrência de datas em `apps.pagamentos.recorrencia`. O job diário
 `valor_parcela` e `num_parcelas` continuam **manuais** por decisão (o cálculo é
 feito fora do sistema — PLANO-DO-PROJETO.md, seção 5); sem `valor_parcela` não há
 como gerar vencimentos, e sem `num_parcelas` não há data de quitação.
-`proximo_vencimento` segue manual: ligá-lo à parcela em aberto é da Fase 4.
+
+Fase 4 (Atraso): `situacao_atraso()` mede o atraso pela parcela (`Vencimento`)
+em aberto mais antiga (`parcela_em_aberto()` / `data_referencia_atraso()`) —
+`proximo_vencimento` só entra como fallback manual enquanto o contrato ainda
+não tem vencimentos gerados.
 """
 
 import datetime
@@ -65,8 +69,9 @@ class Contrato(models.Model):
         null=True,
         blank=True,
         help_text=(
-            "Data da próxima parcela a receber — base do cálculo de atraso e juros. "
-            "Continua manual; ligá-la à parcela em aberto é da Fase 4."
+            "Data da próxima parcela a receber. Usada no cálculo de atraso e juros só "
+            "enquanto o contrato não tem vencimentos gerados (Vencimento) — depois "
+            "disso quem manda é a parcela em aberto mais antiga."
         ),
     )
 
@@ -213,21 +218,40 @@ class Contrato(models.Model):
 
     # ── Fase 4: atraso, juros e status ───────────────────────────────────────
     # A lógica pura vive em apps/pagamentos/atraso.py. Aqui só ligamos ao
-    # contrato (estrutura + próximo vencimento + se está quitado). O import é
+    # contrato (estrutura + data de referência + se está quitado). O import é
     # feito dentro dos métodos para evitar import circular com aquele módulo.
 
-    def situacao_atraso(self, hoje=None):
-        """`SituacaoAtraso` calculada a partir de `proximo_vencimento`.
+    def parcela_em_aberto(self):
+        """`Vencimento` mais antigo (menor nº) ainda não pago — a próxima
+        parcela a cobrar. ``None`` quando o contrato ainda não tem vencimentos
+        gerados (falta `valor_parcela`, ou o job diário ainda não rodou)."""
+        from apps.pagamentos.models import Vencimento
 
-        Devolve ``None`` quando não há `proximo_vencimento` informado — sem uma
-        data de referência não dá para medir atraso.
+        return (
+            self.vencimentos.exclude(status=Vencimento.Status.PAGO)
+            .order_by("numero")
+            .first()
+        )
+
+    def data_referencia_atraso(self):
+        """Data usada para medir atraso: a da `parcela_em_aberto()` quando já
+        há vencimentos gerados; senão cai no `proximo_vencimento` manual."""
+        parcela = self.parcela_em_aberto()
+        return parcela.data_vencimento if parcela else self.proximo_vencimento
+
+    def situacao_atraso(self, hoje=None):
+        """`SituacaoAtraso` calculada a partir de `data_referencia_atraso()`.
+
+        Devolve ``None`` quando não há data de referência — sem vencimentos
+        gerados e sem `proximo_vencimento` manual não dá para medir atraso.
         """
-        if self.proximo_vencimento is None:
+        data_referencia = self.data_referencia_atraso()
+        if data_referencia is None:
             return None
         from apps.pagamentos import atraso
 
         return atraso.avaliar(
-            self.proximo_vencimento,
+            data_referencia,
             self.estrutura,
             hoje=hoje,
             quitado=self.quitado,
