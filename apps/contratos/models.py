@@ -79,6 +79,12 @@ class Contrato(models.Model):
         blank=True,
         help_text="Calculada pelo sistema (data da última parcela) quando há valor e nº de parcelas.",
     )
+    quitado_em = models.DateField(
+        "quitado em",
+        null=True,
+        blank=True,
+        help_text="Data real em que o contrato foi marcado como quitado.",
+    )
     saldo_transportado = models.DecimalField(
         "saldo transportado",
         max_digits=10,

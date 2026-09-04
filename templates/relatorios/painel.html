@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Relatórios{% endblock %}
+
+{% block content %}
+<h1>Relatórios</h1>
+
+<form method="get" class="report-filter">
+  {{ form.non_field_errors }}
+  <div class="form-row"><label for="{{ form.periodo.id_for_label }}">Período</label>{{ form.periodo }}</div>
+  <div class="form-row"><label for="{{ form.referencia.id_for_label }}">Data de referência</label>{{ form.referencia }}</div>
+  <div class="form-row"><label for="{{ form.inicio.id_for_label }}">Início (personalizado)</label>{{ form.inicio }}</div>
+  <div class="form-row"><label for="{{ form.fim.id_for_label }}">Fim (personalizado)</label>{{ form.fim }}</div>
+  <button class="btn" type="submit">Atualizar</button>
+</form>
+
+{% if relatorio %}
+  <div class="report-heading">
+    <div>
+      <span class="eyebrow">Período analisado</span>
+      <h2>{{ relatorio.inicio|date:"d/m/Y" }} a {{ relatorio.fim|date:"d/m/Y" }}</h2>
+    </div>
+    <div class="report-actions">
+      <a class="btn secondary" href="{% url 'relatorios:excel' %}?{{ querystring }}">Baixar Excel</a>
+      <a class="btn secondary" href="{% url 'relatorios:pdf' %}?{{ querystring }}">Baixar PDF</a>
+    </div>
+  </div>
+
+  <dl class="meta report-metrics">
+    <div><dt>Previsto no período</dt><dd class="num">R$ {{ relatorio.total_previsto|floatformat:2 }}</dd></div>
+    <div><dt>Recebido no período</dt><dd class="num">R$ {{ relatorio.total_recebido|floatformat:2 }}</dd></div>
+    <div><dt>Total em atraso</dt><dd class="num critical-text">R$ {{ relatorio.total_atrasado|floatformat:2 }}</dd></div>
+    <div><dt>Parcelas atrasadas</dt><dd class="num">{{ relatorio.quantidade_atrasados }}</dd></div>
+    <div><dt>Novos clientes</dt><dd class="num">{{ relatorio.novos_clientes }}</dd></div>
+    <div><dt>Contratos quitados</dt><dd class="num">{{ relatorio.contratos_quitados }}</dd></div>
+  </dl>
+
+  <h2>Recebimentos por forma</h2>
+  {% if relatorio.por_forma %}
+    <div class="tbl-wrap"><table><thead><tr><th>Forma</th><th class="num">Pagamentos</th><th class="num">Total</th></tr></thead><tbody>
+    {% for linha in relatorio.por_forma %}<tr><td>{{ linha.forma_label }}</td><td class="num">{{ linha.quantidade }}</td><td class="num">R$ {{ linha.total|floatformat:2 }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  {% else %}<p class="empty">Nenhum recebimento no período.</p>{% endif %}
+
+  <h2>Recebimentos</h2>
+  {% if relatorio.recebimentos %}
+    <div class="tbl-wrap cards"><table><thead><tr><th>Data</th><th>Cliente</th><th>Contrato</th><th>Forma</th><th class="num">Valor</th></tr></thead><tbody>
+    {% for p in relatorio.recebimentos %}<tr><td data-label="Data" class="num">{{ p.data_pagamento|date:"d/m/Y" }}</td><td data-label="Cliente">{{ p.contrato.cliente.nome }}</td><td data-label="Contrato">{{ p.contrato.apelido }}</td><td data-label="Forma">{{ p.get_forma_display }}</td><td data-label="Valor" class="num">R$ {{ p.valor_pago|floatformat:2 }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  {% else %}<p class="empty">Nenhum recebimento no período.</p>{% endif %}
+
+  <h2>Parcelas em atraso até o fim do período</h2>
+  {% if relatorio.atrasados %}
+    <div class="tbl-wrap cards"><table><thead><tr><th>Cliente</th><th>Contrato</th><th>Vencimento</th><th>Parcela</th><th class="num">Em aberto</th></tr></thead><tbody>
+    {% for v in relatorio.atrasados %}<tr><td data-label="Cliente">{{ v.contrato.cliente.nome }}</td><td data-label="Contrato">{{ v.contrato.apelido }}</td><td data-label="Vencimento" class="num">{{ v.data_vencimento|date:"d/m/Y" }}</td><td data-label="Parcela" class="num">{{ v.numero }}</td><td data-label="Em aberto" class="num critical-text">R$ {{ v.valor_em_aberto|floatformat:2 }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  {% else %}<p class="empty">Nenhuma parcela em atraso.</p>{% endif %}
+{% endif %}
+{% endblock %}

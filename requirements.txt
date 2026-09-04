@@ -8,6 +8,8 @@ django-import-export==4.4.1
 django-auditlog==3.4.1         # trilha de baixa / quem fez o quê (Fase 3)
 whitenoise==6.12.0
 python-dateutil==2.9.0.post0   # recorrência de vencimentos (Fase 2)
+openpyxl==3.1.5               # exportação dos relatórios em Excel (Fase 5)
+reportlab==4.4.4              # exportação dos relatórios em PDF (Fase 5)
 
 # Dependências transitivas
 asgiref==3.12.1
@@ -20,5 +22,4 @@ six==1.17.0                    # dependência do python-dateutil
 # ── Próximas fases (ver PLANO-DO-PROJETO.md, seção 13) ────────────────────────
 # psycopg[binary]      # PostgreSQL em produção
 # django-q2            # job diário de cobrança (Fase 2 — hoje é management command)
-# weasyprint / openpyxl # relatórios (Fase 5)
 # sentry-sdk

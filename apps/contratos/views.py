@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
@@ -130,7 +131,8 @@ class ContratoQuitarView(LoginRequiredMixin, View):
             messages.info(request, "Este contrato já estava quitado.")
         else:
             contrato.status = Contrato.Status.QUITADO
-            contrato.save(update_fields=["status", "atualizado_em"])
+            contrato.quitado_em = timezone.localdate()
+            contrato.save(update_fields=["status", "quitado_em", "atualizado_em"])
             contrato.atualizar_data_prevista_quitacao()
             messages.success(request, "Contrato marcado como quitado. A cobrança para aqui.")
         return redirect("contratos:detalhe", pk=pk)
