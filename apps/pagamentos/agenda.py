@@ -68,6 +68,22 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None) -> dict:
 
     linhas.sort(key=lambda linha: linha["situacao"].dias_atraso, reverse=True)
 
+    # Expõe no painel o estado da mensagem do dia sem misturar a regra da
+    # agenda com o mecanismo de envio.
+    if linhas:
+        from apps.pagamentos.models import Cobranca
+
+        por_contrato = {
+            cobranca.contrato_id: cobranca
+            for cobranca in Cobranca.objects.filter(
+                contrato_id__in=[linha["contrato"].pk for linha in linhas],
+                data_alvo=hoje,
+                canal=Cobranca.Canal.WHATSAPP,
+            )
+        }
+        for linha in linhas:
+            linha["cobranca"] = por_contrato.get(linha["contrato"].pk)
+
     return {
         "hoje": hoje,
         "linhas": linhas,

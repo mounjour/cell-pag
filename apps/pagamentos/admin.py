@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Pagamento, Vencimento
+from .models import Cobranca, Pagamento, Vencimento
 
 
 @admin.register(Vencimento)
@@ -53,3 +53,32 @@ class PagamentoAdmin(admin.ModelAdmin):
         else:
             # Baixa nova: reflete na parcela (status + transporte de saldo).
             obj.registrar()
+
+
+@admin.register(Cobranca)
+class CobrancaAdmin(admin.ModelAdmin):
+    list_display = (
+        "data_alvo",
+        "contrato",
+        "destinatario",
+        "status",
+        "tentativas",
+        "enviado_em",
+    )
+    list_filter = ("status", "canal", "data_alvo")
+    search_fields = (
+        "contrato__cliente__nome",
+        "contrato__cliente__cpf",
+        "destinatario",
+        "id_externo",
+    )
+    readonly_fields = (
+        "id_externo",
+        "tentativas",
+        "enviado_em",
+        "entregue_em",
+        "lido_em",
+        "criado_em",
+        "atualizado_em",
+    )
+    date_hierarchy = "data_alvo"

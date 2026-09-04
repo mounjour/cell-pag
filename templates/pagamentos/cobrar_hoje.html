@@ -16,7 +16,7 @@
   <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th>Cliente</th><th>Contrato</th><th>Situação</th><th class="num">A cobrar</th><th>Contato</th></tr>
+        <tr><th>Cliente</th><th>Contrato</th><th>Situação</th><th class="num">A cobrar</th><th>Mensagem</th><th>Contato</th></tr>
       </thead>
       <tbody>
         {% for l in linhas %}
@@ -40,6 +40,14 @@
                 R$ {{ l.a_cobrar }}
                 {% if l.situacao.juros %}<span class="helptext">parcela R$ {{ l.parcela }} + juros R$ {{ l.situacao.juros }}</span>{% endif %}
               {% else %}—{% endif %}
+            </td>
+            <td data-label="Mensagem">
+              {% if l.cobranca %}
+                <span class="pill {{ l.cobranca.status }}">{{ l.cobranca.get_status_display }}</span>
+                {% if l.cobranca.erro %}<span class="helptext">{{ l.cobranca.erro }}</span>{% endif %}
+              {% else %}
+                <span class="pill">Não preparada</span>
+              {% endif %}
             </td>
             <td data-label="Contato">
               <a class="num" href="tel:{{ l.contrato.cliente.telefone_whatsapp.as_e164 }}">{{ l.contrato.cliente.telefone_exibicao }}</a>
