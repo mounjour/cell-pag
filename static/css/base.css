@@ -182,6 +182,28 @@ h2 {
 /* contagem de resultados — linha discreta abaixo da toolbar */
 .count { margin: 0 0 1rem; color: var(--ink-soft); font-size: 0.85rem; }
 
+/* ---------- Relatórios ---------- */
+.report-filter {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.7rem;
+  align-items: end;
+  padding: 0.9rem;
+  margin-bottom: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+}
+.report-heading { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1rem; }
+.report-heading h2 { margin: 0.1rem 0 0; border: 0; padding: 0; }
+.report-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.report-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.critical-text { color: var(--critical); font-weight: 600; }
+@media (min-width: 640px) {
+  .report-filter { grid-template-columns: repeat(4, 1fr) auto; }
+  .report-heading { flex-direction: row; align-items: end; justify-content: space-between; }
+  .report-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 /* ---------- Botões ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;

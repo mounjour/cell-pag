@@ -40,17 +40,25 @@ apps/
   usuarios/        usuário customizado (perfil: financeiro | dono) + login/logout
   clientes/        cadastro de clientes — CRUD web + admin com import/export
   contratos/       contratos/aparelhos + documentos anexos — CRUD web
-  pagamentos/      registro de pagamentos e cobrança  [esqueleto — Fase 2+]
+  pagamentos/      vencimentos, baixas, atraso e agenda diária
+  relatorios/      consolidação diária/semanal/mensal + Excel/PDF
 templates/         templates de projeto
 static/            arquivos estáticos de projeto
 ```
 
 ## Estado atual
 
-Fase 1 (Cadastros): clientes e contratos com telas próprias fora do admin, login por
-usuário, anexo de documentos ao contrato. A geração de vencimentos e o cálculo da
-parcela (Fase 2) dependem de regras ainda em aberto — ver `PLANO-DO-PROJETO.md`,
-seção 10.
+Fases 1 a 5 implementadas: cadastros, geração de vencimentos nas cinco estruturas,
+agenda "Cobrar hoje", baixa manual (inclusive parcial), atraso/juros/status e
+relatórios para o perfil dono. Os relatórios aceitam período diário, semanal,
+mensal ou personalizado e exportam os mesmos dados em Excel e PDF.
+
+Depois de atualizar o projeto, aplique a migração que registra a data real de
+quitação dos contratos:
+
+```bash
+python manage.py migrate
+```
 
 ## Comandos úteis
 

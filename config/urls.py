@@ -11,6 +11,7 @@ urlpatterns = [
     path("clientes/", include("apps.clientes.urls")),
     path("contratos/", include("apps.contratos.urls")),
     path("pagamentos/", include("apps.pagamentos.urls")),
+    path("relatorios/", include("apps.relatorios.urls")),
     # compat: o link antigo /cobrar-hoje/ segue funcionando
     path(
         "cobrar-hoje/",
