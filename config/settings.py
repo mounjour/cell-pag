@@ -152,6 +152,14 @@ WHATSAPP_TEMPLATE_VENCIMENTO = env("WHATSAPP_TEMPLATE_VENCIMENTO", default="cobr
 WHATSAPP_TEMPLATE_ATRASO = env("WHATSAPP_TEMPLATE_ATRASO", default="cobranca_atraso")
 WHATSAPP_TEMPLATE_BLOQUEIO = env("WHATSAPP_TEMPLATE_BLOQUEIO", default="cobranca_bloqueio")
 
+# Cobrança Pix dinâmica via Cora (Fase 7). O padrão "log" não chama o banco.
+CORA_PROVIDER = env("CORA_PROVIDER", default="log")
+CORA_CLIENT_ID = env("CORA_CLIENT_ID", default="")
+CORA_CERT_PATH = env("CORA_CERT_PATH", default="")
+CORA_KEY_PATH = env("CORA_KEY_PATH", default="")
+CORA_TOKEN_URL = env("CORA_TOKEN_URL", default="")
+CORA_API_BASE_URL = env("CORA_API_BASE_URL", default="")
+
 # ── Segurança (aplicada quando DEBUG=False) ───────────────────────────────────
 if not DEBUG:
     SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)

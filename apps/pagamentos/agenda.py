@@ -71,7 +71,7 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None) -> dict:
     # Expõe no painel o estado da mensagem do dia sem misturar a regra da
     # agenda com o mecanismo de envio.
     if linhas:
-        from apps.pagamentos.models import Cobranca
+        from apps.pagamentos.models import Cobranca, CobrancaPix
 
         por_contrato = {
             cobranca.contrato_id: cobranca
@@ -83,6 +83,11 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None) -> dict:
         }
         for linha in linhas:
             linha["cobranca"] = por_contrato.get(linha["contrato"].pk)
+            parcela = linha["contrato"].parcela_em_aberto()
+            try:
+                linha["pix"] = parcela.cobranca_pix if parcela else None
+            except CobrancaPix.DoesNotExist:
+                linha["pix"] = None
 
     return {
         "hoje": hoje,

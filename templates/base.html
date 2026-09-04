@@ -11,9 +11,10 @@
   <header class="topbar">
     <a class="brand" href="{% url 'clientes:lista' %}">Acompanhamento de Pagamentos</a>
     {% if user.is_authenticated %}
-      {% with secao=request.resolver_match.app_name %}
+      {% with secao=request.resolver_match.app_name pagina=request.resolver_match.url_name %}
       <nav class="nav">
-        <a href="{% url 'pagamentos:cobrar_hoje' %}"{% if secao == 'pagamentos' %} class="active" aria-current="page"{% endif %}>Cobrar hoje</a>
+        <a href="{% url 'pagamentos:cobrar_hoje' %}"{% if pagina == 'cobrar_hoje' %} class="active" aria-current="page"{% endif %}>Cobrar hoje</a>
+        <a href="{% url 'pagamentos:pix_painel' %}"{% if pagina == 'pix_painel' %} class="active" aria-current="page"{% endif %}>Pix</a>
         <a href="{% url 'clientes:lista' %}"{% if secao == 'clientes' %} class="active" aria-current="page"{% endif %}>Clientes</a>
         <a href="{% url 'contratos:lista' %}"{% if secao == 'contratos' %} class="active" aria-current="page"{% endif %}>Contratos</a>
         {% if user.is_dono %}<a href="{% url 'relatorios:painel' %}"{% if secao == 'relatorios' %} class="active" aria-current="page"{% endif %}>Relatórios</a>{% endif %}
