@@ -1,0 +1,77 @@
+"""Agenda do dia — quem cobrar hoje (Fase 2).
+
+Lógica extraída de `CobrarHojeView` para ser reaproveitada também pelo
+lembrete diário (`apps.pagamentos.lembrete`) — a tela e a mensagem da Yslane
+usam exatamente os mesmos contratos e totais, sem duplicar a regra.
+
+Um contrato entra na agenda quando está atrasado (qualquer estrutura) ou
+quando o `proximo_vencimento` é hoje. Reaproveita `Contrato.situacao_atraso`
+(Fase 4), que hoje trabalha com `proximo_vencimento` — ligá-la à parcela em
+aberto (`Vencimento`) é trabalho futuro da própria Fase 4.
+"""
+
+import datetime
+from decimal import Decimal
+
+from django.utils import timezone
+
+from apps.contratos.models import Contrato
+
+__all__ = ["montar_agenda_do_dia"]
+
+
+def montar_agenda_do_dia(hoje: datetime.date | None = None) -> dict:
+    """Contratos a cobrar hoje + totais.
+
+    Devolve um dict com ``hoje``, ``linhas`` (uma por contrato, ordenadas por
+    dias de atraso decrescente) e os totais ``total_previsto``, ``n_atraso``
+    e ``n_bloqueio``. Cada linha tem ``contrato``, ``situacao``
+    (`SituacaoAtraso`), ``vence_hoje``, ``parcela`` e ``a_cobrar``.
+    """
+    if hoje is None:
+        hoje = timezone.localdate()
+
+    contratos = (
+        Contrato.objects.exclude(status=Contrato.Status.QUITADO)
+        .select_related("cliente")
+        .order_by("cliente__nome", "apelido")
+    )
+
+    linhas = []
+    total_previsto = Decimal("0.00")
+    n_atraso = n_bloqueio = 0
+    for ct in contratos:
+        situacao = ct.situacao_atraso(hoje=hoje)
+        if situacao is None:
+            continue  # sem próximo vencimento — nada a cobrar ainda
+        vence_hoje = ct.proximo_vencimento == hoje
+        if not situacao.dias_atraso and not vence_hoje:
+            continue
+
+        parcela = ct.valor_parcela or Decimal("0.00")
+        a_cobrar = parcela + situacao.juros
+        total_previsto += a_cobrar
+        if situacao.dias_atraso:
+            n_atraso += 1
+        if situacao.alertar_bloqueio:
+            n_bloqueio += 1
+
+        linhas.append(
+            {
+                "contrato": ct,
+                "situacao": situacao,
+                "vence_hoje": vence_hoje and not situacao.dias_atraso,
+                "parcela": ct.valor_parcela,
+                "a_cobrar": a_cobrar,
+            }
+        )
+
+    linhas.sort(key=lambda linha: linha["situacao"].dias_atraso, reverse=True)
+
+    return {
+        "hoje": hoje,
+        "linhas": linhas,
+        "total_previsto": total_previsto,
+        "n_atraso": n_atraso,
+        "n_bloqueio": n_bloqueio,
+    }

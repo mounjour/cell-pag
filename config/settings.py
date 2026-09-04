@@ -133,6 +133,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 PHONENUMBER_DEFAULT_REGION = "BR"
 PHONENUMBER_DB_FORMAT = "E164"  # guarda +55... — formato exigido pela API do WhatsApp
 
+# ── Lembrete diário no WhatsApp da Yslane (Fase 2, Modalidade A) ──────────────
+# Número em E.164 (ex.: +5583988887777). O envio de verdade (Cloud API/BSP)
+# entra quando existir conta WhatsApp Business — ver apps/pagamentos/lembrete.py.
+YSLANE_WHATSAPP_NUMERO = env("YSLANE_WHATSAPP_NUMERO", default="")
+
 # ── Segurança (aplicada quando DEBUG=False) ───────────────────────────────────
 if not DEBUG:
     SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
