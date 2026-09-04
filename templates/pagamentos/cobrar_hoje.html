@@ -16,7 +16,7 @@
   <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th>Cliente</th><th>Contrato</th><th>Situação</th><th class="num">A cobrar</th><th>Mensagem</th><th>Contato</th></tr>
+        <tr><th>Cliente</th><th>Contrato</th><th>Situação</th><th class="num">A cobrar</th><th>Pix</th><th>Mensagem</th><th>Contato</th></tr>
       </thead>
       <tbody>
         {% for l in linhas %}
@@ -25,6 +25,9 @@
             <td data-label="Contrato">
               <a href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a>
               · {{ l.contrato.get_estrutura_display }}
+            </td>
+            <td data-label="Pix">
+              {% if l.pix %}<span class="pill {{ l.pix.status }}">{{ l.pix.get_status_display }}</span>{% else %}<span class="pill">Não gerado</span>{% endif %}
             </td>
             <td data-label="Situação">
               {% if l.vence_hoje %}

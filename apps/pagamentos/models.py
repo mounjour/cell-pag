@@ -24,6 +24,7 @@ mensagem — não há o que gravar nela antes disso.
 """
 
 from decimal import Decimal
+import uuid
 
 from django.conf import settings
 from django.db import models
@@ -287,3 +288,61 @@ class Cobranca(models.Model):
 
     def __str__(self):
         return f"{self.contrato} - {self.data_alvo:%d/%m/%Y} - {self.get_status_display()}"
+
+
+class CobrancaPix(models.Model):
+    """QR Code Pix da Cora vinculado a uma única parcela."""
+
+    class Status(models.TextChoices):
+        PENDENTE = "pendente", "Aguardando geração"
+        ABERTO = "aberto", "Aguardando pagamento"
+        PAGO = "pago", "Pago"
+        VENCIDO = "vencido", "Não pago"
+        CANCELADO = "cancelado", "Cancelado"
+        ERRO = "erro", "Erro"
+
+    vencimento = models.OneToOneField(
+        Vencimento,
+        on_delete=models.PROTECT,
+        related_name="cobranca_pix",
+    )
+    idempotency_key = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    cora_id = models.CharField(max_length=100, blank=True, unique=True, null=True)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDENTE)
+    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    total_pago = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    data_vencimento = models.DateField()
+    pix_copia_e_cola = models.TextField(blank=True)
+    qr_code_url = models.URLField(blank=True, max_length=500)
+    erro = models.TextField(blank=True)
+    pago_em = models.DateTimeField(null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "cobrança Pix"
+        verbose_name_plural = "cobranças Pix"
+        ordering = ["-data_vencimento", "vencimento__contrato__cliente__nome"]
+
+    def __str__(self):
+        return f"{self.vencimento} - {self.get_status_display()}"
+
+    @property
+    def contrato(self):
+        return self.vencimento.contrato
+
+
+class EventoCora(models.Model):
+    evento_id = models.CharField(max_length=120, unique=True)
+    tipo = models.CharField(max_length=80)
+    recurso_id = models.CharField(max_length=120, db_index=True)
+    processado = models.BooleanField(default=False)
+    erro = models.TextField(blank=True)
+    recebido_em = models.DateTimeField(auto_now_add=True)
+    processado_em = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-recebido_em"]
+
+    def __str__(self):
+        return f"{self.tipo} - {self.recurso_id}"

@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from .agenda import montar_agenda_do_dia
 from .models import Cobranca
+from .pix_cora import obter_ou_criar_pix
 from .whatsapp import WhatsAppErro, enviar_template, numero_so_digitos
 
 logger = logging.getLogger("pagamentos.cobranca")
@@ -17,13 +18,13 @@ def _moeda(valor) -> str:
     return f"{valor:.2f}".replace(".", ",")
 
 
-def dados_da_mensagem(linha: dict) -> dict:
+def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
     contrato = linha["contrato"]
     situacao = linha["situacao"]
     vencimento = contrato.parcela_em_aberto()
     data_vencimento = vencimento.data_vencimento if vencimento else contrato.proximo_vencimento
     numero = vencimento.numero if vencimento else "-"
-    chave_pix = settings.WHATSAPP_PIX_CHAVE or "a combinar"
+    chave_pix = chave_pix or settings.WHATSAPP_PIX_CHAVE or "a combinar"
     valor = linha["a_cobrar"]
 
     base = {
@@ -77,9 +78,18 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
     resultado = {"preparadas": 0, "enviadas": 0, "simuladas": 0, "erros": 0, "ignoradas": 0}
 
     for linha in agenda["linhas"]:
-        dados = dados_da_mensagem(linha)
+        dados_iniciais = dados_da_mensagem(linha)
         contrato = linha["contrato"]
         destinatario = numero_so_digitos(contrato.cliente.telefone_whatsapp)
+        pix = (
+            obter_ou_criar_pix(dados_iniciais["vencimento"], hoje=hoje)
+            if dados_iniciais["vencimento"]
+            else None
+        )
+        dados = dados_da_mensagem(
+            linha,
+            chave_pix=pix.pix_copia_e_cola if pix and pix.pix_copia_e_cola else None,
+        )
         cobranca, criada = Cobranca.objects.get_or_create(
             contrato=contrato,
             data_alvo=hoje,
@@ -92,6 +102,12 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
         )
         if criada:
             resultado["preparadas"] += 1
+        if settings.CORA_PROVIDER == "cora" and (pix is None or not pix.pix_copia_e_cola):
+            cobranca.status = Cobranca.Status.ERRO
+            cobranca.erro = pix.erro if pix else "Não foi possível vincular a cobrança a uma parcela."
+            cobranca.save(update_fields=["status", "erro", "atualizado_em"])
+            resultado["erros"] += 1
+            continue
         if cobranca.status in {Cobranca.Status.ENVIADO, Cobranca.Status.ENTREGUE, Cobranca.Status.LIDO}:
             resultado["ignoradas"] += 1
             continue

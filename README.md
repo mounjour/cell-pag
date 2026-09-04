@@ -66,6 +66,10 @@ python manage.py enviar_cobrancas_clientes
 O endpoint a cadastrar na Meta é `/pagamentos/webhooks/whatsapp/`.
 Veja os templates, parâmetros e passos de ativação em `docs/WHATSAPP.md`.
 
+A Fase 7 integra a cobrança Pix dinâmica da Cora, com idempotência, conciliação,
+baixa automática confirmada e painel pago/não pago. O padrão também é seguro
+(`CORA_PROVIDER=log`). Veja a ativação de Stage em `docs/CORA.md`.
+
 Depois de atualizar o projeto, aplique a migração que registra a data real de
 quitação dos contratos:
 

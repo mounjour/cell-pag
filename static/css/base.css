@@ -469,6 +469,8 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
 .pill.enviado { background: var(--amber-wash); border-color: var(--amber); color: var(--amber); }
 .pill.entregue, .pill.lido { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink); }
 .pill.erro { background: var(--critical-wash); border-color: var(--critical); color: var(--critical); }
+.pill.vencido { background: var(--critical-wash); border-color: var(--critical); color: var(--critical); }
+.pill.cancelado { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink-soft); }
 
 /* Painel "cobrar hoje": pílulas + "N dias de atraso" empilham no celular
    em vez de quebrar palavra por palavra numa ficha estreita. */

@@ -3,6 +3,7 @@ import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.pagamentos.cobranca import processar_cobrancas
+from apps.pagamentos.pix_cora import reconciliar_abertas
 
 
 class Command(BaseCommand):
@@ -21,6 +22,7 @@ class Command(BaseCommand):
             hoje = datetime.date.fromisoformat(options["hoje"]) if options["hoje"] else None
         except ValueError as exc:
             raise CommandError("--hoje precisa estar no formato AAAA-MM-DD.") from exc
+        conciliacao = reconciliar_abertas()
         resultado = processar_cobrancas(
             hoje=hoje,
             somente_preparar=options["somente_preparar"],
@@ -32,6 +34,8 @@ class Command(BaseCommand):
                 f"{resultado['enviadas']} enviada(s), "
                 f"{resultado['simuladas']} simulada(s), "
                 f"{resultado['erros']} erro(s), "
-                f"{resultado['ignoradas']} já enviada(s)."
+                f"{resultado['ignoradas']} já enviada(s). "
+                f"Conciliação Cora: {conciliacao['consultadas']} consultada(s), "
+                f"{conciliacao['pagas']} paga(s), {conciliacao['erros']} erro(s)."
             )
         )

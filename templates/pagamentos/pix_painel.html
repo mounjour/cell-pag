@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Acompanhamento Pix{% endblock %}
+
+{% block content %}
+<h1>Acompanhamento Pix · {{ hoje|date:"d/m/Y" }}</h1>
+<p class="note">Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
+
+<dl class="meta report-metrics">
+  <div><dt>Na tela</dt><dd class="num">{{ total }}</dd></div>
+  <div><dt>✅ Pagos hoje</dt><dd class="num">{{ pagas }}</dd></div>
+  <div><dt>⏳ Aguardando</dt><dd class="num">{{ aguardando }}</dd></div>
+  <div><dt>❌ Não pagos</dt><dd class="num critical-text">{{ nao_pagas }}</dd></div>
+  <div><dt>⚠ Erros</dt><dd class="num critical-text">{{ erros }}</dd></div>
+</dl>
+
+{% if cobrancas_pix %}
+<div class="tbl-wrap cards">
+  <table>
+    <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Vencimento</th><th class="num">Valor</th><th>Status</th><th>Pix</th></tr></thead>
+    <tbody>
+    {% for pix in cobrancas_pix %}
+      <tr>
+        <td><a href="{% url 'clientes:detalhe' pix.contrato.cliente.pk %}">{{ pix.contrato.cliente.nome }}</a></td>
+        <td data-label="Contrato"><a href="{% url 'contratos:detalhe' pix.contrato.pk %}">{{ pix.contrato.apelido }}</a></td>
+        <td data-label="Parcela" class="num">{{ pix.vencimento.numero }}</td>
+        <td data-label="Vencimento" class="num">{{ pix.data_vencimento|date:"d/m/Y" }}</td>
+        <td data-label="Valor" class="num">R$ {{ pix.valor|floatformat:2 }}</td>
+        <td data-label="Status">
+          <span class="pill {{ pix.status }}">{% if pix.status == 'pago' %}✅{% elif pix.status == 'vencido' %}❌{% endif %} {{ pix.get_status_display }}</span>
+          {% if pix.erro %}<span class="helptext">{{ pix.erro }}</span>{% endif %}
+        </td>
+        <td data-label="Pix">
+          {% if pix.pix_copia_e_cola %}<details><summary>Ver Copia e Cola</summary><textarea readonly rows="3">{{ pix.pix_copia_e_cola }}</textarea></details>{% else %}—{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty"><p>Nenhuma cobrança Pix pendente ou paga hoje.</p></div>
+{% endif %}
+{% endblock %}
