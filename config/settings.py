@@ -139,6 +139,19 @@ PHONENUMBER_DB_FORMAT = "E164"  # guarda +55... — formato exigido pela API do 
 # entra quando existir conta WhatsApp Business — ver apps/pagamentos/lembrete.py.
 YSLANE_WHATSAPP_NUMERO = env("YSLANE_WHATSAPP_NUMERO", default="")
 
+# WhatsApp Cloud API (Fase 6). "log" prepara a fila sem enviar; "meta" ativa
+# mensagens-template oficiais quando todas as credenciais estiverem presentes.
+WHATSAPP_PROVIDER = env("WHATSAPP_PROVIDER", default="log")
+WHATSAPP_GRAPH_VERSION = env("WHATSAPP_GRAPH_VERSION", default="")
+WHATSAPP_PHONE_NUMBER_ID = env("WHATSAPP_PHONE_NUMBER_ID", default="")
+WHATSAPP_ACCESS_TOKEN = env("WHATSAPP_ACCESS_TOKEN", default="")
+WHATSAPP_WEBHOOK_VERIFY_TOKEN = env("WHATSAPP_WEBHOOK_VERIFY_TOKEN", default="")
+WHATSAPP_APP_SECRET = env("WHATSAPP_APP_SECRET", default="")
+WHATSAPP_PIX_CHAVE = env("WHATSAPP_PIX_CHAVE", default="")
+WHATSAPP_TEMPLATE_VENCIMENTO = env("WHATSAPP_TEMPLATE_VENCIMENTO", default="cobranca_vencimento")
+WHATSAPP_TEMPLATE_ATRASO = env("WHATSAPP_TEMPLATE_ATRASO", default="cobranca_atraso")
+WHATSAPP_TEMPLATE_BLOQUEIO = env("WHATSAPP_TEMPLATE_BLOQUEIO", default="cobranca_bloqueio")
+
 # ── Segurança (aplicada quando DEBUG=False) ───────────────────────────────────
 if not DEBUG:
     SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)

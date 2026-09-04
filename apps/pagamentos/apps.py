@@ -9,7 +9,8 @@ class PagamentosConfig(AppConfig):
     def ready(self):
         from auditlog.registry import auditlog
 
-        from .models import Pagamento, Vencimento
+        from .models import Cobranca, Pagamento, Vencimento
 
         auditlog.register(Vencimento)
         auditlog.register(Pagamento)
+        auditlog.register(Cobranca)

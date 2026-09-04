@@ -222,18 +222,30 @@ class Contrato(models.Model):
     # contrato (estrutura + próximo vencimento + se está quitado). O import é
     # feito dentro dos métodos para evitar import circular com aquele módulo.
 
-    def situacao_atraso(self, hoje=None):
-        """`SituacaoAtraso` calculada a partir de `proximo_vencimento`.
+    def parcela_em_aberto(self):
+        """Primeira parcela que ainda não foi paga, ou ``None``."""
+        from apps.pagamentos.models import Vencimento
 
-        Devolve ``None`` quando não há `proximo_vencimento` informado — sem uma
-        data de referência não dá para medir atraso.
-        """
-        if self.proximo_vencimento is None:
+        return (
+            self.vencimentos.exclude(status=Vencimento.Status.PAGO)
+            .order_by("numero")
+            .first()
+        )
+
+    def data_referencia_atraso(self):
+        """Vencimento da parcela aberta; usa a data manual apenas como fallback."""
+        parcela = self.parcela_em_aberto()
+        return parcela.data_vencimento if parcela else self.proximo_vencimento
+
+    def situacao_atraso(self, hoje=None):
+        """`SituacaoAtraso` da primeira parcela em aberto."""
+        data_referencia = self.data_referencia_atraso()
+        if data_referencia is None:
             return None
         from apps.pagamentos import atraso
 
         return atraso.avaliar(
-            self.proximo_vencimento,
+            data_referencia,
             self.estrutura,
             hoje=hoje,
             quitado=self.quitado,

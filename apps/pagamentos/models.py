@@ -235,3 +235,55 @@ class Pagamento(models.Model):
             venc.aplicar_valor_pago(venc.valor_pago - self.valor_pago)
         self.delete()
         return restante_transportado
+
+
+class Cobranca(models.Model):
+    """Mensagem de cobrança preparada ou enviada para um cliente em um dia."""
+
+    class Canal(models.TextChoices):
+        WHATSAPP = "whatsapp", "WhatsApp"
+
+    class Status(models.TextChoices):
+        PENDENTE = "pendente", "Pendente"
+        ENVIADO = "enviado", "Enviado"
+        ENTREGUE = "entregue", "Entregue"
+        LIDO = "lido", "Lido"
+        ERRO = "erro", "Erro"
+
+    contrato = models.ForeignKey(
+        "contratos.Contrato",
+        on_delete=models.PROTECT,
+        related_name="cobrancas",
+    )
+    vencimento = models.ForeignKey(
+        Vencimento,
+        on_delete=models.PROTECT,
+        related_name="cobrancas",
+        null=True,
+        blank=True,
+    )
+    data_alvo = models.DateField("data da cobrança")
+    canal = models.CharField(max_length=12, choices=Canal.choices, default=Canal.WHATSAPP)
+    destinatario = models.CharField(max_length=20)
+    mensagem = models.TextField()
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDENTE)
+    id_externo = models.CharField("ID no provedor", max_length=160, blank=True, db_index=True)
+    erro = models.TextField(blank=True)
+    tentativas = models.PositiveSmallIntegerField(default=0)
+    enviado_em = models.DateTimeField(null=True, blank=True)
+    entregue_em = models.DateTimeField(null=True, blank=True)
+    lido_em = models.DateTimeField(null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-data_alvo", "contrato__cliente__nome"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["contrato", "data_alvo", "canal"],
+                name="cobranca_unica_por_contrato_dia_canal",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.contrato} - {self.data_alvo:%d/%m/%Y} - {self.get_status_display()}"

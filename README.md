@@ -48,10 +48,23 @@ static/            arquivos estáticos de projeto
 
 ## Estado atual
 
-Fases 1 a 5 implementadas: cadastros, geração de vencimentos nas cinco estruturas,
+Fases 1 a 6 implementadas: cadastros, geração de vencimentos nas cinco estruturas,
 agenda "Cobrar hoje", baixa manual (inclusive parcial), atraso/juros/status e
 relatórios para o perfil dono. Os relatórios aceitam período diário, semanal,
 mensal ou personalizado e exportam os mesmos dados em Excel e PDF.
+
+A Fase 6 prepara diariamente uma cobrança por contrato e envia mensagens-template
+pela API oficial do WhatsApp, com webhook para os estados enviado, entregue, lido
+e erro. Por segurança, o padrão é `WHATSAPP_PROVIDER=log`: a fila é criada, mas
+nada sai do sistema. Depois de configurar a conta Meta e aprovar os três templates,
+troque para `WHATSAPP_PROVIDER=meta` e agende:
+
+```bash
+python manage.py enviar_cobrancas_clientes
+```
+
+O endpoint a cadastrar na Meta é `/pagamentos/webhooks/whatsapp/`.
+Veja os templates, parâmetros e passos de ativação em `docs/WHATSAPP.md`.
 
 Depois de atualizar o projeto, aplique a migração que registra a data real de
 quitação dos contratos:

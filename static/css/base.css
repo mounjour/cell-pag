@@ -464,6 +464,12 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
 .pill.pago { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink); }
 .pill.pago::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 
+/* Status do envio de cobrança pelo WhatsApp. */
+.pill.pendente { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink-soft); }
+.pill.enviado { background: var(--amber-wash); border-color: var(--amber); color: var(--amber); }
+.pill.entregue, .pill.lido { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink); }
+.pill.erro { background: var(--critical-wash); border-color: var(--critical); color: var(--critical); }
+
 /* Painel "cobrar hoje": pílulas + "N dias de atraso" empilham no celular
    em vez de quebrar palavra por palavra numa ficha estreita. */
 .atraso-dias { white-space: nowrap; color: var(--ink-soft); font-size: 0.9rem; }
