@@ -11,6 +11,10 @@ python-dateutil==2.9.0.post0   # recorrência de vencimentos (Fase 2)
 openpyxl==3.1.5               # exportação dos relatórios em Excel (Fase 5)
 reportlab==4.4.4              # exportação dos relatórios em PDF (Fase 5)
 
+# ── Produção (deploy no Render — ver docs/DEPLOY.md) ─────────────────────────
+gunicorn==23.0.0             # servidor WSGI
+psycopg[binary]==3.2.9       # driver PostgreSQL (ativado quando há DATABASE_URL)
+
 # Dependências transitivas
 asgiref==3.12.1
 sqlparse==0.6.0
@@ -20,6 +24,5 @@ diff-match-patch==20241021
 six==1.17.0                    # dependência do python-dateutil
 
 # ── Próximas fases (ver PLANO-DO-PROJETO.md, seção 13) ────────────────────────
-# psycopg[binary]      # PostgreSQL em produção
-# django-q2            # job diário de cobrança (Fase 2 — hoje é management command)
-# sentry-sdk
+# django-q2            # só se o agendamento sair do cron do provedor p/ dentro do Django
+# sentry-sdk           # monitoramento de erros em produção
