@@ -603,21 +603,21 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
 
 ### Fase 5 — Relatórios (não iniciada)
 
-- [ ] Visão diária consolidada (previsto, recebido, atrasados)
-- [ ] Relatórios semanal e mensal
-- [ ] Exportação em Excel (`openpyxl`) e PDF (`WeasyPrint`)
+- [x] Visão diária consolidada (previsto, recebido, atrasados)
+- [x] Relatórios semanal e mensal
+- [x] Exportação em Excel (`openpyxl`) e PDF (`WeasyPrint`)
 
 ### Fase 6 — Cobrança direto ao cliente (não iniciada)
 
-- [ ] Model `Cobranca` (notificação — ver seção 6): `contrato · data_alvo ·
+- [x] Model `Cobranca` (notificação — ver seção 6): `contrato · data_alvo ·
   canal · status · mensagem · enviado_em`. Movido da Fase 3 — só faz sentido
-  junto do envio de mensagem
-- [ ] Integração WhatsApp com provedor oficial (Cloud API)
+  junto do envio de mensagem (falta CORA_CLIENT-ID, CERTIFICATE.PEM e privatie_key)
+- [ ] Integração WhatsApp com Evolution API
 - [ ] Mensagens automáticas de vencimento e atraso
 
 ### Fase 7 — Futuro
 
-- [ ] Módulo de motos
+- [ ] Módulo de motos (DESCARTADO)
 - [ ] Portal do cliente
 - [ ] **Cobrança PIX automática via API da Cora** — ciclo diário
   gerar → enviar → conciliar → sinalizar **pago / não pago** (badge ✅/❌ +
@@ -630,6 +630,6 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
 - [ ] Migrar para **PostgreSQL** em produção (hoje SQLite)
 - [ ] `django-unfold` no admin (planejado, ainda não instalado)
 - [ ] Configurar **Sentry**
-- [ ] Deploy (Render ou Railway — Gunicorn + WhiteNoise)
+- [ ] Deploy (Render — Gunicorn + WhiteNoise)
 - [ ] Backup diário do banco
 - [x] `python-dateutil` no `requirements.txt` (Fase 2) · [x] `django-auditlog` (Fase 3) · [ ] `Django-Q2` (deploy)
