@@ -246,6 +246,38 @@ def test_editar_contrato(auth_client, cliente):
 # ---------- Gerar parcelas pela web (sem terminal) ----------
 
 @pytest.mark.django_db
+def test_cadastro_com_valor_parcela_ja_gera_vencimentos(auth_client, cliente):
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(
+            cliente,
+            estrutura=Contrato.Estrutura.MENSAL,
+            valor_parcela="200,00",
+            num_parcelas="12",
+            data_inicio="2026-08-01",
+        ),
+        follow=True,
+    )
+    assert resp.status_code == 200
+    ct = Contrato.objects.get(cliente=cliente)
+    assert ct.vencimentos.count() > 0
+    assert ct.data_prevista_quitacao is not None
+    assert "gerada(s) automaticamente" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_cadastro_sem_valor_parcela_nao_gera_nada(auth_client, cliente):
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(cliente, valor_parcela="", num_parcelas=""),
+        follow=True,
+    )
+    assert resp.status_code == 200
+    ct = Contrato.objects.get(cliente=cliente)
+    assert ct.vencimentos.count() == 0
+
+
+@pytest.mark.django_db
 def test_gerar_vencimentos_via_web_cria_parcelas(auth_client, cliente):
     ct = novo_contrato(
         cliente,

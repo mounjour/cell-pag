@@ -25,6 +25,24 @@ def _avisar_se_parcela_nao_bate(request, contrato):
         )
 
 
+def _gerar_parcelas_ao_salvar(request, contrato):
+    """Gera/atualiza os `Vencimento` logo ao salvar o contrato pela web.
+
+    Faz o mesmo que o botão "Gerar parcelas" e o job diário fazem por contrato
+    (idempotente): cria as parcelas que faltam até ~60 dias à frente, recalcula
+    a data prevista de quitação e sincroniza o status. Sem `valor_parcela` não
+    há o que gerar — nesse caso o aviso do formulário já orienta o usuário e o
+    botão na tela de detalhe continua disponível para depois.
+    """
+    if contrato.quitado or contrato.valor_parcela is None:
+        return
+    novos = contrato.gerar_vencimentos()
+    contrato.atualizar_data_prevista_quitacao()
+    contrato.sincronizar_status()
+    if novos:
+        messages.info(request, f"{len(novos)} parcela(s) gerada(s) automaticamente.")
+
+
 class ContratoListView(LoginRequiredMixin, ListView):
     model = Contrato
     template_name = "contratos/lista.html"
@@ -97,6 +115,7 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
         response = super().form_valid(form)
         messages.success(self.request, "Contrato cadastrado.")
         _avisar_se_parcela_nao_bate(self.request, self.object)
+        _gerar_parcelas_ao_salvar(self.request, self.object)
         return response
 
     def get_success_url(self):
@@ -112,6 +131,7 @@ class ContratoUpdateView(LoginRequiredMixin, UpdateView):
         response = super().form_valid(form)
         messages.success(self.request, "Contrato atualizado.")
         _avisar_se_parcela_nao_bate(self.request, self.object)
+        _gerar_parcelas_ao_salvar(self.request, self.object)
         return response
 
     def get_success_url(self):

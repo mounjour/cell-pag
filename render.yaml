@@ -1,0 +1,93 @@
+# Blueprint do Render — cria de uma vez o site, o banco PostgreSQL e o cron
+# diário. Passo a passo e o que preencher à mão: docs/DEPLOY.md.
+#
+# Depois de subir para o GitHub: Render → New → Blueprint → aponta para este repo.
+
+databases:
+  - name: cell-pag-db
+    databaseName: cellpag
+    user: cellpag
+    plan: free # trocar por "basic-256mb" (US$ 7/mês) para produção — o free expira em 30 dias
+
+# Variáveis compartilhadas entre o site e o cron (o resto é preenchido no painel).
+envVarGroups:
+  - name: cell-pag-config
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      # Lembrete diário da Yslane (E.164, ex.: +5583988887777)
+      - key: YSLANE_WHATSAPP_NUMERO
+        sync: false
+      # WhatsApp Cloud API — mantém "log" até a conta Meta e os 3 templates
+      # estarem prontos (docs/WHATSAPP.md). Depois troca para "meta" no painel.
+      - key: WHATSAPP_PROVIDER
+        value: log
+      - key: WHATSAPP_GRAPH_VERSION
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_WEBHOOK_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: WHATSAPP_PIX_CHAVE
+        sync: false
+      # Pix Cora — mantém "log" até ter CoraPro + certificado mTLS (docs/CORA.md).
+      - key: CORA_PROVIDER
+        value: log
+      - key: CORA_CLIENT_ID
+        sync: false
+      - key: CORA_CERT_PATH
+        sync: false
+      - key: CORA_KEY_PATH
+        sync: false
+      - key: CORA_TOKEN_URL
+        sync: false
+      - key: CORA_API_BASE_URL
+        sync: false
+
+services:
+  # ── Site ────────────────────────────────────────────────────────────────────
+  - type: web
+    name: cell-pag
+    runtime: python
+    plan: free # "starter" (US$ 7/mês) tira o cold-start de ~1 min após ociosidade
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+    preDeployCommand: "python manage.py migrate" # roda as migrações antes de trocar a versão no ar
+    startCommand: "gunicorn config.wsgi:application"
+    healthCheckPath: /entrar/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cell-pag-db
+          property: connectionString
+      - fromGroup: cell-pag-config
+
+  # ── Rotina diária (cron) ───────────────────────────────────────────────────
+  # 11:30 UTC = 08:30 em America/Sao_Paulo (UTC−3). Gera vencimentos, monta o
+  # lembrete da Yslane e prepara/dispara as cobranças — nesta ordem.
+  - type: cron
+    name: cell-pag-rotina-diaria
+    runtime: python
+    plan: free
+    schedule: "30 11 * * *"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py rotina_diaria"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cell-pag-db
+          property: connectionString
+      - fromGroup: cell-pag-config

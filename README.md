@@ -70,6 +70,15 @@ A Fase 7 integra a cobrança Pix dinâmica da Cora, com idempotência, concilia�
 baixa automática confirmada e painel pago/não pago. O padrão também é seguro
 (`CORA_PROVIDER=log`). Veja a ativação de Stage em `docs/CORA.md`.
 
+Ao cadastrar ou editar um contrato com o valor da parcela preenchido, as
+parcelas (`Vencimento`) já são geradas na hora — o botão "Gerar parcelas" e o
+comando continuam disponíveis como reforço.
+
+Em produção, o comando `rotina_diaria` junta os três jobs do dia (gerar
+vencimentos → lembrete da Yslane → cobrança dos clientes) numa execução só,
+para o cron do provedor chamar uma vez por dia. Deploy no Render (site +
+PostgreSQL + cron) em `docs/DEPLOY.md` e no `render.yaml` da raiz.
+
 Depois de atualizar o projeto, aplique a migração que registra a data real de
 quitação dos contratos:
 
@@ -85,4 +94,8 @@ python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 python manage.py check
+
+# Rotina diária (o cron do Render chama isto 1x/dia — ver docs/DEPLOY.md)
+python manage.py rotina_diaria
+python manage.py rotina_diaria --hoje 2026-10-01 --sem-cobrancas
 ```

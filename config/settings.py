@@ -22,6 +22,12 @@ SECRET_KEY = env("SECRET_KEY", default="dev-inseguro-troque-no-.env")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
+# O Render publica o host do serviço nesta variável — dispensa configurar
+# ALLOWED_HOSTS na mão a cada mudança de subdomínio (ver docs/DEPLOY.md).
+RENDER_EXTERNAL_HOSTNAME = env("RENDER_EXTERNAL_HOSTNAME", default="")
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 # ── Aplicações ────────────────────────────────────────────────────────────────
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -84,6 +90,8 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Dev: SQLite por padrão. Produção: definir DATABASE_URL (postgres://...) no .env.
 if env("DATABASE_URL", default=None):
     DATABASES = {"default": env.db("DATABASE_URL")}
+    # Reaproveita a conexão por 10 min em vez de abrir uma por request.
+    DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=600)
 else:
     DATABASES = {
         "default": {
@@ -171,3 +179,36 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+    if RENDER_EXTERNAL_HOSTNAME:
+        origem_render = f"https://{RENDER_EXTERNAL_HOSTNAME}"
+        if origem_render not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origem_render)
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+# Tudo para o console (stdout) — é o que o Render captura, tanto do serviço web
+# quanto das execuções de cron (a rotina diária). Nível ajustável por env.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simples": {"format": "{asctime} {levelname} {name} — {message}", "style": "{"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "simples"},
+    },
+    "root": {"handlers": ["console"], "level": "WARNING"},
+    "loggers": {
+        # Fluxo de cobrança/lembrete/Pix: INFO por padrão para a rotina diária
+        # deixar rastro do que preparou e enviou.
+        "pagamentos": {
+            "handlers": ["console"],
+            "level": env("LOG_LEVEL_PAGAMENTOS", default="INFO"),
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["console"],
+            "level": env("LOG_LEVEL_DJANGO", default="INFO"),
+            "propagate": False,
+        },
+    },
+}
