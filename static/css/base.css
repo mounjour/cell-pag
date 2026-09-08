@@ -93,7 +93,9 @@ summary:focus-visible {
   border-radius: 1px;
   flex: none;
 }
-.nav { display: flex; gap: 1.25rem; order: 3; width: 100%; }
+/* No celular a navegação quebra em duas linhas em vez de sumir na borda —
+   com 5–6 itens não cabe tudo numa linha de ~340px. */
+.nav { display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; order: 3; width: 100%; }
 .nav a {
   text-decoration: none;
   color: var(--ink-soft);
@@ -129,7 +131,7 @@ summary:focus-visible {
 @media (min-width: 640px) {
   .topbar { flex-wrap: nowrap; gap: 1.25rem; padding: 0.75rem 1.25rem; }
   .brand { flex: 0 0 auto; }
-  .nav { order: 0; width: auto; }
+  .nav { order: 0; width: auto; flex-wrap: nowrap; gap: 1.25rem; }
   .logout { margin-left: auto; }
   .whoami { max-width: none; }
 }
@@ -298,17 +300,28 @@ tbody tr:hover td { background: var(--accent-wash); }
   }
   .tbl-wrap.cards td {
     border: none;
-    padding: 0.32rem 0;
+    padding: 0.4rem 0;
     white-space: normal;
-    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem;
   }
   .tbl-wrap.cards td::before {
     content: attr(data-label);
     flex: none;
+    /* encosta o valor à direita sem "space-between" espalhando os itens
+       de uma célula com vários elementos pelo meio da linha */
+    margin-right: auto;
     color: var(--ink-faint);
     font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
   }
   .tbl-wrap.cards td.num { text-align: right; }
+  /* Célula de conteúdo rico: rótulo ocupa a linha, o conteúdo desce abaixo
+     alinhado à esquerda (vários selos, valor + detalhe, links de ação). */
+  .tbl-wrap.cards td.card-stack {
+    flex-direction: column; align-items: stretch; gap: 0.4rem;
+  }
+  .tbl-wrap.cards td.card-stack::before { margin-right: 0; }
+  /* o número de telefone nunca quebra no meio dos dígitos */
+  .tbl-wrap.cards a[href^="tel:"] { white-space: nowrap; }
   .tbl-wrap.cards td:first-child {
     font-size: 1rem; padding: 0.45rem 0 0.6rem; margin-bottom: 0.35rem;
     border-bottom: 1px solid var(--line);
@@ -327,6 +340,10 @@ tbody tr:hover td { background: var(--accent-wash); }
   box-shadow: var(--raise);
 }
 .empty p { margin: 0; }
+
+/* Texto de apoio dentro de tabelas/fichas (ex.: "parcela + juros" no painel
+   de cobrança). Dentro de .form-row a regra abaixo é a que vale. */
+.helptext { color: var(--ink-faint); font-size: 0.8rem; line-height: 1.4; }
 
 /* ---------- Formulários ---------- */
 .form-grid { display: grid; gap: 1rem; max-width: 620px; }
@@ -475,9 +492,35 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
 /* Painel "cobrar hoje": pílulas + "N dias de atraso" empilham no celular
    em vez de quebrar palavra por palavra numa ficha estreita. */
 .atraso-dias { white-space: nowrap; color: var(--ink-soft); font-size: 0.9rem; }
+
+/* Separador "·" antes de "registrar pagamento" — só no desktop, onde os
+   contatos ficam numa linha só. No celular vira botão. */
+.contato-registrar::before { content: "·\00a0"; color: var(--ink-faint); margin-right: 0.15rem; }
+
 @media (max-width: 639px) {
-  .tbl-wrap.cards td[data-label="Situação"] { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
-  .tbl-wrap.cards td[data-label="Situação"]::before { flex-basis: 100%; }
+  /* Situação: rótulo na própria linha, depois selo + "N dias" numa linha
+     que quebra sozinha (sem o valor jogado para a borda direita). */
+  .tbl-wrap.cards td[data-label="Situação"] { flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+  .tbl-wrap.cards td[data-label="Situação"]::before { flex-basis: 100%; margin-right: 0; }
+
+  /* A cobrar: valor na linha do rótulo, "parcela + juros" desce inteiro embaixo. */
+  .tbl-wrap.cards td[data-label="A cobrar"] .helptext {
+    flex-basis: 100%; margin-top: 0.1rem;
+  }
+
+  /* Contato: telefone + WhatsApp numa linha, "registrar pagamento" vira
+     botão de largura total — é a ação principal da tela. */
+  .tbl-wrap.cards td[data-label="Contato"] .contato-vias {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.4rem;
+  }
+  .tbl-wrap.cards td[data-label="Contato"] .contato-registrar {
+    display: flex; align-items: center; justify-content: center;
+    min-height: var(--tap); padding: 0.4rem 0.9rem;
+    border: 1px solid var(--accent); border-radius: 2px;
+    background: var(--surface); color: var(--accent-ink);
+    font-weight: 600; text-decoration: none;
+  }
+  .tbl-wrap.cards td[data-label="Contato"] .contato-registrar::before { content: none; }
 }
 
 /* ---------- Ficha (grade de dados do detalhe) ---------- */

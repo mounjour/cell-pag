@@ -16,7 +16,7 @@
   <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th>Cliente</th><th>Contrato</th><th>Situação</th><th class="num">A cobrar</th><th>Pix</th><th>Mensagem</th><th>Contato</th></tr>
+        <tr><th>Cliente</th><th>Contrato</th><th>Pix</th><th>Situação</th><th class="num">A cobrar</th><th>Mensagem</th><th>Contato</th></tr>
       </thead>
       <tbody>
         {% for l in linhas %}
@@ -52,10 +52,12 @@
                 <span class="pill">Não preparada</span>
               {% endif %}
             </td>
-            <td data-label="Contato">
-              <a class="num" href="tel:{{ l.contrato.cliente.telefone_whatsapp.as_e164 }}">{{ l.contrato.cliente.telefone_exibicao }}</a>
-              <a class="zap" href="{{ l.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
-              · <a href="{% url 'pagamentos:novo' l.contrato.pk %}">registrar pagamento</a>
+            <td data-label="Contato" class="card-stack">
+              <span class="contato-vias">
+                <a class="num" href="tel:{{ l.contrato.cliente.telefone_whatsapp.as_e164 }}">{{ l.contrato.cliente.telefone_exibicao }}</a>
+                <a class="zap" href="{{ l.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+              </span>
+              <a class="contato-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}">registrar pagamento</a>
             </td>
           </tr>
         {% endfor %}
