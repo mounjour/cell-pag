@@ -79,6 +79,12 @@
 {% with vencimentos=contrato.vencimentos.all total_venc=contrato.vencimentos.count %}
   {% if vencimentos %}
     <p class="count">{{ total_venc }} parcela{{ total_venc|pluralize }} gerada{{ total_venc|pluralize }}{% if total_venc > 24 %} · mostrando as 24 primeiras{% endif %}.</p>
+    {% if not contrato.quitado and contrato.valor_parcela %}
+      <form method="post" action="{% url 'contratos:gerar_vencimentos' contrato.pk %}" style="margin:-0.35rem 0 1rem">
+        {% csrf_token %}
+        <button type="submit" class="btn secondary">Gerar parcelas seguintes</button>
+      </form>
+    {% endif %}
     <div class="tbl-wrap cards">
       <table>
         <thead><tr><th>Nº</th><th class="num">Vencimento</th><th class="num">Previsto</th><th class="num">Pago</th><th class="num">Saldo</th><th>Status</th><th></th></tr></thead>
@@ -102,10 +108,19 @@
       </table>
     </div>
   {% else %}
-    <p class="empty">
-      Nenhuma parcela gerada ainda.
-      {% if not contrato.valor_parcela %}Informe o <strong>valor da parcela</strong> e rode a geração (<code>manage.py gerar_vencimentos</code>).{% else %}Rode <code>manage.py gerar_vencimentos</code>.{% endif %}
-    </p>
+    <div class="empty">
+      <p>Nenhuma parcela gerada ainda.</p>
+      {% if not contrato.valor_parcela %}
+        <p class="helptext">Informe o <strong>valor da parcela</strong> no contrato para poder gerar.</p>
+        <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">Editar contrato</a>
+      {% elif not contrato.quitado %}
+        <form method="post" action="{% url 'contratos:gerar_vencimentos' contrato.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn">Gerar parcelas</button>
+        </form>
+        <p class="helptext">Cria as parcelas com vencimento até 60 dias à frente, a partir da data de início e da estrutura ({{ contrato.get_estrutura_display|lower }}). Pode gerar de novo mais tarde para as parcelas seguintes.</p>
+      {% endif %}
+    </div>
   {% endif %}
 {% endwith %}
 
