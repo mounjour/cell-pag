@@ -14,7 +14,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--somente-preparar",
             action="store_true",
-            help="Cria a fila sem chamar o provedor, mesmo quando a Meta está configurada.",
+            help="Cria a fila sem chamar o provedor, mesmo quando a Evolution está configurada.",
         )
 
     def handle(self, *args, **options):

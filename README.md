@@ -53,22 +53,23 @@ agenda "Cobrar hoje", baixa manual (inclusive parcial), atraso/juros/status e
 relatórios para o perfil dono. Os relatórios aceitam período diário, semanal,
 mensal ou personalizado e exportam os mesmos dados em Excel e PDF.
 
-A Fase 6 prepara diariamente uma cobrança por contrato e envia mensagens-template
-pela API oficial do WhatsApp, com webhook para os estados enviado, entregue, lido
-e erro. Por segurança, o padrão é `WHATSAPP_PROVIDER=log`: a fila é criada, mas
-nada sai do sistema. Depois de configurar a conta Meta e aprovar os três templates,
-troque para `WHATSAPP_PROVIDER=meta` e agende:
+A Fase 6 prepara diariamente uma cobrança por contrato e envia a mensagem (texto
+livre) pela **Evolution API**, com webhook para os estados enviado, entregue,
+lido e erro. Por segurança, o padrão é `WHATSAPP_PROVIDER=log`: a fila é criada,
+mas nada sai do sistema. Depois de conectar uma instância da Evolution, troque
+para `WHATSAPP_PROVIDER=evolution` e agende:
 
 ```bash
 python manage.py enviar_cobrancas_clientes
 ```
 
-O endpoint a cadastrar na Meta é `/pagamentos/webhooks/whatsapp/`.
-Veja os templates, parâmetros e passos de ativação em `docs/WHATSAPP.md`.
+O endpoint a cadastrar na Evolution é `/pagamentos/webhooks/whatsapp/`, autenticado
+por token compartilhado (`EVOLUTION_WEBHOOK_TOKEN`).
+Veja os passos de ativação em `docs/WHATSAPP.md`.
 
-A Fase 7 integra a cobrança Pix dinâmica da Cora, com idempotência, conciliação,
-baixa automática confirmada e painel pago/não pago. O padrão também é seguro
-(`CORA_PROVIDER=log`). Veja a ativação de Stage em `docs/CORA.md`.
+A Fase 7 integra a cobrança **Pix** automática da Cora, com idempotência,
+conciliação, baixa automática confirmada e painel pago/não pago. O padrão também
+é seguro (`CORA_PROVIDER=log`). Veja a ativação de Stage em `docs/CORA.md`.
 
 Ao cadastrar ou editar um contrato com o valor da parcela preenchido, as
 parcelas (`Vencimento`) já são geradas na hora — o botão "Gerar parcelas" e o

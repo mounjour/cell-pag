@@ -290,8 +290,15 @@ class Cobranca(models.Model):
         return f"{self.contrato} - {self.data_alvo:%d/%m/%Y} - {self.get_status_display()}"
 
 
-class CobrancaPix(models.Model):
-    """QR Code Pix da Cora vinculado a uma única parcela."""
+class CobrancaCora(models.Model):
+    """Cobrança Pix da Cora vinculada a uma única parcela.
+
+    A fatura é criada só com Pix (``payment_forms: ["PIX"]``) — boleto e cartão
+    ficam de fora por decisão do projeto. A Cora confirma o pagamento e o
+    reconciliador interno registra o ``Pagamento``. O modelo chama-se
+    ``CobrancaCora`` (não ``CobrancaPix``) porque é o registro da integração com
+    a Cora, que pode ganhar outras formas no futuro.
+    """
 
     class Status(models.TextChoices):
         PENDENTE = "pendente", "Aguardando geração"
@@ -304,7 +311,7 @@ class CobrancaPix(models.Model):
     vencimento = models.OneToOneField(
         Vencimento,
         on_delete=models.PROTECT,
-        related_name="cobranca_pix",
+        related_name="cobranca_cora",
     )
     idempotency_key = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     cora_id = models.CharField(max_length=100, blank=True, unique=True, null=True)
@@ -320,8 +327,8 @@ class CobrancaPix(models.Model):
     atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "cobrança Pix"
-        verbose_name_plural = "cobranças Pix"
+        verbose_name = "cobrança Cora"
+        verbose_name_plural = "cobranças Cora"
         ordering = ["-data_vencimento", "vencimento__contrato__cliente__nome"]
 
     def __str__(self):

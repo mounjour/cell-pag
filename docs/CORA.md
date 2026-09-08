@@ -1,8 +1,13 @@
-# Pix automático com a Cora - Fase 7
+# Cobrança Pix automática com a Cora - Fase 7
 
-O fluxo implementado cria um QR Code Pix por parcela, envia o código pelo fluxo
-oficial do WhatsApp, consulta o estado da fatura e registra a baixa automática
-somente depois que a API autenticada da Cora confirma o pagamento.
+O fluxo implementado cria **uma fatura Cora por parcela, só com Pix**
+(`payment_forms: ["PIX"]`), envia o copia e cola pelo WhatsApp, consulta o
+estado da fatura e registra a baixa automática somente depois que a API
+autenticada da Cora confirma o pagamento. Boleto e cartão não são emitidos por
+aqui — decisão do projeto (as cobranças são feitas em Pix).
+
+O modelo local chama-se `CobrancaCora` (renomeado de `CobrancaPix`) por ser o
+registro da integração com a Cora.
 
 ## Modo seguro
 

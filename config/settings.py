@@ -145,24 +145,22 @@ PHONENUMBER_DEFAULT_REGION = "BR"
 PHONENUMBER_DB_FORMAT = "E164"  # guarda +55... — formato exigido pela API do WhatsApp
 
 # ── Lembrete diário no WhatsApp da Yslane (Fase 2, Modalidade A) ──────────────
-# Número em E.164 (ex.: +5583988887777). O envio de verdade (Cloud API/BSP)
-# entra quando existir conta WhatsApp Business — ver apps/pagamentos/lembrete.py.
+# Número em E.164 (ex.: +5583988887777). O envio de verdade sai pela Evolution
+# API quando WHATSAPP_PROVIDER=evolution — ver apps/pagamentos/lembrete.py.
 YSLANE_WHATSAPP_NUMERO = env("YSLANE_WHATSAPP_NUMERO", default="")
 
-# WhatsApp Cloud API (Fase 6). "log" prepara a fila sem enviar; "meta" ativa
-# mensagens-template oficiais quando todas as credenciais estiverem presentes.
+# WhatsApp via Evolution API (substitui a WhatsApp Cloud API da Meta). "log"
+# prepara a fila sem enviar; "evolution" dispara as mensagens de verdade quando
+# EVOLUTION_API_URL / _API_KEY / _INSTANCE estiverem preenchidos.
 WHATSAPP_PROVIDER = env("WHATSAPP_PROVIDER", default="log")
-WHATSAPP_GRAPH_VERSION = env("WHATSAPP_GRAPH_VERSION", default="")
-WHATSAPP_PHONE_NUMBER_ID = env("WHATSAPP_PHONE_NUMBER_ID", default="")
-WHATSAPP_ACCESS_TOKEN = env("WHATSAPP_ACCESS_TOKEN", default="")
-WHATSAPP_WEBHOOK_VERIFY_TOKEN = env("WHATSAPP_WEBHOOK_VERIFY_TOKEN", default="")
-WHATSAPP_APP_SECRET = env("WHATSAPP_APP_SECRET", default="")
 WHATSAPP_PIX_CHAVE = env("WHATSAPP_PIX_CHAVE", default="")
-WHATSAPP_TEMPLATE_VENCIMENTO = env("WHATSAPP_TEMPLATE_VENCIMENTO", default="cobranca_vencimento")
-WHATSAPP_TEMPLATE_ATRASO = env("WHATSAPP_TEMPLATE_ATRASO", default="cobranca_atraso")
-WHATSAPP_TEMPLATE_BLOQUEIO = env("WHATSAPP_TEMPLATE_BLOQUEIO", default="cobranca_bloqueio")
+EVOLUTION_API_URL = env("EVOLUTION_API_URL", default="")
+EVOLUTION_API_KEY = env("EVOLUTION_API_KEY", default="")
+EVOLUTION_INSTANCE = env("EVOLUTION_INSTANCE", default="")
+# Token compartilhado que autentica o webhook de status da Evolution.
+EVOLUTION_WEBHOOK_TOKEN = env("EVOLUTION_WEBHOOK_TOKEN", default="")
 
-# Cobrança Pix dinâmica via Cora (Fase 7). O padrão "log" não chama o banco.
+# Cobrança Pix via Cora (Fase 7). O padrão "log" não chama o banco.
 CORA_PROVIDER = env("CORA_PROVIDER", default="log")
 CORA_CLIENT_ID = env("CORA_CLIENT_ID", default="")
 CORA_CERT_PATH = env("CORA_CERT_PATH", default="")

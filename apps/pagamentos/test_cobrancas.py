@@ -1,6 +1,4 @@
 import datetime
-import hashlib
-import hmac
 import json
 from decimal import Decimal
 from io import StringIO
@@ -50,32 +48,35 @@ def _contrato(cliente, hoje, *, atraso=0):
     return contrato
 
 
+# ── Texto da mensagem (Evolution manda texto livre, sem template) ─────────
+
 @pytest.mark.django_db
-def test_mensagem_de_vencimento(cliente_cobranca, settings):
+def test_mensagem_de_vencimento(cliente_cobranca):
     hoje = date(2026, 9, 4)
     _contrato(cliente_cobranca, hoje)
     from apps.pagamentos.agenda import montar_agenda_do_dia
 
     dados = dados_da_mensagem(montar_agenda_do_dia(hoje)["linhas"][0])
-    assert dados["template"] == settings.WHATSAPP_TEMPLATE_VENCIMENTO
+    assert "template" not in dados
     assert "vence a parcela 1" in dados["mensagem"]
 
 
 @pytest.mark.django_db
-def test_mensagem_de_atraso_e_bloqueio(cliente_cobranca, settings):
+def test_mensagem_de_atraso_e_bloqueio(cliente_cobranca):
     hoje = date(2026, 9, 10)
     contrato = _contrato(cliente_cobranca, hoje, atraso=2)
     from apps.pagamentos.agenda import montar_agenda_do_dia
 
     dados = dados_da_mensagem(montar_agenda_do_dia(hoje)["linhas"][0])
-    assert dados["template"] == settings.WHATSAPP_TEMPLATE_ATRASO
+    assert "está em aberto" in dados["mensagem"]
     contrato.vencimentos.update(data_vencimento=hoje - datetime.timedelta(days=8))
     contrato.proximo_vencimento = hoje - datetime.timedelta(days=8)
     contrato.save(update_fields=["proximo_vencimento", "atualizado_em"])
     dados = dados_da_mensagem(montar_agenda_do_dia(hoje)["linhas"][0])
-    assert dados["template"] == settings.WHATSAPP_TEMPLATE_BLOQUEIO
     assert "evitar o bloqueio" in dados["mensagem"]
 
+
+# ── processar_cobrancas ─────────────────────────────────────────────────
 
 @pytest.mark.django_db
 def test_modo_log_cria_uma_unica_cobranca_pendente(cliente_cobranca, settings):
@@ -92,12 +93,12 @@ def test_modo_log_cria_uma_unica_cobranca_pendente(cliente_cobranca, settings):
 
 @pytest.mark.django_db
 def test_envio_real_grava_id_e_nao_duplica(cliente_cobranca, settings, monkeypatch):
-    settings.WHATSAPP_PROVIDER = "meta"
+    settings.WHATSAPP_PROVIDER = "evolution"
     hoje = date(2026, 9, 4)
     _contrato(cliente_cobranca, hoje)
     monkeypatch.setattr(
-        "apps.pagamentos.cobranca.enviar_template",
-        lambda **kwargs: {"simulado": False, "id": "wamid.123"},
+        "apps.pagamentos.cobranca.enviar_mensagem",
+        lambda **kwargs: {"simulado": False, "id": "3EB0ABC123"},
     )
     primeiro = processar_cobrancas(hoje)
     segundo = processar_cobrancas(hoje)
@@ -105,7 +106,7 @@ def test_envio_real_grava_id_e_nao_duplica(cliente_cobranca, settings, monkeypat
     assert primeiro["enviadas"] == 1
     assert segundo["ignoradas"] == 1
     assert cobranca.status == Cobranca.Status.ENVIADO
-    assert cobranca.id_externo == "wamid.123"
+    assert cobranca.id_externo == "3EB0ABC123"
 
 
 @pytest.mark.django_db
@@ -124,19 +125,10 @@ def test_comando_somente_prepara(cliente_cobranca):
     assert "1 preparada" in saida.getvalue()
 
 
-@pytest.mark.django_db
-def test_webhook_verificacao(client, settings):
-    settings.WHATSAPP_WEBHOOK_VERIFY_TOKEN = "segredo-verificacao"
-    resposta = client.get(
-        reverse("pagamentos:whatsapp_webhook"),
-        {"hub.mode": "subscribe", "hub.verify_token": "segredo-verificacao", "hub.challenge": "12345"},
-    )
-    assert resposta.status_code == 200
-    assert resposta.content == b"12345"
-
+# ── Webhook de status da Evolution (token compartilhado) ─────────────────
 
 @pytest.mark.django_db
-def test_webhook_atualiza_entrega_com_assinatura(client, settings, cliente_cobranca):
+def test_webhook_atualiza_entrega_com_token(client, settings, cliente_cobranca):
     hoje = date(2026, 9, 4)
     contrato = _contrato(cliente_cobranca, hoje)
     cobranca = Cobranca.objects.create(
@@ -146,19 +138,15 @@ def test_webhook_atualiza_entrega_com_assinatura(client, settings, cliente_cobra
         destinatario="5583999991234",
         mensagem="Teste",
         status=Cobranca.Status.ENVIADO,
-        id_externo="wamid.abc",
+        id_externo="3EB0ENTREGUE",
     )
-    settings.WHATSAPP_APP_SECRET = "app-secret"
-    payload = {
-        "entry": [{"changes": [{"value": {"statuses": [{"id": "wamid.abc", "status": "delivered", "timestamp": "1788541200"}]}}]}]
-    }
-    corpo = json.dumps(payload).encode()
-    assinatura = "sha256=" + hmac.new(b"app-secret", corpo, hashlib.sha256).hexdigest()
+    settings.EVOLUTION_WEBHOOK_TOKEN = "token-webhook"
+    payload = {"event": "messages.update", "data": {"keyId": "3EB0ENTREGUE", "status": "DELIVERY_ACK"}}
     resposta = client.post(
         reverse("pagamentos:whatsapp_webhook"),
-        data=corpo,
+        data=json.dumps(payload),
         content_type="application/json",
-        headers={"X-Hub-Signature-256": assinatura},
+        headers={"apikey": "token-webhook"},
     )
     assert resposta.status_code == 200
     cobranca.refresh_from_db()
@@ -167,13 +155,38 @@ def test_webhook_atualiza_entrega_com_assinatura(client, settings, cliente_cobra
 
 
 @pytest.mark.django_db
-def test_webhook_recusa_assinatura_invalida(client, settings):
-    settings.WHATSAPP_APP_SECRET = "app-secret"
+def test_webhook_aceita_ack_numerico_e_lista(client, settings, cliente_cobranca):
+    hoje = date(2026, 9, 4)
+    contrato = _contrato(cliente_cobranca, hoje)
+    cobranca = Cobranca.objects.create(
+        contrato=contrato,
+        data_alvo=hoje,
+        destinatario="5583999991234",
+        mensagem="Teste",
+        status=Cobranca.Status.ENVIADO,
+        id_externo="3EB0NUM",
+    )
+    settings.EVOLUTION_WEBHOOK_TOKEN = ""
+    settings.DEBUG = True
+    payload = [{"event": "messages.update", "data": {"keyId": "3EB0NUM", "status": 3}}]
+    resposta = client.post(
+        reverse("pagamentos:whatsapp_webhook"),
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+    assert resposta.status_code == 200
+    cobranca.refresh_from_db()
+    assert cobranca.status == Cobranca.Status.LIDO
+
+
+@pytest.mark.django_db
+def test_webhook_recusa_token_invalido(client, settings):
+    settings.EVOLUTION_WEBHOOK_TOKEN = "token-certo"
     resposta = client.post(
         reverse("pagamentos:whatsapp_webhook"),
         data=b"{}",
         content_type="application/json",
-        headers={"X-Hub-Signature-256": "sha256=errada"},
+        headers={"apikey": "token-errado"},
     )
     assert resposta.status_code == 403
 
@@ -188,11 +201,11 @@ def test_webhook_nao_regride_status(client, settings, cliente_cobranca):
         destinatario="5583999991234",
         mensagem="Teste",
         status=Cobranca.Status.LIDO,
-        id_externo="wamid.lido",
+        id_externo="3EB0LIDO",
     )
-    settings.WHATSAPP_APP_SECRET = ""
+    settings.EVOLUTION_WEBHOOK_TOKEN = ""
     settings.DEBUG = True
-    payload = {"entry": [{"changes": [{"value": {"statuses": [{"id": "wamid.lido", "status": "sent"}]}}]}]}
+    payload = {"event": "messages.update", "data": {"keyId": "3EB0LIDO", "status": "SERVER_ACK"}}
     resposta = client.post(
         reverse("pagamentos:whatsapp_webhook"),
         data=json.dumps(payload),
