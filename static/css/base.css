@@ -141,7 +141,7 @@ summary:focus-visible {
 @media (min-width: 640px) { .wrap { padding: 1.75rem 1.25rem 4rem; } }
 /* Telas operacionais com tabela larga (ex.: "Cobrar hoje") respiram mais no
    desktop — texto de leitura continua nos 960px. */
-.wrap.wrap--wide { max-width: 1280px; }
+.wrap.wrap--wide { max-width: 1400px; }
 
 h1 {
   font-size: 1.3rem;
@@ -499,11 +499,12 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
    bloqueio descem em vez de esticar a tabela para os lados. */
 .situacao-cell { white-space: normal; min-width: 10rem; }
 
-/* Envio: Pix e mensagem de cobrança juntos numa coluna só, um selo por linha.
-   São status de bastidor (hoje em modo simulação) — ficam compactos. */
+/* Envio: Pix e mensagem de cobrança viram dois selos mínimos ("Pix" / "Msg"),
+   lado a lado — a cor dá o status e o texto completo fica no title (tooltip).
+   São dados de bastidor (hoje em modo simulação); não valem espaço de coluna. */
 .envio-cell { white-space: normal; }
-.envio-vias { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
-.envio-vias .pill { white-space: nowrap; }
+.envio-vias { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
+.envio-vias .pill { white-space: nowrap; cursor: help; }
 
 /* Contato pode quebrar: "Registrar pagamento" desce para a segunda linha em
    vez de forçar a coluna a esticar. */

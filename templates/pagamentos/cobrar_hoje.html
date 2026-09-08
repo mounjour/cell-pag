@@ -51,14 +51,14 @@
             <td class="envio-cell" data-label="Envio">
               <span class="envio-vias">
                 {% if l.pix %}
-                  <span class="pill {{ l.pix.status }}">Pix · {{ l.pix.get_status_display }}</span>
+                  <span class="pill {{ l.pix.status }}" title="Pix · {{ l.pix.get_status_display }}">Pix</span>
                 {% else %}
-                  <span class="pill">Pix · não gerado</span>
+                  <span class="pill" title="Pix · não gerado">Pix</span>
                 {% endif %}
                 {% if l.cobranca %}
-                  <span class="pill {{ l.cobranca.status }}" {% if l.cobranca.erro %}title="{{ l.cobranca.erro }}"{% endif %}>Msg · {{ l.cobranca.get_status_display }}</span>
+                  <span class="pill {{ l.cobranca.status }}" title="Mensagem · {{ l.cobranca.get_status_display }}{% if l.cobranca.erro %} — {{ l.cobranca.erro }}{% endif %}">Msg</span>
                 {% else %}
-                  <span class="pill">Msg · não preparada</span>
+                  <span class="pill" title="Mensagem · não preparada">Msg</span>
                 {% endif %}
               </span>
             </td>
