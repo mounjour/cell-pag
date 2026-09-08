@@ -8,8 +8,11 @@ Ver `.env.example` para a lista de variáveis.
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY_INSEGURA = "dev-inseguro-troque-no-.env"
 
 env = environ.Env(
     DEBUG=(bool, False),
@@ -18,12 +21,23 @@ env = environ.Env(
 environ.Env.read_env(BASE_DIR / ".env")
 
 # ── Núcleo ────────────────────────────────────────────────────────────────────
-SECRET_KEY = env("SECRET_KEY", default="dev-inseguro-troque-no-.env")
+SECRET_KEY = env("SECRET_KEY", default=SECRET_KEY_INSEGURA)
 DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
-# O Render publica o host do serviço nesta variável — dispensa configurar
-# ALLOWED_HOSTS na mão a cada mudança de subdomínio (ver docs/DEPLOY.md).
+# Em produção a SECRET_KEY tem de vir do ambiente — sem ela, sessões, tokens de
+# reset e assinatura de cookies ficam previsíveis.
+if not DEBUG and SECRET_KEY == SECRET_KEY_INSEGURA:
+    raise ImproperlyConfigured(
+        "Defina SECRET_KEY no ambiente para rodar com DEBUG=False."
+    )
+
+# Descarta entradas vazias (ex.: ALLOWED_HOSTS="" no painel do provedor viraria
+# [''], que o Django trataria como um host válido).
+ALLOWED_HOSTS = [host.strip() for host in env("ALLOWED_HOSTS") if host.strip()]
+
+# O Render publica o host real do serviço nesta variável. É a fonte da verdade
+# em produção — não use curinga (".onrender.com" aceitaria o Host de qualquer
+# app do Render). Ver docs/DEPLOY.md.
 RENDER_EXTERNAL_HOSTNAME = env("RENDER_EXTERNAL_HOSTNAME", default="")
 if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -109,10 +123,17 @@ LOGOUT_REDIRECT_URL = "usuarios:login"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 12},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+# Sessão de app financeiro — expira em 12 h por padrão (ajustável por env).
+SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=60 * 60 * 12)
+SESSION_SAVE_EVERY_REQUEST = True  # renova a validade a cada request ativo
 
 # ── Internacionalização ───────────────────────────────────────────────────────
 LANGUAGE_CODE = "pt-br"
@@ -173,9 +194,18 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=3600)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
+    # HSTS — padrão de 1 dia (o host atual não tem subdomínios, então
+    # include-subdomains é inócuo e recomendado). Ao migrar para um domínio
+    # próprio e estável, suba SECURE_HSTS_SECONDS para 31536000 (1 ano) e só aí
+    # ligue SECURE_HSTS_PRELOAD — preload é praticamente irreversível.
+    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=86400)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True)
+    SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=False)
+
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SAMESITE = "Lax"
+    CSRF_COOKIE_SAMESITE = "Lax"
     CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
     if RENDER_EXTERNAL_HOSTNAME:
         origem_render = f"https://{RENDER_EXTERNAL_HOSTNAME}"

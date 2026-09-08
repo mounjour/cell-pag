@@ -58,9 +58,10 @@ ainda não tem — o modo `log` não exige):
 | `CORA_PROVIDER` | `log` (troque para `cora` quando tiver CoraPro) |
 | `CORA_*` (demais) | em branco por enquanto — ver [`CORA.md`](CORA.md) |
 
-`SECRET_KEY` é gerada automaticamente. `DATABASE_URL`, `ALLOWED_HOSTS` e
-`CSRF_TRUSTED_ORIGINS` já se resolvem sozinhas no Render
-(`RENDER_EXTERNAL_HOSTNAME`).
+`SECRET_KEY` é gerada automaticamente (e o app **recusa** subir com `DEBUG=False`
+sem ela). `DATABASE_URL`, `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS` se resolvem
+sozinhos no Render via `RENDER_EXTERNAL_HOSTNAME` — **não** defina `ALLOWED_HOSTS`
+com curinga (`.onrender.com`); se usar domínio próprio, coloque o host exato.
 
 > **Certificado da Cora:** o Render não tem sistema de arquivos persistente para
 > subir `.pem` pelo painel. Quando for ativar a Cora, use um
