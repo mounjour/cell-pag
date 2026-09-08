@@ -67,10 +67,9 @@ O endpoint a cadastrar na Evolution é `/pagamentos/webhooks/whatsapp/`, autenti
 por token compartilhado (`EVOLUTION_WEBHOOK_TOKEN`).
 Veja os passos de ativação em `docs/WHATSAPP.md`.
 
-A Fase 7 integra a cobrança automática da Cora — **Pix e boleto na mesma
-fatura** —, com idempotência, conciliação, baixa automática confirmada e painel
-pago/não pago. O padrão também é seguro (`CORA_PROVIDER=log`). Veja a ativação
-de Stage em `docs/CORA.md`.
+A Fase 7 integra a cobrança **Pix** automática da Cora, com idempotência,
+conciliação, baixa automática confirmada e painel pago/não pago. O padrão também
+é seguro (`CORA_PROVIDER=log`). Veja a ativação de Stage em `docs/CORA.md`.
 
 Depois de atualizar o projeto, aplique a migração que registra a data real de
 quitação dos contratos:

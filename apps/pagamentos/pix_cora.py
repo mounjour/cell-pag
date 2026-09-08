@@ -1,4 +1,4 @@
-"""Geração, conciliação e baixa automática das cobranças Cora (Pix + boleto)."""
+"""Geração, conciliação e baixa automática das cobranças Pix da Cora."""
 
 import datetime
 from decimal import Decimal
@@ -22,11 +22,9 @@ STATUS_CORA = {
     "CANCELED": CobrancaCora.Status.CANCELADO,
 }
 
-# Formas de pagamento pedidas na fatura. Cartão fica de fora por decisão do
-# projeto (Alisson) — só Pix e boleto.
-FORMAS_PAGAMENTO = ["PIX", "BANK_SLIP"]
-
-METODO_CORA = {"PIX": CobrancaCora.Metodo.PIX, "BANK_SLIP": CobrancaCora.Metodo.BOLETO}
+# Formas de pagamento pedidas na fatura. Boleto e cartão ficam de fora por
+# decisão do projeto (Alisson) — as cobranças são feitas só em Pix.
+FORMAS_PAGAMENTO = ["PIX"]
 
 
 def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
@@ -62,8 +60,7 @@ def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
         ],
         "payment_forms": FORMAS_PAGAMENTO,
         # A Cora não aceita criação já vencida. O vencimento original segue no
-        # nosso banco e o QR/boleto recuperado recebe prazo até hoje quando
-        # necessário.
+        # nosso banco e o QR recuperado recebe prazo até hoje quando necessário.
         "payment_terms": {"due_date": max(vencimento.data_vencimento, hoje).isoformat()},
     }
     try:
@@ -89,26 +86,15 @@ def _aplicar_resposta(cobranca: CobrancaCora, resposta: dict) -> None:
     status = STATUS_CORA.get(str(resposta.get("status", "")).upper())
     if not status:
         raise cora_api.CoraErro(f"Status de fatura desconhecido: {resposta.get('status')!r}")
-    opcoes = resposta.get("payment_options") or {}
-    pix = resposta.get("pix") or opcoes.get("pix") or {}
-    boleto = opcoes.get("bank_slip") or resposta.get("bank_slip") or {}
+    pix = resposta.get("pix") or (resposta.get("payment_options") or {}).get("pix") or {}
 
     cobranca.cora_id = resposta.get("id") or cobranca.cora_id
     cobranca.status = status
     cobranca.total_pago = Decimal(resposta.get("total_paid", 0)) / 100
     cobranca.pix_copia_e_cola = pix.get("emv", cobranca.pix_copia_e_cola)
     cobranca.qr_code_url = pix.get("url") or cobranca.qr_code_url
-    cobranca.boleto_url = boleto.get("url") or cobranca.boleto_url
-    cobranca.boleto_linha_digitavel = boleto.get("digitable") or cobranca.boleto_linha_digitavel
-    cobranca.boleto_codigo_barras = boleto.get("barcode") or cobranca.boleto_codigo_barras
     cobranca.erro = ""
     if status == CobrancaCora.Status.PAGO:
-        pago_via = ""
-        for pagamento_cora in resposta.get("payments") or []:
-            pago_via = str(pagamento_cora.get("method") or pagamento_cora.get("type") or "").upper()
-            if pago_via:
-                break
-        cobranca.metodo_pago = METODO_CORA.get(pago_via, cobranca.metodo_pago)
         ocorrencia = resposta.get("occurrence_date")
         if ocorrencia:
             try:
@@ -127,17 +113,12 @@ def _aplicar_resposta(cobranca: CobrancaCora, resposta: dict) -> None:
 def _dar_baixa(cobranca: CobrancaCora) -> None:
     if Pagamento.objects.filter(vencimento=cobranca.vencimento).exists():
         return
-    forma = (
-        Pagamento.Forma.BOLETO
-        if cobranca.metodo_pago == CobrancaCora.Metodo.BOLETO
-        else Pagamento.Forma.PIX
-    )
     Pagamento(
         contrato=cobranca.vencimento.contrato,
         vencimento=cobranca.vencimento,
         data_pagamento=(cobranca.pago_em or timezone.now()).date(),
         valor_pago=cobranca.total_pago,
-        forma=forma,
+        forma=Pagamento.Forma.PIX,
         observacao=f"Baixa automática pela Cora ({cobranca.cora_id}).",
     ).registrar()
 

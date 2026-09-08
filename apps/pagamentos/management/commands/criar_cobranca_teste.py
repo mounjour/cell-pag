@@ -1,8 +1,8 @@
-"""Cria (e opcionalmente sincroniza) uma cobrança Cora de teste.
+"""Cria (e opcionalmente sincroniza) uma cobrança Pix da Cora de teste.
 
 Serve para validar a Integração Direta da Cora ponta a ponta sem passar pela
 agenda do dia: escolhe uma parcela em aberto, chama a API e mostra o que voltou
-(status, cora_id, Pix copia e cola, linha digitável do boleto, erro).
+(status, cora_id, Pix copia e cola, erro).
 
 Exemplos:
 
@@ -19,7 +19,7 @@ from apps.pagamentos.pix_cora import obter_ou_criar_cobranca, sincronizar_cobran
 
 
 class Command(BaseCommand):
-    help = "Cria uma cobrança Cora (Pix + boleto) de teste para uma parcela em aberto."
+    help = "Cria uma cobrança Pix da Cora de teste para uma parcela em aberto."
 
     def add_arguments(self, parser):
         parser.add_argument("--contrato", type=int, help="pk do contrato (usa a 1ª parcela não paga).")
@@ -63,10 +63,9 @@ class Command(BaseCommand):
         self.stdout.write(estilo(f"status ......... {cobranca.get_status_display()}"))
         self.stdout.write(f"cora_id ........ {cobranca.cora_id or '—'}")
         self.stdout.write(f"pix copia/cola . {cobranca.pix_copia_e_cola[:60] or '—'}")
-        self.stdout.write(f"boleto linha ... {cobranca.boleto_linha_digitavel or '—'}")
-        self.stdout.write(f"boleto url ..... {cobranca.boleto_url or '—'}")
+        self.stdout.write(f"qr code url .... {cobranca.qr_code_url or '—'}")
         if cobranca.total_pago:
-            self.stdout.write(f"total pago ..... R$ {cobranca.total_pago} ({cobranca.get_metodo_pago_display() or 'forma não informada'})")
+            self.stdout.write(f"total pago ..... R$ {cobranca.total_pago}")
         if cobranca.erro:
             self.stdout.write(self.style.ERROR(f"erro ........... {cobranca.erro}"))
         self.stdout.write("Confira também em /pagamentos/pix/.")

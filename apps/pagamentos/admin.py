@@ -86,15 +86,11 @@ class CobrancaAdmin(admin.ModelAdmin):
 
 @admin.register(CobrancaCora)
 class CobrancaCoraAdmin(admin.ModelAdmin):
-    list_display = (
-        "data_vencimento", "vencimento", "valor", "total_pago",
-        "status", "metodo_pago", "cora_id",
-    )
-    list_filter = ("status", "metodo_pago", "data_vencimento")
+    list_display = ("data_vencimento", "vencimento", "valor", "total_pago", "status", "cora_id")
+    list_filter = ("status", "data_vencimento")
     search_fields = ("vencimento__contrato__cliente__nome", "cora_id")
     readonly_fields = (
-        "idempotency_key", "cora_id", "metodo_pago", "pix_copia_e_cola", "qr_code_url",
-        "boleto_url", "boleto_linha_digitavel", "boleto_codigo_barras",
+        "idempotency_key", "cora_id", "pix_copia_e_cola", "qr_code_url",
         "total_pago", "pago_em", "criado_em", "atualizado_em",
     )
 

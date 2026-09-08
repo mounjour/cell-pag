@@ -57,7 +57,7 @@ def test_modo_log_prepara_sem_chamar_cora(parcela_cora, settings, monkeypatch):
 
 
 @pytest.mark.django_db
-def test_cria_fatura_pix_e_boleto_com_valor_em_centavos(parcela_cora, settings, monkeypatch):
+def test_cria_pix_com_idempotencia_e_valor_em_centavos(parcela_cora, settings, monkeypatch):
     settings.CORA_PROVIDER = "cora"
     chamada = {}
 
@@ -68,26 +68,16 @@ def test_cria_fatura_pix_e_boleto_com_valor_em_centavos(parcela_cora, settings, 
             "status": "OPEN",
             "total_paid": 0,
             "pix": {"emv": "000201PIX-COPIA-E-COLA"},
-            "payment_options": {
-                "bank_slip": {
-                    "url": "https://cora.example/boleto.pdf",
-                    "digitable": "23790.00000 00000.000000 00000.000000 0 00000000000000",
-                    "barcode": "23790000000000000000000000000000000000000000",
-                }
-            },
         }
 
     monkeypatch.setattr("apps.pagamentos.cora_api.criar_fatura", criar)
     cobranca = obter_ou_criar_cobranca(parcela_cora, hoje=date(2026, 9, 4))
     assert chamada["payload"]["services"][0]["amount"] == 10000
-    assert chamada["payload"]["payment_forms"] == ["PIX", "BANK_SLIP"]
+    assert chamada["payload"]["payment_forms"] == ["PIX"]
     assert chamada["chave"] == cobranca.idempotency_key
     assert cobranca.status == CobrancaCora.Status.ABERTO
     assert cobranca.cora_id == "inv_123"
     assert cobranca.pix_copia_e_cola == "000201PIX-COPIA-E-COLA"
-    assert cobranca.boleto_url == "https://cora.example/boleto.pdf"
-    assert cobranca.boleto_linha_digitavel.startswith("23790.00000")
-    assert cobranca.boleto_codigo_barras.startswith("23790")
 
 
 @pytest.mark.django_db
@@ -117,32 +107,6 @@ def test_confirmacao_cora_da_baixa_automatica(parcela_cora, monkeypatch):
     assert pagamento.forma == Pagamento.Forma.PIX
     assert pagamento.usuario_baixa is None
     assert "inv_pago" in pagamento.observacao
-
-
-@pytest.mark.django_db
-def test_confirmacao_por_boleto_registra_forma_boleto(parcela_cora, monkeypatch):
-    cobranca = CobrancaCora.objects.create(
-        vencimento=parcela_cora,
-        cora_id="inv_boleto",
-        status=CobrancaCora.Status.ABERTO,
-        valor=Decimal("100.00"),
-        data_vencimento=parcela_cora.data_vencimento,
-    )
-    monkeypatch.setattr(
-        "apps.pagamentos.cora_api.consultar_fatura",
-        lambda cora_id: {
-            "id": cora_id,
-            "status": "PAID",
-            "total_paid": 10000,
-            "occurrence_date": "2026-09-04T12:00:00Z",
-            "payments": [{"method": "BANK_SLIP"}],
-        },
-    )
-    sincronizar_cobranca(cobranca)
-    cobranca.refresh_from_db()
-    assert cobranca.metodo_pago == CobrancaCora.Metodo.BOLETO
-    pagamento = Pagamento.objects.get(vencimento=parcela_cora)
-    assert pagamento.forma == Pagamento.Forma.BOLETO
 
 
 @pytest.mark.django_db

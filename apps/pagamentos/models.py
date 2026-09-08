@@ -118,7 +118,6 @@ class Pagamento(models.Model):
 
     class Forma(models.TextChoices):
         PIX = "pix", "Pix"
-        BOLETO = "boleto", "Boleto"
         DINHEIRO = "dinheiro", "Dinheiro"
         OUTRO = "outro", "Outro"
 
@@ -292,13 +291,13 @@ class Cobranca(models.Model):
 
 
 class CobrancaCora(models.Model):
-    """Fatura da Cora vinculada a uma única parcela, paga por Pix ou boleto.
+    """Cobrança Pix da Cora vinculada a uma única parcela.
 
-    A fatura é criada com as duas formas habilitadas: o cliente escolhe Pix
-    (copia e cola / QR) ou boleto (linha digitável). A baixa é a mesma nos dois
-    casos — a Cora confirma o pagamento e o reconciliador interno registra o
-    ``Pagamento``. O nome do modelo é ``CobrancaCora`` (não ``CobrancaPix``)
-    justamente para não induzir a erro agora que o boleto também sai daqui.
+    A fatura é criada só com Pix (``payment_forms: ["PIX"]``) — boleto e cartão
+    ficam de fora por decisão do projeto. A Cora confirma o pagamento e o
+    reconciliador interno registra o ``Pagamento``. O modelo chama-se
+    ``CobrancaCora`` (não ``CobrancaPix``) porque é o registro da integração com
+    a Cora, que pode ganhar outras formas no futuro.
     """
 
     class Status(models.TextChoices):
@@ -309,10 +308,6 @@ class CobrancaCora(models.Model):
         CANCELADO = "cancelado", "Cancelado"
         ERRO = "erro", "Erro"
 
-    class Metodo(models.TextChoices):
-        PIX = "pix", "Pix"
-        BOLETO = "boleto", "Boleto"
-
     vencimento = models.OneToOneField(
         Vencimento,
         on_delete=models.PROTECT,
@@ -321,17 +316,11 @@ class CobrancaCora(models.Model):
     idempotency_key = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     cora_id = models.CharField(max_length=100, blank=True, unique=True, null=True)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDENTE)
-    metodo_pago = models.CharField(
-        "forma usada no pagamento", max_length=10, choices=Metodo.choices, blank=True
-    )
     valor = models.DecimalField(max_digits=10, decimal_places=2)
     total_pago = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     data_vencimento = models.DateField()
     pix_copia_e_cola = models.TextField(blank=True)
     qr_code_url = models.URLField(blank=True, max_length=500)
-    boleto_url = models.URLField("PDF/link do boleto", blank=True, max_length=500)
-    boleto_linha_digitavel = models.CharField("linha digitável", max_length=60, blank=True)
-    boleto_codigo_barras = models.CharField("código de barras", max_length=60, blank=True)
     erro = models.TextField(blank=True)
     pago_em = models.DateTimeField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)

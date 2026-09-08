@@ -152,7 +152,7 @@ EVOLUTION_INSTANCE = env("EVOLUTION_INSTANCE", default="")
 # Token compartilhado que autentica o webhook de status da Evolution.
 EVOLUTION_WEBHOOK_TOKEN = env("EVOLUTION_WEBHOOK_TOKEN", default="")
 
-# Cobrança Cora — Pix + boleto (Fase 7). O padrão "log" não chama o banco.
+# Cobrança Pix via Cora (Fase 7). O padrão "log" não chama o banco.
 CORA_PROVIDER = env("CORA_PROVIDER", default="log")
 CORA_CLIENT_ID = env("CORA_CLIENT_ID", default="")
 CORA_CERT_PATH = env("CORA_CERT_PATH", default="")

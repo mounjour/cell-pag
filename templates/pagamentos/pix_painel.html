@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Acompanhamento Cora{% endblock %}
+{% block title %}Acompanhamento Pix{% endblock %}
 
 {% block content %}
-<h1>Acompanhamento Cora · {{ hoje|date:"d/m/Y" }}</h1>
-<p class="note">Cada parcela recebe uma cobrança da Cora que aceita <strong>Pix ou boleto</strong>. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
+<h1>Acompanhamento Pix · {{ hoje|date:"d/m/Y" }}</h1>
+<p class="note">Cada parcela recebe uma cobrança Pix da Cora. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
 
 <dl class="meta report-metrics">
   <div><dt>Na tela</dt><dd class="num">{{ total }}</dd></div>
@@ -16,7 +16,7 @@
 {% if cobrancas_cora %}
 <div class="tbl-wrap cards">
   <table>
-    <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Vencimento</th><th class="num">Valor</th><th>Status</th><th>Pix</th><th>Boleto</th></tr></thead>
+    <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Vencimento</th><th class="num">Valor</th><th>Status</th><th>Pix</th></tr></thead>
     <tbody>
     {% for c in cobrancas_cora %}
       <tr>
@@ -27,20 +27,10 @@
         <td data-label="Valor" class="num">R$ {{ c.valor|floatformat:2 }}</td>
         <td data-label="Status">
           <span class="pill {{ c.status }}">{% if c.status == 'pago' %}✅{% elif c.status == 'vencido' %}❌{% endif %} {{ c.get_status_display }}</span>
-          {% if c.metodo_pago %}<span class="helptext">pago via {{ c.get_metodo_pago_display }}</span>{% endif %}
           {% if c.erro %}<span class="helptext">{{ c.erro }}</span>{% endif %}
         </td>
         <td data-label="Pix">
           {% if c.pix_copia_e_cola %}<details><summary>Ver Copia e Cola</summary><textarea readonly rows="3">{{ c.pix_copia_e_cola }}</textarea></details>{% else %}—{% endif %}
-        </td>
-        <td data-label="Boleto">
-          {% if c.boleto_linha_digitavel or c.boleto_url %}
-            <details>
-              <summary>Ver boleto</summary>
-              {% if c.boleto_linha_digitavel %}<textarea readonly rows="2">{{ c.boleto_linha_digitavel }}</textarea>{% endif %}
-              {% if c.boleto_url %}<a href="{{ c.boleto_url }}" target="_blank" rel="noopener">Abrir boleto</a>{% endif %}
-            </details>
-          {% else %}—{% endif %}
         </td>
       </tr>
     {% endfor %}
@@ -48,6 +38,6 @@
   </table>
 </div>
 {% else %}
-<div class="empty"><p>Nenhuma cobrança Cora pendente ou paga hoje.</p></div>
+<div class="empty"><p>Nenhuma cobrança Pix pendente ou paga hoje.</p></div>
 {% endif %}
 {% endblock %}
