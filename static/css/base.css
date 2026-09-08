@@ -10,20 +10,48 @@
   --surface-2: #f1efe6;    /* faixa alternada de tabela, cabeçalho de tabela, :hover neutro */
   --ink: #1b211e;          /* texto principal */
   --ink-soft: #4f554f;     /* texto de apoio */
-  --ink-faint: #7a7f78;    /* só rótulos em maiúsculas pequenas (th, dt, helptext) */
+  --ink-faint: #6b6f67;    /* rótulos em maiúsculas pequenas (th, dt, helptext) — AA sobre papel */
   --line: #d6d4c8;         /* bordas e divisórias finas */
   --line-strong: #c2c0b1;  /* contorno de cartão/tabela e divisória de seção */
   --accent: #1e6e5a;       /* verde da casa — ação, foco, marca */
   --accent-ink: #124e3d;   /* verde escuro — texto sobre wash, links, hover de botão */
   --accent-wash: #e3ede8;  /* fundo verde suave — sucesso, pill "em dia", :hover de linha */
+  --on-accent: #ffffff;    /* texto sobre o verde cheio (botão primário) */
   --amber: #86560f;        /* âmbar — aviso intermediário */
   --amber-wash: #f3e8d2;
   --critical: #9d3526;     /* terracota — erro, inadimplência */
   --critical-wash: #f0ded9;
   --focus: #1e6e5a;        /* anel de foco */
-  --raise: 0 1px 2px rgba(27, 33, 30, 0.05);  /* elevação de papel — só um respiro, sem sombra pesada */
+  --raise: 0 1px 2px rgba(27, 33, 30, 0.06);  /* elevação de papel — só um respiro, sem sombra pesada */
   --tap: 44px;             /* alvo mínimo de toque */
-  color-scheme: light;
+  color-scheme: light dark;
+}
+
+/* ---------- Modo escuro (segue o tema do dispositivo) ----------
+   Mesmo "caderno de controle", num papel de grafite morno (nada de preto puro
+   nem verde neon). O verde da casa vira uma versão dessaturada; âmbar e
+   terracota também baixam o brilho; as sombras ganham um pouco de peso. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #3a3a3b;        /* cinza médio-escuro neutro — fundo da página (mais claro que os cartões) */
+    --surface: #2b2b2c;      /* cartões, tabelas, campos, barra do topo — recuados sobre o fundo */
+    --surface-2: #333334;    /* faixa alternada, cabeçalho de tabela, hover neutro */
+    --ink: #e6e5e3;
+    --ink-soft: #adadaa;
+    --ink-faint: #9a9a97;
+    --line: #454547;
+    --line-strong: #575759;
+    --accent: #5c9d89;       /* verde-pinho dessaturado */
+    --accent-ink: #8ab9a9;   /* texto sobre wash, links, hover */
+    --accent-wash: #32473f;  /* tintura verde discreta — visível sobre o cartão */
+    --on-accent: #0c211b;
+    --amber: #c39a5c;        /* ocre — sem brilho */
+    --amber-wash: #372f21;
+    --critical: #cf8d7e;     /* terracota suave */
+    --critical-wash: #392824;
+    --focus: #5c9d89;
+    --raise: 0 1px 3px rgba(0, 0, 0, 0.45);
+  }
 }
 
 * { box-sizing: border-box; }
@@ -38,7 +66,8 @@ body {
   font: 16px/1.55 "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-a { color: var(--accent-ink); }
+a { color: var(--accent-ink); transition: color 0.12s ease; }
+::selection { background: var(--accent-wash); color: var(--ink); }
 a:focus-visible,
 .linkish:focus-visible,
 button:focus-visible,
@@ -212,12 +241,12 @@ h2 {
   min-height: var(--tap);
   padding: 0.5rem 1.1rem;
   border: 1px solid var(--accent);
-  background: var(--accent); color: #fff; text-decoration: none; cursor: pointer;
+  background: var(--accent); color: var(--on-accent); text-decoration: none; cursor: pointer;
   font: inherit; font-weight: 600; border-radius: 2px;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 .btn.secondary { background: var(--surface); color: var(--accent-ink); }
-.btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: #fff; }
+.btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--on-accent); }
 .btn:active { transform: translateY(1px); }
 .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .btn[disabled], .btn:disabled { opacity: 0.55; pointer-events: none; }
@@ -263,6 +292,7 @@ textarea:focus {
 }
 table { border-collapse: collapse; width: 100%; background: var(--surface); font-size: 0.92rem; }
 th, td { text-align: left; padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tbody tr td { transition: background-color 0.1s ease; }
 td.wrap-cell { white-space: normal; min-width: 12rem; }
 th {
   background: var(--surface-2);
