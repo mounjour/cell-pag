@@ -243,6 +243,90 @@ def test_editar_contrato(auth_client, cliente):
     assert ct.estrutura == Contrato.Estrutura.SEMANAL
 
 
+# ---------- Gerar parcelas pela web (sem terminal) ----------
+
+@pytest.mark.django_db
+def test_gerar_vencimentos_via_web_cria_parcelas(auth_client, cliente):
+    ct = novo_contrato(
+        cliente,
+        estrutura=Contrato.Estrutura.MENSAL,
+        valor_parcela=Decimal("200.00"),
+        num_parcelas=12,
+        data_inicio=datetime.date(2026, 8, 1),
+    )
+    resp = auth_client.post(reverse("contratos:gerar_vencimentos", args=[ct.pk]), follow=True)
+    assert resp.status_code == 200
+    assert ct.vencimentos.count() > 0
+    assert "parcela(s) gerada(s)" in resp.content.decode()
+    ct.refresh_from_db()
+    assert ct.data_prevista_quitacao is not None
+
+
+@pytest.mark.django_db
+def test_gerar_vencimentos_via_web_e_idempotente(auth_client, cliente):
+    ct = novo_contrato(
+        cliente,
+        estrutura=Contrato.Estrutura.MENSAL,
+        valor_parcela=Decimal("200.00"),
+        num_parcelas=12,
+    )
+    url = reverse("contratos:gerar_vencimentos", args=[ct.pk])
+    auth_client.post(url)
+    total = ct.vencimentos.count()
+    resp = auth_client.post(url, follow=True)
+    assert ct.vencimentos.count() == total  # segunda vez não duplica
+    assert "Nenhuma parcela nova" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_gerar_vencimentos_via_web_sem_valor_parcela_avisa(auth_client, cliente):
+    ct = novo_contrato(cliente)  # valor_parcela = None
+    resp = auth_client.post(
+        reverse("contratos:gerar_vencimentos", args=[ct.pk]), follow=True
+    )
+    assert ct.vencimentos.count() == 0
+    assert "Informe o valor da parcela" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_gerar_vencimentos_via_web_contrato_quitado_nao_gera(auth_client, cliente):
+    ct = novo_contrato(
+        cliente,
+        status=Contrato.Status.QUITADO,
+        valor_parcela=Decimal("200.00"),
+        num_parcelas=12,
+    )
+    resp = auth_client.post(
+        reverse("contratos:gerar_vencimentos", args=[ct.pk]), follow=True
+    )
+    assert ct.vencimentos.count() == 0
+    assert "Contrato quitado" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_gerar_vencimentos_via_web_exige_login(client, cliente):
+    ct = novo_contrato(cliente)
+    resp = client.post(reverse("contratos:gerar_vencimentos", args=[ct.pk]))
+    assert resp.status_code == 302
+    assert "/entrar/" in resp["Location"]
+
+
+@pytest.mark.django_db
+def test_detalhe_mostra_botao_gerar_quando_nao_ha_parcelas(auth_client, cliente):
+    ct = novo_contrato(cliente, valor_parcela=Decimal("200.00"), num_parcelas=12)
+    corpo = auth_client.get(reverse("contratos:detalhe", args=[ct.pk])).content.decode()
+    assert reverse("contratos:gerar_vencimentos", args=[ct.pk]) in corpo
+    assert "Gerar parcelas" in corpo
+
+
+@pytest.mark.django_db
+def test_detalhe_sem_valor_parcela_manda_editar_o_contrato(auth_client, cliente):
+    ct = novo_contrato(cliente)  # valor_parcela = None
+    corpo = auth_client.get(reverse("contratos:detalhe", args=[ct.pk])).content.decode()
+    assert "manage.py gerar_vencimentos" not in corpo
+    assert reverse("contratos:editar", args=[ct.pk]) in corpo
+
+
 # ---------- Formulário: entrada de dados no celular ----------
 
 @pytest.mark.parametrize(

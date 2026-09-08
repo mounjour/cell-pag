@@ -138,6 +138,43 @@ class ContratoQuitarView(LoginRequiredMixin, View):
         return redirect("contratos:detalhe", pk=pk)
 
 
+class ContratoGerarVencimentosView(LoginRequiredMixin, View):
+    """Gera os `Vencimento` do contrato pela web (POST).
+
+    Faz o mesmo que o job ``manage.py gerar_vencimentos`` faz por contrato:
+    cria as parcelas que faltam até ~60 dias à frente (a partir de
+    `data_inicio` + estrutura + `valor_parcela`), recalcula a data prevista de
+    quitação e roda `sincronizar_status()`. Enquanto o cron do provedor não
+    roda (Fase 2 / deploy), este botão é a forma de gerar parcelas sem abrir o
+    terminal. Idempotente — pode ser clicado de novo depois para gerar as
+    parcelas seguintes.
+    """
+
+    def post(self, request, pk):
+        contrato = get_object_or_404(Contrato, pk=pk)
+        if contrato.quitado:
+            messages.info(request, "Contrato quitado — não há parcelas novas a gerar.")
+        elif contrato.valor_parcela is None:
+            messages.error(
+                request,
+                "Informe o valor da parcela no contrato antes de gerar as parcelas.",
+            )
+        else:
+            novos = contrato.gerar_vencimentos()
+            contrato.atualizar_data_prevista_quitacao()
+            contrato.sincronizar_status()
+            if novos:
+                messages.success(
+                    request, f"{len(novos)} nova(s) parcela(s) gerada(s)."
+                )
+            else:
+                messages.info(
+                    request,
+                    "Nenhuma parcela nova — as parcelas já cobrem o horizonte de 60 dias.",
+                )
+        return redirect("contratos:detalhe", pk=pk)
+
+
 class DocumentoCreateView(LoginRequiredMixin, CreateView):
     form_class = DocumentoContratoForm
     http_method_names = ["post"]
