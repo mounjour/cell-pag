@@ -7,7 +7,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
-from .models import CobrancaPix, EventoCora
+from .models import CobrancaCora, EventoCora
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -27,7 +27,7 @@ class CoraWebhookView(View):
         recurso_id = request.headers.get("webhook-resource-id", "")
         if not tipo.startswith("invoice.") or not recurso_id:
             return JsonResponse({"success": False, "erro": "Evento inválido."}, status=400)
-        if not CobrancaPix.objects.filter(cora_id=recurso_id).exists():
+        if not CobrancaCora.objects.filter(cora_id=recurso_id).exists():
             return JsonResponse({"success": True, "localizada": False})
 
         # Chave determinística limita replays e impede crescimento ilimitado da

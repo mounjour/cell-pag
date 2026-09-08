@@ -18,7 +18,7 @@ from apps.contratos.models import Contrato
 
 from .agenda import montar_agenda_do_dia
 from .forms import PagamentoForm
-from .models import CobrancaPix, Pagamento, Vencimento
+from .models import CobrancaCora, Pagamento, Vencimento
 
 
 class CobrarHojeView(LoginRequiredMixin, TemplateView):
@@ -37,13 +37,13 @@ class PixPainelView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         hoje = timezone.localdate()
         cobrancas = list(
-            CobrancaPix.objects.select_related("vencimento__contrato__cliente")
+            CobrancaCora.objects.select_related("vencimento__contrato__cliente")
             .filter(
                 Q(status__in=[
-                    CobrancaPix.Status.PENDENTE,
-                    CobrancaPix.Status.ABERTO,
-                    CobrancaPix.Status.VENCIDO,
-                    CobrancaPix.Status.ERRO,
+                    CobrancaCora.Status.PENDENTE,
+                    CobrancaCora.Status.ABERTO,
+                    CobrancaCora.Status.VENCIDO,
+                    CobrancaCora.Status.ERRO,
                 ])
                 | Q(pago_em__date=hoje)
             )
@@ -51,12 +51,12 @@ class PixPainelView(LoginRequiredMixin, TemplateView):
         )
         ctx.update(
             hoje=hoje,
-            cobrancas_pix=cobrancas,
+            cobrancas_cora=cobrancas,
             total=len(cobrancas),
-            pagas=sum(c.status == CobrancaPix.Status.PAGO for c in cobrancas),
-            nao_pagas=sum(c.status == CobrancaPix.Status.VENCIDO for c in cobrancas),
-            aguardando=sum(c.status in {CobrancaPix.Status.PENDENTE, CobrancaPix.Status.ABERTO} for c in cobrancas),
-            erros=sum(c.status == CobrancaPix.Status.ERRO for c in cobrancas),
+            pagas=sum(c.status == CobrancaCora.Status.PAGO for c in cobrancas),
+            nao_pagas=sum(c.status == CobrancaCora.Status.VENCIDO for c in cobrancas),
+            aguardando=sum(c.status in {CobrancaCora.Status.PENDENTE, CobrancaCora.Status.ABERTO} for c in cobrancas),
+            erros=sum(c.status == CobrancaCora.Status.ERRO for c in cobrancas),
         )
         return ctx
 

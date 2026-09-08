@@ -7,8 +7,12 @@ from validate_docbr import CPF as CPFGen
 
 from apps.clientes.models import Cliente
 from apps.contratos.models import Contrato
-from apps.pagamentos.models import CobrancaPix, EventoCora, Pagamento, Vencimento
-from apps.pagamentos.pix_cora import obter_ou_criar_pix, reconciliar_abertas, sincronizar_pix
+from apps.pagamentos.models import CobrancaCora, EventoCora, Pagamento, Vencimento
+from apps.pagamentos.pix_cora import (
+    obter_ou_criar_cobranca,
+    reconciliar_abertas,
+    sincronizar_cobranca,
+)
 
 
 date = datetime.date
@@ -47,13 +51,13 @@ def test_modo_log_prepara_sem_chamar_cora(parcela_cora, settings, monkeypatch):
         "apps.pagamentos.cora_api.criar_fatura",
         lambda *args, **kwargs: pytest.fail("não deveria chamar a Cora"),
     )
-    pix = obter_ou_criar_pix(parcela_cora, hoje=date(2026, 9, 4))
-    assert pix.status == CobrancaPix.Status.PENDENTE
-    assert pix.cora_id is None
+    cobranca = obter_ou_criar_cobranca(parcela_cora, hoje=date(2026, 9, 4))
+    assert cobranca.status == CobrancaCora.Status.PENDENTE
+    assert cobranca.cora_id is None
 
 
 @pytest.mark.django_db
-def test_cria_pix_com_idempotencia_e_valor_em_centavos(parcela_cora, settings, monkeypatch):
+def test_cria_fatura_pix_e_boleto_com_valor_em_centavos(parcela_cora, settings, monkeypatch):
     settings.CORA_PROVIDER = "cora"
     chamada = {}
 
@@ -64,24 +68,34 @@ def test_cria_pix_com_idempotencia_e_valor_em_centavos(parcela_cora, settings, m
             "status": "OPEN",
             "total_paid": 0,
             "pix": {"emv": "000201PIX-COPIA-E-COLA"},
-            "payment_options": {"bank_slip": {"url": "https://cora.example/qr.png"}},
+            "payment_options": {
+                "bank_slip": {
+                    "url": "https://cora.example/boleto.pdf",
+                    "digitable": "23790.00000 00000.000000 00000.000000 0 00000000000000",
+                    "barcode": "23790000000000000000000000000000000000000000",
+                }
+            },
         }
 
     monkeypatch.setattr("apps.pagamentos.cora_api.criar_fatura", criar)
-    pix = obter_ou_criar_pix(parcela_cora, hoje=date(2026, 9, 4))
+    cobranca = obter_ou_criar_cobranca(parcela_cora, hoje=date(2026, 9, 4))
     assert chamada["payload"]["services"][0]["amount"] == 10000
-    assert chamada["chave"] == pix.idempotency_key
-    assert pix.status == CobrancaPix.Status.ABERTO
-    assert pix.cora_id == "inv_123"
-    assert pix.pix_copia_e_cola == "000201PIX-COPIA-E-COLA"
+    assert chamada["payload"]["payment_forms"] == ["PIX", "BANK_SLIP"]
+    assert chamada["chave"] == cobranca.idempotency_key
+    assert cobranca.status == CobrancaCora.Status.ABERTO
+    assert cobranca.cora_id == "inv_123"
+    assert cobranca.pix_copia_e_cola == "000201PIX-COPIA-E-COLA"
+    assert cobranca.boleto_url == "https://cora.example/boleto.pdf"
+    assert cobranca.boleto_linha_digitavel.startswith("23790.00000")
+    assert cobranca.boleto_codigo_barras.startswith("23790")
 
 
 @pytest.mark.django_db
 def test_confirmacao_cora_da_baixa_automatica(parcela_cora, monkeypatch):
-    pix = CobrancaPix.objects.create(
+    cobranca = CobrancaCora.objects.create(
         vencimento=parcela_cora,
         cora_id="inv_pago",
-        status=CobrancaPix.Status.ABERTO,
+        status=CobrancaCora.Status.ABERTO,
         valor=Decimal("100.00"),
         data_vencimento=parcela_cora.data_vencimento,
     )
@@ -95,21 +109,48 @@ def test_confirmacao_cora_da_baixa_automatica(parcela_cora, monkeypatch):
             "pix": {"emv": "PIX"},
         },
     )
-    sincronizar_pix(pix)
-    pix.refresh_from_db()
-    assert pix.status == CobrancaPix.Status.PAGO
+    sincronizar_cobranca(cobranca)
+    cobranca.refresh_from_db()
+    assert cobranca.status == CobrancaCora.Status.PAGO
     pagamento = Pagamento.objects.get(vencimento=parcela_cora)
     assert pagamento.valor_pago == Decimal("100.00")
+    assert pagamento.forma == Pagamento.Forma.PIX
     assert pagamento.usuario_baixa is None
     assert "inv_pago" in pagamento.observacao
 
 
 @pytest.mark.django_db
+def test_confirmacao_por_boleto_registra_forma_boleto(parcela_cora, monkeypatch):
+    cobranca = CobrancaCora.objects.create(
+        vencimento=parcela_cora,
+        cora_id="inv_boleto",
+        status=CobrancaCora.Status.ABERTO,
+        valor=Decimal("100.00"),
+        data_vencimento=parcela_cora.data_vencimento,
+    )
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.consultar_fatura",
+        lambda cora_id: {
+            "id": cora_id,
+            "status": "PAID",
+            "total_paid": 10000,
+            "occurrence_date": "2026-09-04T12:00:00Z",
+            "payments": [{"method": "BANK_SLIP"}],
+        },
+    )
+    sincronizar_cobranca(cobranca)
+    cobranca.refresh_from_db()
+    assert cobranca.metodo_pago == CobrancaCora.Metodo.BOLETO
+    pagamento = Pagamento.objects.get(vencimento=parcela_cora)
+    assert pagamento.forma == Pagamento.Forma.BOLETO
+
+
+@pytest.mark.django_db
 def test_reconciliacao_processa_sinal_do_webhook(parcela_cora, monkeypatch):
-    pix = CobrancaPix.objects.create(
+    cobranca = CobrancaCora.objects.create(
         vencimento=parcela_cora,
         cora_id="inv_sinal",
-        status=CobrancaPix.Status.ABERTO,
+        status=CobrancaCora.Status.ABERTO,
         valor=Decimal("100.00"),
         data_vencimento=parcela_cora.data_vencimento,
     )
@@ -126,14 +167,15 @@ def test_reconciliacao_processa_sinal_do_webhook(parcela_cora, monkeypatch):
     evento.refresh_from_db()
     assert resultado["consultadas"] == 1
     assert evento.processado is True
+    assert cobranca.cora_id == "inv_sinal"
 
 
 @pytest.mark.django_db
 def test_webhook_cora_so_registra_fatura_conhecida(client, parcela_cora, monkeypatch):
-    CobrancaPix.objects.create(
+    CobrancaCora.objects.create(
         vencimento=parcela_cora,
         cora_id="inv_conhecida",
-        status=CobrancaPix.Status.ABERTO,
+        status=CobrancaCora.Status.ABERTO,
         valor=Decimal("100.00"),
         data_vencimento=parcela_cora.data_vencimento,
     )
@@ -159,10 +201,10 @@ def test_painel_pix_exige_login(client):
 
 @pytest.mark.django_db
 def test_painel_pix_mostra_pago_e_nao_pago(auth_client, parcela_cora):
-    CobrancaPix.objects.create(
+    CobrancaCora.objects.create(
         vencimento=parcela_cora,
         cora_id="inv_atrasada",
-        status=CobrancaPix.Status.VENCIDO,
+        status=CobrancaCora.Status.VENCIDO,
         valor=Decimal("100.00"),
         data_vencimento=parcela_cora.data_vencimento,
     )

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Cobranca, CobrancaPix, EventoCora, Pagamento, Vencimento
+from .models import Cobranca, CobrancaCora, EventoCora, Pagamento, Vencimento
 
 
 @admin.register(Vencimento)
@@ -84,13 +84,17 @@ class CobrancaAdmin(admin.ModelAdmin):
     date_hierarchy = "data_alvo"
 
 
-@admin.register(CobrancaPix)
-class CobrancaPixAdmin(admin.ModelAdmin):
-    list_display = ("data_vencimento", "vencimento", "valor", "total_pago", "status", "cora_id")
-    list_filter = ("status", "data_vencimento")
+@admin.register(CobrancaCora)
+class CobrancaCoraAdmin(admin.ModelAdmin):
+    list_display = (
+        "data_vencimento", "vencimento", "valor", "total_pago",
+        "status", "metodo_pago", "cora_id",
+    )
+    list_filter = ("status", "metodo_pago", "data_vencimento")
     search_fields = ("vencimento__contrato__cliente__nome", "cora_id")
     readonly_fields = (
-        "idempotency_key", "cora_id", "pix_copia_e_cola", "qr_code_url",
+        "idempotency_key", "cora_id", "metodo_pago", "pix_copia_e_cola", "qr_code_url",
+        "boleto_url", "boleto_linha_digitavel", "boleto_codigo_barras",
         "total_pago", "pago_em", "criado_em", "atualizado_em",
     )
 

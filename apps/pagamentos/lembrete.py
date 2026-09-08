@@ -1,18 +1,12 @@
 """Lembrete diário para a Yslane, via WhatsApp (Fase 2, Modalidade A).
 
-Decisão do Alisson (04/09): o canal do lembrete é **WhatsApp** (a ideia
-anterior de Telegram/e-mail — seção 13 do plano — não vale mais). Só que o
-projeto ainda não tem nenhuma integração de envio: o WhatsApp oficial (Cloud
-API, direto na Meta ou via BSP como 360dialog/Zenvia) só estava previsto para
-a Fase 6, e exige conta Business verificada + template de mensagem aprovado
-pela Meta — não é só mandar texto livre.
+Decisão do Alisson (04/09): o canal do lembrete é **WhatsApp**. O envio agora
+sai pela **Evolution API** (a mesma integração das cobranças ao cliente —
+``apps.pagamentos.whatsapp``), que manda texto livre, sem template aprovado.
 
-**Decisão (Alisson, 04/09): "deixar pronto, sem conta ainda".** `montar_texto`
-e `enviar_lembrete_diario` já fazem o trabalho de verdade (montam a agenda do
-dia e o texto do resumo); `enviar` é um **stub** — só registra no log o que
-seria mandado e devolve sucesso. Quando a conta Business existir, troca-se só
-o corpo de `enviar` pela chamada ao provedor escolhido; o resto do fluxo (job,
-texto, agenda) não muda.
+``montar_texto`` monta a agenda do dia e o resumo; ``enviar`` chama a Evolution
+quando ``WHATSAPP_PROVIDER=evolution`` e só registra no log quando ``log``
+(padrão). O resto do fluxo (job, texto, agenda) não muda.
 """
 
 import datetime
@@ -63,19 +57,31 @@ def montar_texto(agenda: dict) -> str:
 
 
 def enviar(texto: str, numero: str | None = None) -> bool:
-    """Envia (por ora, apenas registra) o lembrete no WhatsApp da Yslane.
+    """Envia o lembrete no WhatsApp da Yslane pela Evolution API.
 
-    **Stub** — sem conta WhatsApp Business ainda (Alisson, 04/09), não chama
-    nenhuma API. Loga o texto e devolve ``True`` (como se tivesse entrado na
-    fila de envio). Trocar o corpo desta função pela chamada ao provedor
-    (Cloud API/BSP) quando a conta existir — a assinatura já é a que o job usa.
+    Com ``WHATSAPP_PROVIDER=log`` (padrão) só registra o texto no log e devolve
+    ``True``. Com ``evolution``, chama a Evolution de verdade; falha de envio é
+    logada e devolve ``False``. A assinatura é a mesma que o job diário usa.
     """
     destino = numero or getattr(settings, "YSLANE_WHATSAPP_NUMERO", "")
     if not destino:
         logger.warning(
             "YSLANE_WHATSAPP_NUMERO não configurado no .env — lembrete só logado."
         )
-    logger.info("[lembrete WhatsApp -> %s]\n%s", destino or "(sem número)", texto)
+        logger.info("[lembrete WhatsApp -> (sem número)]\n%s", texto)
+        return True
+
+    from .whatsapp import WhatsAppErro, enviar_mensagem, numero_so_digitos
+
+    try:
+        resultado = enviar_mensagem(destinatario=numero_so_digitos(destino), texto=texto)
+    except WhatsAppErro as exc:
+        logger.error("Falha ao enviar o lembrete diário para %s: %s", destino, exc)
+        return False
+    if resultado["simulado"]:
+        logger.info("[lembrete WhatsApp -> %s (simulado)]\n%s", destino, texto)
+    else:
+        logger.info("[lembrete WhatsApp -> %s] enviado (id=%s)", destino, resultado["id"])
     return True
 
 

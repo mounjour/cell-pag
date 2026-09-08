@@ -1,9 +1,15 @@
-"""Cliente mínimo da API oficial WhatsApp Cloud API."""
+"""Cliente da Evolution API para envio de mensagens de WhatsApp.
+
+Substitui a WhatsApp Cloud API (Meta) — decisão do Alisson. A Evolution manda
+texto livre, então não há mais templates aprovados: a mensagem montada em
+``apps.pagamentos.cobranca`` vai inteira no corpo.
+"""
 
 import json
 import logging
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from django.conf import settings
@@ -23,59 +29,45 @@ def numero_so_digitos(numero) -> str:
     return re.sub(r"\D", "", numero)
 
 
-def enviar_template(*, destinatario: str, template: str, parametros: list[str]) -> dict:
-    """Envia um template ou apenas simula, conforme ``WHATSAPP_PROVIDER``."""
-    provider = settings.WHATSAPP_PROVIDER.lower().strip()
-    if provider == "log":
-        logger.info(
-            "[simulação WhatsApp -> %s] template=%s parametros=%s",
-            destinatario,
-            template,
-            parametros,
-        )
-        return {"simulado": True, "id": ""}
-    if provider != "meta":
-        raise WhatsAppErro(f"WHATSAPP_PROVIDER desconhecido: {provider!r}")
-
+def _config_evolution():
     faltando = [
         nome
         for nome, valor in (
-            ("WHATSAPP_GRAPH_VERSION", settings.WHATSAPP_GRAPH_VERSION),
-            ("WHATSAPP_PHONE_NUMBER_ID", settings.WHATSAPP_PHONE_NUMBER_ID),
-            ("WHATSAPP_ACCESS_TOKEN", settings.WHATSAPP_ACCESS_TOKEN),
+            ("EVOLUTION_API_URL", settings.EVOLUTION_API_URL),
+            ("EVOLUTION_API_KEY", settings.EVOLUTION_API_KEY),
+            ("EVOLUTION_INSTANCE", settings.EVOLUTION_INSTANCE),
         )
         if not valor
     ]
     if faltando:
-        raise WhatsAppErro("Configuração incompleta: " + ", ".join(faltando))
-
-    url = (
-        f"https://graph.facebook.com/{settings.WHATSAPP_GRAPH_VERSION}/"
-        f"{settings.WHATSAPP_PHONE_NUMBER_ID}/messages"
+        raise WhatsAppErro("Configuração Evolution incompleta: " + ", ".join(faltando))
+    return (
+        settings.EVOLUTION_API_URL.rstrip("/"),
+        settings.EVOLUTION_API_KEY,
+        settings.EVOLUTION_INSTANCE,
     )
-    corpo = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": destinatario,
-        "type": "template",
-        "template": {
-            "name": template,
-            "language": {"code": "pt_BR"},
-            "components": [
-                {
-                    "type": "body",
-                    "parameters": [{"type": "text", "text": str(p)} for p in parametros],
-                }
-            ],
-        },
-    }
+
+
+def enviar_mensagem(*, destinatario: str, texto: str) -> dict:
+    """Envia uma mensagem de texto, ou apenas simula conforme ``WHATSAPP_PROVIDER``.
+
+    ``log`` só registra e devolve ``{"simulado": True, "id": ""}``.
+    ``evolution`` chama ``POST {EVOLUTION_API_URL}/message/sendText/{instância}``.
+    """
+    provider = settings.WHATSAPP_PROVIDER.lower().strip()
+    if provider == "log":
+        logger.info("[simulação WhatsApp -> %s]\n%s", destinatario, texto)
+        return {"simulado": True, "id": ""}
+    if provider != "evolution":
+        raise WhatsAppErro(f"WHATSAPP_PROVIDER desconhecido: {provider!r}")
+
+    base_url, api_key, instancia = _config_evolution()
+    url = f"{base_url}/message/sendText/{urllib.parse.quote(instancia)}"
+    corpo = {"number": destinatario, "text": texto}
     requisicao = urllib.request.Request(
         url,
         data=json.dumps(corpo).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {settings.WHATSAPP_ACCESS_TOKEN}",
-            "Content-Type": "application/json",
-        },
+        headers={"apikey": api_key, "Content-Type": "application/json"},
         method="POST",
     )
     try:
@@ -83,11 +75,11 @@ def enviar_template(*, destinatario: str, template: str, parametros: list[str]) 
             dados = json.loads(resposta.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detalhe = exc.read().decode("utf-8", errors="replace")[:1000]
-        raise WhatsAppErro(f"Meta respondeu HTTP {exc.code}: {detalhe}") from exc
+        raise WhatsAppErro(f"Evolution respondeu HTTP {exc.code}: {detalhe}") from exc
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        raise WhatsAppErro(f"Falha ao chamar a API do WhatsApp: {exc}") from exc
+        raise WhatsAppErro(f"Falha ao chamar a Evolution API: {exc}") from exc
 
-    mensagens = dados.get("messages") or []
-    if not mensagens or not mensagens[0].get("id"):
-        raise WhatsAppErro("A Meta aceitou a requisição sem devolver o ID da mensagem.")
-    return {"simulado": False, "id": mensagens[0]["id"]}
+    identificador = (dados.get("key") or {}).get("id") or dados.get("id") or ""
+    if not identificador:
+        raise WhatsAppErro("A Evolution aceitou a requisição sem devolver o ID da mensagem.")
+    return {"simulado": False, "id": identificador}

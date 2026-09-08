@@ -8,8 +8,8 @@ from django.utils import timezone
 
 from .agenda import montar_agenda_do_dia
 from .models import Cobranca
-from .pix_cora import obter_ou_criar_pix
-from .whatsapp import WhatsAppErro, enviar_template, numero_so_digitos
+from .pix_cora import obter_ou_criar_cobranca
+from .whatsapp import WhatsAppErro, enviar_mensagem, numero_so_digitos
 
 logger = logging.getLogger("pagamentos.cobranca")
 
@@ -38,8 +38,6 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
     }
     if situacao.alertar_bloqueio:
         base.update(
-            template=settings.WHATSAPP_TEMPLATE_BLOQUEIO,
-            parametros=[base["nome"], base["numero"], base["aparelho"], base["dias"], base["valor"], chave_pix],
             mensagem=(
                 f"Oi, {base['nome']}! A parcela {numero} do seu {base['aparelho']} está "
                 f"com {base['dias']} dias de atraso. Preciso que seja regularizada hoje para "
@@ -49,8 +47,6 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
         )
     elif situacao.dias_atraso:
         base.update(
-            template=settings.WHATSAPP_TEMPLATE_ATRASO,
-            parametros=[base["nome"], base["numero"], base["aparelho"], base["data"], base["dias"], base["valor"], chave_pix],
             mensagem=(
                 f"Oi, {base['nome']}! A parcela {numero} do seu {base['aparelho']}, que venceu "
                 f"em {base['data']}, está em aberto ({base['dias']} dia(s) de atraso). "
@@ -60,8 +56,6 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
         )
     else:
         base.update(
-            template=settings.WHATSAPP_TEMPLATE_VENCIMENTO,
-            parametros=[base["nome"], base["data"], base["numero"], base["aparelho"], base["valor"], chave_pix],
             mensagem=(
                 f"Oi, {base['nome']}! Passando pra lembrar que hoje ({base['data']}) vence a "
                 f"parcela {numero} do seu {base['aparelho']}, no valor de R$ {base['valor']}. "
@@ -82,7 +76,7 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
         contrato = linha["contrato"]
         destinatario = numero_so_digitos(contrato.cliente.telefone_whatsapp)
         pix = (
-            obter_ou_criar_pix(dados_iniciais["vencimento"], hoje=hoje)
+            obter_ou_criar_cobranca(dados_iniciais["vencimento"], hoje=hoje)
             if dados_iniciais["vencimento"]
             else None
         )
@@ -115,10 +109,9 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             continue
 
         try:
-            resposta = enviar_template(
+            resposta = enviar_mensagem(
                 destinatario=destinatario,
-                template=dados["template"],
-                parametros=dados["parametros"],
+                texto=dados["mensagem"],
             )
         except WhatsAppErro as exc:
             cobranca.status = Cobranca.Status.ERRO
