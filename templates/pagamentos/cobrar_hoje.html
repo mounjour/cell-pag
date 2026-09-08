@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Cobrar hoje{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
 
 {% block content %}
 <h1>Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
@@ -16,7 +17,7 @@
   <div class="tbl-wrap cards cobrar-hoje">
     <table>
       <thead>
-        <tr><th>Cliente</th><th>Contrato</th><th>Pix</th><th>Situação</th><th class="num">A cobrar</th><th>Mensagem</th><th>Contato</th></tr>
+        <tr><th>Cliente</th><th>Contrato</th><th>Situação</th><th class="num">A cobrar</th><th>Envio</th><th>Contato</th></tr>
       </thead>
       <tbody>
         {% for l in linhas %}
@@ -25,9 +26,6 @@
             <td class="contrato-cell" data-label="Contrato">
               <a href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a>
               <span class="estrutura">· {{ l.contrato.get_estrutura_display }}</span>
-            </td>
-            <td data-label="Pix">
-              {% if l.pix %}<span class="pill {{ l.pix.status }}">{{ l.pix.get_status_display }}</span>{% else %}<span class="pill">Não gerado</span>{% endif %}
             </td>
             <td class="situacao-cell" data-label="Situação">
               {% if l.vence_hoje %}
@@ -50,13 +48,19 @@
                 <span class="valor-cobrar">—</span>
               {% endif %}
             </td>
-            <td data-label="Mensagem">
-              {% if l.cobranca %}
-                <span class="pill {{ l.cobranca.status }}">{{ l.cobranca.get_status_display }}</span>
-                {% if l.cobranca.erro %}<span class="helptext">{{ l.cobranca.erro }}</span>{% endif %}
-              {% else %}
-                <span class="pill">Não preparada</span>
-              {% endif %}
+            <td class="envio-cell" data-label="Envio">
+              <span class="envio-vias">
+                {% if l.pix %}
+                  <span class="pill {{ l.pix.status }}">Pix · {{ l.pix.get_status_display }}</span>
+                {% else %}
+                  <span class="pill">Pix · não gerado</span>
+                {% endif %}
+                {% if l.cobranca %}
+                  <span class="pill {{ l.cobranca.status }}" {% if l.cobranca.erro %}title="{{ l.cobranca.erro }}"{% endif %}>Msg · {{ l.cobranca.get_status_display }}</span>
+                {% else %}
+                  <span class="pill">Msg · não preparada</span>
+                {% endif %}
+              </span>
             </td>
             <td data-label="Contato" class="card-stack contato-cell">
               <span class="contato-vias">

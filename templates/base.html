@@ -29,7 +29,7 @@
     {% endif %}
   </header>
 
-  <main class="wrap">
+  <main class="wrap {% block wrap_class %}{% endblock %}">
     {% if messages %}
       <ul class="messages">
         {% for m in messages %}<li class="msg {{ m.tags }}">{{ m }}</li>{% endfor %}
