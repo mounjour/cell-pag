@@ -489,38 +489,56 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
 .pill.vencido { background: var(--critical-wash); border-color: var(--critical); color: var(--critical); }
 .pill.cancelado { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink-soft); }
 
-/* Painel "cobrar hoje": pílulas + "N dias de atraso" empilham no celular
-   em vez de quebrar palavra por palavra numa ficha estreita. */
+/* ─────────── Painel "Cobrar hoje" ─────────── */
 .atraso-dias { white-space: nowrap; color: var(--ink-soft); font-size: 0.9rem; }
 
-/* Separador "·" antes de "registrar pagamento" — só no desktop, onde os
+/* Valor a cobrar: é o número que a Yslane precisa ver primeiro. O detalhe
+   ("parcela + juros") desce numa linha própria, no desktop e no celular. */
+.valor-cobrar { font-weight: 700; font-size: 1.05rem; }
+.cobrar-cell .helptext { display: block; }
+.contrato-cell .estrutura { color: var(--ink-soft); }
+
+/* Separador "·" antes de "Registrar pagamento" — só no desktop, onde os
    contatos ficam numa linha só. No celular vira botão. */
 .contato-registrar::before { content: "·\00a0"; color: var(--ink-faint); margin-right: 0.15rem; }
 
 @media (max-width: 639px) {
-  /* Situação: rótulo na própria linha, depois selo + "N dias" numa linha
-     que quebra sozinha (sem o valor jogado para a borda direita). */
-  .tbl-wrap.cards td[data-label="Situação"] { flex-wrap: wrap; align-items: center; gap: 0.35rem; }
-  .tbl-wrap.cards td[data-label="Situação"]::before { flex-basis: 100%; margin-right: 0; }
+  /* -- Cabeçalho da ficha: nome + contrato juntos, com um traço só embaixo.
+        O contrato vira subtítulo (sem o rótulo "CONTRATO"). -- */
+  .tbl-wrap.cards.cobrar-hoje td.cli-cell {
+    border-bottom: none; margin-bottom: 0; padding-bottom: 0.15rem;
+  }
+  .tbl-wrap.cards.cobrar-hoje td.contrato-cell {
+    display: block; padding: 0 0 0.6rem; margin-bottom: 0.4rem;
+    border-bottom: 1px solid var(--line); font-size: 0.9rem;
+  }
+  .tbl-wrap.cards.cobrar-hoje td.contrato-cell::before { content: none; }
+  .tbl-wrap.cards.cobrar-hoje td.contrato-cell a { font-weight: 600; }
 
-  /* A cobrar: valor na linha do rótulo, "parcela + juros" desce inteiro embaixo. */
-  .tbl-wrap.cards td[data-label="A cobrar"] .helptext {
-    flex-basis: 100%; margin-top: 0.1rem;
+  /* -- Situação: rótulo na própria linha; selo + "N dias" numa linha que
+        quebra sozinha (sem jogar o texto para a borda direita) -- */
+  .tbl-wrap.cards.cobrar-hoje td.situacao-cell { align-items: center; gap: 0.35rem; }
+  .tbl-wrap.cards.cobrar-hoje td.situacao-cell::before { flex-basis: 100%; margin-right: 0; }
+
+  /* -- A cobrar: valor grande na linha do rótulo, detalhe inteiro embaixo -- */
+  .tbl-wrap.cards.cobrar-hoje td.cobrar-cell { align-items: baseline; }
+  .tbl-wrap.cards.cobrar-hoje td.cobrar-cell .helptext {
+    flex-basis: 100%; margin-top: 0.15rem;
   }
 
-  /* Contato: telefone + WhatsApp numa linha, "registrar pagamento" vira
-     botão de largura total — é a ação principal da tela. */
-  .tbl-wrap.cards td[data-label="Contato"] .contato-vias {
+  /* -- Contato: telefone + WhatsApp numa linha; "Registrar pagamento" vira
+        botão de largura total — é a ação principal da tela -- */
+  .tbl-wrap.cards.cobrar-hoje td.contato-cell .contato-vias {
     display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.4rem;
   }
-  .tbl-wrap.cards td[data-label="Contato"] .contato-registrar {
+  .tbl-wrap.cards.cobrar-hoje td.contato-cell .contato-registrar {
     display: flex; align-items: center; justify-content: center;
-    min-height: var(--tap); padding: 0.4rem 0.9rem;
+    min-height: var(--tap); margin-top: 0.15rem; padding: 0.4rem 0.9rem;
     border: 1px solid var(--accent); border-radius: 2px;
     background: var(--surface); color: var(--accent-ink);
     font-weight: 600; text-decoration: none;
   }
-  .tbl-wrap.cards td[data-label="Contato"] .contato-registrar::before { content: none; }
+  .tbl-wrap.cards.cobrar-hoje td.contato-cell .contato-registrar::before { content: none; }
 }
 
 /* ---------- Ficha (grade de dados do detalhe) ---------- */
