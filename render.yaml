@@ -22,21 +22,19 @@ envVarGroups:
       # Lembrete diário da Yslane (E.164, ex.: +5583988887777)
       - key: YSLANE_WHATSAPP_NUMERO
         sync: false
-      # WhatsApp Cloud API — mantém "log" até a conta Meta e os 3 templates
-      # estarem prontos (docs/WHATSAPP.md). Depois troca para "meta" no painel.
+      # WhatsApp via Evolution API — mantém "log" até ter uma instância da
+      # Evolution conectada (docs/WHATSAPP.md). Depois troca para "evolution".
       - key: WHATSAPP_PROVIDER
         value: log
-      - key: WHATSAPP_GRAPH_VERSION
-        sync: false
-      - key: WHATSAPP_PHONE_NUMBER_ID
-        sync: false
-      - key: WHATSAPP_ACCESS_TOKEN
-        sync: false
-      - key: WHATSAPP_WEBHOOK_VERIFY_TOKEN
-        sync: false
-      - key: WHATSAPP_APP_SECRET
-        sync: false
       - key: WHATSAPP_PIX_CHAVE
+        sync: false
+      - key: EVOLUTION_API_URL
+        sync: false
+      - key: EVOLUTION_API_KEY
+        sync: false
+      - key: EVOLUTION_INSTANCE
+        sync: false
+      - key: EVOLUTION_WEBHOOK_TOKEN
         sync: false
       # Pix Cora — mantém "log" até ter CoraPro + certificado mTLS (docs/CORA.md).
       - key: CORA_PROVIDER

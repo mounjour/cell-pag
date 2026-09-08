@@ -16,7 +16,7 @@ O [`render.yaml`](../render.yaml) na raiz descreve os três de uma vez (Blueprin
 | Item | Onde | Necessário para |
 |---|---|---|
 | Criar conta no Render e conectar este repositório do GitHub | render.com | tudo |
-| Conta **WhatsApp Business** verificada na Meta + 3 templates aprovados | business.facebook.com | envio real de lembrete/cobrança — ver [`WHATSAPP.md`](WHATSAPP.md) |
+| Subir uma instância da **Evolution API** (Docker) e conectar um número por QR Code | servidor próprio | envio real de lembrete/cobrança — ver [`WHATSAPP.md`](WHATSAPP.md) |
 | Contratar **CoraPro** + gerar certificado mTLS | app/Web da Cora | geração real de Pix — ver [`CORA.md`](CORA.md) |
 
 Enquanto (2) e (3) não estiverem prontos, o sistema fica com
@@ -53,8 +53,8 @@ ainda não tem — o modo `log` não exige):
 | Variável | Valor agora |
 |---|---|
 | `YSLANE_WHATSAPP_NUMERO` | número da Yslane em E.164, ex.: `+5583988887777` |
-| `WHATSAPP_PROVIDER` | `log` (troque para `meta` quando os templates forem aprovados) |
-| `WHATSAPP_*` (demais) | em branco por enquanto — ver [`WHATSAPP.md`](WHATSAPP.md) |
+| `WHATSAPP_PROVIDER` | `log` (troque para `evolution` quando a instância estiver conectada) |
+| `WHATSAPP_PIX_CHAVE`, `EVOLUTION_*` | em branco por enquanto — ver [`WHATSAPP.md`](WHATSAPP.md) |
 | `CORA_PROVIDER` | `log` (troque para `cora` quando tiver CoraPro) |
 | `CORA_*` (demais) | em branco por enquanto — ver [`CORA.md`](CORA.md) |
 
@@ -157,11 +157,10 @@ Para avaliação, o free resolve. Para uso diário de verdade, conte com
 
 **WhatsApp** (detalhe em [`WHATSAPP.md`](WHATSAPP.md)):
 
-- [ ] Conta WhatsApp Business verificada + número comercial
-- [ ] Templates `cobranca_vencimento`, `cobranca_atraso`, `cobranca_bloqueio` aprovados em `pt_BR`
-- [ ] Variáveis `WHATSAPP_GRAPH_VERSION`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_WEBHOOK_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_PIX_CHAVE` preenchidas
-- [ ] Webhook `https://cell-pag.onrender.com/pagamentos/webhooks/whatsapp/` cadastrado na Meta
-- [ ] `WHATSAPP_PROVIDER=meta`
+- [ ] Instância da Evolution API no ar + número conectado por QR Code
+- [ ] Variáveis `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`, `EVOLUTION_WEBHOOK_TOKEN`, `WHATSAPP_PIX_CHAVE` preenchidas
+- [ ] Webhook `messages.update` → `https://cell-pag.onrender.com/pagamentos/webhooks/whatsapp/` cadastrado na Evolution, autenticado pelo `EVOLUTION_WEBHOOK_TOKEN`
+- [ ] `WHATSAPP_PROVIDER=evolution`
 
 **Cora** (detalhe em [`CORA.md`](CORA.md)):
 
