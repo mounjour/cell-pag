@@ -451,3 +451,26 @@ def test_cobrar_hoje_usa_vencimento_gerado_em_vez_do_proximo_vencimento_manual(a
     resp = auth_client.get(reverse("pagamentos:cobrar_hoje"))
     apelidos = {linha["contrato"].apelido for linha in resp.context["linhas"]}
     assert "ComVencimento" not in apelidos
+
+
+@pytest.mark.django_db
+def test_cobrar_hoje_mostra_valor_mesmo_sem_valor_parcela(auth_client, cliente):
+    """Contrato sem `valor_parcela` mas em atraso: o painel ainda tem que
+    mostrar o valor a cobrar (só os juros) — não pode aparecer "—"."""
+    hoje = date.today()
+    _contrato(
+        cliente,
+        apelido="SemParcela",
+        estrutura=Contrato.Estrutura.MENSAL,
+        valor_parcela=None,
+        proximo_vencimento=hoje - timedelta(days=10),
+    )
+    resp = auth_client.get(reverse("pagamentos:cobrar_hoje"))
+    linha = next(l for l in resp.context["linhas"] if l["contrato"].apelido == "SemParcela")
+    assert linha["parcela"] is None
+    assert linha["a_cobrar"] > 0
+    # a célula "A cobrar" traz o valor (só juros) em vez de "—"
+    corpo = resp.content.decode()
+    celula = corpo.split("SemParcela", 1)[1].split("</tr>", 1)[0]
+    assert "só juros" in celula
+    assert 'class="valor-cobrar' in celula

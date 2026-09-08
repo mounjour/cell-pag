@@ -121,11 +121,13 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # WhiteNoise serve os estáticos em produção a partir de STATIC_ROOT (após
-# collectstatic). O storage com hash/manifesto entra no endurecimento de deploy.
+# collectstatic). O storage com manifesto põe um hash no nome de cada arquivo
+# (base.<hash>.css) — assim uma mudança de CSS/JS invalida o cache do navegador
+# sozinha, sem o usuário precisar dar "recarregar forçado".
 if not DEBUG:
     STORAGES = {
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
     }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
