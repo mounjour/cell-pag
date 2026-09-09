@@ -58,15 +58,22 @@ ainda não tem — o modo `log` não exige):
 | `CORA_PROVIDER` | `log` (troque para `cora` quando tiver CoraPro) |
 | `CORA_*` (demais) | em branco por enquanto — ver [`CORA.md`](CORA.md) |
 
-`SECRET_KEY` é gerada automaticamente. `DATABASE_URL`, `ALLOWED_HOSTS` e
-`CSRF_TRUSTED_ORIGINS` já se resolvem sozinhas no Render
-(`RENDER_EXTERNAL_HOSTNAME`).
+`SECRET_KEY` é gerada automaticamente (e o app **recusa** subir com `DEBUG=False`
+sem ela). `DATABASE_URL`, `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS` se resolvem
+sozinhos no Render via `RENDER_EXTERNAL_HOSTNAME` — **não** defina `ALLOWED_HOSTS`
+com curinga (`.onrender.com`); se usar domínio próprio, coloque o host exato.
 
 > **Certificado da Cora:** o Render não tem sistema de arquivos persistente para
 > subir `.pem` pelo painel. Quando for ativar a Cora, use um
 > [Secret File](https://render.com/docs/configure-environment-variables#secret-files)
 > no serviço web **e** no cron, e aponte `CORA_CERT_PATH` / `CORA_KEY_PATH` para
 > o caminho do secret file (ex.: `/etc/secrets/cora-cert.pem`).
+
+> **Anexos (comprovantes, documentos):** o disco do container é efêmero — sem um
+> [Persistent Disk](https://render.com/docs/disks) montado em `MEDIA_ROOT`
+> (`/opt/render/project/src/media`), os arquivos enviados somem a cada deploy.
+> A validação (pdf/jpg/png/webp até 10 MB) e a entrega autenticada já estão no
+> código; falta só o disco quando quiserem guardar anexos de verdade.
 
 ## 4. Primeiro acesso
 

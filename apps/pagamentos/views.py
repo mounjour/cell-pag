@@ -14,6 +14,7 @@ from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
 from django.utils import timezone
 
+from apps.arquivos import servir_anexo
 from apps.contratos.models import Contrato
 
 from .agenda import montar_agenda_do_dia
@@ -170,3 +171,11 @@ class HistoricoPagamentosView(LoginRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["filtrado"] = bool(self.cliente_id or self.contrato_id)
         return ctx
+
+
+class ComprovanteDownloadView(LoginRequiredMixin, View):
+    """Baixa autenticada do comprovante de um pagamento (nunca por URL pública)."""
+
+    def get(self, request, pk):
+        pagamento = get_object_or_404(Pagamento, pk=pk)
+        return servir_anexo(pagamento.comprovante)

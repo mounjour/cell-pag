@@ -1,5 +1,3 @@
-from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
@@ -19,8 +17,8 @@ urlpatterns = [
     ),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Mídia (comprovantes, documentos) NÃO é servida por URL pública — só pelas
+# views autenticadas pagamentos:comprovante / contratos:documento_baixar.
 
 admin.site.site_header = "Acompanhamento de Pagamentos"
 admin.site.site_title = "Acompanhamento de Pagamentos"

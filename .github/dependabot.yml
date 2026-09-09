@@ -1,0 +1,18 @@
+# Varredura semanal de dependências (item 12 de docs/SEGURANCA.md).
+# O Dependabot abre PRs quando sai correção de segurança ou versão nova.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      dev-e-transitivas:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

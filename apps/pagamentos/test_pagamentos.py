@@ -316,3 +316,27 @@ def test_baixa_gera_registro_no_auditlog(cliente):
     ct = _contrato_com_parcelas(cliente)
     _baixa(ct, 1, "40.00")
     assert LogEntry.objects.filter(content_type__model="pagamento").exists()
+
+
+# ── download do comprovante (sempre autenticado, como anexo) ────────────────
+
+@pytest.mark.django_db
+def test_comprovante_so_baixa_autenticado(auth_client, cliente, settings, tmp_path):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from django.test import Client
+
+    settings.MEDIA_ROOT = str(tmp_path)
+    ct = _contrato_com_parcelas(cliente)
+    pag = _baixa(
+        ct, 1, "40.00",
+        comprovante=SimpleUploadedFile("cp.pdf", b"%PDF-1.4 comprova", content_type="application/pdf"),
+    )
+    url = reverse("pagamentos:comprovante", args=[pag.pk])
+
+    anon = Client().get(url)
+    assert anon.status_code == 302 and "/entrar/" in anon["Location"]
+
+    ok = auth_client.get(url)
+    assert ok.status_code == 200
+    assert ok["X-Content-Type-Options"] == "nosniff"
+    assert "attachment" in ok["Content-Disposition"]

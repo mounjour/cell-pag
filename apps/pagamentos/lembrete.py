@@ -68,20 +68,22 @@ def enviar(texto: str, numero: str | None = None) -> bool:
         logger.warning(
             "YSLANE_WHATSAPP_NUMERO não configurado no .env — lembrete só logado."
         )
-        logger.info("[lembrete WhatsApp -> (sem número)]\n%s", texto)
+        logger.debug("[lembrete WhatsApp -> (sem número)]\n%s", texto)
         return True
 
-    from .whatsapp import WhatsAppErro, enviar_mensagem, numero_so_digitos
+    from .whatsapp import WhatsAppErro, enviar_mensagem, mascara_numero, numero_so_digitos
 
+    alvo = mascara_numero(destino)
     try:
         resultado = enviar_mensagem(destinatario=numero_so_digitos(destino), texto=texto)
     except WhatsAppErro as exc:
-        logger.error("Falha ao enviar o lembrete diário para %s: %s", destino, exc)
+        logger.error("Falha ao enviar o lembrete diário para %s: %s", alvo, exc)
         return False
     if resultado["simulado"]:
-        logger.info("[lembrete WhatsApp -> %s (simulado)]\n%s", destino, texto)
+        logger.info("[lembrete WhatsApp -> %s] simulado (%d caractere(s))", alvo, len(texto))
     else:
-        logger.info("[lembrete WhatsApp -> %s] enviado (id=%s)", destino, resultado["id"])
+        logger.info("[lembrete WhatsApp -> %s] enviado (id=%s)", alvo, resultado["id"])
+    logger.debug("[lembrete WhatsApp -> %s]\n%s", destino, texto)
     return True
 
 

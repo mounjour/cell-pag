@@ -20,4 +20,9 @@ urlpatterns = [
         views.DocumentoCreateView.as_view(),
         name="documento_novo",
     ),
+    path(
+        "documentos/<int:pk>/baixar/",
+        views.DocumentoDownloadView.as_view(),
+        name="documento_baixar",
+    ),
 ]

@@ -6,10 +6,11 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
+from apps.arquivos import servir_anexo
 from apps.clientes.models import Cliente
 
 from .forms import ContratoForm, DocumentoContratoForm
-from .models import Contrato
+from .models import Contrato, DocumentoContrato
 
 
 def _avisar_se_parcela_nao_bate(request, contrato):
@@ -213,3 +214,11 @@ class DocumentoCreateView(LoginRequiredMixin, CreateView):
     def form_invalid(self, form):
         messages.error(self.request, "Não foi possível anexar o documento. Verifique o arquivo.")
         return redirect("contratos:detalhe", pk=self.contrato.pk)
+
+
+class DocumentoDownloadView(LoginRequiredMixin, View):
+    """Baixa autenticada de um documento anexo (nunca por URL pública)."""
+
+    def get(self, request, pk):
+        documento = get_object_or_404(DocumentoContrato, pk=pk)
+        return servir_anexo(documento.arquivo)

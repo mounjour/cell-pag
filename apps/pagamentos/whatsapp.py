@@ -29,6 +29,12 @@ def numero_so_digitos(numero) -> str:
     return re.sub(r"\D", "", numero)
 
 
+def mascara_numero(numero) -> str:
+    """Telefone reduzido aos 4 últimos dígitos, para não vazar PII no log."""
+    digitos = re.sub(r"\D", "", str(numero or ""))
+    return "…" + digitos[-4:] if len(digitos) >= 4 else "…"
+
+
 def _config_evolution():
     faltando = [
         nome
@@ -56,7 +62,12 @@ def enviar_mensagem(*, destinatario: str, texto: str) -> dict:
     """
     provider = settings.WHATSAPP_PROVIDER.lower().strip()
     if provider == "log":
-        logger.info("[simulação WhatsApp -> %s]\n%s", destinatario, texto)
+        logger.info(
+            "[simulação WhatsApp -> %s] mensagem de %d caractere(s)",
+            mascara_numero(destinatario),
+            len(texto),
+        )
+        logger.debug("[simulação WhatsApp -> %s]\n%s", destinatario, texto)
         return {"simulado": True, "id": ""}
     if provider != "evolution":
         raise WhatsAppErro(f"WHATSAPP_PROVIDER desconhecido: {provider!r}")
@@ -74,10 +85,12 @@ def enviar_mensagem(*, destinatario: str, texto: str) -> dict:
         with urllib.request.urlopen(requisicao, timeout=20) as resposta:
             dados = json.loads(resposta.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        detalhe = exc.read().decode("utf-8", errors="replace")[:1000]
-        raise WhatsAppErro(f"Evolution respondeu HTTP {exc.code}: {detalhe}") from exc
+        detalhe = exc.read().decode("utf-8", errors="replace")[:500]
+        logger.warning("Evolution respondeu HTTP %s: %s", exc.code, detalhe)
+        raise WhatsAppErro(f"A Evolution recusou o envio (HTTP {exc.code}).") from exc
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        raise WhatsAppErro(f"Falha ao chamar a Evolution API: {exc}") from exc
+        logger.warning("Falha ao chamar a Evolution API: %s", exc)
+        raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
 
     identificador = (dados.get("key") or {}).get("id") or dados.get("id") or ""
     if not identificador:

@@ -17,8 +17,10 @@ envVarGroups:
         generateValue: true
       - key: DEBUG
         value: "False"
-      - key: ALLOWED_HOSTS
-        value: ".onrender.com"
+      # ALLOWED_HOSTS não é definido aqui de propósito: o settings.py usa o
+      # RENDER_EXTERNAL_HOSTNAME (host real do serviço). Um curinga como
+      # ".onrender.com" aceitaria o header Host de qualquer app do Render.
+      # Para domínio próprio, defina ALLOWED_HOSTS no painel com o host exato.
       # Lembrete diário da Yslane (E.164, ex.: +5583988887777)
       - key: YSLANE_WHATSAPP_NUMERO
         sync: false
@@ -49,6 +51,8 @@ envVarGroups:
         sync: false
       - key: CORA_API_BASE_URL
         sync: false
+      - key: CORA_WEBHOOK_TOKEN
+        generateValue: true
 
 services:
   # ── Site ────────────────────────────────────────────────────────────────────
@@ -62,7 +66,7 @@ services:
     healthCheckPath: /entrar/
     envVars:
       - key: PYTHON_VERSION
-        value: "3.12.7"
+        value: "3.12.10"
       - key: WEB_CONCURRENCY
         value: "2"
       - key: DATABASE_URL
@@ -83,7 +87,7 @@ services:
     startCommand: "python manage.py rotina_diaria"
     envVars:
       - key: PYTHON_VERSION
-        value: "3.12.7"
+        value: "3.12.10"
       - key: DATABASE_URL
         fromDatabase:
           name: cell-pag-db
