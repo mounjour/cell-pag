@@ -7,6 +7,16 @@ caixa a resolver; a ordem é por prioridade, não por esforço.
 Pendências que não são código: habilitar Dependabot nas Settings do repo (12) e
 adicionar um disco persistente no Render para os anexos (2).
 
+**Passos de painel/conta (GitHub, Render, senhas, LGPD):**
+[`SEGURANCA-OPERACIONAL.md`](SEGURANCA-OPERACIONAL.md) — runbook do que só o
+Alisson faz. LGPD (aviso de privacidade, retenção de anexos, pedido do titular):
+[`LGPD.md`](LGPD.md).
+
+**Depois da branch:** a tela de bloqueio do `django-axes` deixou de ser o
+HTTP 429 cru — `AXES_LOCKOUT_TEMPLATE = "usuarios/bloqueado.html"` mostra uma
+página "Muitas tentativas" com o tempo de espera e como liberar. Status
+continua 429.
+
 ## Já está bem resolvido (linha de base)
 
 - Templates com autoescape; **nenhum** `mark_safe` / `|safe` / `format_html` no código.
