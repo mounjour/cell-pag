@@ -56,6 +56,7 @@ THIRD_PARTY_APPS = [
     "phonenumber_field",
     "import_export",
     "auditlog",
+    "axes",  # lockout de login por força-bruta
 ]
 
 LOCAL_APPS = [
@@ -79,6 +80,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Registra o usuário logado em cada alteração auditada (Fase 3).
     "auditlog.middleware.AuditlogMiddleware",
+    # django-axes: precisa vir por último (depois do AuthenticationMiddleware).
+    "axes.middleware.AxesMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -120,6 +123,25 @@ AUTH_USER_MODEL = "usuarios.Usuario"
 LOGIN_URL = "usuarios:login"
 LOGIN_REDIRECT_URL = "clientes:lista"
 LOGOUT_REDIRECT_URL = "usuarios:login"
+
+# django-axes intercepta a autenticação antes do backend padrão do Django.
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# Lockout de força-bruta no login. Trava a combinação usuário+IP: mesmo que o
+# site esteja atrás do proxy do Render (IP do cliente = IP do proxy), o efeito
+# prático vira "trava por usuário" — e travar um usuário conhecido já inviabiliza
+# o chute online, sem risco de travar todo mundo por um IP compartilhado.
+# Reset manual: python manage.py axes_reset_username <nome>
+AXES_FAILURE_LIMIT = env.int("AXES_FAILURE_LIMIT", default=8)
+AXES_COOLOFF_TIME = env.int("AXES_COOLOFF_HOURS", default=1)  # horas
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+AXES_RESET_ON_SUCCESS = True
+AXES_ENABLE_ADMIN = True
+AXES_VERBOSE = not DEBUG
+AXES_LOCKOUT_TEMPLATE = None  # resposta HTTP 429 padrão, sem template dedicado
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

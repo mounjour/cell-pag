@@ -3,8 +3,8 @@
 Levantamento inicial (branch `seguranca/hardening-revisao`). Cada item é uma
 caixa a resolver; a ordem é por prioridade, não por esforço.
 
-**Feito nesta branch:** 1, 8, 9, 10, 13, 14 (config) e 4, 5, 6, 7 (código) —
-ver os commits `seguranca:`.
+**Feito nesta branch:** 1, 3, 8, 9, 10, 12, 13, 14 (config/infra) e 4, 5, 6, 7
+(código) — ver os commits `seguranca:`. **Aberto:** 2 (upload), 11 (CSP).
 
 ## Já está bem resolvido (linha de base)
 
@@ -38,10 +38,11 @@ vira **XSS armazenado / hospedagem de malware** (subir `.html`, `.svg`).
 de tamanho no form, e servir por uma view autenticada com
 `Content-Disposition: attachment` + `X-Content-Type-Options: nosniff`.
 
-### 3. Login sem proteção a força-bruta
-`auth_views.LoginView` puro, sem rate-limit nem lockout. Vai ficar exposto na
-internet com 2 usuários de senha fraca em potencial.
-**Ação:** `django-axes` (lockout por IP/usuário) ou throttling no proxy.
+### 3. Login sem proteção a força-bruta — ✅ feito
+`django-axes` (8.3.1): trava a combinação `usuário+IP` após 8 falhas (`AXES_FAILURE_LIMIT`)
+por 1 h (`AXES_COOLOFF_HOURS`), zera no sucesso. Atrás do proxy do Render o
+efeito é "trava por usuário" — sem risco de travar todo mundo por um IP.
+Destravar: `python manage.py axes_reset_username <nome>`.
 
 ---
 
@@ -91,9 +92,9 @@ Não é nativo do Django. Como não há `<script>` inline e o CSS é do mesmo ho
 dá para uma política restritiva.
 **Ação:** `django-csp` com `default-src 'self'`.
 
-### 12. Sem varredura de dependência
-**Ação:** ligar Dependabot no repo (ou `pip-audit` no CI) para CVE de Django,
-reportlab, etc.
+### 12. Sem varredura de dependência — ✅ feito
+`.github/dependabot.yml`: varredura `pip` semanal (+ `github-actions`). Abre PR
+quando sai correção. Precisa do Dependabot habilitado nas Settings do repo.
 
 ### 13. Política de senha fraca — ✅ feito
 `MinimumLengthValidator` agora com `min_length: 12`.
