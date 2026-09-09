@@ -15,7 +15,7 @@ reportlab==4.4.4              # exportação dos relatórios em PDF (Fase 5)
 
 # ── Produção (deploy no Render — ver docs/DEPLOY.md) ─────────────────────────
 gunicorn==23.0.0             # servidor WSGI
-psycopg[binary]==3.2.9       # driver PostgreSQL (ativado quando há DATABASE_URL)
+psycopg[binary]==3.3.5       # driver PostgreSQL (ativado quando há DATABASE_URL)
 
 # Dependências transitivas
 asgiref==3.12.1
