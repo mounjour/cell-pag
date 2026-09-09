@@ -7,6 +7,7 @@ validate-docbr==2.0.0
 django-import-export==4.4.1
 django-auditlog==3.4.1         # trilha de baixa / quem fez o quê (Fase 3)
 django-axes==8.3.1            # lockout de login por força-bruta
+django-csp==4.0              # Content-Security-Policy
 whitenoise==6.12.0
 python-dateutil==2.9.0.post0   # recorrência de vencimentos (Fase 2)
 openpyxl==3.1.5               # exportação dos relatórios em Excel (Fase 5)

@@ -69,6 +69,12 @@ com curinga (`.onrender.com`); se usar domínio próprio, coloque o host exato.
 > no serviço web **e** no cron, e aponte `CORA_CERT_PATH` / `CORA_KEY_PATH` para
 > o caminho do secret file (ex.: `/etc/secrets/cora-cert.pem`).
 
+> **Anexos (comprovantes, documentos):** o disco do container é efêmero — sem um
+> [Persistent Disk](https://render.com/docs/disks) montado em `MEDIA_ROOT`
+> (`/opt/render/project/src/media`), os arquivos enviados somem a cada deploy.
+> A validação (pdf/jpg/png/webp até 10 MB) e a entrega autenticada já estão no
+> código; falta só o disco quando quiserem guardar anexos de verdade.
+
 ## 4. Primeiro acesso
 
 Abra um **Shell** no serviço web (aba *Shell* do Render) e crie o login:

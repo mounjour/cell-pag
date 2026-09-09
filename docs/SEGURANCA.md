@@ -3,8 +3,9 @@
 Levantamento inicial (branch `seguranca/hardening-revisao`). Cada item é uma
 caixa a resolver; a ordem é por prioridade, não por esforço.
 
-**Feito nesta branch:** 1, 3, 8, 9, 10, 12, 13, 14 (config/infra) e 4, 5, 6, 7
-(código) — ver os commits `seguranca:`. **Aberto:** 2 (upload), 11 (CSP).
+**Feito nesta branch:** todos os 17 itens — ver os commits `seguranca:`.
+Pendências que não são código: habilitar Dependabot nas Settings do repo (12) e
+adicionar um disco persistente no Render para os anexos (2).
 
 ## Já está bem resolvido (linha de base)
 
@@ -28,15 +29,17 @@ caixa a resolver; a ordem é por prioridade, não por esforço.
 vem só do `RENDER_EXTERNAL_HOSTNAME`. `settings.py` também descarta entradas
 vazias da lista.
 
-### 2. Upload de arquivo sem validação
-`Pagamento.comprovante` e `DocumentoContrato.arquivo` são `FileField` sem
-checagem de extensão, tipo MIME nem tamanho. Hoje o risco é baixo porque em
-produção **nada serve `MEDIA/`** (os arquivos nem baixam — e somem a cada
-deploy, bug à parte). No dia que habilitarem disco persistente + rota de mídia,
-vira **XSS armazenado / hospedagem de malware** (subir `.html`, `.svg`).
-**Ação (antes de servir mídia):** `FileExtensionValidator` (pdf/jpg/png), limite
-de tamanho no form, e servir por uma view autenticada com
-`Content-Disposition: attachment` + `X-Content-Type-Options: nosniff`.
+### 2. Upload de arquivo sem validação — ✅ feito
+`apps/validadores.py`: os dois `FileField` (`Pagamento.comprovante`,
+`DocumentoContrato.arquivo`) só aceitam `pdf/jpg/jpeg/png/webp` até 10 MB
+(migrações `pagamentos.0006`, `contratos.0008`).
+`apps/arquivos.servir_anexo` + as views `pagamentos:comprovante` /
+`contratos:documento_baixar` (com login) entregam o arquivo **sempre como
+`attachment`**, com `X-Content-Type-Options: nosniff` e
+`Content-Security-Policy: default-src 'none'; sandbox`. A rota pública de mídia
+(`static(MEDIA_URL)` no DEBUG) foi removida.
+**Ainda falta (infra, não código):** disco persistente no Render — sem ele os
+anexos continuam sumindo a cada deploy (bug funcional, não de segurança).
 
 ### 3. Login sem proteção a força-bruta — ✅ feito
 `django-axes` (8.3.1): trava a combinação `usuário+IP` após 8 falhas (`AXES_FAILURE_LIMIT`)
@@ -87,10 +90,11 @@ do `check --deploy` é esperado até lá.
 
 ## Baixa — defesa em profundidade
 
-### 11. Sem Content-Security-Policy
-Não é nativo do Django. Como não há `<script>` inline e o CSS é do mesmo host,
-dá para uma política restritiva.
-**Ação:** `django-csp` com `default-src 'self'`.
+### 11. Sem Content-Security-Policy — ✅ feito
+`django-csp` (4.0): `default-src 'self'`, `script-src 'self'` (um `<script>` ou
+`on*=` injetado não executa), `object-src`/`frame-ancestors` `'none'`,
+`base-uri`/`form-action` `'self'`. `style-src` mantém `'unsafe-inline'` só por
+causa de alguns `style="margin…"` em atributo — inline **script** já está barrado.
 
 ### 12. Sem varredura de dependência — ✅ feito
 `.github/dependabot.yml`: varredura `pip` semanal (+ `github-actions`). Abre PR

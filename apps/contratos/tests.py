@@ -420,6 +420,46 @@ def test_anexar_documento_registra_enviado_por(auth_client, operador, cliente, s
     assert doc.tipo == "contrato_assinado"
 
 
+@pytest.mark.django_db
+def test_anexo_rejeita_extensao_proibida(auth_client, cliente, settings, tmp_path):
+    settings.MEDIA_ROOT = str(tmp_path)
+    ct = novo_contrato(cliente, apelido="B", estrutura=Contrato.Estrutura.SEMANAL)
+    exe = SimpleUploadedFile("virus.exe", b"MZ conteudo", content_type="application/octet-stream")
+    resp = auth_client.post(
+        reverse("contratos:documento_novo", args=[ct.pk]),
+        {"tipo": "outro", "arquivo": exe},
+    )
+    assert resp.status_code == 302          # form_invalid volta para o detalhe
+    assert ct.documentos.count() == 0       # nada foi salvo
+
+
+@pytest.mark.django_db
+def test_download_documento_exige_login(client, cliente, settings, tmp_path):
+    settings.MEDIA_ROOT = str(tmp_path)
+    ct = novo_contrato(cliente, apelido="C", estrutura=Contrato.Estrutura.SEMANAL)
+    doc = ct.documentos.create(
+        tipo="outro",
+        arquivo=SimpleUploadedFile("doc.pdf", b"%PDF-1.4 x", content_type="application/pdf"),
+    )
+    resp = client.get(reverse("contratos:documento_baixar", args=[doc.pk]))
+    assert resp.status_code == 302 and "/entrar/" in resp["Location"]
+
+
+@pytest.mark.django_db
+def test_download_documento_autenticado_como_anexo(auth_client, cliente, settings, tmp_path):
+    settings.MEDIA_ROOT = str(tmp_path)
+    ct = novo_contrato(cliente, apelido="D", estrutura=Contrato.Estrutura.SEMANAL)
+    doc = ct.documentos.create(
+        tipo="outro",
+        arquivo=SimpleUploadedFile("doc.pdf", b"%PDF-1.4 conteudo", content_type="application/pdf"),
+    )
+    resp = auth_client.get(reverse("contratos:documento_baixar", args=[doc.pk]))
+    assert resp.status_code == 200
+    assert resp["X-Content-Type-Options"] == "nosniff"
+    assert "attachment" in resp["Content-Disposition"]
+    assert b"".join(resp.streaming_content) == b"%PDF-1.4 conteudo"
+
+
 # ---------- Comando seed_demo ----------
 
 @pytest.mark.django_db

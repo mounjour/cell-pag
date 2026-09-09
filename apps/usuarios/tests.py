@@ -112,6 +112,16 @@ def test_login_valido_dentro_do_limite(client, django_user_model, settings):
     assert entrou.status_code == 302
 
 
+# ---------- Content-Security-Policy ----------
+
+@pytest.mark.django_db
+def test_resposta_tem_csp_restritivo(client):
+    csp = client.get(_LOGIN_URL).headers.get("Content-Security-Policy", "")
+    assert "script-src 'self'" in csp
+    assert "object-src 'none'" in csp
+    assert "frame-ancestors 'none'" in csp
+
+
 @pytest.mark.django_db
 def test_sucesso_zera_o_contador(client, django_user_model, settings):
     settings.AXES_FAILURE_LIMIT = 3

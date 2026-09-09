@@ -30,6 +30,8 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from apps.validadores import validar_extensao_upload, validar_tamanho_upload
+
 
 class Vencimento(models.Model):
     """Uma parcela do contrato: quando vence e quanto se espera receber.
@@ -149,7 +151,10 @@ class Pagamento(models.Model):
         verbose_name="quem deu baixa",
     )
     comprovante = models.FileField(
-        "comprovante", upload_to=caminho_comprovante, blank=True
+        "comprovante",
+        upload_to=caminho_comprovante,
+        blank=True,
+        validators=[validar_extensao_upload, validar_tamanho_upload],
     )
     observacao = models.TextField("observação", blank=True)
     criado_em = models.DateTimeField("criado em", auto_now_add=True)

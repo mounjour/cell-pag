@@ -57,6 +57,7 @@ THIRD_PARTY_APPS = [
     "import_export",
     "auditlog",
     "axes",  # lockout de login por força-bruta
+    "csp",   # Content-Security-Policy
 ]
 
 LOCAL_APPS = [
@@ -71,6 +72,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "csp.middleware.CSPMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -235,6 +237,25 @@ if not DEBUG:
         origem_render = f"https://{RENDER_EXTERNAL_HOSTNAME}"
         if origem_render not in CSRF_TRUSTED_ORIGINS:
             CSRF_TRUSTED_ORIGINS.append(origem_render)
+
+# ── Content-Security-Policy (django-csp) ─────────────────────────────────────
+# Não há <script> nem <style> inline no projeto — só alguns `style="margin…"`
+# em atributo, por isso style-src mantém 'unsafe-inline'. script-src é 'self'
+# puro: um <script> ou on*=… injetado não executa.
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ["'self'"],
+        "script-src": ["'self'"],
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "img-src": ["'self'", "data:"],
+        "font-src": ["'self'"],
+        "connect-src": ["'self'"],
+        "object-src": ["'none'"],
+        "base-uri": ["'self'"],
+        "frame-ancestors": ["'none'"],
+        "form-action": ["'self'"],
+    },
+}
 
 # ── Logs ─────────────────────────────────────────────────────────────────────
 # Tudo para o console (stdout) — é o que o Render captura, tanto do serviço web

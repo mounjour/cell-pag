@@ -22,6 +22,8 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 
+from apps.validadores import validar_extensao_upload, validar_tamanho_upload
+
 
 class Contrato(models.Model):
     class Estrutura(models.TextChoices):
@@ -301,7 +303,11 @@ class DocumentoContrato(models.Model):
         Contrato, on_delete=models.CASCADE, related_name="documentos", verbose_name="contrato"
     )
     tipo = models.CharField("tipo", max_length=24, choices=Tipo.choices, default=Tipo.OUTRO)
-    arquivo = models.FileField("arquivo", upload_to=caminho_documento)
+    arquivo = models.FileField(
+        "arquivo",
+        upload_to=caminho_documento,
+        validators=[validar_extensao_upload, validar_tamanho_upload],
+    )
     descricao = models.CharField("descrição", max_length=150, blank=True)
     enviado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,

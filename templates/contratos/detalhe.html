@@ -147,7 +147,7 @@
               <td class="num" data-label="Valor">R$ {{ p.valor_pago }}</td>
               <td data-label="Forma">{{ p.get_forma_display }}</td>
               <td data-label="Baixa">{{ p.usuario_baixa|default:"—" }} · {{ p.criado_em|date:"d/m/Y H:i" }}</td>
-              <td data-label="Comprovante">{% if p.comprovante %}<a href="{{ p.comprovante.url }}" target="_blank" rel="noopener">abrir</a>{% else %}—{% endif %}</td>
+              <td data-label="Comprovante">{% if p.comprovante %}<a href="{% url 'pagamentos:comprovante' p.pk %}">baixar</a>{% else %}—{% endif %}</td>
               <td data-label="" class="num">
                 <form method="post" action="{% url 'pagamentos:estornar' contrato.pk p.pk %}"
                       onsubmit="return confirm('Estornar esta baixa da parcela {{ p.vencimento.numero|default:'' }}?')">
@@ -175,7 +175,7 @@
           <tr>
             <td>{{ d.get_tipo_display }}</td>
             <td data-label="Descrição">{{ d.descricao|default:"—" }}</td>
-            <td data-label="Arquivo"><a href="{{ d.arquivo.url }}" target="_blank" rel="noopener">abrir</a></td>
+            <td data-label="Arquivo"><a href="{% url 'contratos:documento_baixar' d.pk %}">baixar</a></td>
             <td data-label="Enviado">{{ d.enviado_em|date:"d/m/Y H:i" }}{% if d.enviado_por %} · {{ d.enviado_por }}{% endif %}</td>
           </tr>
         {% endfor %}
