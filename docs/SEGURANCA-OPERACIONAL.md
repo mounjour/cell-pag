@@ -41,24 +41,15 @@ seção **Dependabot**, já aparecem com `Disable` (ou seja, ligados):
 **Conferir:** **Security → Dependabot** lista "no open alerts" ou os alertas
 encontrados; em alguns dias aparece o primeiro PR do bot em **Pull requests**.
 
-### A2. ⬜ Secret scanning + push protection  *(scanning já ligado; falta push protection)*
+### A2. ✅ Secret scanning + push protection  *(ligado — conferido 09/09/2026)*
 
-Na Overview, **Secret scanning alerts • Enabled** ✅ — o scanning já roda. Falta o
-**Push protection** (bloqueia o `git push` que carrega token/chave):
+Na Overview, **Secret scanning alerts • Enabled** ✅ e, na página
+**Advanced Security** → seção **Secret scanning**, o **Push protection** está
+ligado (bloqueia o `git push` que carrega token/chave).
 
-1. Na página **Advanced Security**, **role para baixo** até a seção
-   **Secret scanning** (logo abaixo de "Dependabot security updates").
-2. No sub-item **Push protection**, clique **Enable**.
-
-> Se a seção **Secret scanning** não existir nessa página, o repo é **privado** e
-> o recurso exige GitHub Advanced Security (plano pago). Aí a opção é deixar o
-> repo público **ou** aceitar o risco e confiar na disciplina de `.env`
-> (`.gitignore` já cobre `.env`, `.env.*`, `*.pem`). Registre a escolha aqui:
-> `[ESCOLHA: ____]`
-
-**Conferir (com push protection ligado):** numa branch de teste, faça um commit
-com uma linha tipo `AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE` e tente `git
-push` — deve ser recusado. Apague a branch depois.
+**Conferir:** numa branch de teste, faça um commit com uma linha tipo
+`AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE` e tente `git push` — deve ser
+recusado. Apague a branch depois.
 
 ### A3. ⬜ Branch protection na `main`
 
@@ -248,7 +239,7 @@ Ver [`LGPD.md`](LGPD.md). Ações suas:
 ```
 GitHub
   [x] A1  Dependabot alerts + security updates ligados
-  [ ] A2  Push protection ligado (scanning já ok) — ou escolha registrada
+  [x] A2  Secret scanning + push protection ligados
   [ ] A3  Branch protection na main (PR + block force push)
 Render
   [ ] B1  Disco persistente em /opt/render/project/src/media
