@@ -171,6 +171,15 @@ summary:focus-visible {
 /* Telas operacionais com tabela larga (ex.: "Cobrar hoje") respiram mais no
    desktop — texto de leitura continua nos 960px. */
 .wrap.wrap--wide { max-width: 1400px; }
+/* Telas de foco único (login) — centraliza o cartão vertical e horizontalmente
+   na área útil, em vez de encostá-lo no topo. */
+.wrap.wrap--center {
+  min-height: calc(100vh - 4rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.wrap.wrap--center .login-box { margin-top: 0; margin-bottom: 0; }
 
 h1 {
   font-size: 1.3rem;
@@ -380,6 +389,9 @@ tbody tr:hover td { background: var(--accent-wash); }
 
 /* ---------- Formulários ---------- */
 .form-grid { display: grid; gap: 1rem; max-width: 620px; }
+/* Variante sem trava de largura: para formulários que ficam no meio de seções
+   de largura total (ex.: anexar documento na tela do contrato). */
+.form-grid--full { max-width: none; }
 .form-row { display: grid; gap: 0.3rem; }
 .form-row label { font-weight: 600; font-size: 0.82rem; color: var(--ink); }
 .form-row:focus-within label { color: var(--accent-ink); }
@@ -508,6 +520,10 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
 /* contrato encerrado — ponto vazado */
 .pill.quitado::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 
+/* Coluna "Status" da lista de contratos: todos os selos com a mesma largura
+   (a do mais longo, "Inadimplente"), texto centralizado. */
+.status-cell .pill { min-width: 7.25rem; justify-content: center; }
+
 /* Status da parcela (Vencimento): aberto / parcial / pago */
 .pill.aberto { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink-soft); }
 .pill.parcial { background: var(--amber-wash); border-color: var(--amber); color: var(--amber); }
@@ -534,7 +550,8 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
    São dados de bastidor (hoje em modo simulação); não valem espaço de coluna. */
 .envio-cell { white-space: normal; }
 .envio-vias { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
-.envio-vias .pill { white-space: nowrap; cursor: help; }
+/* "Pix" e "Msg" com a mesma largura — o texto centraliza no selo. */
+.envio-vias .pill { white-space: nowrap; cursor: help; min-width: 3.25rem; justify-content: center; }
 
 /* Contato pode quebrar: "Registrar pagamento" desce para a segunda linha em
    vez de forçar a coluna a esticar. */
