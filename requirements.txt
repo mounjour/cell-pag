@@ -1,5 +1,5 @@
 # Runtime — instalar com: pip install -r requirements.txt
-Django==5.2.17
+Django==6.1.1
 django-environ==0.14.0
 django-phonenumber-field==8.5.0
 phonenumbers==9.0.38
