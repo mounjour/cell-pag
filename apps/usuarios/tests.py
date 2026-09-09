@@ -103,6 +103,21 @@ def test_login_trava_no_limite(client, django_user_model, settings):
 
 
 @pytest.mark.django_db
+def test_tela_de_bloqueio_e_amigavel(client, django_user_model, settings):
+    settings.AXES_FAILURE_LIMIT = 2
+    django_user_model.objects.create_user("op-bloq", password=_SENHA)
+
+    for _ in range(settings.AXES_FAILURE_LIMIT):
+        travado = client.post(_LOGIN_URL, {"username": "op-bloq", "password": "errada"})
+
+    assert travado.status_code == 429
+    assert travado["Content-Type"].startswith("text/html")
+    corpo = travado.content.decode()
+    assert "Muitas tentativas" in corpo
+    assert "axes_reset_username" in corpo
+
+
+@pytest.mark.django_db
 def test_login_valido_dentro_do_limite(client, django_user_model, settings):
     settings.AXES_FAILURE_LIMIT = 5
     django_user_model.objects.create_user("op2", password=_SENHA)

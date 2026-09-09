@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Acesso bloqueado · Acompanhamento de Pagamentos{% endblock %}
+{% block wrap_class %}wrap--center{% endblock %}
+
+{% block content %}
+<div class="login-box">
+  <span class="eyebrow">Acesso bloqueado</span>
+  <h1>Muitas tentativas</h1>
+
+  <p class="msg error">
+    Este acesso foi bloqueado por segurança depois de várias tentativas de
+    login sem sucesso.
+  </p>
+
+  <p>
+    Aguarde cerca de <strong>1&nbsp;hora</strong> e tente novamente. O bloqueio
+    é liberado sozinho quando esse tempo passa.
+  </p>
+
+  <p class="fineprint">
+    Precisa entrar antes disso? O responsável libera na hora rodando
+    <code>python manage.py axes_reset_username &lt;usuário&gt;</code> no Shell
+    do Render.
+  </p>
+
+  <p><a href="{% url 'usuarios:login' %}">Voltar para a tela de entrada</a></p>
+</div>
+{% endblock %}

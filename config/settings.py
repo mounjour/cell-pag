@@ -143,7 +143,9 @@ AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_RESET_ON_SUCCESS = True
 AXES_ENABLE_ADMIN = True
 AXES_VERBOSE = not DEBUG
-AXES_LOCKOUT_TEMPLATE = None  # resposta HTTP 429 padrão, sem template dedicado
+# Página amigável no lugar do HTTP 429 cru quando o acesso trava. O status
+# continua 429 (AXES_HTTP_RESPONSE_CODE padrão) — só o corpo fica legível.
+AXES_LOCKOUT_TEMPLATE = "usuarios/bloqueado.html"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
