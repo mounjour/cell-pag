@@ -135,7 +135,8 @@ def test_reconciliacao_processa_sinal_do_webhook(parcela_cora, monkeypatch):
 
 
 @pytest.mark.django_db
-def test_webhook_cora_so_registra_fatura_conhecida(client, parcela_cora, monkeypatch):
+def test_webhook_cora_so_registra_fatura_conhecida(client, parcela_cora, settings, monkeypatch):
+    settings.CORA_WEBHOOK_TOKEN = "tok-cora"
     CobrancaCora.objects.create(
         vencimento=parcela_cora,
         cora_id="inv_conhecida",
@@ -147,14 +148,26 @@ def test_webhook_cora_so_registra_fatura_conhecida(client, parcela_cora, monkeyp
         "apps.pagamentos.cora_api.consultar_fatura",
         lambda *args: pytest.fail("webhook público não pode consultar API autenticada"),
     )
+    url = reverse("pagamentos:cora_webhook") + "?token=tok-cora"
     cabecalhos = {
         "webhook-event-type": "invoice.paid",
         "webhook-resource-id": "inv_conhecida",
     }
-    primeira = client.post(reverse("pagamentos:cora_webhook"), headers=cabecalhos)
-    segunda = client.post(reverse("pagamentos:cora_webhook"), headers=cabecalhos)
+    primeira = client.post(url, headers=cabecalhos)
+    segunda = client.post(url, headers=cabecalhos)
     assert primeira.status_code == segunda.status_code == 200
     assert EventoCora.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_webhook_cora_recusa_sem_token(client, settings):
+    settings.CORA_WEBHOOK_TOKEN = "tok-cora"
+    resposta = client.post(
+        reverse("pagamentos:cora_webhook"),
+        headers={"webhook-event-type": "invoice.paid", "webhook-resource-id": "x"},
+    )
+    assert resposta.status_code == 403
+    assert EventoCora.objects.count() == 0
 
 
 @pytest.mark.django_db

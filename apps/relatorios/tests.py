@@ -154,6 +154,21 @@ def test_exportacao_excel(dono_client, dados_relatorio):
 
 
 @pytest.mark.django_db
+def test_exportacao_excel_neutraliza_injecao_de_formula(dono_client, dados_relatorio):
+    contrato, _, _ = dados_relatorio
+    contrato.cliente.nome = "=HYPERLINK(\"http://x\")"
+    contrato.cliente.save(update_fields=["nome"])
+    resposta = dono_client.get(
+        reverse("relatorios:excel"),
+        {"periodo": "personalizado", "inicio": "2026-09-01", "fim": "2026-09-02"},
+    )
+    workbook = load_workbook(BytesIO(resposta.content), data_only=False)
+    celula = workbook["Recebimentos"]["B2"]
+    assert celula.data_type != "f"                 # não é fórmula
+    assert not str(celula.value).startswith("=")   # nem começa com '='
+
+
+@pytest.mark.django_db
 def test_exportacao_pdf(dono_client, dados_relatorio):
     resposta = dono_client.get(
         reverse("relatorios:pdf"),

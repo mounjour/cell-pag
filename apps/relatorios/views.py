@@ -20,6 +20,16 @@ from apps.usuarios.mixins import DonoRequeridoMixin
 from .forms import PeriodoForm
 from .servicos import montar_relatorio
 
+# Excel/Sheets interpretam célula que começa com um destes como fórmula.
+_GATILHOS_FORMULA = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _celula(valor):
+    """Neutraliza injeção de fórmula: prefixa `'` em texto que abre com = + - @."""
+    if isinstance(valor, str) and valor[:1] in _GATILHOS_FORMULA:
+        return "'" + valor
+    return valor
+
 
 def _contexto(request):
     dados = request.GET or {
@@ -78,8 +88,8 @@ class RelatorioExcelView(DonoRequeridoMixin, View):
         for pagamento in rel["recebimentos"]:
             recebidos.append([
                 pagamento.data_pagamento,
-                pagamento.contrato.cliente.nome,
-                pagamento.contrato.apelido,
+                _celula(pagamento.contrato.cliente.nome),
+                _celula(pagamento.contrato.apelido),
                 pagamento.vencimento.numero if pagamento.vencimento else "",
                 pagamento.get_forma_display(),
                 pagamento.valor_pago,
@@ -92,8 +102,8 @@ class RelatorioExcelView(DonoRequeridoMixin, View):
         for vencimento in rel["atrasados"]:
             atrasados.append([
                 vencimento.data_vencimento,
-                vencimento.contrato.cliente.nome,
-                vencimento.contrato.apelido,
+                _celula(vencimento.contrato.cliente.nome),
+                _celula(vencimento.contrato.apelido),
                 vencimento.numero,
                 vencimento.valor_previsto,
                 vencimento.valor_pago,

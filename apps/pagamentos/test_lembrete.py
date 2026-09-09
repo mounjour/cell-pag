@@ -91,14 +91,23 @@ def test_texto_vence_hoje_sem_valor_de_parcela(cliente):
     assert "—" in texto  # sem valor_parcela
 
 
-# ── enviar (stub) ─────────────────────────────────────────────────────────
+# ── enviar ────────────────────────────────────────────────────────────────
 
-def test_enviar_devolve_true_e_loga(caplog, settings):
+def test_enviar_devolve_true_e_loga_sem_pii(caplog, settings):
     settings.YSLANE_WHATSAPP_NUMERO = "+5583988887777"
     with caplog.at_level(logging.INFO, logger="pagamentos.lembrete"):
         assert lembrete.enviar("texto de teste") is True
-    assert "+5583988887777" in caplog.text
-    assert "texto de teste" in caplog.text
+    # No nível INFO o número aparece só mascarado e o texto não aparece.
+    assert "…7777" in caplog.text
+    assert "+5583988887777" not in caplog.text
+    assert "texto de teste" not in caplog.text
+
+
+def test_enviar_texto_completo_só_em_debug(caplog, settings):
+    settings.YSLANE_WHATSAPP_NUMERO = "+5583988887777"
+    with caplog.at_level(logging.DEBUG, logger="pagamentos.lembrete"):
+        lembrete.enviar("texto secreto de teste")
+    assert "texto secreto de teste" in caplog.text
 
 
 def test_enviar_sem_numero_configurado_avisa(caplog, settings):
@@ -111,7 +120,8 @@ def test_enviar_sem_numero_configurado_avisa(caplog, settings):
 def test_enviar_aceita_numero_explicito(caplog):
     with caplog.at_level(logging.INFO, logger="pagamentos.lembrete"):
         lembrete.enviar("texto", numero="+5511900000000")
-    assert "+5511900000000" in caplog.text
+    assert "…0000" in caplog.text
+    assert "+5511900000000" not in caplog.text
 
 
 # ── enviar_lembrete_diario (integração) ──────────────────────────────────

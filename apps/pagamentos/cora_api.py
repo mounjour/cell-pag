@@ -1,6 +1,7 @@
 """Cliente HTTP mTLS para a Integração Direta da Cora."""
 
 import json
+import logging
 import ssl
 import time
 import urllib.error
@@ -8,6 +9,8 @@ import urllib.parse
 import urllib.request
 
 from django.conf import settings
+
+logger = logging.getLogger("pagamentos.cora")
 
 
 class CoraErro(RuntimeError):
@@ -116,9 +119,13 @@ def _abrir(requisicao, *, contexto, autenticada):
             corpo = resposta.read()
             return json.loads(corpo.decode("utf-8")) if corpo else {}
     except urllib.error.HTTPError as exc:
-        detalhe = exc.read().decode("utf-8", errors="replace")[:1200]
+        detalhe = exc.read().decode("utf-8", errors="replace")[:500]
         if autenticada and exc.code == 401:
             raise CoraErroNaoAutorizado("Token Cora expirado ou inválido.") from exc
-        raise CoraErro(f"Cora respondeu HTTP {exc.code}: {detalhe}") from exc
+        # O corpo da resposta pode repetir dados do cliente que enviamos — fica
+        # só no log do servidor, nunca na mensagem exibida na tela.
+        logger.warning("Cora respondeu HTTP %s: %s", exc.code, detalhe)
+        raise CoraErro(f"A Cora recusou a requisição (HTTP {exc.code}).") from exc
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        raise CoraErro(f"Falha de comunicação com a Cora: {exc}") from exc
+        logger.warning("Falha de comunicação com a Cora: %s", exc)
+        raise CoraErro("Falha de comunicação com a Cora.") from exc

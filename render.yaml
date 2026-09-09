@@ -51,6 +51,8 @@ envVarGroups:
         sync: false
       - key: CORA_API_BASE_URL
         sync: false
+      - key: CORA_WEBHOOK_TOKEN
+        generateValue: true
 
 services:
   # ── Site ────────────────────────────────────────────────────────────────────

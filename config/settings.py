@@ -188,6 +188,8 @@ CORA_CERT_PATH = env("CORA_CERT_PATH", default="")
 CORA_KEY_PATH = env("CORA_KEY_PATH", default="")
 CORA_TOKEN_URL = env("CORA_TOKEN_URL", default="")
 CORA_API_BASE_URL = env("CORA_API_BASE_URL", default="")
+# Token compartilhado exigido no webhook da Cora (via ?token= na URL cadastrada).
+CORA_WEBHOOK_TOKEN = env("CORA_WEBHOOK_TOKEN", default="")
 
 # ── Segurança (aplicada quando DEBUG=False) ───────────────────────────────────
 if not DEBUG:

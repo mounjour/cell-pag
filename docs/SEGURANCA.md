@@ -3,8 +3,8 @@
 Levantamento inicial (branch `seguranca/hardening-revisao`). Cada item é uma
 caixa a resolver; a ordem é por prioridade, não por esforço.
 
-**Feito nesta branch (config, sem dependência nova):** 1, 8, 9, 10, 13, 14 —
-ver commit "seguranca: hardening de configuração".
+**Feito nesta branch:** 1, 8, 9, 10, 13, 14 (config) e 4, 5, 6, 7 (código) —
+ver os commits `seguranca:`.
 
 ## Já está bem resolvido (linha de base)
 
@@ -47,27 +47,25 @@ internet com 2 usuários de senha fraca em potencial.
 
 ## Média
 
-### 4. PII em log de nível INFO
-`apps/pagamentos/whatsapp.py` e `lembrete.py` logam telefone + texto completo da
-mensagem (nome do cliente, chave Pix, copia-e-cola) no stdout → logs do Render,
-que ficam retidos e visíveis a quem tem acesso ao painel.
-**Ação:** baixar para DEBUG, ou redigir telefone/nome, ou logar só o id da `Cobranca`.
+### 4. PII em log de nível INFO — ✅ feito
+`whatsapp.py` / `lembrete.py`: no INFO o telefone sai mascarado (`…7777`) e o
+texto da mensagem não sai — o conteúdo completo foi para o nível DEBUG.
+`mascara_numero()` em `whatsapp.py` é o utilitário compartilhado.
 
-### 5. Erro da Cora vaza para a tela
-`cora_api` guarda até 1200 caracteres do corpo de resposta da Cora em
-`CobrancaCora.erro`, exibido em `/pagamentos/pix/` e em "Cobrar hoje".
-**Ação:** detalhe completo só no log; na tela, mensagem curta/genérica.
+### 5. Erro da Cora vaza para a tela — ✅ feito
+`cora_api` (e `whatsapp.py`) agora logam o corpo da resposta (até 500 chars) no
+servidor e levantam só uma mensagem curta (`"A Cora recusou a requisição (HTTP
+NNN)."`), que é o que chega em `CobrancaCora.erro` / `Cobranca.erro` e nas telas.
 
-### 6. Injeção de fórmula no Excel/PDF exportado
-Nome do cliente / apelido / observação vão crus para o `.xlsx` (openpyxl) e para
-o PDF (`reportlab.Paragraph` interpreta `<b>`, `&`, `<font>`…).
-**Ação:** prefixar `'` em célula que começa com `= + - @`; escapar
-(`xml.sax.saxutils.escape`) os textos antes do `Paragraph`.
+### 6. Injeção de fórmula no Excel exportado — ✅ feito
+`apps/relatorios/views.py`: `_celula()` prefixa `'` em texto que começa com
+`= + - @` (nome do cliente / apelido). O PDF usa `Table` com strings simples,
+que **não** interpreta marcação — sem ação necessária lá.
 
-### 7. Webhook da Cora sem autenticação
-`/pagamentos/webhooks/cora/` é escrita não autenticada (cria `EventoCora`).
-Por design só registra sinal para fatura já conhecida, mas dá para endurecer.
-**Ação:** aplicar o mesmo token compartilhado do webhook da Evolution.
+### 7. Webhook da Cora sem autenticação — ✅ feito
+`/pagamentos/webhooks/cora/` agora exige `CORA_WEBHOOK_TOKEN` (via `?token=` na
+URL cadastrada, ou header `apikey`/`Authorization`), com `hmac.compare_digest`.
+Sem token configurado só responde com `DEBUG=True`.
 
 ### 8. `SECRET_KEY` com fallback inseguro — ✅ feito
 `settings.py` agora levanta `ImproperlyConfigured` quando `not DEBUG` e a
