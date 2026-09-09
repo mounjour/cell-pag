@@ -139,6 +139,9 @@ summary:focus-visible {
 /* ---------- Layout ---------- */
 .wrap { max-width: 960px; margin: 0 auto; padding: 1.1rem 1rem 3.5rem; }
 @media (min-width: 640px) { .wrap { padding: 1.75rem 1.25rem 4rem; } }
+/* Telas operacionais com tabela larga (ex.: "Cobrar hoje") respiram mais no
+   desktop — texto de leitura continua nos 960px. */
+.wrap.wrap--wide { max-width: 1400px; }
 
 h1 {
   font-size: 1.3rem;
@@ -492,9 +495,27 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
 /* ─────────── Painel "Cobrar hoje" ─────────── */
 .atraso-dias { white-space: nowrap; color: var(--ink-soft); font-size: 0.9rem; }
 
+/* Situação pode quebrar linha: o selo, o "N dias de atraso" e o aviso de
+   bloqueio descem em vez de esticar a tabela para os lados. */
+.situacao-cell { white-space: normal; min-width: 10rem; }
+
+/* Envio: Pix e mensagem de cobrança viram dois selos mínimos ("Pix" / "Msg"),
+   lado a lado — a cor dá o status e o texto completo fica no title (tooltip).
+   São dados de bastidor (hoje em modo simulação); não valem espaço de coluna. */
+.envio-cell { white-space: normal; }
+.envio-vias { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
+.envio-vias .pill { white-space: nowrap; cursor: help; }
+
+/* Contato pode quebrar: "Registrar pagamento" desce para a segunda linha em
+   vez de forçar a coluna a esticar. */
+.contato-cell { white-space: normal; }
+
 /* Valor a cobrar: é o número que a Yslane precisa ver primeiro. O detalhe
    ("parcela + juros") desce numa linha própria, no desktop e no celular. */
-.valor-cobrar { font-weight: 700; font-size: 1.05rem; }
+.valor-cobrar { font-weight: 700; font-size: 1.05rem; white-space: nowrap; }
+/* O detalhe "parcela + juros" pode quebrar em duas linhas em vez de esticar
+   a coluna; o valor em si (.valor-cobrar) nunca quebra. */
+.cobrar-cell { white-space: normal; }
 .cobrar-cell .helptext { display: block; }
 .contrato-cell .estrutura { color: var(--ink-soft); }
 
