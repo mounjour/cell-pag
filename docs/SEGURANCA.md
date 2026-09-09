@@ -100,8 +100,10 @@ causa de alguns `style="margin…"` em atributo — inline **script** já está 
 `.github/dependabot.yml`: varredura `pip` semanal (+ `github-actions`). Abre PR
 quando sai correção. Precisa do Dependabot habilitado nas Settings do repo.
 
-### 13. Política de senha fraca — ✅ feito
-`MinimumLengthValidator` agora com `min_length: 12`.
+### 13. Política de senha
+`MinimumLengthValidator` em `min_length: 8` (padrão do Django) — por decisão do
+Alisson, voltou de 12 para 8. Os demais validadores (comum, só-números,
+parecida com o usuário) seguem ativos.
 
 ### 14. Sessão longa — ✅ feito
 `SESSION_COOKIE_AGE` = 12 h (tunável por env) + `SESSION_SAVE_EVERY_REQUEST`
