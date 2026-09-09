@@ -13,39 +13,52 @@ Legenda: ⬜ a fazer · ✅ feito · ⏸️ adiado de propósito
 
 ---
 
-## A. GitHub — Settings › Code security
+## A. GitHub — Settings › Advanced Security
 
-Abra: **github.com/mounjour/cell-pag → Settings → Code security** (menu da
-esquerda; em repositório pessoal pode aparecer como *"Code security and analysis"*).
+Abra direto: **https://github.com/mounjour/cell-pag/settings/security_analysis**
+(caminho pelo menu: *Settings* → seção **Security** → **Advanced Security**;
+dependendo da conta aparece como "Code security" ou "Code security and analysis").
+Um resumo do estado de tudo fica em
+**https://github.com/mounjour/cell-pag/security** (*Security and quality → Overview*).
 
-### A1. ⬜ Dependabot — alerts + security updates
+> Nos botões dessa tela, o texto diz o que o clique **vai fazer**: `Disable`
+> visível = o recurso **já está ligado** (não clique); `Enable` = está desligado.
+
+### A1. ✅ Dependabot — alerts + security updates  *(já ligado — conferido 09/09/2026)*
 
 O arquivo [`.github/dependabot.yml`](../.github/dependabot.yml) já está no repo
-(varredura `pip` + `github-actions` semanal). Falta **ligar** na conta:
+(varredura `pip` + `github-actions` semanal). Na tela **Advanced Security**,
+seção **Dependabot**, já aparecem com `Disable` (ou seja, ligados):
 
-1. Em *Code security*, seção **Dependabot**.
-2. Ligue **Dependabot alerts**.
-3. Ligue **Dependabot security updates** (abre PR sozinho quando sai correção).
-4. *(opcional)* **Dependabot version updates** — como o `.yml` já existe, aqui
-   só confirma que ele foi detectado ("Config file: `.github/dependabot.yml`").
+- **Dependabot alerts** ✅
+- **Dependabot security updates** ✅ (abre PR sozinho quando sai correção)
+- **Dependency graph** ✅ (pré-requisito, também já ligado)
 
-**Conferir:** aba **Security → Dependabot** do repo lista "no open alerts" ou os
-alertas encontrados. Em alguns dias deve aparecer o primeiro PR do bot em
-**Pull requests**.
+*(opcional)* **Dependabot malware alerts** — está com `Enable`; pode ligar.
+*(opcional)* Mais abaixo, **Dependabot version updates** deve mostrar
+"Config file: `.github/dependabot.yml`" detectado.
 
-### A2. ⬜ Secret scanning + push protection
+**Conferir:** **Security → Dependabot** lista "no open alerts" ou os alertas
+encontrados; em alguns dias aparece o primeiro PR do bot em **Pull requests**.
 
-1. Mesma tela, seção **Secret scanning**. Clique **Enable**.
-2. Ligue **Push protection** (bloqueia o `git push` que carrega token/chave).
+### A2. ⬜ Secret scanning + push protection  *(scanning já ligado; falta push protection)*
 
-> Repositório **privado** exige GitHub Advanced Security (planos pagos). Se o
-> botão estiver bloqueado: ou deixe o repo público, ou apenas garanta a
-> disciplina de segredo em `.env` (já coberta pelo `.gitignore`). Registre a
-> escolha aqui.
+Na Overview, **Secret scanning alerts • Enabled** ✅ — o scanning já roda. Falta o
+**Push protection** (bloqueia o `git push` que carrega token/chave):
 
-**Conferir:** faça um teste local — crie um arquivo com uma linha tipo
-`AWS_SECRET_ACCESS_KEY=AKIA...EXEMPLO` e tente `git push` numa branch de teste;
-com push protection ligado o push é recusado. Apague a branch depois.
+1. Na página **Advanced Security**, **role para baixo** até a seção
+   **Secret scanning** (logo abaixo de "Dependabot security updates").
+2. No sub-item **Push protection**, clique **Enable**.
+
+> Se a seção **Secret scanning** não existir nessa página, o repo é **privado** e
+> o recurso exige GitHub Advanced Security (plano pago). Aí a opção é deixar o
+> repo público **ou** aceitar o risco e confiar na disciplina de `.env`
+> (`.gitignore` já cobre `.env`, `.env.*`, `*.pem`). Registre a escolha aqui:
+> `[ESCOLHA: ____]`
+
+**Conferir (com push protection ligado):** numa branch de teste, faça um commit
+com uma linha tipo `AWS_SECRET_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE` e tente `git
+push` — deve ser recusado. Apague a branch depois.
 
 ### A3. ⬜ Branch protection na `main`
 
@@ -234,8 +247,8 @@ Ver [`LGPD.md`](LGPD.md). Ações suas:
 
 ```
 GitHub
-  [ ] A1  Dependabot alerts + security updates ligados
-  [ ] A2  Secret scanning + push protection ligados (ou escolha registrada)
+  [x] A1  Dependabot alerts + security updates ligados
+  [ ] A2  Push protection ligado (scanning já ok) — ou escolha registrada
   [ ] A3  Branch protection na main (PR + block force push)
 Render
   [ ] B1  Disco persistente em /opt/render/project/src/media
