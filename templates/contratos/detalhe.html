@@ -186,7 +186,7 @@
   <p class="empty">Nenhum documento anexado.</p>
 {% endif %}
 
-<form class="form-grid" style="margin-top:1rem" method="post"
+<form class="form-grid form-grid--full" style="margin-top:1rem" method="post"
       action="{% url 'contratos:documento_novo' contrato.pk %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% include "_form.html" with form=form_documento %}

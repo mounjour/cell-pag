@@ -4,6 +4,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#edeae0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#3a3a3b" media="(prefers-color-scheme: dark)">
   <title>{% block title %}Acompanhamento de Pagamentos{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
 </head>
@@ -29,7 +32,7 @@
     {% endif %}
   </header>
 
-  <main class="wrap">
+  <main class="wrap {% block wrap_class %}{% endblock %}">
     {% if messages %}
       <ul class="messages">
         {% for m in messages %}<li class="msg {{ m.tags }}">{{ m }}</li>{% endfor %}
