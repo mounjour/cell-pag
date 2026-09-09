@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Manual de uso — Acompanhamento de Pagamentos de Celulares</title>
+<style>
+  :root{
+    --bg:#edeae0; --surface:#f6f4ee; --surface-2:#eae7dc;
+    --text:#2b2b2b; --muted:#5f5c52; --border:#d6d4c8;
+    --accent:#1e6e5a; --accent-ink:#0f3f33;
+    --green-bg:#dcece4; --green-ink:#1c5c47;
+    --red-bg:#f3dede; --red-ink:#9b2c2c;
+    --gray-bg:#e3e1d8; --gray-ink:#54514a;
+    --amber-bg:#f6ecd2; --amber-ink:#7a5a12;
+    --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#262627; --surface:#2f2f30; --surface-2:#343435;
+      --text:#e8e6e0; --muted:#a9a69c; --border:#45443f;
+      --accent:#5cba9f; --accent-ink:#bfe6da;
+      --green-bg:#22392f; --green-ink:#9ed9c1;
+      --red-bg:#3d2626; --red-ink:#f0a5a5;
+      --gray-bg:#37372f; --gray-ink:#c4c1b4;
+      --amber-bg:#3a3220; --amber-ink:#e7c988;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:840px; margin:0 auto; padding:1.5rem 1.1rem 5rem}
+  header.doc{
+    border-bottom:2px solid var(--accent); padding-bottom:1rem; margin-bottom:1.5rem;
+  }
+  header.doc .eyebrow{
+    text-transform:uppercase; letter-spacing:.09em; font-size:.72rem;
+    font-weight:700; color:var(--accent);
+  }
+  h1{font-size:1.6rem; line-height:1.25; margin:.2rem 0 .4rem}
+  h2{
+    font-size:1.28rem; margin:2.6rem 0 .7rem; padding-top:.7rem;
+    border-top:1px solid var(--border);
+  }
+  h2:first-of-type{border-top:0; padding-top:0}
+  h3{font-size:1.05rem; margin:1.6rem 0 .5rem; color:var(--accent-ink)}
+  @media (prefers-color-scheme:dark){h3{color:var(--accent)}}
+  p,ul,ol{margin:.6rem 0}
+  a{color:var(--accent); text-underline-offset:2px}
+  code{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:4px;
+    padding:.08em .38em; font-size:.86em;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .lead{color:var(--muted); font-size:1.02rem}
+  .callout{
+    background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--accent);
+    border-radius:8px; padding:.8rem 1rem; margin:1rem 0; box-shadow:var(--shadow);
+  }
+  .callout.warn{border-left-color:#c9862b}
+  .callout p:first-child{margin-top:0} .callout p:last-child{margin-bottom:0}
+  .toc{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:1rem 1.2rem; margin:1.5rem 0; box-shadow:var(--shadow);
+  }
+  .toc strong{display:block; margin-bottom:.4rem; font-size:.95rem}
+  .toc ol{margin:.2rem 0 0; padding-left:1.3rem}
+  .toc li{margin:.18rem 0}
+  .tbl{overflow-x:auto; margin:1rem 0; border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow)}
+  table{border-collapse:collapse; width:100%; font-size:.92rem; background:var(--surface)}
+  th,td{text-align:left; padding:.55rem .7rem; border-bottom:1px solid var(--border); vertical-align:top}
+  th{background:var(--surface-2); font-weight:700; white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  .pill{
+    display:inline-block; padding:.12em .6em; border-radius:999px; font-size:.8rem;
+    font-weight:700; white-space:nowrap;
+  }
+  .pill.g{background:var(--green-bg); color:var(--green-ink)}
+  .pill.r{background:var(--red-bg); color:var(--red-ink)}
+  .pill.n{background:var(--gray-bg); color:var(--gray-ink)}
+  .pill.a{background:var(--amber-bg); color:var(--amber-ink)}
+  .meta-line{color:var(--muted); font-size:.9rem; margin:.1rem 0 .9rem}
+  .meta-line b{color:var(--text)}
+  hr{border:0; border-top:1px solid var(--border); margin:2rem 0}
+  .back{font-size:.82rem; color:var(--muted); text-decoration:none; float:right; margin-top:.35rem}
+  .back:hover{color:var(--accent)}
+  footer.doc{margin-top:3rem; padding-top:1rem; border-top:1px solid var(--border); color:var(--muted); font-size:.85rem}
+  @media print{
+    body{background:#fff; color:#000; font-size:11pt}
+    .toc,.back{display:none}
+    .callout,.tbl,.toc{box-shadow:none}
+    h2{break-after:avoid} .tbl{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <span class="eyebrow">Manual de operação</span>
+  <h1>Sistema de Acompanhamento de Pagamentos de Celulares</h1>
+  <p class="lead">Guia de uso no dia a dia (financeiro e dono). Explica cada página, o que fazer nela e as regras por trás dos números.</p>
+</header>
+
+<div class="callout">
+  <p>Documentação técnica de instalação e deploy fica em <code>README.md</code>, <code>docs/DEPLOY.md</code>, <code>docs/WHATSAPP.md</code> e <code>docs/CORA.md</code>. Este manual é só de <strong>operação</strong>.</p>
+</div>
+
+<nav class="toc" aria-label="Sumário">
+  <strong>Sumário</strong>
+  <ol>
+    <li><a href="#c1">Conceitos que aparecem em toda tela</a></li>
+    <li><a href="#c2">Entrar / Sair</a></li>
+    <li><a href="#c3">Barra de navegação</a></li>
+    <li><a href="#c4">Clientes — lista</a></li>
+    <li><a href="#c5">Clientes — novo / editar</a></li>
+    <li><a href="#c6">Clientes — ficha do cliente</a></li>
+    <li><a href="#c7">Contratos — lista</a></li>
+    <li><a href="#c8">Contratos — novo / editar</a></li>
+    <li><a href="#c9">Contratos — detalhe do contrato</a></li>
+    <li><a href="#c10">Registrar pagamento (dar baixa)</a></li>
+    <li><a href="#c11">Cobrar hoje</a></li>
+    <li><a href="#c12">Pix</a></li>
+    <li><a href="#c13">Histórico de pagamentos</a></li>
+    <li><a href="#c14">Relatórios — só dono</a></li>
+    <li><a href="#c15">Admin — só equipe técnica</a></li>
+    <li><a href="#c16">Rotina do dia sugerida</a></li>
+    <li><a href="#c17">Automações (o que o sistema faz sozinho)</a></li>
+    <li><a href="#c18">Perguntas frequentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="c1">1. Conceitos que aparecem em toda tela <a class="back" href="#">▲ topo</a></h2>
+
+<h3>Perfis de acesso</h3>
+<div class="tbl"><table>
+  <thead><tr><th>Perfil</th><th>Enxerga</th><th>Não enxerga</th></tr></thead>
+  <tbody>
+    <tr><td><b>Financeiro</b></td><td>Clientes, Contratos, Cobrar hoje, Pix, Histórico</td><td>Relatórios, Admin</td></tr>
+    <tr><td><b>Dono</b></td><td>Tudo do financeiro <b>+ Relatórios</b></td><td>Admin (a não ser que também seja equipe/staff)</td></tr>
+    <tr><td><b>Equipe técnica (staff)</b></td><td>Tudo + <b>Admin</b></td><td>—</td></tr>
+  </tbody>
+</table></div>
+<p>O dono vê tudo que o financeiro vê e ainda tem os Relatórios. O contrário não vale. O perfil de cada usuário é definido no Admin (campo <strong>perfil</strong>).</p>
+
+<h3>Estruturas de pagamento</h3>
+<p>Como as parcelas se repetem no tempo. A primeira parcela vence <strong>um período depois</strong> da data de início (o dia da compra não conta como vencimento).</p>
+<div class="tbl"><table>
+  <thead><tr><th>Estrutura</th><th>Vencimento da parcela nº <em>n</em></th><th>Observação</th></tr></thead>
+  <tbody>
+    <tr><td><b>Diária</b></td><td>início + <em>n</em> dias</td><td>todo dia, domingo incluído</td></tr>
+    <tr><td><b>Semanal</b></td><td>início + 7×<em>n</em> dias</td><td>o atraso só começa <b>na segunda-feira</b> depois do domingo que fecha a semana</td></tr>
+    <tr><td><b>Por dezena</b></td><td>início + 10×<em>n</em> dias</td><td>"pegou dia 3, paga dia 13"</td></tr>
+    <tr><td><b>Quinzenal</b></td><td>início + 15×<em>n</em> dias</td><td>15 dias corridos, não é "duas vezes no mês"</td></tr>
+    <tr><td><b>Mensal</b></td><td>mesmo dia do mês, mês a mês</td><td>31/01 → cai em 28/02 nos meses curtos</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Status e cores</h3>
+<p>O status é <strong>recalculado toda vez que a tela abre</strong>, com base na parcela em aberto mais antiga do contrato.</p>
+<div class="tbl"><table>
+  <thead><tr><th>Selo</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><span class="pill g">Em dia</span></td><td>sem parcela vencida</td></tr>
+    <tr><td><span class="pill r">Atrasado</span></td><td>1 a 6 dias de atraso</td></tr>
+    <tr><td><span class="pill r">Inadimplente</span></td><td>7 dias de atraso ou mais</td></tr>
+    <tr><td><span class="pill n">Quitado</span></td><td>contrato encerrado; parou de cobrar</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Juros</h3>
+<ul>
+  <li><strong>R$ 5,00 fixos por dia de atraso</strong> (5 × dias de atraso).</li>
+  <li>Começa a contar <strong>no dia seguinte</strong> ao vencimento (vencer "hoje" ainda não é atraso).</li>
+  <li>Na estrutura <strong>semanal</strong>, começa na segunda-feira após o domingo que fecha a semana.</li>
+  <li>No atraso, a cobrança continua <strong>todos os dias</strong>.</li>
+</ul>
+
+<h3>Alerta de bloqueio</h3>
+<p>Aos <strong>7 dias de atraso</strong> o sistema mostra <strong>"⚠ hora de bloquear o aparelho"</strong>. O sistema <strong>só avisa</strong> — o bloqueio em si é ação manual do vendedor.</p>
+
+<h3>Parcela (Vencimento) × Pagamento (baixa)</h3>
+<ul>
+  <li><strong>Parcela / Vencimento:</strong> o que o cliente <em>deve</em> pagar numa data (nº, data, valor previsto). O sistema gera automaticamente.</li>
+  <li><strong>Pagamento / baixa:</strong> o registro de que o dinheiro <em>entrou</em>. Você lança à mão.</li>
+  <li>Cada parcela aceita <strong>uma única baixa</strong>. Para corrigir, use <strong>estornar</strong> e lance de novo.</li>
+</ul>
+
+<h3>Dinheiro nos formulários</h3>
+<p>Digite com vírgula decimal: <code>1.234,56</code> ou <code>1234,56</code> ou <code>1234.56</code> — todos são aceitos. O sistema mostra sempre com vírgula.</p>
+
+<h2 id="c2">2. Entrar / Sair <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/entrar/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> todo mundo (é a porta de entrada).</p>
+<p>Qualquer endereço do sistema sem login manda para esta tela.</p>
+<p><strong>O que fazer:</strong></p>
+<ol>
+  <li>Digite <strong>usuário</strong> e <strong>senha</strong>.</li>
+  <li>Clique em <strong>Entrar</strong>.</li>
+</ol>
+<ul>
+  <li>Usuário/senha errados → mensagem "Usuário ou senha inválidos."</li>
+  <li>Depois de entrar, você cai na <strong>lista de Clientes</strong>. Se tinha tentado abrir outra página antes do login, o sistema te leva direto para ela.</li>
+  <li><strong>Sair:</strong> botão <strong>Sair</strong> no canto superior direito (ao lado do seu nome).</li>
+  <li>Não há "criar conta" nem "esqueci a senha" na tela. Novos usuários e troca de senha são feitos pela equipe técnica no Admin.</li>
+</ul>
+
+<h2 id="c3">3. Barra de navegação <a class="back" href="#">▲ topo</a></h2>
+<p>Aparece no topo de todas as páginas depois do login:</p>
+<div class="tbl"><table>
+  <thead><tr><th>Link</th><th>Vai para</th><th>Quem vê</th></tr></thead>
+  <tbody>
+    <tr><td><b>Acompanhamento de Pagamentos</b> (título)</td><td>Lista de clientes</td><td>todos</td></tr>
+    <tr><td><b>Cobrar hoje</b></td><td>Agenda de cobrança do dia</td><td>todos</td></tr>
+    <tr><td><b>Pix</b></td><td>Painel das cobranças Pix da Cora</td><td>todos</td></tr>
+    <tr><td><b>Clientes</b></td><td>Lista de clientes</td><td>todos</td></tr>
+    <tr><td><b>Contratos</b></td><td>Lista de contratos</td><td>todos</td></tr>
+    <tr><td><b>Relatórios</b></td><td>Painel de relatórios</td><td>só dono</td></tr>
+    <tr><td><b>Admin</b></td><td>Painel administrativo do Django</td><td>só equipe/staff</td></tr>
+    <tr><td><i>(seu nome)</i> + <b>Sair</b></td><td>Encerra a sessão</td><td>todos</td></tr>
+  </tbody>
+</table></div>
+<p>O link da seção em que você está fica destacado.</p>
+
+<h2 id="c4">4. Clientes — lista <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/clientes/</code> (também é a página inicial) &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>Lista de todos os clientes cadastrados, em ordem alfabética, <strong>20 por página</strong>.</p>
+<p><strong>Elementos da tela:</strong></p>
+<ul>
+  <li><strong>Buscar por nome ou CPF</strong> — digite parte do nome ou os números do CPF e clique <strong>Buscar</strong>. A busca é "contém" (não precisa ser exato).</li>
+  <li><strong>Novo cliente</strong> — botão à direita, abre o formulário de cadastro.</li>
+  <li><strong>Tabela</strong> com: Nome (link para a ficha), CPF formatado, Telefone (link <code>tel:</code> que disca no celular) e nº de Contratos.</li>
+  <li><strong>Paginação</strong> ("Anterior / Próxima") no rodapé quando há mais de 20.</li>
+  <li>Se não houver ninguém (ou a busca não achar), aparece um aviso e o atalho para cadastrar.</li>
+</ul>
+
+<h2 id="c5">5. Clientes — novo / editar <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URLs:</b> <code>/clientes/novo/</code> e <code>/clientes/&lt;id&gt;/editar/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>Mesma tela para cadastrar e para alterar (o título muda para "Editar cliente").</p>
+<div class="tbl"><table>
+  <thead><tr><th>Campo</th><th>Obrigatório</th><th>Regras</th></tr></thead>
+  <tbody>
+    <tr><td><b>Nome completo</b></td><td>Sim</td><td>livre, até 150 caracteres</td></tr>
+    <tr><td><b>CPF</b></td><td>Sim</td><td>só números; o sistema tira pontos e traços sozinho; <b>valida os dígitos</b> (CPF inválido é recusado); <b>não pode repetir</b> — dois clientes não podem ter o mesmo CPF</td></tr>
+    <tr><td><b>Telefone / WhatsApp</b></td><td>Sim</td><td>número brasileiro; usado para os links de ligação e de WhatsApp</td></tr>
+    <tr><td><b>Endereço</b></td><td>Não</td><td>livre</td></tr>
+  </tbody>
+</table></div>
+<p><strong>Botões:</strong> <strong>Salvar</strong> (grava e vai para a ficha do cliente, com a mensagem "Cliente cadastrado/atualizado") · <strong>Cancelar</strong> (volta sem gravar). Erros de validação aparecem em vermelho embaixo do campo.</p>
+
+<h2 id="c6">6. Clientes — ficha do cliente <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/clientes/&lt;id&gt;/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>Tudo sobre um cliente numa página só.</p>
+<p><strong>Topo:</strong></p>
+<ul>
+  <li>Nome do cliente.</li>
+  <li><strong>Editar</strong> — vai para o formulário.</li>
+  <li><strong>Novo contrato</strong> — abre o cadastro de contrato <strong>já com este cliente preenchido</strong>.</li>
+</ul>
+<p><strong>Dados do cliente:</strong> CPF, Telefone/WhatsApp (com link <strong>WhatsApp</strong> que abre a conversa em <code>wa.me</code>), Endereço, Data de cadastro.</p>
+<p><strong>Contratos</strong> — tabela de todos os contratos do cliente: Apelido (link), Aparelho, Estrutura, Valor total e Status (selo colorido, recalculado na hora).</p>
+<p><strong>Pagamentos</strong> — os <strong>50 pagamentos mais recentes</strong> do cliente (todos os contratos juntos): Data, Contrato, nº da parcela, Valor e Forma. Se houver mais de 50, há o link <strong>"ver histórico"</strong> (abre o Histórico já filtrado por este cliente).</p>
+<p>Se o cliente não tem contratos ou pagamentos, cada bloco mostra um aviso curto.</p>
+
+<h2 id="c7">7. Contratos — lista <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/contratos/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>Todos os contratos, ordenados por nome do cliente, <strong>20 por página</strong>.</p>
+<ul>
+  <li><strong>Filtro por status</strong> — lista suspensa: Todos / Em dia / Atrasado / Inadimplente / Quitado. Muda a lista na hora. Usa o status <strong>calculado hoje</strong> (o mesmo que a tela mostra).</li>
+  <li><strong>Novo contrato</strong> — botão à direita.</li>
+  <li><strong>Tabela:</strong> Apelido (link para o detalhe), Cliente (link para a ficha), Estrutura, Valor total, Início e Status.</li>
+  <li><strong>Paginação</strong> no rodapé.</li>
+</ul>
+
+<h2 id="c8">8. Contratos — novo / editar <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URLs:</b> <code>/contratos/novo/</code> e <code>/contratos/&lt;id&gt;/editar/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>Mesma tela para cadastrar e alterar. No topo há um bloco <strong>"Como os campos de parcela e datas funcionam"</strong> que se abre ao clicar — vale a pena ler na primeira vez. O formulário é dividido em quatro blocos:</p>
+
+<h3>Cliente e aparelho</h3>
+<div class="tbl"><table>
+  <thead><tr><th>Campo</th><th>Obrigatório</th><th>Observação</th></tr></thead>
+  <tbody>
+    <tr><td><b>Cliente</b></td><td>Sim</td><td>escolha na lista; já vem preenchido se você veio do botão "Novo contrato" da ficha</td></tr>
+    <tr><td><b>Apelido / descrição</b></td><td>Sim</td><td>diferencia contratos do mesmo cliente. Ex.: "iPhone 11"</td></tr>
+    <tr><td><b>Aparelho (modelo)</b></td><td>Sim</td><td>ex.: "iPhone 11 64GB"</td></tr>
+    <tr><td><b>IMEI</b></td><td>Não</td><td>só números; o sistema tira o que não for dígito</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Valores e estrutura</h3>
+<div class="tbl"><table>
+  <thead><tr><th>Campo</th><th>Obrigatório</th><th>Observação</th></tr></thead>
+  <tbody>
+    <tr><td><b>Valor total do contrato</b></td><td>Sim</td><td>com vírgula: <code>1.500,00</code></td></tr>
+    <tr><td><b>Estrutura de pagamento</b></td><td>Sim</td><td>diária / semanal / por dezena / quinzenal / mensal</td></tr>
+    <tr><td><b>Valor da parcela</b></td><td>Não*</td><td><b>digitado à mão</b> (o cálculo é feito fora do sistema). <b>Sem ele o sistema não gera as parcelas.</b></td></tr>
+    <tr><td><b>Nº de parcelas</b></td><td>Não*</td><td><b>digitado à mão</b>. Sem ele não há <b>data prevista de quitação</b> e a geração usa um teto de segurança</td></tr>
+  </tbody>
+</table></div>
+<p>* Não são obrigatórios para salvar, mas <strong>sem os dois o contrato fica incompleto</strong> (não gera parcelas / não calcula quitação).</p>
+<div class="callout warn">
+  <p><strong>Aviso de conferência:</strong> se <code>valor da parcela × nº de parcelas</code> não bater com o valor total, aparece um aviso amarelo ("Parcela × nº dá R$ X, diferente do valor total"). É só um alerta — <strong>o sistema não recalcula nada</strong> e deixa você salvar.</p>
+</div>
+
+<h3>Datas</h3>
+<div class="tbl"><table>
+  <thead><tr><th>Campo</th><th>Obrigatório</th><th>Observação</th></tr></thead>
+  <tbody>
+    <tr><td><b>Data de início</b></td><td>Sim</td><td>base de todo o cronograma de parcelas</td></tr>
+    <tr><td><b>Dia(s) de referência</b></td><td>Não</td><td>anotação livre (ex.: "dia 15", "a cada 10 dias"). <b>Não entra no cálculo</b>, é só lembrete</td></tr>
+    <tr><td><b>Próximo vencimento</b></td><td>Não</td><td>data manual da próxima parcela. Só é usada para medir atraso/juros <b>enquanto o contrato ainda não tem parcelas geradas</b>. Depois disso quem manda é a parcela em aberto mais antiga</td></tr>
+    <tr><td><b>Data prevista de quitação</b></td><td>Não</td><td>normalmente <b>calculada pelo sistema</b> (data da última parcela). Só preencha à mão em casos especiais</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Outros</h3>
+<div class="tbl"><table>
+  <thead><tr><th>Campo</th><th>Observação</th></tr></thead>
+  <tbody>
+    <tr><td><b>Status</b></td><td>em dia / atrasado / inadimplente / quitado. Em geral deixe "em dia" — o sistema recalcula sozinho nas telas. Use "quitado" só se quiser encerrar já no cadastro</td></tr>
+    <tr><td><b>Observações</b></td><td>texto livre</td></tr>
+  </tbody>
+</table></div>
+<div class="callout">
+  <p><strong>Ao salvar:</strong> se o <strong>valor da parcela</strong> estiver preenchido, o sistema <strong>já gera as parcelas na hora</strong> (até ~60 dias à frente), calcula a data prevista de quitação e ajusta o status. Você vê mensagens tipo "3 parcela(s) gerada(s) automaticamente". O botão "Gerar parcelas" no detalhe continua disponível como reforço.</p>
+</div>
+
+<h2 id="c9">9. Contratos — detalhe do contrato <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/contratos/&lt;id&gt;/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>A tela mais completa do sistema. De cima para baixo:</p>
+
+<h3>Barra de ações (topo)</h3>
+<ul>
+  <li><strong>Ver cliente</strong> — vai para a ficha.</li>
+  <li><strong>Editar</strong> — formulário do contrato.</li>
+  <li><strong>Registrar pagamento</strong> — dar baixa numa parcela (só aparece se o contrato <strong>não</strong> estiver quitado).</li>
+</ul>
+
+<h3>Caixa "Marcar como quitado"</h3>
+<p>Aparece <strong>só quando todas as parcelas previstas já estão pagas</strong>. Traz o botão <strong>Marcar como quitado</strong>.</p>
+<div class="callout warn">
+  <p><strong>Importante:</strong> a baixa <strong>nunca</strong> quita o contrato sozinha. Quitar é <strong>ação manual</strong>. Depois de quitado, o contrato para de cobrar, registra a data real de quitação e some da agenda "Cobrar hoje".</p>
+</div>
+
+<h3>Dados do contrato</h3>
+<p>Aparelho + IMEI, Estrutura, Telefone (com link WhatsApp), Status, Valor total, Valor da parcela, Nº de parcelas, Data de início, Dia(s) de referência, Próximo vencimento, Previsão de quitação. Se <code>parcela × nº</code> não bate com o total, repete aqui o aviso de conferência.</p>
+
+<h3>"Situação hoje"</h3>
+<p>Cartão com o retrato do dia:</p>
+<ul>
+  <li><span class="pill g">Em dia</span> — "Sem atraso. Parcela nº X vence em dd/mm/aaaa."</li>
+  <li><span class="pill r">Atrasado / Inadimplente</span> — "N dias de atraso (parcela nº X) · juros acumulados R$ Y".</li>
+  <li>Aos 7+ dias: faixa vermelha <strong>"⚠ N dias — hora de bloquear o aparelho (ação manual do vendedor)"</strong>.</li>
+  <li>Se não há como medir atraso (sem parcelas geradas e sem "próximo vencimento"), aparece o aviso para preencher o <strong>próximo vencimento</strong> no contrato.</li>
+</ul>
+
+<h3>Parcelas</h3>
+<p>Tabela das parcelas geradas (mostra as <strong>24 primeiras</strong>): Nº, Vencimento, Previsto, Pago, Saldo, Status (Em aberto / Parcial / Pago) e o link <strong>"dar baixa"</strong> nas que ainda não estão pagas.</p>
+<ul>
+  <li><strong>Botão "Gerar parcelas" / "Gerar parcelas seguintes":</strong> cria as parcelas que faltam <strong>até 60 dias à frente</strong>, a partir da data de início + estrutura. Pode clicar de novo mais tarde para gerar as próximas. É <strong>idempotente</strong> (clicar duas vezes não duplica nada).</li>
+  <li>Se <strong>não há parcelas</strong> e falta o <strong>valor da parcela</strong>, a tela pede para editar o contrato e preencher esse campo primeiro.</li>
+</ul>
+
+<h3>Saldo transportado</h3>
+<p>Aviso que aparece <strong>só quando existe</strong> saldo de um pagamento parcial (ou de um pagamento a maior) que não achou parcela seguinte onde encaixar. Esse valor entra automaticamente na <strong>próxima parcela gerada</strong>.</p>
+
+<h3>Pagamentos</h3>
+<p>Tabela de todas as baixas do contrato: Data, Parcela, Valor, Forma, quem deu a baixa e quando, link do <strong>Comprovante</strong> (se anexado) e o botão <strong>estornar</strong>.</p>
+<ul>
+  <li><strong>Estornar</strong> pede confirmação. Desfaz a baixa, devolve a parcela para "em aberto/parcial" e recalcula o status.</li>
+  <li>Se a baixa estornada havia <strong>transportado saldo</strong> para parcelas seguintes, o sistema <strong>avisa</strong> que os valores previstos das próximas parcelas precisam ser conferidos <strong>à mão</strong> (ele não desfaz o transporte sozinho).</li>
+</ul>
+
+<h3>Documentos</h3>
+<p>Tabela dos arquivos anexados (Tipo, Descrição, link <strong>abrir</strong>, quem enviou e quando) e o formulário <strong>"Anexar documento"</strong>:</p>
+<ul>
+  <li><strong>Tipo:</strong> Contrato assinado / RG / Comprovante de residência / Outro.</li>
+  <li><strong>Arquivo:</strong> o PDF ou a foto.</li>
+  <li><strong>Descrição:</strong> opcional.</li>
+  <li>Clique <strong>Anexar documento</strong>. O sistema guarda quem enviou e a data.</li>
+</ul>
+
+<h2 id="c10">10. Registrar pagamento (dar baixa) <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/pagamentos/contrato/&lt;id&gt;/novo/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>Chega-se aqui pelo botão <strong>Registrar pagamento</strong> (detalhe do contrato), pelo link <strong>"dar baixa"</strong> numa parcela, ou pelo link <strong>"Registrar pagamento"</strong> da agenda "Cobrar hoje". Se o contrato estiver <strong>quitado</strong>, o sistema recusa e volta para o detalhe.</p>
+<p><strong>Cabeçalho:</strong> Cliente, Contrato + estrutura, Valor da parcela.</p>
+<div class="tbl"><table>
+  <thead><tr><th>Campo</th><th>Preenchimento</th><th>Regras</th></tr></thead>
+  <tbody>
+    <tr><td><b>Parcela</b></td><td>já vem selecionada a <b>mais antiga em aberto</b>; a lista mostra "Parcela N · vence dd/mm/aaaa · falta R$ X"</td><td>só aparece parcelas não pagas; se a parcela escolhida já tiver baixa, o sistema recusa e manda estornar a anterior</td></tr>
+    <tr><td><b>Data do pagamento</b></td><td>vem com <b>hoje</b></td><td><b>não pode ser no futuro</b></td></tr>
+    <tr><td><b>Valor pago</b></td><td>vem com o <b>saldo da parcela</b></td><td>tem que ser <b>maior que zero</b></td></tr>
+    <tr><td><b>Forma</b></td><td>Pix / Dinheiro / Outro</td><td>padrão: Pix</td></tr>
+    <tr><td><b>Comprovante</b></td><td>opcional</td><td>anexo (PDF/imagem)</td></tr>
+    <tr><td><b>Observação</b></td><td>opcional</td><td>texto livre</td></tr>
+  </tbody>
+</table></div>
+<p><strong>Botões:</strong> <strong>Registrar baixa</strong> · <strong>Cancelar</strong>.</p>
+<p><strong>O que acontece ao registrar:</strong></p>
+<ul>
+  <li><strong>Valor igual ao saldo</strong> → parcela vira <strong>Pago</strong>.</li>
+  <li><strong>Valor menor</strong> (pagamento parcial) → parcela vira <strong>Parcial</strong>; o que faltou é <strong>somado ao valor previsto da próxima parcela em aberto</strong> (ou vira "saldo transportado" se não houver próxima).</li>
+  <li><strong>Valor maior</strong> (pagou a mais) → o troco <strong>abate as próximas parcelas</strong> (em cascata), ou vira crédito no "saldo transportado".</li>
+  <li>Se, com essa baixa, <strong>todas as parcelas</strong> ficarem pagas, o sistema avisa para usar <strong>"Marcar como quitado"</strong> no detalhe — mas <strong>não quita sozinho</strong>.</li>
+</ul>
+<p>Abaixo do formulário há a tabela <strong>"Parcelas em aberto"</strong> (as 8 primeiras) para consulta.</p>
+
+<h2 id="c11">11. Cobrar hoje <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/cobrar-hoje/</code> (ou <code>/pagamentos/cobrar-hoje/</code>) &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>A agenda de trabalho do dia. Lista os contratos <strong>atrasados</strong> (qualquer estrutura) <strong>ou</strong> com <strong>vencimento hoje</strong>. Contratos quitados nunca aparecem.</p>
+<p><strong>Resumo do topo (números do dia):</strong></p>
+<ul>
+  <li><strong>Para cobrar</strong> — quantos contratos na lista.</li>
+  <li><strong>Atrasados</strong> — quantos já passaram do vencimento.</li>
+  <li><strong>Alerta de bloqueio</strong> — quantos com 7+ dias de atraso.</li>
+  <li><strong>Total previsto (parcela + juros)</strong> — soma do que dá para receber hoje.</li>
+</ul>
+<p><strong>Tabela</strong> (ordenada por dias de atraso, do maior para o menor):</p>
+<div class="tbl"><table>
+  <thead><tr><th>Coluna</th><th>O que mostra</th></tr></thead>
+  <tbody>
+    <tr><td><b>Cliente</b></td><td>nome (link para a ficha)</td></tr>
+    <tr><td><b>Contrato</b></td><td>apelido (link) + estrutura</td></tr>
+    <tr><td><b>Situação</b></td><td>"Vence hoje" (verde) <b>ou</b> selo do status + "N dias de atraso" + faixa "⚠ bloquear aparelho" quando for o caso</td></tr>
+    <tr><td><b>A cobrar</b></td><td>valor da parcela + juros; a linha de baixo detalha "parcela R$ X + juros R$ Y". Se não houver valor de parcela no contrato, mostra "só juros R$ Y · defina o valor da parcela no contrato"</td></tr>
+    <tr><td><b>Envio</b></td><td>dois selos: <b>Pix</b> (estado da cobrança Cora da parcela) e <b>Msg</b> (estado da mensagem de WhatsApp do dia). "não gerado / não preparada" quando ainda não existem. Passe o mouse para ver o detalhe</td></tr>
+    <tr><td><b>Contato</b></td><td>telefone (link de ligação), link <b>WhatsApp</b>, e o link <b>Registrar pagamento</b></td></tr>
+  </tbody>
+</table></div>
+<p><strong>Como usar:</strong> percorra a lista, entre em contato pelo WhatsApp/telefone e, quando o cliente pagar, clique em <strong>Registrar pagamento</strong> naquela linha para dar baixa. Se não há nada: <strong>"Nada para cobrar hoje. 🎉"</strong></p>
+
+<h2 id="c12">12. Pix <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/pagamentos/pix/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>Acompanhamento das cobranças <strong>Pix automáticas da Cora</strong>. Cada parcela pode receber uma cobrança Pix; quando a Cora confirma o pagamento, a <strong>baixa é automática</strong> (você não precisa lançar nada).</p>
+<p><strong>Resumo do topo:</strong></p>
+<ul>
+  <li><strong>Na tela</strong> — total de linhas exibidas.</li>
+  <li><strong>✅ Pagos hoje</strong> — confirmados pela Cora hoje.</li>
+  <li><strong>⏳ Aguardando</strong> — cobrança gerada, cliente ainda não pagou.</li>
+  <li><strong>❌ Não pagos</strong> — a cobrança <strong>venceu</strong> sem pagamento → o financeiro deve entrar em contato.</li>
+  <li><strong>⚠ Erros</strong> — falha ao gerar/processar a cobrança.</li>
+</ul>
+<p><strong>Tabela:</strong> Cliente (link), Contrato (link), nº da Parcela, Vencimento, Valor, Status (com selo colorido) e <strong>Pix</strong> — o campo <strong>"Ver Copia e Cola"</strong> abre o código Pix copia-e-cola para mandar ao cliente. A tela mostra as cobranças <strong>pendentes, aguardando, não pagas e com erro</strong>, além das <strong>pagas hoje</strong>. Cobranças pagas em dias anteriores não poluem a lista.</p>
+<div class="callout">
+  <p>Enquanto a integração da Cora estiver em modo seguro (<code>CORA_PROVIDER=log</code>), nada é enviado de verdade. Ativação em <code>docs/CORA.md</code>.</p>
+</div>
+
+<h2 id="c13">13. Histórico de pagamentos <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/pagamentos/historico/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> todos.</p>
+<p>Todas as baixas já registradas, da mais recente para a mais antiga, <strong>50 por página</strong>.</p>
+<p><strong>Colunas:</strong> Data, Cliente (link), Contrato (link), nº da Parcela, Valor, Forma, e <strong>Baixa</strong> (quem lançou + data/hora).</p>
+<p><strong>Filtros</strong> (chegam pela URL, normalmente ao clicar "ver histórico" numa ficha):</p>
+<ul>
+  <li><code>?cliente=&lt;id&gt;</code> — só as baixas daquele cliente.</li>
+  <li><code>?contrato=&lt;id&gt;</code> — só as daquele contrato.</li>
+  <li>Quando um filtro está ativo, aparece <strong>"Filtrado · ver todos"</strong> para limpar.</li>
+</ul>
+<p>Paginação com "Anterior / Próxima" preservando o filtro.</p>
+
+<h2 id="c14">14. Relatórios — só dono <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/relatorios/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> <b>só perfil dono</b> (financeiro recebe "acesso negado").</p>
+<p>Consolidação de um período.</p>
+
+<h3>Filtro</h3>
+<div class="tbl"><table>
+  <thead><tr><th>Campo</th><th>Uso</th></tr></thead>
+  <tbody>
+    <tr><td><b>Período</b></td><td>Diário / Semanal / Mensal / Personalizado</td></tr>
+    <tr><td><b>Data de referência</b></td><td>o dia base. Diário = esse dia; Semanal = a semana (segunda a domingo) que o contém; Mensal = o mês inteiro</td></tr>
+    <tr><td><b>Início / Fim (personalizado)</b></td><td>só quando o período é "Personalizado". Fim não pode ser antes do Início; máximo de 367 dias</td></tr>
+  </tbody>
+</table></div>
+<p>Clique <strong>Atualizar</strong>. Sem nenhum filtro, o padrão é <strong>o dia de hoje</strong>.</p>
+
+<h3>Indicadores do período</h3>
+<ul>
+  <li><strong>Previsto no período</strong> — soma dos valores previstos das parcelas que vencem no intervalo.</li>
+  <li><strong>Recebido no período</strong> — soma das baixas com data de pagamento no intervalo.</li>
+  <li><strong>Total em atraso</strong> — soma em aberto das parcelas vencidas <strong>até o fim do período</strong> (retrato histórico: uma parcela paga depois do fim do período ainda conta como atrasada aqui).</li>
+  <li><strong>Parcelas atrasadas</strong> — quantidade das acima.</li>
+  <li><strong>Novos clientes</strong> — cadastrados no intervalo.</li>
+  <li><strong>Contratos quitados</strong> — marcados como quitados no intervalo.</li>
+</ul>
+
+<h3>Tabelas</h3>
+<ul>
+  <li><strong>Recebimentos por forma</strong> — Pix / Dinheiro / Outro, com quantidade e total.</li>
+  <li><strong>Recebimentos</strong> — cada baixa: Data, Cliente, Contrato, Forma, Valor.</li>
+  <li><strong>Parcelas em atraso até o fim do período</strong> — Cliente, Contrato, Vencimento, nº, Em aberto.</li>
+</ul>
+
+<h3>Exportar</h3>
+<ul>
+  <li><strong>Baixar Excel</strong> — arquivo <code>.xlsx</code> com abas <strong>Resumo</strong>, <strong>Recebimentos</strong> e <strong>Em atraso</strong>.</li>
+  <li><strong>Baixar PDF</strong> — mesmo conteúdo em PDF paisagem.</li>
+</ul>
+<p>Os dois botões respeitam o período que está na tela.</p>
+
+<h2 id="c15">15. Admin — só equipe técnica <a class="back" href="#">▲ topo</a></h2>
+<p class="meta-line"><b>URL:</b> <code>/admin/</code> &nbsp;·&nbsp; <b>Quem acessa:</b> usuários marcados como <b>equipe (staff)</b> ou <b>superusuário</b>.</p>
+<p>Painel administrativo do Django. Uso principal:</p>
+<ul>
+  <li><strong>Usuários</strong> — criar logins, definir <strong>perfil</strong> (financeiro / dono), marcar quem é equipe/staff, <strong>trocar senha</strong>, ativar/desativar acesso.</li>
+  <li><strong>Clientes</strong> — cadastro completo <strong>com importação e exportação</strong> (CSV/Excel): botões <strong>Importar</strong> e <strong>Exportar</strong> no topo da lista. Busca por nome, CPF ou telefone.</li>
+  <li><strong>Contratos</strong> — idem, com <strong>importação e exportação</strong>. Busca por nome/CPF do cliente, apelido, aparelho ou IMEI.</li>
+  <li><strong>Vencimentos, Pagamentos, Cobranças (WhatsApp), Cobranças Cora, Eventos Cora</strong> — consulta e ajuste fino quando algo precisa ser corrigido manualmente.</li>
+</ul>
+<div class="callout warn">
+  <p>O Admin é uma ferramenta técnica: alterações aqui não passam pelas validações e avisos das telas normais. Use com cuidado e, de preferência, só a importação/exportação de clientes e contratos e a gestão de usuários.</p>
+</div>
+
+<h2 id="c16">16. Rotina do dia sugerida <a class="back" href="#">▲ topo</a></h2>
+<ol>
+  <li><strong>Cobrar hoje</strong> — abra a agenda. Veja os números do topo.</li>
+  <li>Para cada linha: contate o cliente (WhatsApp/telefone).</li>
+  <li><strong>Pix</strong> — confira os <strong>"❌ Não pagos"</strong> e os <strong>"⚠ Erros"</strong>; entre em contato nesses casos. Os <strong>"✅ Pagos hoje"</strong> já entraram sozinhos.</li>
+  <li>Quando alguém pagar fora do Pix: <strong>Registrar pagamento</strong> na linha correspondente.</li>
+  <li>Contrato com <strong>todas as parcelas pagas</strong> → abra o detalhe e clique <strong>Marcar como quitado</strong>.</li>
+  <li>Cadastros do dia (novos clientes / contratos) entram por <strong>Clientes → Novo</strong> e <strong>Contratos → Novo</strong>.</li>
+  <li>Fim de mês / a pedido do dono: <strong>Relatórios</strong> e exportação em Excel/PDF.</li>
+</ol>
+
+<h2 id="c17">17. Automações (o que o sistema faz sozinho) <a class="back" href="#">▲ topo</a></h2>
+<p>Rodam no servidor uma vez por dia (não precisam de ação sua):</p>
+<div class="tbl"><table>
+  <thead><tr><th>Tarefa</th><th>O que faz</th></tr></thead>
+  <tbody>
+    <tr><td><b>Gerar vencimentos</b></td><td>cria as parcelas que faltam até ~60 dias à frente, atualiza a data prevista de quitação e o status de todos os contratos</td></tr>
+    <tr><td><b>Lembrete diário</b></td><td>monta o resumo do dia para a Yslane</td></tr>
+    <tr><td><b>Cobrança dos clientes</b></td><td>prepara e envia (quando a Evolution API está ligada) as mensagens de vencimento/atraso pelo WhatsApp</td></tr>
+    <tr><td><b>Reconciliação Cora</b></td><td>confere na Cora as cobranças Pix abertas e registra as baixas confirmadas</td></tr>
+  </tbody>
+</table></div>
+<p>Por padrão os envios ficam em <strong>modo seguro</strong> (<code>WHATSAPP_PROVIDER=log</code> / <code>CORA_PROVIDER=log</code>): as filas são criadas e aparecem nos painéis, mas <strong>nada sai do sistema</strong> até a equipe técnica ativar cada integração (<code>docs/WHATSAPP.md</code>, <code>docs/CORA.md</code>).</p>
+
+<h2 id="c18">18. Perguntas frequentes <a class="back" href="#">▲ topo</a></h2>
+
+<p><strong>Lancei uma baixa errada. E agora?</strong><br>
+No detalhe do contrato, seção <strong>Pagamentos</strong>, clique <strong>estornar</strong> na linha. Se aparecer o aviso de saldo transportado, confira à mão os valores previstos das parcelas seguintes.</p>
+
+<p><strong>O cliente pagou só uma parte. Posso registrar?</strong><br>
+Pode. A parcela fica <strong>Parcial</strong> e a diferença entra na próxima parcela automaticamente.</p>
+
+<p><strong>Por que o contrato não gera parcelas?</strong><br>
+Falta o <strong>valor da parcela</strong> no cadastro. Edite o contrato, preencha e salve (ou use o botão <strong>Gerar parcelas</strong> no detalhe).</p>
+
+<p><strong>A baixa quitou o contrato?</strong><br>
+Não. Quitar é sempre <strong>manual</strong>: botão <strong>Marcar como quitado</strong> no detalhe, que só aparece quando todas as parcelas previstas estão pagas.</p>
+
+<p><strong>Mudei o status do contrato no formulário e ele "voltou".</strong><br>
+Normal. O status é <strong>recalculado</strong> toda vez que a tela abre, a partir das parcelas em aberto. O campo no formulário só vale para casos manuais (ex.: quitar).</p>
+
+<p><strong>"Cobrar hoje" está diferente de "Pix".</strong><br>
+São coisas diferentes: <strong>Cobrar hoje</strong> é a agenda de quem contatar (atraso + vencimento do dia); <strong>Pix</strong> é o acompanhamento das cobranças automáticas da Cora.</p>
+
+<p><strong>Não consigo ver Relatórios.</strong><br>
+Relatórios é <strong>só para o perfil dono</strong>. Peça à equipe técnica para ajustar seu perfil no Admin.</p>
+
+<p><strong>Como cadastro um novo usuário do sistema?</strong><br>
+Só pelo <strong>Admin</strong> (<code>/admin/</code> → Usuários), por quem tem acesso de equipe/staff.</p>
+
+<footer class="doc">
+  Manual de operação — Sistema de Acompanhamento de Pagamentos de Celulares. Uso interno.
+  Versão de referência do código: fases 1 a 7 implementadas.
+</footer>
+
+</div>
+</body>
+</html>
