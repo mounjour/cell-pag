@@ -7,7 +7,9 @@ databases:
   - name: cell-pag-db
     databaseName: cellpag
     user: cellpag
-    plan: free # trocar por "basic-256mb" (US$ 7/mês) para produção — o free expira em 30 dias
+    # basic-256mb (~US$ 7/mês): tem backup diário e não expira. O plano "free"
+    # expira em 30 dias e não faz backup — inaceitável para registro financeiro.
+    plan: basic-256mb
 
 # Variáveis compartilhadas entre o site e o cron (o resto é preenchido no painel).
 envVarGroups:
@@ -59,11 +61,20 @@ services:
   - type: web
     name: cell-pag
     runtime: python
-    plan: free # "starter" (US$ 7/mês) tira o cold-start de ~1 min após ociosidade
+    # "starter" (~US$ 7/mês): exigido para montar disco persistente (o plano
+    # "free" não suporta disco). De brinde, tira o cold-start de ~1 min.
+    plan: starter
     buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
     preDeployCommand: "python manage.py migrate" # roda as migrações antes de trocar a versão no ar
     startCommand: "gunicorn config.wsgi:application"
     healthCheckPath: /entrar/
+    # Disco para os anexos (comprovantes, documentos). Sem ele, MEDIA_ROOT é
+    # efêmero e os arquivos somem a cada deploy. O caminho tem de bater com o
+    # MEDIA_ROOT do settings.py (BASE_DIR/"media"). O cron NÃO precisa de disco.
+    disk:
+      name: media
+      mountPath: /opt/render/project/src/media
+      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.10"
