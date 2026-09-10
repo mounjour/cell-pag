@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Início{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <h1 style="margin:0">Início · {{ painel.hoje|date:"d/m/Y" }}</h1>
+  <span class="spacer"></span>
+  <a class="btn" href="{% url 'pagamentos:cobrar_hoje' %}">Ir para Cobrar hoje</a>
+</div>
+
+<dl class="meta painel-kpis">
+  <div>
+    <dt>A receber em aberto</dt>
+    <dd class="num">R$ {{ painel.a_receber|floatformat:2 }}</dd>
+  </div>
+  <div>
+    <dt>Em atraso (hoje)</dt>
+    <dd class="num critical-text">R$ {{ painel.total_atrasado|floatformat:2 }}<span class="kpi-sub">{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }}</span></dd>
+  </div>
+  <div>
+    <dt>Recebido no mês</dt>
+    <dd class="num">R$ {{ painel.recebido_mes|floatformat:2 }}<span class="kpi-sub">de R$ {{ painel.previsto_mes|floatformat:2 }} previstos</span></dd>
+  </div>
+  <div>
+    <dt>Contratos ativos</dt>
+    <dd class="num">{{ painel.contratos_ativos }}</dd>
+  </div>
+  <div>
+    <dt>Inadimplentes</dt>
+    <dd class="num">{{ painel.inadimplentes }}<span class="kpi-sub">{{ painel.atrasados_contratos }} atrasado{{ painel.atrasados_contratos|pluralize }}</span></dd>
+  </div>
+  <div>
+    <dt>Ticket médio</dt>
+    <dd class="num">R$ {{ painel.ticket_medio|floatformat:2 }}</dd>
+  </div>
+</dl>
+
+<div class="painel-graficos">
+  <div class="card">
+    <h2 style="margin-top:0">Recebido × previsto por mês</h2>
+    <div class="chart-box"><canvas id="grafico-meses" aria-label="Recebido e previsto por mês nos últimos seis meses"></canvas></div>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Contratos por status</h2>
+    <div class="chart-box"><canvas id="grafico-status" aria-label="Distribuição dos contratos por status"></canvas></div>
+  </div>
+</div>
+
+<h2>Precisa de atenção</h2>
+{% if painel.atencao %}
+  <div class="tbl-wrap cards">
+    <table>
+      <thead>
+        <tr><th>Cliente</th><th>Contrato</th><th class="num">Atraso</th><th class="num">Em aberto</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for item in painel.atencao %}
+          <tr>
+            <td><a href="{% url 'clientes:detalhe' item.contrato.cliente.pk %}">{{ item.contrato.cliente.nome }}</a></td>
+            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' item.contrato.pk %}">{{ item.contrato.apelido }}</a></td>
+            <td class="num" data-label="Atraso">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize }}</td>
+            <td class="num" data-label="Em aberto">R$ {{ item.em_aberto|floatformat:2 }}</td>
+            <td class="num" data-label=""><a href="{% url 'pagamentos:novo' item.contrato.pk %}">registrar</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty"><p>Nenhum contrato em atraso agora. 🎉</p></div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {{ serie_json|json_script:"serie-data" }}
+  {{ status_json|json_script:"status-data" }}
+  <script src="{% static 'js/chart.umd.min.js' %}"></script>
+  <script src="{% static 'js/inicio.js' %}"></script>
+{% endblock %}

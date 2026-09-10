@@ -64,10 +64,27 @@
             </td>
             <td data-label="Contato" class="card-stack contato-cell">
               <span class="contato-vias">
-                <a class="num" href="tel:{{ l.contrato.cliente.telefone_whatsapp.as_e164 }}">{{ l.contrato.cliente.telefone_exibicao }}</a>
-                <a class="zap" href="{{ l.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+                <a class="icon-btn icon-btn--phone" href="tel:{{ l.contrato.cliente.telefone_whatsapp.as_e164 }}"
+                   title="Ligar para {{ l.contrato.cliente.telefone_exibicao }}"
+                   aria-label="Ligar para {{ l.contrato.cliente.nome }} — {{ l.contrato.cliente.telefone_exibicao }}">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                  </svg>
+                </a>
+                <a class="icon-btn icon-btn--wa" href="{{ l.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener"
+                   title="Abrir WhatsApp de {{ l.contrato.cliente.telefone_exibicao }}"
+                   aria-label="Abrir WhatsApp de {{ l.contrato.cliente.nome }}">
+                  <svg viewBox="0 0 32 32" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+                    <path d="M16.004 0h-.008C7.174 0 .002 7.174.002 16c0 3.5 1.13 6.744 3.05 9.38L1.06 31.26l6.08-1.944A15.9 15.9 0 0 0 16.004 32C24.83 32 32 24.826 32 16S24.83 0 16.004 0zm9.32 22.598c-.386 1.09-1.92 1.994-3.142 2.258-.836.178-1.928.32-5.604-1.204-4.7-1.948-7.726-6.724-7.962-7.034-.226-.31-1.9-2.53-1.9-4.826 0-2.296 1.166-3.424 1.636-3.904.386-.394.844-.574 1.324-.574.156 0 .296.008.424.014.386.016.58.038.834.646.316.764 1.09 2.66 1.182 2.854.094.194.156.42.028.73-.12.31-.226.45-.42.694-.194.244-.408.542-.582.73-.194.21-.396.436-.17.826.226.39.998 1.646 2.144 2.664 1.474 1.314 2.72 1.72 3.16 1.914.44.194.694.162.95-.098.32-.32 1.006-1.146 1.33-1.542.32-.396.6-.34 1.006-.194.408.146 2.594 1.224 3.04 1.446.446.222.742.33.85.516.108.192.108 1.09-.278 2.18z"/>
+                  </svg>
+                </a>
               </span>
-              <a class="contato-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}">Registrar pagamento</a>
+              <a class="btn btn-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">
+                  <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1.1 14.2-3.6-3.6 1.4-1.4 2.2 2.2 4.9-4.9 1.4 1.4-6.3 6.3z"/>
+                </svg>
+                Registrar
+              </a>
             </td>
           </tr>
         {% endfor %}
