@@ -147,16 +147,47 @@ python manage.py reconciliar_cora
 
 ---
 
-## 6. Custos (referência, planos do Render em 2025)
+## 6. Custos (referência, planos do Render em 2026)
 
-| Recurso | Plano free | Plano pago mínimo |
+O Render cobra em dois níveis que se somam: a **assinatura do workspace** (fixa) e
+o **preço de cada recurso** por tamanho de instância. Para este projeto o workspace
+**Hobby (grátis)** basta — nada aqui exige o plano Pro (US$ 25/mês: SOC 2,
+autoscaling, mais banda). O uso de banda de uma ferramenta interna para 2 pessoas
+fica folgado no Hobby.
+
+### O que o `render.yaml` provisiona
+
+| Recurso | Como está no blueprint | Custo/mês |
 |---|---|---|
-| Site (web) | dorme após 15 min ocioso, acorda em ~1 min | Starter ~US$ 7/mês (sempre ligado) |
-| PostgreSQL | **expira em 30 dias** | Basic ~US$ 7/mês |
-| Cron job | — | ~US$ 1/mês (por uso) |
+| Workspace | Hobby | US$ 0 |
+| Site (web) `cell-pag` | `plan: starter` — obrigatório: tem disco (o free não monta disco) e tira o cold-start | ~US$ 7 |
+| Disco persistente (anexos) | `sizeGB: 1` — US$ 0,25/GB | ~US$ 0,25 |
+| PostgreSQL `cell-pag-db` | `plan: basic-256mb` — backup diário, não expira | ~US$ 6–7 |
+| Cron `cell-pag-rotina-diaria` | `plan: free` — roda ~1 min/dia | US$ 0 |
+| **Total no Render** | | **≈ US$ 13–15/mês** |
 
-Para avaliação, o free resolve. Para uso diário de verdade, conte com
-**~US$ 15/mês**. Migrar de free para pago não exige mudar código.
+Com IOF + spread de câmbio (~+6%): **≈ R$ 75–90/mês**. Mais a retenção de US$ 1
+na validação do cartão no cadastro. Pagamento só em cartão internacional — o
+Render não aceita Pix nem boleto.
+
+### Fora dessa conta
+
+- **Evolution API (WhatsApp)** — não roda no Render; é Docker em servidor próprio
+  (item 0). Com `WHATSAPP_PROVIDER=log`, custo zero. Para ativar de verdade: um
+  VPS pequeno (~US$ 4–6/mês) ou uma VM que já exista.
+- **CoraPro** — assinatura do banco Cora para gerar Pix via API; custo bancário,
+  não de infraestrutura. Com `CORA_PROVIDER=log`, custo zero.
+- **Sentry** — o tier grátis atende.
+
+### Free não serve para produção aqui
+
+- **Postgres free** expira em 30 dias e some — inaceitável para registro
+  financeiro (por isso o blueprint fixa `basic-256mb`).
+- **Web free** dorme após 15 min, volta em ~1 min e **não monta disco** — os
+  anexos sumiriam a cada deploy. A Yslane usa todo dia no celular.
+
+Para avaliação rápida, dá para trocar tudo para free e voltar depois sem mexer no
+código. Para uso diário de verdade, conte com **~US$ 15/mês** no Render.
 
 ---
 
