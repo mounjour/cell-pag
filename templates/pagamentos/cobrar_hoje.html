@@ -31,9 +31,11 @@
               {% if l.vence_hoje %}
                 <span class="pill em_dia">Vence hoje</span>
               {% else %}
-                <span class="pill {{ l.situacao.status }}">{{ l.contrato.status_efetivo_label }}</span>
+                <span class="situacao-selos">
+                  <span class="pill {{ l.situacao.status }}">{{ l.contrato.status_efetivo_label }}</span>
+                  {% if l.situacao.alertar_bloqueio %}<span class="pill alerta-bloqueio">⚠ bloquear aparelho</span>{% endif %}
+                </span>
                 <span class="atraso-dias">{{ l.situacao.dias_atraso }} dia{{ l.situacao.dias_atraso|pluralize }} de atraso</span>
-                {% if l.situacao.alertar_bloqueio %}<span class="pill inadimplente">⚠ bloquear aparelho</span>{% endif %}
               {% endif %}
             </td>
             <td class="num cobrar-cell" data-label="A cobrar">
