@@ -344,12 +344,12 @@ main h2:nth-of-type(6n + 6) { border-left-color: var(--c-pink); }
 .report-heading { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1rem; }
 .report-heading h2 { margin: 0.1rem 0 0; border: 0; padding: 0; }
 .report-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.report-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.meta.report-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .critical-text { color: var(--critical-ink); font-weight: 600; }
 @media (min-width: 640px) {
   .report-filter { grid-template-columns: repeat(4, 1fr) auto; }
   .report-heading { flex-direction: row; align-items: end; justify-content: space-between; }
-  .report-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .meta.report-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* ---------- Botões ---------- */
