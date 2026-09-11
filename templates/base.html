@@ -5,9 +5,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#edeae0" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#3a3a3b" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#202124" media="(prefers-color-scheme: dark)">
   <title>{% block title %}Acompanhamento de Pagamentos{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
 </head>
 <body>
@@ -16,11 +19,12 @@
     {% if user.is_authenticated %}
       {% with secao=request.resolver_match.app_name pagina=request.resolver_match.url_name %}
       <nav class="nav">
+        <a href="{% url 'relatorios:inicio' %}"{% if pagina == 'inicio' %} class="active" aria-current="page"{% endif %}>Início</a>
         <a href="{% url 'pagamentos:cobrar_hoje' %}"{% if pagina == 'cobrar_hoje' %} class="active" aria-current="page"{% endif %}>Cobrar hoje</a>
         <a href="{% url 'pagamentos:pix_painel' %}"{% if pagina == 'pix_painel' %} class="active" aria-current="page"{% endif %}>Pix</a>
         <a href="{% url 'clientes:lista' %}"{% if secao == 'clientes' %} class="active" aria-current="page"{% endif %}>Clientes</a>
         <a href="{% url 'contratos:lista' %}"{% if secao == 'contratos' %} class="active" aria-current="page"{% endif %}>Contratos</a>
-        {% if user.is_dono %}<a href="{% url 'relatorios:painel' %}"{% if secao == 'relatorios' %} class="active" aria-current="page"{% endif %}>Relatórios</a>{% endif %}
+        {% if user.is_dono %}<a href="{% url 'relatorios:painel' %}"{% if secao == 'relatorios' and pagina != 'inicio' %} class="active" aria-current="page"{% endif %}>Relatórios</a>{% endif %}
         {% if user.is_staff %}<a href="/admin/">Admin</a>{% endif %}
       </nav>
       {% endwith %}
@@ -40,5 +44,6 @@
     {% endif %}
     {% block content %}{% endblock %}
   </main>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

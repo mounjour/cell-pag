@@ -1,72 +1,117 @@
 /* Mobile-first. Estilos base valem para celular; @media (min-width: 640px) amplia.
-   Personalidade: papelaria / caderno de controle. Verde-pinho é a cor da casa;
-   a cor forte fica reservada para status. Nada de firula — o que muda aqui em
-   relação à versão anterior é execução: foco visível, hierarquia mais firme,
-   tabelas que se leem no celular e uma barra de ação que não some na rolagem. */
+   Linguagem visual: Google — Material Design, versão colorida. Azul Google é a cor
+   de ação; cada seção ganha um acento de uma paleta de seis cores (azul, verde,
+   roxo, laranja, ciano, rosa); os blocos de dados viram cartões-métrica com
+   elevação e um leve movimento de entrada. Superfícies brancas sobre um cinza de
+   app com um véu de cor no topo. Cantos generosos (14px nos cartões, 8px nos
+   controles), tipografia Roboto, sombras Material de duas camadas. */
 
 :root {
-  --paper: #edeae0;        /* fundo da página — papel morno, um tom mais fundo que o branco */
+  --paper: #f6f8fc;        /* fundo do aplicativo — cinza Google com um respiro azulado */
   --surface: #ffffff;      /* cartões, tabelas, campos, barra do topo */
-  --surface-2: #f1efe6;    /* faixa alternada de tabela, cabeçalho de tabela, :hover neutro */
-  --ink: #1b211e;          /* texto principal */
-  --ink-soft: #4f554f;     /* texto de apoio */
-  --ink-faint: #6b6f67;    /* rótulos em maiúsculas pequenas (th, dt, helptext) — AA sobre papel */
-  --line: #d6d4c8;         /* bordas e divisórias finas */
-  --line-strong: #c2c0b1;  /* contorno de cartão/tabela e divisória de seção */
-  --accent: #1e6e5a;       /* verde da casa — ação, foco, marca */
-  --accent-ink: #124e3d;   /* verde escuro — texto sobre wash, links, hover de botão */
-  --accent-wash: #e3ede8;  /* fundo verde suave — sucesso, pill "em dia", :hover de linha */
-  --on-accent: #ffffff;    /* texto sobre o verde cheio (botão primário) */
-  --amber: #86560f;        /* âmbar — aviso intermediário */
-  --amber-wash: #f3e8d2;
-  --critical: #9d3526;     /* terracota — erro, inadimplência */
-  --critical-wash: #f0ded9;
-  --focus: #1e6e5a;        /* anel de foco */
-  --raise: 0 1px 2px rgba(27, 33, 30, 0.06);  /* elevação de papel — só um respiro, sem sombra pesada */
-  --tap: 44px;             /* alvo mínimo de toque */
+  --surface-2: #eef1f6;    /* faixa alternada de tabela, cabeçalho, :hover neutro */
+  --ink: #1f1f1f;          /* texto principal */
+  --ink-soft: #3c4043;     /* texto de apoio */
+  --ink-faint: #5f6368;    /* rótulos, helptext, th — Google grey 700 (AA sobre branco) */
+  --line: #dde1e6;         /* bordas e divisórias finas */
+  --line-strong: #c4c7c5;  /* contorno de campo, divisória de seção */
+
+  --accent: #1a73e8;       /* azul Google — ação, foco, marca */
+  --accent-ink: #1558b0;   /* azul mais fundo — links, hover de botão, texto sobre wash */
+  --accent-wash: #e8f0fe;  /* azul Google pálido — realce, :hover de linha, banner */
+  --on-accent: #ffffff;    /* texto sobre o azul cheio (botão primário) */
+
+  --amber: #e8710a;        /* laranja Google — aviso intermediário */
+  --amber-ink: #b06000;
+  --amber-wash: #feefc3;
+  --critical: #d93025;     /* vermelho Google — erro, inadimplência */
+  --critical-ink: #c5221f;
+  --critical-wash: #fce8e6;
+  --ok: #1e8e3e;           /* verde Google — sucesso, "em dia" */
+  --ok-ink: #137333;
+  --ok-wash: #e6f4ea;
+
+  /* Paleta de seções — o acento gira por esta ordem em h2 e nos cartões-métrica */
+  --c-blue: #1a73e8;   --c-blue-wash: #e8f0fe;
+  --c-green: #1e8e3e;  --c-green-wash: #e6f4ea;
+  --c-purple: #9334e6; --c-purple-wash: #f3e8fd;
+  --c-orange: #e8710a; --c-orange-wash: #fdecd8;
+  --c-teal: #0f9aa8;   --c-teal-wash: #e0f5f7;
+  --c-pink: #d01884;   --c-pink-wash: #fde7f3;
+
+  --focus: #1a73e8;
+  /* elevação Material — sombra de duas camadas */
+  --raise: 0 1px 2px 0 rgba(60, 64, 67, 0.28), 0 1px 3px 1px rgba(60, 64, 67, 0.13);
+  --raise-hover: 0 2px 6px 0 rgba(60, 64, 67, 0.28), 0 6px 14px 4px rgba(60, 64, 67, 0.15);
+  --radius: 14px;          /* cartões, tabelas, painéis, caixas */
+  --radius-sm: 8px;        /* campos, botões, cartões-métrica, avisos */
+  --radius-pill: 999px;    /* navegação, busca */
+  --tap: 44px;
   color-scheme: light dark;
 }
 
-/* ---------- Modo escuro (segue o tema do dispositivo) ----------
-   Mesmo "caderno de controle", num papel de grafite morno (nada de preto puro
-   nem verde neon). O verde da casa vira uma versão dessaturada; âmbar e
-   terracota também baixam o brilho; as sombras ganham um pouco de peso. */
+/* ---------- Modo escuro (segue o tema do dispositivo) ---------- */
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #3a3a3b;        /* cinza médio-escuro neutro — fundo da página (mais claro que os cartões) */
-    --surface: #2b2b2c;      /* cartões, tabelas, campos, barra do topo — recuados sobre o fundo */
-    --surface-2: #333334;    /* faixa alternada, cabeçalho de tabela, hover neutro */
-    --ink: #e6e5e3;
-    --ink-soft: #adadaa;
-    --ink-faint: #9a9a97;
-    --line: #454547;
-    --line-strong: #575759;
-    --accent: #5c9d89;       /* verde-pinho dessaturado */
-    --accent-ink: #8ab9a9;   /* texto sobre wash, links, hover */
-    --accent-wash: #32473f;  /* tintura verde discreta — visível sobre o cartão */
-    --on-accent: #0c211b;
-    --amber: #c39a5c;        /* ocre — sem brilho */
-    --amber-wash: #372f21;
-    --critical: #cf8d7e;     /* terracota suave */
-    --critical-wash: #392824;
-    --focus: #5c9d89;
-    --raise: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --paper: #1b1c1e;
+    --surface: #26282b;
+    --surface-2: #303236;
+    --ink: #e8eaed;
+    --ink-soft: #c4c7c5;
+    --ink-faint: #9aa0a6;
+    --line: #3f4145;
+    --line-strong: #5f6368;
+
+    --accent: #8ab4f8;
+    --accent-ink: #aecbfa;
+    --accent-wash: #2b3b57;
+    --on-accent: #1b1c1e;
+
+    --amber: #fcad70;
+    --amber-ink: #fcad70;
+    --amber-wash: #402f1c;
+    --critical: #f28b82;
+    --critical-ink: #f28b82;
+    --critical-wash: #3d2b28;
+    --ok: #81c995;
+    --ok-ink: #81c995;
+    --ok-wash: #1f352a;
+
+    --c-blue: #8ab4f8;   --c-blue-wash: #2b3b57;
+    --c-green: #81c995;  --c-green-wash: #1f352a;
+    --c-purple: #d7aefb; --c-purple-wash: #3c2c50;
+    --c-orange: #fcad70; --c-orange-wash: #402f1c;
+    --c-teal: #5ad0dd;   --c-teal-wash: #1c3b3e;
+    --c-pink: #ff8bcb;   --c-pink-wash: #45213a;
+
+    --focus: #8ab4f8;
+    --raise: 0 1px 2px 0 rgba(0, 0, 0, 0.6), 0 1px 3px 1px rgba(0, 0, 0, 0.35);
+    --raise-hover: 0 2px 6px 0 rgba(0, 0, 0, 0.6), 0 6px 16px 4px rgba(0, 0, 0, 0.45);
   }
 }
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
 body {
   margin: 0;
   background: var(--paper);
+  background-attachment: fixed;
+  background-image:
+    radial-gradient(900px 320px at 108% -6%, rgba(66, 133, 244, 0.12), transparent 60%),
+    radial-gradient(760px 280px at -8% 0%, rgba(52, 168, 83, 0.09), transparent 55%);
   color: var(--ink);
-  /* 16px evita o zoom automático do iOS ao focar um input */
-  font: 16px/1.55 "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font: 16px/1.5 Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { body { background-image: none; } }
+
+h1, h2, .brand {
+  font-family: "Google Sans", Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 }
 
-a { color: var(--accent-ink); transition: color 0.12s ease; }
+a { color: var(--accent-ink); text-decoration: none; transition: color 0.12s ease; }
+a:hover { text-decoration: underline; }
 ::selection { background: var(--accent-wash); color: var(--ink); }
 a:focus-visible,
 .linkish:focus-visible,
@@ -74,11 +119,9 @@ button:focus-visible,
 summary:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
-/* Dados numéricos (dinheiro, CPF, IMEI, datas em coluna): dígitos de largura fixa
-   para as colunas alinharem como num caderno de contas. */
 .num {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
@@ -87,7 +130,7 @@ summary:focus-visible {
 .eyebrow {
   font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.08em;
   font-weight: 600;
   color: var(--accent-ink);
 }
@@ -100,52 +143,53 @@ summary:focus-visible {
   gap: 0.4rem 1rem;
   padding: 0.6rem 1rem;
   background: var(--surface);
-  border-bottom: 2px solid var(--accent);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--raise);
 }
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
+  gap: 0.6rem;
+  font-weight: 500;
   text-decoration: none;
   color: var(--ink);
-  font-size: 0.98rem;
+  font-size: 1.05rem;
   flex: 1 1 auto;
   min-width: 0;
 }
-/* pequena "aba" verde — a marca do caderno */
+.brand:hover { text-decoration: none; }
+/* disco com as quatro cores do Google — a marca */
 .brand::before {
   content: "";
-  width: 0.7rem;
-  height: 1.1rem;
-  background: var(--accent);
-  border-radius: 1px;
+  width: 15px; height: 15px;
+  border-radius: 50%;
   flex: none;
+  background: conic-gradient(from -55deg, #4285f4 0 25%, #ea4335 0 50%, #fbbc04 0 75%, #34a853 0);
 }
-/* No celular a navegação quebra em duas linhas em vez de sumir na borda —
-   com 5–6 itens não cabe tudo numa linha de ~340px. */
-.nav { display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem; order: 3; width: 100%; }
+.nav { display: flex; flex-wrap: wrap; gap: 0.2rem 0.35rem; order: 3; width: 100%; }
 .nav a {
   text-decoration: none;
-  color: var(--ink-soft);
-  padding: 0.35rem 0;
+  color: var(--ink-faint);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: var(--radius-pill);
+  transition: background 0.12s ease, color 0.12s ease;
 }
-.nav a:hover { color: var(--accent-ink); }
+.nav a:hover { color: var(--accent-ink); background: var(--surface-2); text-decoration: none; }
 .nav a.active {
-  color: var(--ink);
+  color: var(--accent-ink);
+  background: var(--accent-wash);
   font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--accent);
 }
 .logout { display: flex; align-items: center; gap: 0.55rem; flex: none; }
-/* no celular o nome do usuário sai — brand + "Sair" cabem numa linha só,
-   e a navegação fica logo abaixo com alvos de toque folgados */
 .whoami { display: none; }
 @media (min-width: 640px) {
   .whoami {
     display: inline;
     color: var(--ink-faint);
     font-size: 0.82rem;
-    max-width: none;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -153,26 +197,35 @@ summary:focus-visible {
 }
 .linkish {
   background: none; border: none; color: var(--accent-ink);
-  cursor: pointer; font: inherit; padding: 0.35rem 0; text-decoration: underline;
+  cursor: pointer; font: inherit; font-weight: 500; padding: 0.35rem 0.25rem;
+  text-decoration: none; border-radius: var(--radius-sm);
   flex: none;
 }
+.linkish:hover { text-decoration: underline; }
 
 @media (min-width: 640px) {
-  .topbar { flex-wrap: nowrap; gap: 1.25rem; padding: 0.75rem 1.25rem; }
+  .topbar {
+    flex-wrap: nowrap; gap: 1.5rem; padding: 0.5rem 1.5rem;
+    position: sticky; top: 0; z-index: 20;
+  }
   .brand { flex: 0 0 auto; }
-  .nav { order: 0; width: auto; flex-wrap: nowrap; gap: 1.25rem; }
+  .nav { order: 0; width: auto; flex-wrap: nowrap; gap: 0.35rem; align-items: center; }
   .logout { margin-left: auto; }
-  .whoami { max-width: none; }
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  @media (min-width: 640px) {
+    .topbar {
+      background: color-mix(in srgb, var(--surface) 80%, transparent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+  }
 }
 
 /* ---------- Layout ---------- */
-.wrap { max-width: 960px; margin: 0 auto; padding: 1.1rem 1rem 3.5rem; }
-@media (min-width: 640px) { .wrap { padding: 1.75rem 1.25rem 4rem; } }
-/* Telas operacionais com tabela larga (ex.: "Cobrar hoje") respiram mais no
-   desktop — texto de leitura continua nos 960px. */
+.wrap { max-width: 960px; margin: 0 auto; padding: 1.35rem 1rem 3.5rem; }
+@media (min-width: 640px) { .wrap { padding: 1.9rem 1.5rem 4rem; } }
 .wrap.wrap--wide { max-width: 1400px; }
-/* Telas de foco único (login) — centraliza o cartão vertical e horizontalmente
-   na área útil, em vez de encostá-lo no topo. */
 .wrap.wrap--center {
   min-height: calc(100vh - 4rem);
   display: flex;
@@ -182,37 +235,54 @@ summary:focus-visible {
 .wrap.wrap--center .login-box { margin-top: 0; margin-bottom: 0; }
 
 h1 {
-  font-size: 1.3rem;
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  margin: 0 0 1rem;
+  font-size: 1.55rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0 0 1.1rem;
 }
 h2 {
   font-size: 1.05rem;
-  font-weight: 600;
-  margin: 1.75rem 0 0.75rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid var(--line);
+  font-weight: 500;
+  margin: 2rem 0 0.85rem;
+  padding-left: 0.7rem;
+  border-left: 4px solid var(--c-blue);
+  line-height: 1.3;
 }
-@media (min-width: 640px) { h1 { font-size: 1.5rem; } h2 { font-size: 1.1rem; } }
+main h2:nth-of-type(6n + 1) { border-left-color: var(--c-blue); }
+main h2:nth-of-type(6n + 2) { border-left-color: var(--c-green); }
+main h2:nth-of-type(6n + 3) { border-left-color: var(--c-purple); }
+main h2:nth-of-type(6n + 4) { border-left-color: var(--c-orange); }
+main h2:nth-of-type(6n + 5) { border-left-color: var(--c-teal); }
+main h2:nth-of-type(6n + 6) { border-left-color: var(--c-pink); }
+.card > h2, .report-heading h2 { border-left: 0; padding-left: 0; }
+@media (min-width: 640px) { h1 { font-size: 1.8rem; } h2 { font-size: 1.15rem; } }
 
 /* ---------- Mensagens ---------- */
-.messages { list-style: none; padding: 0; margin: 0 0 1.25rem; display: grid; gap: 0.4rem; }
+.messages { list-style: none; padding: 0; margin: 0 0 1.25rem; display: grid; gap: 0.5rem; }
 .msg {
-  padding: 0.6rem 0.85rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--line);
-  border-left: 3px solid var(--line-strong);
-  border-radius: 2px;
+  border-left: 4px solid var(--line-strong);
+  border-radius: var(--radius-sm);
   background: var(--surface);
+  box-shadow: var(--raise);
+  font-size: 0.9rem;
 }
-.msg.success { background: var(--accent-wash); border-color: var(--accent); }
-.msg.error { background: var(--critical-wash); border-color: var(--critical); }
+.msg.success { background: var(--ok-wash); border-color: var(--ok); color: var(--ink); }
+.msg.error { background: var(--critical-wash); border-color: var(--critical); color: var(--ink); }
 
 /* ---------- Toolbar (busca + ações) ---------- */
-.toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.75rem; }
-.toolbar form { display: flex; gap: 0.4rem; }
-.toolbar input[type=search] { flex: 1; min-width: 0; }
-/* o botão de busca acompanha o campo; só a ação primária ocupa a linha toda */
+.toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.85rem; }
+.toolbar form { display: flex; gap: 0.5rem; }
+.toolbar input[type=search] {
+  flex: 1; min-width: 0;
+  border-radius: var(--radius-pill);
+  padding-left: 1.1rem;
+}
+.toolbar input[type=search]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 1px 10px rgba(32, 33, 36, 0.16);
+}
 .toolbar form .btn { width: auto; flex: none; }
 .toolbar > .btn { width: 100%; }
 .spacer { display: none; }
@@ -222,25 +292,26 @@ h2 {
   .spacer { display: block; flex: 1; }
 }
 
-/* contagem de resultados — linha discreta abaixo da toolbar */
-.count { margin: 0 0 1rem; color: var(--ink-soft); font-size: 0.85rem; }
+.count { margin: 0 0 1rem; color: var(--ink-faint); font-size: 0.85rem; }
 
 /* ---------- Relatórios ---------- */
 .report-filter {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.7rem;
+  gap: 0.85rem;
   align-items: end;
-  padding: 0.9rem;
-  margin-bottom: 1.5rem;
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1.6rem;
   background: var(--surface);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--raise);
 }
 .report-heading { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1rem; }
 .report-heading h2 { margin: 0.1rem 0 0; border: 0; padding: 0; }
 .report-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .report-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.critical-text { color: var(--critical); font-weight: 600; }
+.critical-text { color: var(--critical-ink); font-weight: 600; }
 @media (min-width: 640px) {
   .report-filter { grid-template-columns: repeat(4, 1fr) auto; }
   .report-heading { flex-direction: row; align-items: end; justify-content: space-between; }
@@ -251,24 +322,33 @@ h2 {
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: var(--tap);
-  padding: 0.5rem 1.1rem;
-  border: 1px solid var(--accent);
+  padding: 0.5rem 1.5rem;
+  border: 1px solid transparent;
   background: var(--accent); color: var(--on-accent); text-decoration: none; cursor: pointer;
-  font: inherit; font-weight: 600; border-radius: 2px;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  font: inherit; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--raise);
+  transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
 }
-.btn.secondary { background: var(--surface); color: var(--accent-ink); }
-.btn:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--on-accent); }
-.btn:active { transform: translateY(1px); }
+.btn:hover {
+  background: var(--accent-ink); border-color: var(--accent-ink); color: var(--on-accent);
+  box-shadow: var(--raise-hover); transform: translateY(-1px); text-decoration: none;
+}
+.btn:active { transform: translateY(0); box-shadow: var(--raise); }
 .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.btn[disabled], .btn:disabled { opacity: 0.55; pointer-events: none; }
-.btn-block { width: 100%; font-size: 1rem; }
+.btn[disabled], .btn:disabled { opacity: 0.5; pointer-events: none; box-shadow: none; }
+.btn-block { width: 100%; font-size: 0.9375rem; }
 
-/* ---------- Campos ----------
-   Um único padrão para todos os inputs de digitação (text, tel, email, number,
-   date, password, search, file…), select e textarea. A exclusão dentro de
-   :where() (especificidade zero) evita pegar checkbox/radio/botões sem atrapalhar
-   regras mais específicas como .money-wrap input. */
+.btn.secondary {
+  background: var(--surface); color: var(--accent-ink);
+  border-color: var(--line); box-shadow: none;
+}
+.btn.secondary:hover {
+  background: var(--accent-wash); color: var(--accent-ink);
+  border-color: var(--line-strong); box-shadow: none; transform: translateY(-1px);
+}
+
+/* ---------- Campos ---------- */
 input:where(:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]):not([type=button]):not([type=reset]):not([type=range]):not([type=color]):not([type=image])),
 select,
 textarea {
@@ -276,50 +356,55 @@ textarea {
   font: inherit; font-size: 16px;
   width: 100%;
   height: var(--tap);
-  padding: 0.5rem 0.65rem;
-  border: 1px solid var(--line-strong); border-radius: 2px;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
   background: var(--surface); color: var(--ink);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
-textarea { height: auto; min-height: 4.5rem; padding: 0.55rem 0.65rem; line-height: 1.5; }
+textarea { height: auto; min-height: 4.5rem; padding: 0.65rem 0.85rem; line-height: 1.5; }
 input[type=file] { padding: 0.45rem 0.6rem; }
 ::placeholder { color: var(--ink-faint); opacity: 1; }
 
-/* Campo em foco: anel sempre visível (ferramenta de digitação — o foco por
-   clique também mostra). Botões e links usam :focus-visible mais adiante. */
 input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--accent);
-  outline: 2px solid var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
 
 /* ---------- Tabelas ---------- */
 .tbl-wrap {
   overflow-x: auto; -webkit-overflow-scrolling: touch;
-  margin: 0 0 1.25rem;
-  border: 1px solid var(--line-strong);
-  border-radius: 2px;
+  margin: 0 0 1.35rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   box-shadow: var(--raise);
+  transition: box-shadow 0.15s ease;
 }
-table { border-collapse: collapse; width: 100%; background: var(--surface); font-size: 0.92rem; }
-th, td { text-align: left; padding: 0.7rem 0.8rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl-wrap:hover { box-shadow: var(--raise-hover); }
+table { border-collapse: collapse; width: 100%; background: var(--surface); font-size: 0.875rem; }
+th, td { text-align: left; padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
 tbody tr td { transition: background-color 0.1s ease; }
 td.wrap-cell { white-space: normal; min-width: 12rem; }
 th {
-  background: var(--surface-2);
-  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em;
-  color: var(--ink-faint); font-weight: 600;
+  background: var(--surface);
+  font-size: 0.75rem; letter-spacing: 0;
+  color: var(--ink-faint); font-weight: 500;
+  border-bottom: 1px solid var(--line-strong);
 }
 th.num, td.num { text-align: right; }
-td a { font-weight: 600; }
+td a { font-weight: 500; }
 tbody tr:nth-child(even) td { background: var(--surface-2); }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: var(--accent-wash); }
 
-/* No celular, tabelas marcadas com .cards viram lista de fichas empilhadas —
-   assim o status e o valor nunca ficam escondidos numa rolagem lateral.
-   No desktop (>=640px) continuam tabelas normais. */
 @media (max-width: 639px) {
   .tbl-wrap.cards {
     border: none; box-shadow: none; overflow: visible; background: transparent;
@@ -334,11 +419,11 @@ tbody tr:hover td { background: var(--accent-wash); }
   }
   .tbl-wrap.cards tr {
     background: var(--surface);
-    border: 1px solid var(--line-strong);
-    border-radius: 2px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
     box-shadow: var(--raise);
-    margin-bottom: 0.6rem;
-    padding: 0.2rem 0.9rem 0.35rem;
+    margin-bottom: 0.7rem;
+    padding: 0.35rem 1rem 0.5rem;
   }
   .tbl-wrap.cards td {
     border: none;
@@ -349,20 +434,15 @@ tbody tr:hover td { background: var(--accent-wash); }
   .tbl-wrap.cards td::before {
     content: attr(data-label);
     flex: none;
-    /* encosta o valor à direita sem "space-between" espalhando os itens
-       de uma célula com vários elementos pelo meio da linha */
     margin-right: auto;
     color: var(--ink-faint);
-    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+    font-size: 0.7rem; letter-spacing: 0; font-weight: 500;
   }
   .tbl-wrap.cards td.num { text-align: right; }
-  /* Célula de conteúdo rico: rótulo ocupa a linha, o conteúdo desce abaixo
-     alinhado à esquerda (vários selos, valor + detalhe, links de ação). */
   .tbl-wrap.cards td.card-stack {
     flex-direction: column; align-items: stretch; gap: 0.4rem;
   }
   .tbl-wrap.cards td.card-stack::before { margin-right: 0; }
-  /* o número de telefone nunca quebra no meio dos dígitos */
   .tbl-wrap.cards a[href^="tel:"] { white-space: nowrap; }
   .tbl-wrap.cards td:first-child {
     font-size: 1rem; padding: 0.45rem 0 0.6rem; margin-bottom: 0.35rem;
@@ -375,74 +455,77 @@ tbody tr:hover td { background: var(--accent-wash); }
 
 .empty {
   display: grid; justify-items: center; gap: 0.8rem;
-  padding: 1.5rem 1.25rem; text-align: center;
-  color: var(--ink-soft);
-  background: var(--surface);
-  border: 1px solid var(--line-strong); border-radius: 2px;
-  box-shadow: var(--raise);
+  padding: 2.5rem 1.5rem; text-align: center;
+  color: var(--ink-faint);
+  background: var(--surface-2);
+  border: 1px dashed var(--line-strong); border-radius: var(--radius);
 }
 .empty p { margin: 0; }
 
-/* Texto de apoio dentro de tabelas/fichas (ex.: "parcela + juros" no painel
-   de cobrança). Dentro de .form-row a regra abaixo é a que vale. */
 .helptext { color: var(--ink-faint); font-size: 0.8rem; line-height: 1.4; }
 
 /* ---------- Formulários ---------- */
-.form-grid { display: grid; gap: 1rem; max-width: 620px; }
-/* Variante sem trava de largura: para formulários que ficam no meio de seções
-   de largura total (ex.: anexar documento na tela do contrato). */
+.form-grid { display: grid; gap: 1.1rem; max-width: 620px; }
 .form-grid--full { max-width: none; }
-.form-row { display: grid; gap: 0.3rem; }
-.form-row label { font-weight: 600; font-size: 0.82rem; color: var(--ink); }
+/* Formulário como cartão — tira a cara de página crua. */
+.form-grid.form-page,
+.form-grid--full {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--raise);
+}
+@media (min-width: 640px) {
+  .form-grid.form-page,
+  .form-grid--full { padding: 1.85rem 1.85rem 1.6rem; }
+}
+.form-row { display: grid; gap: 0.35rem; }
+.form-row label { font-weight: 500; font-size: 0.8125rem; color: var(--ink-faint); }
 .form-row:focus-within label { color: var(--accent-ink); }
 .form-row .helptext { color: var(--ink-faint); font-size: 0.8rem; }
-.form-row .errorlist { color: var(--critical); margin: 0.2rem 0 0; padding-left: 1rem; font-size: 0.85rem; }
+.form-row .errorlist { color: var(--critical-ink); margin: 0.2rem 0 0; padding-left: 1rem; font-size: 0.85rem; }
 
-/* Aviso do sistema dentro do formulário (ex.: o que fica para a Fase 2). */
 .note {
-  margin: 0 0 1.25rem;
-  padding: 0.8rem 0.95rem;
+  margin: 0 0 1.35rem;
+  padding: 0.9rem 1.05rem;
   background: var(--accent-wash);
-  border: 1px solid var(--accent);
-  border-left-width: 3px;
-  border-radius: 2px;
+  border: 1px solid transparent;
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
   color: var(--ink);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 .note strong { font-weight: 600; }
 
-/* Versão recolhível do aviso — usada em formulários longos (celular) para o
-   texto não empurrar os campos para baixo da dobra. */
 details.note { padding: 0; }
 details.note > summary {
-  padding: 0.7rem 0.95rem;
-  font-weight: 600;
+  padding: 0.8rem 1.05rem;
+  font-weight: 500;
   cursor: pointer;
   list-style: none;
 }
 details.note > summary::-webkit-details-marker { display: none; }
 details.note > summary::before { content: "▸ "; color: var(--accent-ink); }
 details.note[open] > summary::before { content: "▾ "; }
-details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
+details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 
-/* Link para o WhatsApp ao lado do telefone. */
 .zap {
-  font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.04em; margin-left: 0.15rem; white-space: nowrap;
+  font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0; margin-left: 0.15rem; white-space: nowrap;
 }
 .zap::before { content: "·\00a0"; color: var(--ink-faint); font-weight: 400; margin-right: 0.15rem; }
 
-/* Ações do formulário: no celular ficam grudadas na base da tela para o "Salvar"
-   nunca sumir num formulário longo. No desktop voltam ao fluxo normal. */
 .form-actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
 .form-actions .btn { width: 100%; }
 .form-page .form-actions {
   position: sticky;
   bottom: 0;
-  margin: 1.25rem -1rem 0;
-  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  background: var(--paper);
-  border-top: 1px solid var(--line-strong);
+  margin: 1.25rem -1.25rem -1.25rem;
+  padding: 0.85rem 1.25rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 var(--radius) var(--radius);
   z-index: 5;
 }
 @media (min-width: 640px) {
@@ -454,11 +537,10 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
     padding: 0;
     background: none;
     border-top: none;
+    border-radius: 0;
   }
 }
 
-/* Formulário centralizado na página (cadastro/edição de cliente e contrato).
-   Coluna de 920px; título à esquerda; Salvar/Cancelar dividem a largura em dois. */
 .form-centered { max-width: 920px; margin-inline: auto; }
 .form-centered h1 { margin-bottom: 1rem; }
 .form-centered .form-grid { max-width: none; }
@@ -467,15 +549,12 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
   .form-centered .form-actions .btn { flex: 1; }
 }
 
-/* Variante do cadastro de cliente: título centralizado e um respiro no topo. */
 .form-centered.centrado h1 { text-align: center; margin-bottom: 1.75rem; }
 @media (min-width: 640px) {
   .form-centered.centrado { padding-top: 2rem; }
 }
 
-/* Seções do formulário — um rótulo, um traço firme, sem caixa, para os campos
-   ficarem com a mesma largura dos outros formulários. */
-.form-section { display: grid; gap: 0.9rem; }
+.form-section { display: grid; gap: 1rem; }
 .form-section + .form-section {
   border-top: 1px solid var(--line-strong);
   padding-top: 1.35rem;
@@ -483,96 +562,108 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
 }
 .form-section-title {
   margin: 0 0 0.1rem;
-  font-size: 0.72rem; text-transform: uppercase;
-  letter-spacing: 0.09em; color: var(--accent-ink); font-weight: 600;
+  font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--accent-ink); font-weight: 600;
 }
 @media (min-width: 640px) {
   .form-section { gap: 1rem; }
   .form-section + .form-section { padding-top: 1.5rem; }
 }
 
-/* Prefixo "R$" nos campos de dinheiro */
 .money-wrap { position: relative; display: block; }
 .money-wrap::before {
-  content: "R$"; position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%);
+  content: "R$"; position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%);
   color: var(--ink-faint); font-size: 0.9rem; pointer-events: none;
 }
 .money-wrap input { padding-left: 2.4rem; }
 
-/* ---------- Pills de status ----------
-   Etiqueta quadrada (2px) — o formato de carnê combina mais com "caderno de
-   controle" que a cápsula redonda. O ponto antes do texto dá a leitura de status
-   sem depender só da cor. */
+/* ---------- Chips de status ---------- */
 .pill {
   display: inline-flex; align-items: center; gap: 0.4em;
-  padding: 0.16em 0.6em; border-radius: 2px;
-  font-size: 0.7rem; font-weight: 600;
-  border: 1px solid; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 0.28em 0.75em; border-radius: var(--radius-sm);
+  font-size: 0.75rem; font-weight: 600;
+  border: 1px solid transparent; letter-spacing: 0;
+  background: var(--surface-2); color: var(--ink-soft);
 }
 .pill::before {
   content: ""; width: 0.5em; height: 0.5em; border-radius: 50%;
   background: currentColor; flex: none;
 }
-.pill.em_dia { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink); }
-.pill.atrasado { background: var(--amber-wash); border-color: var(--amber); color: var(--amber); }
-.pill.inadimplente { background: var(--critical-wash); border-color: var(--critical); color: var(--critical); }
-.pill.quitado { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink-soft); }
-/* contrato encerrado — ponto vazado */
+.pill.em_dia { background: var(--ok-wash); color: var(--ok-ink); }
+.pill.atrasado { background: var(--amber-wash); color: var(--amber-ink); }
+.pill.inadimplente { background: var(--critical-wash); color: var(--critical-ink); }
+.pill.quitado { background: var(--surface-2); color: var(--ink-faint); }
 .pill.quitado::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 
-/* Coluna "Status" da lista de contratos: todos os selos com a mesma largura
-   (a do mais longo, "Inadimplente"), texto centralizado. */
 .status-cell .pill { min-width: 7.25rem; justify-content: center; }
 
-/* Status da parcela (Vencimento): aberto / parcial / pago */
-.pill.aberto { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink-soft); }
-.pill.parcial { background: var(--amber-wash); border-color: var(--amber); color: var(--amber); }
-.pill.pago { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink); }
+.pill.aberto { background: var(--surface-2); color: var(--ink-faint); }
+.pill.parcial { background: var(--amber-wash); color: var(--amber-ink); }
+.pill.pago { background: var(--ok-wash); color: var(--ok-ink); }
 .pill.pago::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 
-/* Status do envio de cobrança pelo WhatsApp. */
-.pill.pendente { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink-soft); }
-.pill.enviado { background: var(--amber-wash); border-color: var(--amber); color: var(--amber); }
-.pill.entregue, .pill.lido { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink); }
-.pill.erro { background: var(--critical-wash); border-color: var(--critical); color: var(--critical); }
-.pill.vencido { background: var(--critical-wash); border-color: var(--critical); color: var(--critical); }
-.pill.cancelado { background: var(--surface-2); border-color: var(--line-strong); color: var(--ink-soft); }
+.pill.pendente { background: var(--surface-2); color: var(--ink-faint); }
+.pill.enviado { background: var(--amber-wash); color: var(--amber-ink); }
+.pill.entregue, .pill.lido { background: var(--ok-wash); color: var(--ok-ink); }
+.pill.erro { background: var(--critical-wash); color: var(--critical-ink); }
+.pill.vencido { background: var(--critical-wash); color: var(--critical-ink); }
+.pill.cancelado { background: var(--surface-2); color: var(--ink-faint); }
 
 /* ─────────── Painel "Cobrar hoje" ─────────── */
-.atraso-dias { white-space: nowrap; color: var(--ink-soft); font-size: 0.9rem; }
-
-/* Situação pode quebrar linha: o selo, o "N dias de atraso" e o aviso de
-   bloqueio descem em vez de esticar a tabela para os lados. */
+.atraso-dias { white-space: nowrap; color: var(--ink-faint); font-size: 0.9rem; }
 .situacao-cell { white-space: normal; min-width: 10rem; }
-
-/* Envio: Pix e mensagem de cobrança viram dois selos mínimos ("Pix" / "Msg"),
-   lado a lado — a cor dá o status e o texto completo fica no title (tooltip).
-   São dados de bastidor (hoje em modo simulação); não valem espaço de coluna. */
 .envio-cell { white-space: normal; }
 .envio-vias { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
-/* "Pix" e "Msg" com a mesma largura — o texto centraliza no selo. */
 .envio-vias .pill { white-space: nowrap; cursor: help; min-width: 3.25rem; justify-content: center; }
-
-/* Contato pode quebrar: "Registrar pagamento" desce para a segunda linha em
-   vez de forçar a coluna a esticar. */
-.contato-cell { white-space: normal; }
-
-/* Valor a cobrar: é o número que a Yslane precisa ver primeiro. O detalhe
-   ("parcela + juros") desce numa linha própria, no desktop e no celular. */
-.valor-cobrar { font-weight: 700; font-size: 1.05rem; white-space: nowrap; }
-/* O detalhe "parcela + juros" pode quebrar em duas linhas em vez de esticar
-   a coluna; o valor em si (.valor-cobrar) nunca quebra. */
+.valor-cobrar { font-weight: 600; font-size: 1.1rem; white-space: nowrap; }
 .cobrar-cell { white-space: normal; }
 .cobrar-cell .helptext { display: block; }
-.contrato-cell .estrutura { color: var(--ink-soft); }
+.contrato-cell .estrutura { color: var(--ink-faint); }
 
-/* Separador "·" antes de "Registrar pagamento" — só no desktop, onde os
-   contatos ficam numa linha só. No celular vira botão. */
-.contato-registrar::before { content: "·\00a0"; color: var(--ink-faint); margin-right: 0.15rem; }
+/* Contato: linha com os dois ícones (ligar / WhatsApp) e, abaixo, o botão
+   "Registrar". O <td> continua sendo célula de tabela (nada de display:flex
+   nele, senão perde a largura da coluna e o conteúdo vaza a borda); quem
+   empilha é o próprio conteúdo — o .contato-vias vira um bloco flex e o botão
+   cai na linha de baixo. min-width reserva espaço para os ícones de 40px. */
+.contato-cell {
+  white-space: normal;
+  min-width: 8.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+.contato-vias { display: flex; align-items: center; gap: 0.45rem; }
+.contato-cell .btn-registrar { margin-top: 0.5rem; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; flex: none;
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--surface); color: var(--ink-soft);
+  text-decoration: none;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease;
+}
+.icon-btn:hover { transform: translateY(-1px); box-shadow: var(--raise); text-decoration: none; }
+.icon-btn:active { transform: translateY(0); box-shadow: none; }
+.icon-btn svg { display: block; width: 20px; height: 20px; }
+.icon-btn--phone { color: var(--accent-ink); background: var(--accent-wash); border-color: transparent; }
+.icon-btn--phone:hover { background: var(--accent-wash); border-color: var(--accent); }
+.icon-btn--wa { color: #1fa855; background: rgba(37, 211, 102, 0.12); border-color: transparent; }
+.icon-btn--wa:hover { background: rgba(37, 211, 102, 0.2); border-color: #25d366; }
+@media (prefers-color-scheme: dark) {
+  .icon-btn--wa { color: #4ad17c; background: rgba(74, 209, 124, 0.16); }
+}
+
+/* Botão "Registrar": a ação principal da linha — cheio, em cápsula, com ícone. */
+.btn-registrar {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  min-height: 38px; padding: 0.45rem 1.15rem;
+  font-size: 0.82rem; font-weight: 600; letter-spacing: 0.01em;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 1px 2px rgba(26, 115, 232, 0.28), 0 1px 3px 1px rgba(26, 115, 232, 0.12);
+}
+.btn-registrar svg { flex: none; width: 16px; height: 16px; }
+.btn-registrar:hover { box-shadow: var(--raise-hover); }
 
 @media (max-width: 639px) {
-  /* -- Cabeçalho da ficha: nome + contrato juntos, com um traço só embaixo.
-        O contrato vira subtítulo (sem o rótulo "CONTRATO"). -- */
   .tbl-wrap.cards.cobrar-hoje td.cli-cell {
     border-bottom: none; margin-bottom: 0; padding-bottom: 0.15rem;
   }
@@ -581,81 +672,126 @@ details.note > p { margin: 0; padding: 0 0.95rem 0.85rem; }
     border-bottom: 1px solid var(--line); font-size: 0.9rem;
   }
   .tbl-wrap.cards.cobrar-hoje td.contrato-cell::before { content: none; }
-  .tbl-wrap.cards.cobrar-hoje td.contrato-cell a { font-weight: 600; }
+  .tbl-wrap.cards.cobrar-hoje td.contrato-cell a { font-weight: 500; }
 
-  /* -- Situação: rótulo na própria linha; selo + "N dias" numa linha que
-        quebra sozinha (sem jogar o texto para a borda direita) -- */
   .tbl-wrap.cards.cobrar-hoje td.situacao-cell { align-items: center; gap: 0.35rem; }
   .tbl-wrap.cards.cobrar-hoje td.situacao-cell::before { flex-basis: 100%; margin-right: 0; }
 
-  /* -- A cobrar: valor grande na linha do rótulo, detalhe inteiro embaixo -- */
   .tbl-wrap.cards.cobrar-hoje td.cobrar-cell { align-items: baseline; }
   .tbl-wrap.cards.cobrar-hoje td.cobrar-cell .helptext {
     flex-basis: 100%; margin-top: 0.15rem;
   }
 
-  /* -- Contato: telefone + WhatsApp numa linha; "Registrar pagamento" vira
-        botão de largura total — é a ação principal da tela -- */
-  .tbl-wrap.cards.cobrar-hoje td.contato-cell .contato-vias {
-    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.4rem;
+  .tbl-wrap.cards.cobrar-hoje td.contato-cell { min-width: 0; gap: 0.55rem; }
+  .tbl-wrap.cards.cobrar-hoje td.contato-cell .contato-vias { flex-wrap: wrap; }
+  .tbl-wrap.cards.cobrar-hoje td.contato-cell .btn-registrar {
+    width: 100%; min-height: var(--tap); margin-top: 0; justify-content: center; font-size: 0.88rem;
   }
-  .tbl-wrap.cards.cobrar-hoje td.contato-cell .contato-registrar {
-    display: flex; align-items: center; justify-content: center;
-    min-height: var(--tap); margin-top: 0.15rem; padding: 0.4rem 0.9rem;
-    border: 1px solid var(--accent); border-radius: 2px;
-    background: var(--surface); color: var(--accent-ink);
-    font-weight: 600; text-decoration: none;
-  }
-  .tbl-wrap.cards.cobrar-hoje td.contato-cell .contato-registrar::before { content: none; }
 }
 
-/* ---------- Ficha (grade de dados do detalhe) ---------- */
+/* ---------- Cartões-métrica (grade de dados do detalhe) ---------- */
 .meta {
-  display: grid; grid-template-columns: 1fr; gap: 0.85rem 1.75rem;
-  margin: 1rem 0 1.25rem;
-  padding: 1rem 1.15rem;
-  background: var(--surface);
-  border: 1px solid var(--line-strong); border-radius: 2px;
-  box-shadow: var(--raise);
+  display: grid; grid-template-columns: 1fr; gap: 0.75rem;
+  margin: 1.1rem 0 1.5rem;
+  padding: 0;
+  background: none; border: 0; box-shadow: none;
 }
-.meta > div { display: grid; gap: 0.15rem; }
-.meta dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
-.meta dd { margin: 0; color: var(--ink); font-size: 0.95rem; }
-@media (min-width: 520px) { .meta { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); } }
+.meta > div {
+  display: grid; gap: 0.2rem; align-content: start;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--c-blue);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 0.95rem;
+  box-shadow: var(--raise);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.meta > div:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); }
+.meta > div:nth-child(6n + 1) { border-left-color: var(--c-blue); }
+.meta > div:nth-child(6n + 2) { border-left-color: var(--c-green); }
+.meta > div:nth-child(6n + 3) { border-left-color: var(--c-purple); }
+.meta > div:nth-child(6n + 4) { border-left-color: var(--c-orange); }
+.meta > div:nth-child(6n + 5) { border-left-color: var(--c-teal); }
+.meta > div:nth-child(6n + 6) { border-left-color: var(--c-pink); }
+.meta dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); font-weight: 600; }
+.meta dd { margin: 0; color: var(--ink); font-size: 1.05rem; font-weight: 500; }
+/* auto-fill (não auto-fit): quando sobra um cartão na última linha ele mantém a
+   largura de uma coluna em vez de esticar de ponta a ponta. */
+@media (min-width: 520px) { .meta { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); } }
 
-.pagination { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; color: var(--ink-soft); font-size: 0.9rem; }
+.pagination { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; color: var(--ink-faint); font-size: 0.9rem; }
 
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 2px;
-  padding: 0.95rem 1.1rem;
+  border-radius: var(--radius);
+  padding: 1.15rem 1.3rem;
   margin: 1rem 0;
   box-shadow: var(--raise);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); }
+
+/* ---------- Tela inicial (painel) ---------- */
+/* 6 números-chave: colunas fixas para caírem sempre 3+3 (ou 2+2+2), sem cartão
+   órfão esticado na última linha. */
+.painel-kpis { grid-template-columns: 1fr; }
+@media (min-width: 520px) { .painel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 920px) { .painel-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.painel-kpis dd { font-size: 1.35rem; font-weight: 600; line-height: 1.25; }
+.painel-kpis .kpi-sub {
+  display: block;
+  font-size: 0.72rem; font-weight: 500;
+  color: var(--ink-faint); margin-top: 0.2rem;
+}
+.painel-graficos {
+  display: grid; gap: 1rem;
+  grid-template-columns: 1fr;
+  margin: 0.25rem 0 0.75rem;
+}
+.painel-graficos .card { margin: 0; }
+.painel-graficos .card:hover { transform: none; box-shadow: var(--raise); }
+.painel-graficos .card h2 { margin: 0 0 0.9rem; font-size: 1rem; }
+.chart-box { position: relative; height: 260px; }
+@media (min-width: 900px) {
+  .painel-graficos { grid-template-columns: 3fr 2fr; }
 }
 
 /* ---------- Login ---------- */
 .login-box {
-  max-width: 380px;
+  max-width: 400px;
   margin: 1.75rem auto;
   background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-top: 3px solid var(--accent);
-  border-radius: 2px;
-  padding: 1.75rem 1.5rem 2rem;
-  box-shadow: var(--raise);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 2.5rem 2.25rem;
+  box-shadow: var(--raise-hover);
 }
 .login-box .eyebrow { display: block; margin-bottom: 0.15rem; }
-.login-box h1 { font-size: 1.35rem; text-align: left; margin: 0.15rem 0 1.4rem; }
-.login-box .form-grid { gap: 1.1rem; max-width: none; }
+.login-box h1 { font-size: 1.5rem; font-weight: 400; text-align: left; margin: 0.15rem 0 1.5rem; }
+.login-box .form-grid { gap: 1.2rem; max-width: none; }
 .login-box .msg { margin-bottom: 0.25rem; }
 .login-box .fineprint {
-  margin: 1.1rem 0 0; text-align: center;
+  margin: 1.25rem 0 0; text-align: center;
   color: var(--ink-faint); font-size: 0.8rem;
 }
-@media (min-width: 640px) { .login-box { margin: 3.5rem auto; padding: 2rem 1.9rem 2.25rem; } }
+@media (min-width: 640px) { .login-box { margin: 3.5rem auto; padding: 2.75rem 2.5rem; } }
 
-/* ---------- Movimento ---------- */
+/* ---------- Movimento de entrada ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+  main.wrap > * { animation: rise 0.34s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  main.wrap > :nth-child(1) { animation-delay: 0.03s; }
+  main.wrap > :nth-child(2) { animation-delay: 0.07s; }
+  main.wrap > :nth-child(3) { animation-delay: 0.11s; }
+  main.wrap > :nth-child(4) { animation-delay: 0.15s; }
+  main.wrap > :nth-child(5) { animation-delay: 0.19s; }
+  main.wrap > :nth-child(n + 6) { animation-delay: 0.22s; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }

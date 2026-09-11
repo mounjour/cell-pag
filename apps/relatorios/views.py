@@ -1,6 +1,7 @@
 from io import BytesIO
 from urllib.parse import urlencode
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
 from django.utils import timezone
 from django.views import View
@@ -18,7 +19,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from apps.usuarios.mixins import DonoRequeridoMixin
 
 from .forms import PeriodoForm
-from .servicos import montar_relatorio
+from .servicos import montar_painel_inicial, montar_relatorio
 
 # Excel/Sheets interpretam célula que começa com um destes como fórmula.
 _GATILHOS_FORMULA = ("=", "+", "-", "@", "\t", "\r")
@@ -49,6 +50,38 @@ def _contexto(request):
         }
     )
     return {"form": form, "relatorio": relatorio, "querystring": querystring}
+
+
+class InicioView(LoginRequiredMixin, TemplateView):
+    """Tela inicial: números-chave, dois gráficos e a lista de atenção.
+
+    Aberta a qualquer usuário autenticado (a Yslane também usa). Os dados vêm
+    de ``montar_painel_inicial``; os gráficos recebem listas já convertidas
+    para ``float``/``int`` e são injetados no HTML via ``json_script``.
+    """
+
+    template_name = "relatorios/inicio.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        painel = montar_painel_inicial()
+        ctx["painel"] = painel
+        ctx["serie_json"] = {
+            "labels": [m["rotulo"] for m in painel["serie_meses"]],
+            "recebido": [float(m["recebido"]) for m in painel["serie_meses"]],
+            "previsto": [float(m["previsto"]) for m in painel["serie_meses"]],
+        }
+        contagem = painel["status_contagem"]
+        ctx["status_json"] = {
+            "labels": ["Em dia", "Atrasado", "Inadimplente", "Quitado"],
+            "data": [
+                contagem.get("em_dia", 0),
+                contagem.get("atrasado", 0),
+                contagem.get("inadimplente", 0),
+                contagem.get("quitado", 0),
+            ],
+        }
+        return ctx
 
 
 class RelatorioView(DonoRequeridoMixin, TemplateView):
