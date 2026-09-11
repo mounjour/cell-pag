@@ -635,6 +635,14 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .pill.quitado { background: var(--surface-2); color: var(--ink-faint); }
 .pill.quitado::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 
+/* Selos de situação lado a lado (status + alerta de bloqueio, quando houver)
+   numa linha só; o "X dias de atraso" fica destacado numa linha própria
+   embaixo — é o dado que muda a decisão de cobrar, então tem mais peso
+   tipográfico que os selos. */
+.situacao-selos { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.pill.alerta-bloqueio { background: var(--critical-wash); color: var(--critical-ink); }
+.pill.alerta-bloqueio::before { content: none; }
+
 .status-cell .pill { min-width: 7.25rem; justify-content: center; }
 
 .pill.aberto { background: var(--surface-2); color: var(--ink-faint); }
@@ -650,7 +658,7 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .pill.cancelado { background: var(--surface-2); color: var(--ink-faint); }
 
 /* ─────────── Painel "Cobrar hoje" ─────────── */
-.atraso-dias { white-space: nowrap; color: var(--ink-faint); font-size: 0.9rem; }
+.atraso-dias { white-space: nowrap; color: var(--ink); font-size: 1.05rem; font-weight: 500; }
 .situacao-cell { white-space: normal; min-width: 10rem; }
 .envio-cell { white-space: normal; }
 .envio-vias { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
@@ -725,7 +733,8 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
   /* "Situação" repete o que o badge já diz em palavras ("Inadimplente" /
      "Atrasado") — tirar o rótulo economiza uma linha inteira sem perder
      informação. */
-  .tbl-wrap.cards.cobrar-hoje td.situacao-cell { align-items: center; gap: 0.35rem; padding-top: 0.55rem; }
+  .tbl-wrap.cards.cobrar-hoje td.situacao-cell { align-items: flex-start; gap: 0.4rem; padding-top: 0.55rem; }
+  .tbl-wrap.cards.cobrar-hoje td.situacao-cell .atraso-dias { flex-basis: 100%; margin-top: 0.35rem; }
   .tbl-wrap.cards.cobrar-hoje td.situacao-cell::before { content: none; }
 
   /* "A cobrar" é o número que a Yslane precisa bater o olho e decorar antes
