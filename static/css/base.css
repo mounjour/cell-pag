@@ -660,6 +660,12 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 /* ─────────── Painel "Cobrar hoje" ─────────── */
 .atraso-dias { white-space: nowrap; color: var(--ink); font-size: 1.05rem; font-weight: 500; }
 .situacao-cell { white-space: normal; min-width: 10rem; }
+@media (min-width: 640px) {
+  /* Largura suficiente pra "Inadimplente" + "bloquear aparelho" caberem lado
+     a lado numa linha só, como no cartão mobile — sem isso os dois selos
+     quebram em linhas separadas na tabela do desktop. */
+  .situacao-cell { min-width: 18.5rem; }
+}
 .envio-cell { white-space: normal; }
 .envio-vias { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
 .envio-vias .pill { white-space: nowrap; cursor: help; min-width: 3.25rem; justify-content: center; }
@@ -749,19 +755,18 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
   /* "Envio" e "Contato": os rótulos são redundantes no celular (o texto do
      chip já diz "Pix"/"Msg"; os ícones já têm aria-label) — tirar libera
      espaço vertical e reduz o card a um bloco de leitura + uma barra de ação.
-     Os chips de envio também usam o mesmo componente .pill dos badges de
-     situação — sem o fundo colorido eles ficam claramente secundários
-     (metadado de entrega), sem competir visualmente com o status do cliente.
      Alinhar à direita gruda essa linha embaixo do valor (mesma coluna do "R$"
      acima) em vez de flutuar solta à esquerda — vira "detalhe do valor",
-     não uma linha desgarrada no meio do card. */
+     não uma linha desgarrada no meio do card. Os chips continuam menores que
+     os selos de situação (metadado secundário), mas com fundo e texto claro
+     o bastante pra não sumir contra o card. */
   .tbl-wrap.cards.cobrar-hoje td.envio-cell {
     padding-top: 0; padding-bottom: 0.6rem; justify-content: flex-end;
   }
   .tbl-wrap.cards.cobrar-hoje td.envio-cell::before { content: none; }
-  .tbl-wrap.cards.cobrar-hoje td.envio-cell .envio-vias { gap: 0.6rem; }
+  .tbl-wrap.cards.cobrar-hoje td.envio-cell .envio-vias { gap: 0.4rem; }
   .tbl-wrap.cards.cobrar-hoje td.envio-cell .pill {
-    background: none; border: none; padding: 0.1em 0; min-width: 0; font-size: 0.78rem;
+    padding: 0.2em 0.6em; min-width: 0; font-size: 0.72rem;
   }
   .tbl-wrap.cards.cobrar-hoje td.envio-cell .pill::before { width: 0.4em; height: 0.4em; }
 
