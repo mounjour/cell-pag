@@ -9,7 +9,7 @@
   <a class="btn" href="{% url 'contratos:novo' %}?cliente={{ cliente.pk }}">Novo contrato</a>
 </div>
 
-<dl class="meta">
+<dl class="meta meta--4col">
   <div><dt>CPF</dt><dd class="num">{{ cliente.cpf_formatado }}</dd></div>
   <div><dt>Telefone / WhatsApp</dt><dd>
     <a class="num" href="tel:{{ cliente.telefone_whatsapp.as_e164 }}">{{ cliente.telefone_exibicao }}</a>
