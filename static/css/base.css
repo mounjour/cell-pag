@@ -288,7 +288,7 @@ main h2:nth-of-type(6n + 3) { border-left-color: var(--c-purple); }
 main h2:nth-of-type(6n + 4) { border-left-color: var(--c-orange); }
 main h2:nth-of-type(6n + 5) { border-left-color: var(--c-teal); }
 main h2:nth-of-type(6n + 6) { border-left-color: var(--c-pink); }
-.card > h2, .report-heading h2 { border-left: 0; padding-left: 0; }
+.card > h2, .report-heading h2 { border-left: 0; padding-left: 0; margin-top: 0; }
 @media (min-width: 640px) { h1 { font-size: 1.8rem; } h2 { font-size: 1.15rem; } }
 
 /* ---------- Mensagens ---------- */
@@ -307,6 +307,7 @@ main h2:nth-of-type(6n + 6) { border-left-color: var(--c-pink); }
 
 /* ---------- Toolbar (busca + ações) ---------- */
 .toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.85rem; }
+.toolbar h1 { margin: 0; }
 .toolbar form { display: flex; gap: 0.5rem; }
 .toolbar input[type=search] {
   flex: 1; min-width: 0;
@@ -381,6 +382,19 @@ main h2:nth-of-type(6n + 6) { border-left-color: var(--c-pink); }
   background: var(--accent-wash); color: var(--accent-ink);
   border-color: var(--line-strong); box-shadow: none; transform: translateY(-1px);
 }
+
+/* Botão "Copiar código" (Pix): compacto pra caber numa célula de tabela. */
+.btn-copiar-pix {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 34px; padding: 0.4rem 0.9rem; white-space: nowrap;
+  background: var(--surface); color: var(--accent-ink);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  font: inherit; font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.btn-copiar-pix:hover { background: var(--accent-wash); border-color: var(--line-strong); }
+.btn-copiar-pix:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn-copiar-pix.copiado { background: var(--ok-wash); color: var(--ok-ink); border-color: transparent; }
 
 /* ---------- Campos ---------- */
 input:where(:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]):not([type=button]):not([type=reset]):not([type=range]):not([type=color]):not([type=image])),
@@ -459,6 +473,13 @@ tbody tr:hover td { background: var(--accent-wash); }
     margin-bottom: 0.7rem;
     padding: 0.35rem 1rem 0.5rem;
   }
+  /* Acento de cor na borda esquerda do cartão — leitura rápida da situação
+     sem precisar ler o texto (mesmo padrão dos cartões-métrica .meta).
+     Reaproveitado em qualquer lista com status (Cobrar hoje, Contratos...). */
+  .tbl-wrap.cards tr.row-acento--inadimplente { border-left: 4px solid var(--critical-ink); }
+  .tbl-wrap.cards tr.row-acento--atrasado { border-left: 4px solid var(--amber-ink); }
+  .tbl-wrap.cards tr.row-acento--em_dia { border-left: 4px solid var(--ok-ink); }
+  .tbl-wrap.cards tr.row-acento--quitado { border-left: 4px solid var(--ink-faint); }
   .tbl-wrap.cards td {
     border: none;
     padding: 0.4rem 0;
@@ -719,13 +740,6 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .btn-registrar:hover { box-shadow: var(--raise-hover); }
 
 @media (max-width: 639px) {
-  /* Acento de cor na borda esquerda do cartão — leitura rápida da situação
-     sem precisar ler o texto (mesmo padrão dos cartões-métrica .meta). */
-  .tbl-wrap.cards.cobrar-hoje tr.row-acento--inadimplente { border-left: 4px solid var(--critical-ink); }
-  .tbl-wrap.cards.cobrar-hoje tr.row-acento--atrasado { border-left: 4px solid var(--amber-ink); }
-  .tbl-wrap.cards.cobrar-hoje tr.row-acento--em_dia { border-left: 4px solid var(--ok-ink); }
-  .tbl-wrap.cards.cobrar-hoje tr.row-acento--quitado { border-left: 4px solid var(--ink-faint); }
-
   .tbl-wrap.cards.cobrar-hoje td.cli-cell {
     border-bottom: none; margin-bottom: 0; padding-bottom: 0.15rem;
   }

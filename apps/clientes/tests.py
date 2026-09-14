@@ -45,11 +45,12 @@ def test_telefone_exibicao_e_whatsapp_url():
 
 @pytest.mark.django_db
 def test_detalhe_mostra_telefone_clicavel(auth_client):
+    # O link é só o telefone (mesmo número do WhatsApp) — decisão do Alisson
+    # (14/09): sem link/texto "WhatsApp" separado no detalhe do cliente.
     c = novo_cliente(nome="Zé", telefone_whatsapp="83 98888-7777")
     corpo = auth_client.get(reverse("clientes:detalhe", args=[c.pk])).content.decode()
     assert 'href="tel:+5583988887777"' in corpo
     assert "(83) 98888-7777" in corpo
-    assert "https://wa.me/5583988887777" in corpo
 
 
 # ---------- Telas ----------

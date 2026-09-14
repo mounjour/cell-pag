@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="toolbar">
-  <h1 style="margin:0">{{ contrato.cliente.nome }} — {{ contrato.apelido }}</h1>
+  <h1>{{ contrato.cliente.nome }} — {{ contrato.apelido }}</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Ver cliente</a>
   <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">Editar</a>
@@ -50,7 +50,7 @@
 {% with s=contrato.situacao_atraso p=contrato.parcela_em_aberto ref=contrato.data_referencia_atraso %}
   {% if s %}
     <div class="card">
-      <h2 style="margin-top:0">Situação hoje</h2>
+      <h2>Situação hoje</h2>
       {% if s.dias_atraso %}
         <p>
           <span class="pill {{ s.status }}">{{ contrato.status_efetivo_label }}</span>
