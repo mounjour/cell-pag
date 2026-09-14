@@ -1,25 +1,27 @@
 /* Mobile-first. Estilos base valem para celular; @media (min-width: 640px) amplia.
-   Linguagem visual: Google — Material Design, versão colorida. Azul Google é a cor
-   de ação; cada seção ganha um acento de uma paleta de seis cores (azul, verde,
-   roxo, laranja, ciano, rosa); os blocos de dados viram cartões-métrica com
-   elevação e um leve movimento de entrada. Superfícies brancas sobre um cinza de
-   app com um véu de cor no topo. Cantos generosos (14px nos cartões, 8px nos
-   controles), tipografia Roboto, sombras Material de duas camadas. */
+   Linguagem visual: "Petróleo" — verde-azulado profundo (cor de livro-caixa e
+   patina), identidade própria em vez do Material Design do Google. Cada seção
+   ganha um acento de uma paleta de seis cores (azul, verde, roxo, laranja, ciano,
+   rosa) só como variedade decorativa; os blocos de dados viram cartões-métrica
+   com elevação e um leve movimento de entrada. Superfícies brancas sobre um
+   fundo neutro com leve viés esverdeado. Cantos generosos (14px nos cartões,
+   8px nos controles), título em Fraunces / texto em Source Sans 3, sombras de
+   duas camadas tingidas na tinta da marca. */
 
 :root {
-  --paper: #f6f8fc;        /* fundo do aplicativo — cinza Google com um respiro azulado */
+  --paper: #f2f5f3;        /* fundo do aplicativo — neutro com um respiro de verde-petróleo */
   --surface: #ffffff;      /* cartões, tabelas, campos, barra do topo */
-  --surface-2: #eef1f6;    /* faixa alternada de tabela, cabeçalho, :hover neutro */
-  --ink: #1f1f1f;          /* texto principal */
-  --ink-soft: #3c4043;     /* texto de apoio */
-  --ink-faint: #5f6368;    /* rótulos, helptext, th — Google grey 700 (AA sobre branco) */
-  --line: #dde1e6;         /* bordas e divisórias finas */
-  --line-strong: #c4c7c5;  /* contorno de campo, divisória de seção */
+  --surface-2: #e9eeec;    /* faixa alternada de tabela, cabeçalho, :hover neutro */
+  --ink: #17231f;          /* texto principal — preto com viés petróleo */
+  --ink-soft: #4e5e58;     /* texto de apoio */
+  --ink-faint: #71847d;    /* rótulos, helptext, th (AA sobre branco) */
+  --line: #dce4e1;         /* bordas e divisórias finas */
+  --line-strong: #b9c7c2;  /* contorno de campo, divisória de seção */
 
-  --accent: #1a73e8;       /* azul Google — ação, foco, marca */
-  --accent-ink: #1558b0;   /* azul mais fundo — links, hover de botão, texto sobre wash */
-  --accent-wash: #e8f0fe;  /* azul Google pálido — realce, :hover de linha, banner */
-  --on-accent: #ffffff;    /* texto sobre o azul cheio (botão primário) */
+  --accent: #0d6b63;       /* verde-petróleo — ação, foco, marca */
+  --accent-ink: #0a5450;   /* petróleo mais fundo — links, hover de botão, texto sobre wash */
+  --accent-wash: #dff0ec;  /* petróleo pálido — realce, :hover de linha, banner */
+  --on-accent: #ffffff;    /* texto sobre o petróleo cheio (botão primário) */
 
   --amber: #e8710a;        /* laranja Google — aviso intermediário */
   --amber-ink: #b06000;
@@ -39,10 +41,10 @@
   --c-teal: #0f9aa8;   --c-teal-wash: #e0f5f7;
   --c-pink: #d01884;   --c-pink-wash: #fde7f3;
 
-  --focus: #1a73e8;
-  /* elevação Material — sombra de duas camadas */
-  --raise: 0 1px 2px 0 rgba(60, 64, 67, 0.28), 0 1px 3px 1px rgba(60, 64, 67, 0.13);
-  --raise-hover: 0 2px 6px 0 rgba(60, 64, 67, 0.28), 0 6px 14px 4px rgba(60, 64, 67, 0.15);
+  --focus: #0d6b63;
+  /* elevação — sombra de duas camadas tingida na tinta da marca (não cinza neutro) */
+  --raise: 0 1px 2px 0 rgba(23, 35, 31, 0.24), 0 1px 3px 1px rgba(23, 35, 31, 0.12);
+  --raise-hover: 0 2px 6px 0 rgba(23, 35, 31, 0.24), 0 6px 14px 4px rgba(23, 35, 31, 0.14);
   --radius: 14px;          /* cartões, tabelas, painéis, caixas */
   --radius-sm: 8px;        /* campos, botões, cartões-métrica, avisos */
   --radius-pill: 999px;    /* navegação, busca */
@@ -53,19 +55,19 @@
 /* ---------- Modo escuro (segue o tema do dispositivo) ---------- */
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #1b1c1e;
-    --surface: #26282b;
-    --surface-2: #303236;
-    --ink: #e8eaed;
-    --ink-soft: #c4c7c5;
-    --ink-faint: #9aa0a6;
-    --line: #3f4145;
-    --line-strong: #5f6368;
+    --paper: #0f1715;
+    --surface: #17211f;
+    --surface-2: #1e2a27;
+    --ink: #e6eeeb;
+    --ink-soft: #aec0ba;
+    --ink-faint: #84958f;
+    --line: #243330;
+    --line-strong: #39504b;
 
-    --accent: #8ab4f8;
-    --accent-ink: #aecbfa;
-    --accent-wash: #2b3b57;
-    --on-accent: #1b1c1e;
+    --accent: #4fb8ac;
+    --accent-ink: #7cd1c6;
+    --accent-wash: #173330;
+    --on-accent: #0b1817;
 
     --amber: #fcad70;
     --amber-ink: #fcad70;
@@ -84,7 +86,7 @@
     --c-teal: #5ad0dd;   --c-teal-wash: #1c3b3e;
     --c-pink: #ff8bcb;   --c-pink-wash: #45213a;
 
-    --focus: #8ab4f8;
+    --focus: #4fb8ac;
     --raise: 0 1px 2px 0 rgba(0, 0, 0, 0.6), 0 1px 3px 1px rgba(0, 0, 0, 0.35);
     --raise-hover: 0 2px 6px 0 rgba(0, 0, 0, 0.6), 0 6px 16px 4px rgba(0, 0, 0, 0.45);
   }
@@ -99,15 +101,15 @@ body {
   background: var(--paper);
   background-attachment: fixed;
   background-image:
-    radial-gradient(900px 320px at 108% -6%, rgba(66, 133, 244, 0.12), transparent 60%),
-    radial-gradient(760px 280px at -8% 0%, rgba(52, 168, 83, 0.09), transparent 55%);
+    radial-gradient(900px 320px at 108% -6%, rgba(13, 107, 99, 0.10), transparent 60%),
+    radial-gradient(760px 280px at -8% 0%, rgba(13, 107, 99, 0.07), transparent 55%);
   color: var(--ink);
-  font: 16px/1.5 Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font: 16px/1.5 "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) { body { background-image: none; } }
 
 h1, h2, .brand {
-  font-family: "Google Sans", Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-family: "Fraunces", Georgia, "Source Sans 3", serif;
 }
 
 a { color: var(--accent-ink); text-decoration: none; transition: color 0.12s ease; }
@@ -161,14 +163,7 @@ summary:focus-visible {
   min-width: 0;
 }
 .brand:hover { text-decoration: none; }
-/* disco com as quatro cores do Google — a marca */
-.brand::before {
-  content: "";
-  width: 15px; height: 15px;
-  border-radius: 50%;
-  flex: none;
-  background: conic-gradient(from -55deg, #4285f4 0 25%, #ea4335 0 50%, #fbbc04 0 75%, #34a853 0);
-}
+.brand-mark { flex: none; }
 .nav-toggle-input { position: absolute; opacity: 0; pointer-events: none; }
 .nav-toggle {
   display: inline-flex; align-items: center; justify-content: center;
