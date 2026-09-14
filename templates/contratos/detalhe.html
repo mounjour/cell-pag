@@ -31,8 +31,7 @@
   </dd></div>
   <div><dt>Status</dt><dd><span class="pill {{ contrato.status_efetivo }}">{{ contrato.status_efetivo_label }}</span></dd></div>
   <div><dt>Valor total</dt><dd class="num">R$ {{ contrato.valor_total }}</dd></div>
-  <div><dt>Valor da parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
-  <div><dt>Nº de parcelas</dt><dd class="num">{{ contrato.num_parcelas|default:"—" }}</dd></div>
+  <div><dt>Parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %} × {{ contrato.num_parcelas|default:"—" }}</dd></div>
   <div><dt>Data de início</dt><dd class="num">{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
   <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"—" }}</dd></div>
   <div><dt>Próximo vencimento</dt><dd class="num">{{ contrato.proximo_vencimento|date:"d/m/Y"|default:"—" }}</dd></div>
