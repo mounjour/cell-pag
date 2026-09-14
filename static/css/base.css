@@ -353,6 +353,19 @@ main h2:nth-of-type(6n + 6) { border-left-color: var(--c-pink); }
   .meta.report-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* Painel Pix: 5 métricas — número ímpar, sempre sobra um espaço vazio numa
+   grade comum de 2 ou 3 colunas. Aqui a grade usa uma unidade mais fina
+   (4 no celular, 6 no desktop) pra que o último item (ou os 2 últimos)
+   se estiquem e preencham a linha toda, em vez de deixar um buraco. */
+.meta.report-metrics.meta--5col { grid-template-columns: repeat(4, 1fr); }
+.meta--5col > div:nth-child(-n+4) { grid-column: span 2; }
+.meta--5col > div:nth-child(5) { grid-column: span 4; }
+@media (min-width: 640px) {
+  .meta.report-metrics.meta--5col { grid-template-columns: repeat(6, 1fr); }
+  .meta--5col > div:nth-child(-n+3) { grid-column: span 2; }
+  .meta--5col > div:nth-child(n+4) { grid-column: span 3; }
+}
+
 /* ---------- Botões ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
