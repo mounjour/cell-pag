@@ -166,17 +166,28 @@ def test_webhook_aceita_ack_numerico_e_lista(client, settings, cliente_cobranca)
         status=Cobranca.Status.ENVIADO,
         id_externo="3EB0NUM",
     )
-    settings.EVOLUTION_WEBHOOK_TOKEN = ""
-    settings.DEBUG = True
+    settings.EVOLUTION_WEBHOOK_TOKEN = "token-webhook"
     payload = [{"event": "messages.update", "data": {"keyId": "3EB0NUM", "status": 3}}]
     resposta = client.post(
         reverse("pagamentos:whatsapp_webhook"),
         data=json.dumps(payload),
         content_type="application/json",
+        headers={"apikey": "token-webhook"},
     )
     assert resposta.status_code == 200
     cobranca.refresh_from_db()
     assert cobranca.status == Cobranca.Status.LIDO
+
+
+@pytest.mark.django_db
+def test_webhook_recusa_sem_token_configurado(client, settings):
+    settings.EVOLUTION_WEBHOOK_TOKEN = ""
+    resposta = client.post(
+        reverse("pagamentos:whatsapp_webhook"),
+        data=b"{}",
+        content_type="application/json",
+    )
+    assert resposta.status_code == 403
 
 
 @pytest.mark.django_db
@@ -203,13 +214,13 @@ def test_webhook_nao_regride_status(client, settings, cliente_cobranca):
         status=Cobranca.Status.LIDO,
         id_externo="3EB0LIDO",
     )
-    settings.EVOLUTION_WEBHOOK_TOKEN = ""
-    settings.DEBUG = True
+    settings.EVOLUTION_WEBHOOK_TOKEN = "token-webhook"
     payload = {"event": "messages.update", "data": {"keyId": "3EB0LIDO", "status": "SERVER_ACK"}}
     resposta = client.post(
         reverse("pagamentos:whatsapp_webhook"),
         data=json.dumps(payload),
         content_type="application/json",
+        headers={"apikey": "token-webhook"},
     )
     assert resposta.status_code == 200
     cobranca.refresh_from_db()

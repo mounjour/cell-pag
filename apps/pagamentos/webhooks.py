@@ -3,7 +3,7 @@
 A Evolution não assina os eventos (a Meta assinava com HMAC). A autenticação
 aqui é por **token compartilhado** (``EVOLUTION_WEBHOOK_TOKEN``), aceito no
 cabeçalho ``apikey``/``Authorization`` ou em ``?token=``. Sem token configurado,
-o endpoint só responde quando ``DEBUG=True`` (ambiente de desenvolvimento).
+o endpoint rejeita toda requisição (falha fechado, mesmo em desenvolvimento).
 """
 
 import hmac
@@ -65,7 +65,7 @@ class WhatsAppWebhookView(View):
 def _token_valido(request) -> bool:
     esperado = settings.EVOLUTION_WEBHOOK_TOKEN
     if not esperado:
-        return settings.DEBUG
+        return False
     recebido = (
         request.headers.get("apikey")
         or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
