@@ -15,7 +15,7 @@ from .models import CobrancaCora, EventoCora
 def _token_valido(request) -> bool:
     esperado = settings.CORA_WEBHOOK_TOKEN
     if not esperado:
-        return settings.DEBUG
+        return False
     recebido = (
         request.headers.get("apikey")
         or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
