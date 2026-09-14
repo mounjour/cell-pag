@@ -13,21 +13,22 @@ página**, o que fazer em cada uma e as regras por trás dos números.
 1. [Conceitos que aparecem em toda tela](#1-conceitos-que-aparecem-em-toda-tela)
 2. [Entrar / Sair (`/entrar/`)](#2-entrar--sair)
 3. [Barra de navegação](#3-barra-de-navegação)
-4. [Clientes — lista (`/clientes/`)](#4-clientes--lista)
-5. [Clientes — novo / editar](#5-clientes--novo--editar)
-6. [Clientes — ficha do cliente (`/clientes/<id>/`)](#6-clientes--ficha-do-cliente)
-7. [Contratos — lista (`/contratos/`)](#7-contratos--lista)
-8. [Contratos — novo / editar](#8-contratos--novo--editar)
-9. [Contratos — detalhe do contrato (`/contratos/<id>/`)](#9-contratos--detalhe-do-contrato)
-10. [Registrar pagamento (dar baixa)](#10-registrar-pagamento-dar-baixa)
-11. [Cobrar hoje (`/cobrar-hoje/`)](#11-cobrar-hoje)
-12. [Pix (`/pagamentos/pix/`)](#12-pix)
-13. [Histórico de pagamentos (`/pagamentos/historico/`)](#13-histórico-de-pagamentos)
-14. [Relatórios (`/relatorios/`) — só dono](#14-relatórios--só-dono)
-15. [Admin (`/admin/`) — só equipe técnica](#15-admin--só-equipe-técnica)
-16. [Rotina do dia sugerida](#16-rotina-do-dia-sugerida)
-17. [Automações (o que o sistema faz sozinho)](#17-automações-o-que-o-sistema-faz-sozinho)
-18. [Perguntas frequentes](#18-perguntas-frequentes)
+4. [Início (`/`) — resumo do dia](#4-início--resumo-do-dia)
+5. [Clientes — lista (`/clientes/`)](#5-clientes--lista)
+6. [Clientes — novo / editar](#6-clientes--novo--editar)
+7. [Clientes — ficha do cliente (`/clientes/<id>/`)](#7-clientes--ficha-do-cliente)
+8. [Contratos — lista (`/contratos/`)](#8-contratos--lista)
+9. [Contratos — novo / editar](#9-contratos--novo--editar)
+10. [Contratos — detalhe do contrato (`/contratos/<id>/`)](#10-contratos--detalhe-do-contrato)
+11. [Registrar pagamento (dar baixa)](#11-registrar-pagamento-dar-baixa)
+12. [Cobrar hoje (`/cobrar-hoje/`)](#12-cobrar-hoje)
+13. [Pix (`/pagamentos/pix/`)](#13-pix)
+14. [Histórico de pagamentos (`/pagamentos/historico/`)](#14-histórico-de-pagamentos)
+15. [Relatórios (`/relatorios/`) — só dono](#15-relatórios--só-dono)
+16. [Admin (`/admin/`) — só equipe técnica](#16-admin--só-equipe-técnica)
+17. [Rotina do dia sugerida](#17-rotina-do-dia-sugerida)
+18. [Automações (o que o sistema faz sozinho)](#18-automações-o-que-o-sistema-faz-sozinho)
+19. [Perguntas frequentes](#19-perguntas-frequentes)
 
 ---
 
@@ -37,7 +38,7 @@ página**, o que fazer em cada uma e as regras por trás dos números.
 
 | Perfil | Enxerga | Não enxerga |
 |---|---|---|
-| **Financeiro** | Clientes, Contratos, Cobrar hoje, Pix, Histórico | Relatórios, Admin |
+| **Financeiro** | Início, Clientes, Contratos, Cobrar hoje, Pix, Histórico | Relatórios, Admin |
 | **Dono** | Tudo do financeiro **+ Relatórios** | Admin (a não ser que também seja "equipe/staff") |
 | **Equipe técnica (staff/superusuário)** | Tudo + **Admin** | — |
 
@@ -92,6 +93,13 @@ O sistema **só avisa** — o bloqueio em si é ação manual do vendedor (Aliss
 Digite com vírgula decimal: `1.234,56` ou `1234,56` ou `1234.56` — todos são
 aceitos. O sistema mostra sempre com vírgula.
 
+### Anexos (Comprovante e Documentos)
+
+Os arquivos enviados em **Comprovante** (baixa) e **Documentos** (contrato) só
+aceitam **PDF, JPG, JPEG, PNG ou WEBP**, até **10 MB**. Outro tipo de arquivo é
+recusado com aviso na tela. O download exige estar **logado** — o link nunca
+abre para quem não tem acesso ao sistema.
+
 ---
 
 ## 2. Entrar / Sair
@@ -105,21 +113,27 @@ Qualquer endereço do sistema sem login manda para esta tela.
 2. Clique em **Entrar**.
 
 - Usuário/senha errados → mensagem "Usuário ou senha inválidos."
-- Depois de entrar, você cai na **lista de Clientes**. Se tinha tentado abrir
-  outra página antes do login, o sistema te leva direto para ela.
+- Depois de entrar, você cai na tela **Início** (resumo do dia). Se tinha
+  tentado abrir outra página antes do login, o sistema te leva direto para ela.
 - **Sair:** botão **Sair** no canto superior direito (ao lado do seu nome).
 - Não há "criar conta" nem "esqueci a senha" na tela. Novos usuários e troca de
   senha são feitos pela equipe técnica no Admin.
+- **Muitas tentativas erradas seguidas bloqueiam o acesso por segurança** (tela
+  "Acesso bloqueado — Muitas tentativas"). O bloqueio se libera sozinho depois
+  de cerca de **1 hora**; para liberar antes, é preciso pedir à equipe técnica
+  (comando no servidor).
 
 ---
 
 ## 3. Barra de navegação
 
-Aparece no topo de todas as páginas depois do login:
+Aparece no topo de todas as páginas depois do login (fica **fixa no topo** ao
+rolar a tela, também no celular):
 
 | Link | Vai para | Quem vê |
 |---|---|---|
-| **Acompanhamento de Pagamentos** (título) | Lista de clientes | todos |
+| **Acompanhamento de Pagamentos** (título) | Início | todos |
+| **Início** | Resumo do dia (números e gráficos) | todos |
 | **Cobrar hoje** | Agenda de cobrança do dia | todos |
 | **Pix** | Painel das cobranças Pix da Cora | todos |
 | **Clientes** | Lista de clientes | todos |
@@ -132,9 +146,39 @@ O link da seção em que você está fica destacado.
 
 ---
 
-## 4. Clientes — lista
+## 4. Início — resumo do dia
 
-**URL:** `/clientes/` (também é a página inicial) · **Quem acessa:** todos.
+**URL:** `/` (também chamada de `relatorios:inicio`) · **Quem acessa:** todos
+(financeiro e dono — diferente de Relatórios, que é só do dono).
+
+Página que abre logo depois do login. Dá o retrato rápido do negócio sem
+precisar entrar em Relatórios.
+
+**Números do topo (do mês corrente, salvo indicação contrária):**
+- **A receber em aberto** — soma de tudo que ainda não foi pago.
+- **Em atraso (hoje)** — valor e quantidade de parcelas vencidas até hoje.
+- **Recebido no mês** — quanto entrou, com o previsto do mês ao lado.
+- **Contratos ativos** — quantidade (não quitados).
+- **Inadimplentes** — quantidade de contratos com 7+ dias de atraso, com o
+  total de atrasados (1+ dia) ao lado.
+- **Ticket médio** — valor médio dos contratos.
+
+**Gráficos:**
+- **Recebido × previsto por mês** — barras dos últimos 6 meses.
+- **Contratos por status** — rosca com a distribuição Em dia / Atrasado /
+  Inadimplente / Quitado.
+
+**"Precisa de atenção"** — tabela com os contratos em atraso agora (Cliente,
+Contrato, dias de atraso, valor em aberto) e o link **registrar** direto para
+a baixa. Sem ninguém atrasado, aparece "Nenhum contrato em atraso agora. 🎉".
+
+**Botão "Ir para Cobrar hoje"** no topo leva direto para a agenda do dia.
+
+---
+
+## 5. Clientes — lista
+
+**URL:** `/clientes/` · **Quem acessa:** todos.
 
 Lista de todos os clientes cadastrados, em ordem alfabética, **20 por página**.
 
@@ -149,7 +193,7 @@ Lista de todos os clientes cadastrados, em ordem alfabética, **20 por página**
 
 ---
 
-## 5. Clientes — novo / editar
+## 6. Clientes — novo / editar
 
 **URLs:** `/clientes/novo/` e `/clientes/<id>/editar/` · **Quem acessa:** todos.
 
@@ -171,7 +215,7 @@ Erros de validação aparecem em vermelho embaixo do campo.
 
 ---
 
-## 6. Clientes — ficha do cliente
+## 7. Clientes — ficha do cliente
 
 **URL:** `/clientes/<id>/` · **Quem acessa:** todos.
 
@@ -182,8 +226,8 @@ Tudo sobre um cliente numa página só.
 - **Editar** — vai para o formulário.
 - **Novo contrato** — abre o cadastro de contrato **já com este cliente preenchido**.
 
-**Dados do cliente:** CPF, Telefone/WhatsApp (com link **WhatsApp** que abre a
-conversa em `wa.me`), Endereço, Data de cadastro.
+**Dados do cliente:** CPF, Telefone (link `tel:` que também é o número usado no
+WhatsApp), Endereço, Data de cadastro.
 
 **Contratos** — tabela de todos os contratos do cliente: Apelido (link),
 Aparelho, Estrutura, Valor total e Status (selo colorido, recalculado na hora).
@@ -197,7 +241,7 @@ Se o cliente não tem contratos ou pagamentos, cada bloco mostra um aviso curto.
 
 ---
 
-## 7. Contratos — lista
+## 8. Contratos — lista
 
 **URL:** `/contratos/` · **Quem acessa:** todos.
 
@@ -211,7 +255,7 @@ Todos os contratos, ordenados por nome do cliente, **20 por página**.
 
 ---
 
-## 8. Contratos — novo / editar
+## 9. Contratos — novo / editar
 
 **URLs:** `/contratos/novo/` e `/contratos/<id>/editar/` · **Quem acessa:** todos.
 
@@ -263,7 +307,7 @@ automaticamente". O botão "Gerar parcelas" no detalhe continua disponível como
 
 ---
 
-## 9. Contratos — detalhe do contrato
+## 10. Contratos — detalhe do contrato
 
 **URL:** `/contratos/<id>/` · **Quem acessa:** todos.
 
@@ -284,8 +328,8 @@ Aparece **só quando todas as parcelas previstas já estão pagas**. Traz o bot�
 
 ### Dados do contrato
 Aparelho + IMEI, Estrutura, Telefone (com link WhatsApp), Status, Valor total,
-Valor da parcela, Nº de parcelas, Data de início, Dia(s) de referência, Próximo
-vencimento, Previsão de quitação.
+**Parcela** (valor da parcela × nº de parcelas, ex.: "R$ 600,00 x 6"), Data de
+início, Dia(s) de referência, Próximo vencimento, Previsão de quitação.
 
 - Se `parcela × nº` não bate com o total, repete aqui o aviso de conferência.
 
@@ -318,7 +362,7 @@ entra automaticamente na **próxima parcela gerada**.
 
 ### Pagamentos
 Tabela de todas as baixas do contrato: Data, Parcela, Valor, Forma, quem deu a
-baixa e quando, link do **Comprovante** (se anexado) e o botão **estornar**.
+baixa e quando, link **baixar** do comprovante (se anexado) e o botão **estornar**.
 
 - **Estornar** pede confirmação. Desfaz a baixa, devolve a parcela para
   "em aberto/parcial" e recalcula o status.
@@ -327,21 +371,23 @@ baixa e quando, link do **Comprovante** (se anexado) e o botão **estornar**.
   conferidos **à mão** (ele não desfaz o transporte sozinho).
 
 ### Documentos
-Tabela dos arquivos anexados (Tipo, Descrição, link **abrir**, quem enviou e
+Tabela dos arquivos anexados (Tipo, Descrição, link **baixar**, quem enviou e
 quando) e o formulário **"Anexar documento"**:
 - **Tipo:** Contrato assinado / RG / Comprovante de residência / Outro.
-- **Arquivo:** o PDF ou a foto.
+- **Arquivo:** PDF, JPG, JPEG, PNG ou WEBP, até 10 MB (ver [seção 1](#1-conceitos-que-aparecem-em-toda-tela)).
 - **Descrição:** opcional.
 - Clique **Anexar documento**. O sistema guarda quem enviou e a data.
+- Os links de download (**baixar**) exigem login — não são links públicos.
 
 ---
 
-## 10. Registrar pagamento (dar baixa)
+## 11. Registrar pagamento (dar baixa)
 
 **URL:** `/pagamentos/contrato/<id>/novo/` · **Quem acessa:** todos.
-Chega-se aqui pelo botão **Registrar pagamento** (detalhe do contrato) ou pelo
-link **"dar baixa"** numa parcela, ou ainda pelo link **"Registrar pagamento"** da
-agenda "Cobrar hoje".
+Chega-se aqui pelo botão **Registrar pagamento** (detalhe do contrato), pelo
+link **"dar baixa"** numa parcela, pelo link **"Registrar pagamento"** da
+agenda "Cobrar hoje" ou pelo link **"registrar"** na lista "Precisa de
+atenção" da tela **Início**.
 
 Se o contrato estiver **quitado**, o sistema recusa e volta para o detalhe.
 
@@ -354,7 +400,7 @@ Se o contrato estiver **quitado**, o sistema recusa e volta para o detalhe.
 | **Data do pagamento** | vem com **hoje** | **não pode ser no futuro** |
 | **Valor pago** | vem com o **saldo da parcela** | tem que ser **maior que zero** |
 | **Forma** | Pix / Dinheiro / Outro | padrão: Pix |
-| **Comprovante** | opcional | anexo (PDF/imagem) |
+| **Comprovante** | opcional | anexo — PDF, JPG, JPEG, PNG ou WEBP, até 10 MB |
 | **Observação** | opcional | texto livre |
 
 **Botões:** **Registrar baixa** · **Cancelar**.
@@ -373,7 +419,7 @@ Abaixo do formulário há a tabela **"Parcelas em aberto"** (as 8 primeiras) par
 
 ---
 
-## 11. Cobrar hoje
+## 12. Cobrar hoje
 
 **URL:** `/cobrar-hoje/` (ou `/pagamentos/cobrar-hoje/`) · **Quem acessa:** todos.
 
@@ -392,19 +438,19 @@ estrutura) **ou** com **vencimento hoje**. Contratos quitados nunca aparecem.
 |---|---|
 | **Cliente** | nome (link para a ficha) |
 | **Contrato** | apelido (link) + estrutura |
-| **Situação** | "Vence hoje" (verde) **ou** selo do status + "N dias de atraso" + faixa "⚠ bloquear aparelho" quando for o caso |
+| **Situação** | "Vence hoje" (verde) **ou** selo do status + selo "⚠ bloquear aparelho" (lado a lado, quando for o caso) + "N dias de atraso" em destaque numa linha própria |
 | **A cobrar** | valor da parcela + juros; a linha de baixo detalha "parcela R$ X + juros R$ Y". Se não houver valor de parcela no contrato, mostra "só juros R$ Y · defina o valor da parcela no contrato" |
 | **Envio** | dois selos: **Pix** (estado da cobrança Cora da parcela) e **Msg** (estado da mensagem de WhatsApp do dia). "não gerado / não preparada" quando ainda não existem. Passe o mouse para ver o detalhe |
-| **Contato** | telefone (link de ligação), link **WhatsApp**, e o link **Registrar pagamento** |
+| **Contato** | ícone de telefone (link de ligação), ícone de WhatsApp, e o botão **Registrar** (baixa) |
 
 **Como usar:** percorra a lista, entre em contato pelo WhatsApp/telefone e, quando
-o cliente pagar, clique em **Registrar pagamento** naquela linha para dar baixa.
+o cliente pagar, clique em **Registrar** naquela linha para dar baixa.
 
 Se não há nada: **"Nada para cobrar hoje. 🎉"**
 
 ---
 
-## 12. Pix
+## 13. Pix
 
 **URL:** `/pagamentos/pix/` · **Quem acessa:** todos.
 
@@ -421,8 +467,9 @@ automática** (você não precisa lançar nada).
 - **⚠ Erros** — falha ao gerar/processar a cobrança.
 
 **Tabela:** Cliente (link), Contrato (link), nº da Parcela, Vencimento, Valor,
-Status (com selo colorido) e **Pix** — o campo **"Ver Copia e Cola"** abre o
-código Pix copia-e-cola para mandar ao cliente.
+Status (com selo colorido) e **Pix** — o botão **"Copiar código"** copia o
+código Pix copia-e-cola para a área de transferência, pronto para colar e
+mandar ao cliente.
 
 A tela mostra as cobranças **pendentes, aguardando, não pagas e com erro**, além
 das **pagas hoje**. Cobranças pagas em dias anteriores não poluem a lista.
@@ -432,7 +479,7 @@ das **pagas hoje**. Cobranças pagas em dias anteriores não poluem a lista.
 
 ---
 
-## 13. Histórico de pagamentos
+## 14. Histórico de pagamentos
 
 **URL:** `/pagamentos/historico/` · **Quem acessa:** todos.
 
@@ -451,10 +498,11 @@ Paginação com "Anterior / Próxima" preservando o filtro.
 
 ---
 
-## 14. Relatórios — só dono
+## 15. Relatórios — só dono
 
 **URL:** `/relatorios/` · **Quem acessa:** **só perfil dono** (financeiro recebe
-"acesso negado").
+"acesso negado"). Não confundir com a tela **Início**, que também mostra
+números-chave mas é aberta para todos.
 
 Consolidação de um período.
 
@@ -488,7 +536,7 @@ Os dois botões respeitam o período que está na tela.
 
 ---
 
-## 15. Admin — só equipe técnica
+## 16. Admin — só equipe técnica
 
 **URL:** `/admin/` · **Quem acessa:** usuários marcados como **equipe (staff)** ou **superusuário**.
 
@@ -509,19 +557,20 @@ Painel administrativo do Django. Uso principal:
 
 ---
 
-## 16. Rotina do dia sugerida
+## 17. Rotina do dia sugerida
 
-1. **Cobrar hoje** — abra a agenda. Veja os números do topo.
-2. Para cada linha: contate o cliente (WhatsApp/telefone).
-3. **Pix** — confira os **"❌ Não pagos"** e os **"⚠ Erros"**; entre em contato nesses casos. Os **"✅ Pagos hoje"** já entraram sozinhos.
-4. Quando alguém pagar fora do Pix: **Registrar pagamento** na linha correspondente.
-5. Contrato com **todas as parcelas pagas** → abra o detalhe e clique **Marcar como quitado**.
-6. Cadastros do dia (novos clientes / contratos) entram por **Clientes → Novo** e **Contratos → Novo**.
-7. Fim de mês / a pedido do dono: **Relatórios** e exportação em Excel/PDF.
+1. **Início** — dê uma olhada rápida nos números do dia e em "Precisa de atenção".
+2. **Cobrar hoje** — abra a agenda. Veja os números do topo.
+3. Para cada linha: contate o cliente (WhatsApp/telefone).
+4. **Pix** — confira os **"❌ Não pagos"** e os **"⚠ Erros"**; entre em contato nesses casos. Os **"✅ Pagos hoje"** já entraram sozinhos.
+5. Quando alguém pagar fora do Pix: **Registrar pagamento** na linha correspondente.
+6. Contrato com **todas as parcelas pagas** → abra o detalhe e clique **Marcar como quitado**.
+7. Cadastros do dia (novos clientes / contratos) entram por **Clientes → Novo** e **Contratos → Novo**.
+8. Fim de mês / a pedido do dono: **Relatórios** e exportação em Excel/PDF.
 
 ---
 
-## 17. Automações (o que o sistema faz sozinho)
+## 18. Automações (o que o sistema faz sozinho)
 
 Rodam no servidor uma vez por dia (não precisam de ação sua):
 
@@ -539,7 +588,7 @@ sai do sistema** até a equipe técnica ativar cada integração (`docs/WHATSAPP
 
 ---
 
-## 18. Perguntas frequentes
+## 19. Perguntas frequentes
 
 **Lancei uma baixa errada. E agora?**
 No detalhe do contrato, seção **Pagamentos**, clique **estornar** na linha. Se
@@ -566,9 +615,18 @@ parcelas em aberto. O campo no formulário só vale para casos manuais (ex.: qui
 São coisas diferentes: **Cobrar hoje** é a agenda de quem contatar (atraso +
 vencimento do dia); **Pix** é o acompanhamento das cobranças automáticas da Cora.
 
+**"Início" está diferente de "Relatórios".**
+**Início** é o resumo rápido do dia/mês, aberto para financeiro e dono.
+**Relatórios** é a consolidação detalhada e exportável de um período à
+escolha, só para o dono.
+
 **Não consigo ver Relatórios.**
 Relatórios é **só para o perfil dono**. Peça à equipe técnica para ajustar seu
 perfil no Admin.
 
 **Como cadastro um novo usuário do sistema?**
 Só pelo **Admin** (`/admin/` → Usuários), por quem tem acesso de equipe/staff.
+
+**Errei a senha várias vezes e travou.**
+É a proteção contra tentativas de invasão (bloqueio automático). Espere cerca
+de 1 hora ou peça à equipe técnica para liberar antes pelo servidor.
