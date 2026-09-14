@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#202124" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#0f1715" media="(prefers-color-scheme: dark)">
   <title>{% block title %}Acompanhamento de Pagamentos{% endblock %}</title>
   {% with secao_icone=request.resolver_match.app_name %}
     {% if secao_icone == 'clientes' %}
@@ -23,12 +23,20 @@
   {% endwith %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{% url 'clientes:lista' %}">Acompanhamento de Pagamentos</a>
+    <a class="brand" href="{% url 'clientes:lista' %}">
+      <svg class="brand-mark" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="var(--accent)"/>
+        <rect x="7" y="6" width="6" height="12" rx="1.4" fill="var(--on-accent)"/>
+        <circle cx="16.6" cy="15.2" r="3.1" fill="none" stroke="var(--on-accent)" stroke-width="1.4"/>
+        <path d="M15.5 15.2c0-1.2.6-1.8 1.1-2.4" stroke="var(--on-accent)" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      Acompanhamento de Pagamentos
+    </a>
     {% if user.is_authenticated %}
       <input type="checkbox" id="nav-toggle" class="nav-toggle-input">
       <label for="nav-toggle" class="nav-toggle" aria-label="Abrir menu">
