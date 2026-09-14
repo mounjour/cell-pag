@@ -6,7 +6,7 @@
 <h1>Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
 
 {% if linhas %}
-  <dl class="meta meta--cobrar-hoje">
+  <dl class="meta meta--4col">
     <div><dt>Para cobrar</dt><dd class="num">{{ linhas|length }}</dd></div>
     <div><dt>Atrasados</dt><dd class="num">{{ n_atraso }}</dd></div>
     <div><dt>Alerta de bloqueio</dt><dd class="num">{{ n_bloqueio }}</dd></div>

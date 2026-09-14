@@ -832,7 +832,11 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 @media (min-width: 520px) { .meta { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); } }
 /* "Cobrar hoje": sempre 4 cartões fixos — esticam para ocupar a largura total
    (mesma largura da tabela abaixo), em vez do auto-fill genérico do .meta. */
-@media (min-width: 640px) { .meta--cobrar-hoje { grid-template-columns: repeat(4, 1fr); } }
+/* Grade de 4 colunas fixas — pra blocos .meta que sempre têm exatamente 4
+   itens (Cobrar hoje, Clientes>Detalhes): estica pra ocupar a largura toda
+   em vez do auto-fill genérico, que deixa colunas fantasma sem esticar os
+   cartões existentes quando sobra espaço na linha. */
+@media (min-width: 640px) { .meta--4col { grid-template-columns: repeat(4, 1fr); } }
 
 .pagination { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; color: var(--ink-faint); font-size: 0.9rem; }
 
