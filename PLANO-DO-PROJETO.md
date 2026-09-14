@@ -2,8 +2,11 @@
 
 > **Anteprojeto** · 28/08/2026 (atualizado com as respostas do formulário de 28/08)
 > **Base:** "Roteiro de Entrevista com Yslane v2" + "Respostas" + formulário de respostas da Yslane
-> **Status:** Blocos 4–8 respondidos pela Yslane. Falta só o Alisson definir: cálculo da
-> parcela, regra da **diária**, regra da **por dezena** e regra exata do **mensal**.
+> **Status (atualizado 14/09):** Fases 1–7 têm código implementado (Fases 6 e 7 rodando
+> em modo seguro — `WHATSAPP_PROVIDER=log` / `CORA_PROVIDER=log` — até a ativação externa
+> descrita em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md)). Pendências reais:
+> confirmar a fronteira atrasado→inadimplente e o texto final da mensagem com o Alisson/Yslane
+> (seção 10), e a ativação externa das Fases 6/7. Ver backlog completo na [seção 14](#14-backlog--o-que-falta).
 
 Site para controlar os pagamentos dos aparelhos vendidos a prazo — nas estruturas
 **diária, semanal, por dezena, quinzenal e mensal**. Uso principal de **Yslane** (financeiro),
@@ -340,8 +343,8 @@ Fases em sequência. As datas dependem do tamanho da equipe e serão definidas a
 | **Fase 3 — Pagamentos** | Registro e baixa | **Implementada (03/09).** Model `Pagamento` (uma linha por parcela, `UniqueConstraint(contrato, vencimento)` + `CheckConstraint`), baixa manual (`/pagamentos/contrato/<pk>/novo/`), **pagamento parcial com transporte de saldo** para a próxima parcela (ou `Contrato.saldo_transportado`), estorno, histórico por cliente + `/pagamentos/historico/`, trilha via `django-auditlog`. **Quitação é manual** (`/contratos/<pk>/quitar/` — a baixa nunca quita). `Cobranca` movido para a Fase 6. |
 | **Fase 4 — Atraso** | Juros e status | **Implementada (04/09).** Lógica pura pronta e testada (`apps/pagamentos/atraso.py`): dias de atraso com a janela da semanal, **juros de R$ 5,00/dia**, os 4 status, cor da UI e **alerta de bloqueio aos 7 dias**. Ligada ao `Contrato` (`situacao_atraso` / `status_efetivo` / `sincronizar_status`), com bloco "Situação hoje" no detalhe e coluna no admin. O cálculo usa a **parcela (`Vencimento`) em aberto mais antiga** (`parcela_em_aberto()` / `data_referencia_atraso()`) quando o contrato já tem vencimentos gerados; `proximo_vencimento` manual só entra como *fallback* antes disso. Atualização em massa do `status` salvo roda no job diário `gerar_vencimentos` (Fase 2). Lista/filtro de contratos e o painel "Cobrar hoje" usam o status calculado. Ver seção 4.6. |
 | **Fase 5 — Relatórios** | Visão gerencial | Visão diária consolidada, relatórios semanais e mensais, exportação em Excel e PDF. |
-| **Fase 6 — Cobrança ao cliente** | WhatsApp automático (Modalidade B) | Integração com API oficial, número comercial, configuração por cliente e mensagens de atraso. |
-| **Fase 7 — Futuro** | Expansões | Módulo de motos, portal do cliente, geração de chave Pix e conciliação bancária. |
+| **Fase 6 — Cobrança ao cliente** | WhatsApp automático (Modalidade B) | **Código implementado (ver [`docs/WHATSAPP.md`](docs/WHATSAPP.md)).** Integração com a Evolution API (auto-hospedada, `apps/pagamentos/whatsapp.py`, `cobranca.py`, `webhooks.py`), mensagens de vencimento/atraso, `manage.py enviar_cobrancas_clientes`. Roda em modo seguro (`WHATSAPP_PROVIDER=log`) até a ativação — passos externos (VPS, chip dedicado, credenciais) em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md). |
+| **Fase 7 — Futuro** | Expansões | **Cobrança Pix via Cora: código implementado** (ver [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md) e [`docs/CORA.md`](docs/CORA.md)) — `apps/pagamentos/cora_api.py`, `pix_cora.py`, `cora_webhooks.py`, `reconciliar_cora`. Roda em modo seguro (`CORA_PROVIDER=log`) até a ativação (conta PJ CoraPro + certificado mTLS — checklist em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md)). Módulo de motos **descartado**; portal do cliente segue sem iniciar. |
 
 ---
 
@@ -384,7 +387,8 @@ Fases em sequência. As datas dependem do tamanho da equipe e serão definidas a
 - **Já decidido (03/09):** geração diária só da **diária** (domingo incluído; as demais
   geram na data da parcela); juro fica por fora do QR; **envio automático ao cliente,
   sem a Yslane** → puxa a Fase 6 como dependência dura; **pagamento parcial via PIX aceito**.
-- Só começa depois das Fases 2, 3 e 6. Reescrita, dependências e faseamento **7a–7d** no doc.
+- Dependência das Fases 2, 3 e 6 **satisfeita em código** (14/09) — falta só o
+  acesso à API da Cora acima. Reescrita, dependências e faseamento **7a–7d** no doc.
 
 **Com a Yslane (não bloqueiam):**
 
@@ -607,29 +611,56 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
 - [x] Relatórios semanal e mensal
 - [x] Exportação em Excel (`openpyxl`) e PDF (`WeasyPrint`)
 
-### Fase 6 — Cobrança direto ao cliente (não iniciada)
+### Fase 6 — Cobrança direto ao cliente (**código implementado — 14/09**)
 
 - [x] Model `Cobranca` (notificação — ver seção 6): `contrato · data_alvo ·
   canal · status · mensagem · enviado_em`. Movido da Fase 3 — só faz sentido
   junto do envio de mensagem (falta CORA_CLIENT-ID, CERTIFICATE.PEM e privatie_key)
-- [ ] Integração WhatsApp com Evolution API
-- [ ] Mensagens automáticas de vencimento e atraso
+- [x] Integração WhatsApp com Evolution API — `apps/pagamentos/whatsapp.py`
+  (cliente HTTP), webhook de status em `apps/pagamentos/webhooks.py`
+  (autenticado por `EVOLUTION_WEBHOOK_TOKEN`, falha fechado sem token — corrigido 14/09)
+- [x] Mensagens automáticas de vencimento e atraso — `apps/pagamentos/cobranca.py`
+  + `manage.py enviar_cobrancas_clientes`, com os 3 textos da [seção 8](#8-cobrança-automática--decisão-de-canal)
+  (rascunho ainda provisório, falta o texto final da Yslane)
+- [ ] **Ativação externa (não é código):** contratar VPS, hospedar a Evolution
+  API, número dedicado, credenciais reais. `WHATSAPP_PROVIDER=log` por padrão
+  (nada é enviado). Passo a passo em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md).
 
 ### Fase 7 — Futuro
 
-- [ ] Módulo de motos (DESCARTADO)
-- [ ] Portal do cliente
-- [ ] **Cobrança PIX automática via API da Cora** — ciclo diário
-  gerar → enviar → conciliar → sinalizar **pago / não pago** (badge ✅/❌ +
-  lista "entrar em contato" para a Yslane). Especificação, bloqueios, perguntas
-  para o Alisson e faseamento **7a–7d** em
-  [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md). Depende das Fases 2, 3 e 6.
+- ~~Módulo de motos~~ — **descartado** (Alisson, 02/09): v1 é só celulares.
+- [ ] Portal do cliente — não iniciado, sem previsão.
+- [x] **Cobrança PIX automática via API da Cora** — ciclo diário
+  gerar → enviar → conciliar → sinalizar **pago / não pago** implementado:
+  `apps/pagamentos/cora_api.py` (cliente mTLS), `pix_cora.py` (geração de
+  cobrança), `cora_webhooks.py` (webhook autenticado por `CORA_WEBHOOK_TOKEN`,
+  falha fechado sem token — corrigido 14/09), `manage.py reconciliar_cora`,
+  painel pago/não pago em `/pagamentos/pix/`. Especificação completa e
+  faseamento **7a–7d** em [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md).
+- [ ] **Ativação externa (não é código):** conta PJ + plano CoraPro, certificado
+  mTLS (Stage e depois produção). `CORA_PROVIDER=log` por padrão (nenhum Pix é
+  criado). Passo a passo em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md).
 
 ### Técnico / infra (transversal)
 
-- [ ] Migrar para **PostgreSQL** em produção (hoje SQLite)
-- [ ] `django-unfold` no admin (planejado, ainda não instalado)
-- [ ] Configurar **Sentry**
-- [ ] Deploy (Render — Gunicorn + WhiteNoise)
-- [ ] Backup diário do banco
-- [x] `python-dateutil` no `requirements.txt` (Fase 2) · [x] `django-auditlog` (Fase 3) · [ ] `Django-Q2` (deploy)
+- [ ] Migrar para **PostgreSQL** em produção (hoje SQLite) — **código pronto**
+  (`DATABASE_URL` via `django-environ` já suportado em `config/settings.py`;
+  `psycopg[binary]` no `requirements.txt`); só falta o deploy real criar o banco.
+- [ ] `django-unfold` no admin — **avaliado e revertido em 14/09.** Instalei,
+  testei no navegador e a interface (menu, filtros, atalhos, tema) fica toda
+  quebrada: o Alpine.js do pacote precisa de `'unsafe-eval'` no `script-src` do
+  CSP, e o projeto usa CSP restrito de propósito (`script-src: 'self'` puro —
+  ver comentário em `config/settings.py`). Afrouxar o CSP pra ganhar o tema
+  visual do admin é uma troca de segurança que precisa ser decidida com o
+  Alisson antes de tentar de novo (ou buscar outro tema sem Alpine/eval).
+- [ ] Configurar **Sentry** — precisa de conta/DSN (ação externa).
+- [ ] Deploy (Render — Gunicorn + WhiteNoise) — **blueprint pronto**
+  (`render.yaml` já define web + banco + cron); falta só apontar o Render
+  para o repositório (ação externa, precisa de acesso à conta).
+- [ ] Backup diário do banco — depende do deploy acima (Render já faz backup
+  diário do Postgres gerenciado; `django-dbbackup` para R2/B2 fica opcional).
+- [x] `python-dateutil` no `requirements.txt` (Fase 2) · [x] `django-auditlog` (Fase 3)
+- [x] Tarefas agendadas — **decisão tomada:** cron nativo do Render
+  (`rotina_diaria`, `render.yaml`) em vez de Django-Q2, seguindo a alternativa
+  já prevista na [seção 13](#13-stack-técnica) ("management command + cron do
+  provedor"). Item antigo do backlog ficava desatualizado — corrigido 14/09.
