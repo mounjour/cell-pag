@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Acompanhamento Pix{% endblock %}
 
 {% block content %}
@@ -30,7 +31,9 @@
           {% if c.erro %}<span class="helptext">{{ c.erro }}</span>{% endif %}
         </td>
         <td data-label="Pix">
-          {% if c.pix_copia_e_cola %}<details><summary>Ver Copia e Cola</summary><textarea readonly rows="3">{{ c.pix_copia_e_cola }}</textarea></details>{% else %}—{% endif %}
+          {% if c.pix_copia_e_cola %}
+            <button type="button" class="btn-copiar-pix" data-pix="{{ c.pix_copia_e_cola }}">Copiar código</button>
+          {% else %}—{% endif %}
         </td>
       </tr>
     {% endfor %}
@@ -40,4 +43,8 @@
 {% else %}
 <div class="empty"><p>Nenhuma cobrança Pix pendente ou paga hoje.</p></div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/pix_painel.js' %}"></script>
 {% endblock %}

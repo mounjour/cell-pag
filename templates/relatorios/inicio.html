@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="toolbar">
-  <h1 style="margin:0">Início · {{ painel.hoje|date:"d/m/Y" }}</h1>
+  <h1>Início · {{ painel.hoje|date:"d/m/Y" }}</h1>
   <span class="spacer"></span>
   <a class="btn" href="{% url 'pagamentos:cobrar_hoje' %}">Ir para Cobrar hoje</a>
 </div>
@@ -38,11 +38,11 @@
 
 <div class="painel-graficos">
   <div class="card">
-    <h2 style="margin-top:0">Recebido × previsto por mês</h2>
+    <h2>Recebido × previsto por mês</h2>
     <div class="chart-box"><canvas id="grafico-meses" aria-label="Recebido e previsto por mês nos últimos seis meses"></canvas></div>
   </div>
   <div class="card">
-    <h2 style="margin-top:0">Contratos por status</h2>
+    <h2>Contratos por status</h2>
     <div class="chart-box"><canvas id="grafico-status" aria-label="Distribuição dos contratos por status"></canvas></div>
   </div>
 </div>

@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="toolbar">
-  <h1 style="margin:0">{{ cliente.nome }}</h1>
+  <h1>{{ cliente.nome }}</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="{% url 'clientes:editar' cliente.pk %}">Editar</a>
   <a class="btn" href="{% url 'contratos:novo' %}?cliente={{ cliente.pk }}">Novo contrato</a>
@@ -13,7 +13,6 @@
   <div><dt>CPF</dt><dd class="num">{{ cliente.cpf_formatado }}</dd></div>
   <div><dt>Telefone / WhatsApp</dt><dd>
     <a class="num" href="tel:{{ cliente.telefone_whatsapp.as_e164 }}">{{ cliente.telefone_exibicao }}</a>
-    <a class="zap" href="{{ cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
   </dd></div>
   <div><dt>Endereço</dt><dd>{{ cliente.endereco|default:"—" }}</dd></div>
   <div><dt>Cadastrado em</dt><dd class="num">{{ cliente.criado_em|date:"d/m/Y" }}</dd></div>
@@ -28,7 +27,7 @@
       </thead>
       <tbody>
         {% for ct in contratos %}
-          <tr>
+          <tr class="row-acento row-acento--{{ ct.status_efetivo }}">
             <td><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
             <td data-label="Aparelho">{{ ct.aparelho_modelo }}</td>
             <td data-label="Estrutura">{{ ct.get_estrutura_display }}</td>
