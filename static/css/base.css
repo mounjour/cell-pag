@@ -145,6 +145,9 @@ summary:focus-visible {
   background: var(--surface);
   border-bottom: 1px solid var(--line);
   box-shadow: var(--raise);
+  /* Fixo no topo também no celular — sem isso, dá pra abrir o menu só
+     depois de rolar a página inteira de volta pro topo. */
+  position: sticky; top: 0; z-index: 20;
 }
 .brand {
   display: inline-flex;
@@ -235,7 +238,6 @@ summary:focus-visible {
 @media (min-width: 640px) {
   .topbar {
     flex-wrap: nowrap; gap: 1.5rem; padding: 0.5rem 1.5rem;
-    position: sticky; top: 0; z-index: 20;
   }
   .brand { flex: 0 0 auto; }
   .nav-toggle { display: none; }
