@@ -1,0 +1,1 @@
+<ul class="messages" id="mensagens"{% if oob %} hx-swap-oob="true"{% endif %}>{% for m in messages %}<li class="msg {{ m.tags }}">{{ m }}</li>{% endfor %}</ul>
