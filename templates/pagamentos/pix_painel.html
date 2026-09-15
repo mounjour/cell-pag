@@ -27,7 +27,7 @@
         <td data-label="Vencimento" class="num">{{ c.data_vencimento|date:"d/m/Y" }}</td>
         <td data-label="Valor" class="num">R$ {{ c.valor|floatformat:2 }}</td>
         <td data-label="Status">
-          <span class="pill {{ c.status }}">{% if c.status == 'pago' %}✅{% elif c.status == 'vencido' %}❌{% endif %} {{ c.get_status_display }}</span>
+          <span class="pill pill-pix {{ c.status }}">{% if c.status == 'pago' %}✅{% elif c.status == 'vencido' %}❌{% endif %} {{ c.get_status_display }}</span>
           {% if c.erro %}<span class="helptext">{{ c.erro }}</span>{% endif %}
         </td>
         <td data-label="Pix">
