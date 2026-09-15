@@ -67,11 +67,7 @@
   </header>
 
   <main class="wrap {% block wrap_class %}{% endblock %}">
-    {% if messages %}
-      <ul class="messages">
-        {% for m in messages %}<li class="msg {{ m.tags }}">{{ m }}</li>{% endfor %}
-      </ul>
-    {% endif %}
+    {% include "_mensagens.html" %}
     {% block content %}{% endblock %}
   </main>
   {% block scripts %}{% endblock %}

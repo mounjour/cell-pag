@@ -9,7 +9,9 @@ só a conta WhatsApp Business para o envio de verdade (ver `lembrete.py`).
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
 from django.utils import timezone
@@ -63,7 +65,16 @@ class PixPainelView(LoginRequiredMixin, TemplateView):
 
 
 class PagamentoCreateView(LoginRequiredMixin, CreateView):
-    """Baixa de um pagamento numa parcela de um contrato."""
+    """Baixa de um pagamento numa parcela de um contrato.
+
+    Aberta tanto como página cheia (link direto) quanto dentro do diálogo
+    "Registrar" do painel Cobrar hoje (via htmx — `apps/pagamentos/static ...
+    js/cobrar_hoje.js` + `templates/pagamentos/_pagamento_form_conteudo.html`).
+    Quando a requisição vem do htmx, usa o mesmo conteúdo sem o `base.html`
+    (cabeçalho/nav), e a baixa bem-sucedida não redireciona — devolve o
+    painel "Cobrar hoje" e as mensagens atualizados via troca fora-de-banda
+    (`hx-swap-oob`), pra fechar o diálogo sem recarregar a página.
+    """
 
     form_class = PagamentoForm
     template_name = "pagamentos/pagamento_form.html"
@@ -77,6 +88,14 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
             return redirect("contratos:detalhe", pk=self.contrato.pk)
         return super().dispatch(request, *args, **kwargs)
 
+    def _is_htmx(self):
+        return self.request.headers.get("HX-Request") == "true"
+
+    def get_template_names(self):
+        if self._is_htmx():
+            return ["pagamentos/_pagamento_form_conteudo.html"]
+        return [self.template_name]
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["contrato"] = self.contrato
@@ -85,10 +104,19 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["contrato"] = self.contrato
+        ctx["em_dialog"] = self._is_htmx()
         ctx["parcelas_abertas"] = self.contrato.vencimentos.exclude(
             status=Vencimento.Status.PAGO
         ).order_by("numero")
         return ctx
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        if self._is_htmx():
+            # 2xx faria o htmx tratar a resposta como sucesso e fechar o
+            # diálogo mesmo com o formulário inválido (ver static/js/cobrar_hoje.js).
+            response.status_code = 422
+        return response
 
     def form_valid(self, form):
         pagamento = form.save(commit=False)
@@ -109,7 +137,28 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
             messages.success(self.request, "Pagamento registrado.")
 
         self._avisar_se_tudo_pago()
+
+        if self._is_htmx():
+            return self._resposta_htmx_sucesso()
         return redirect("contratos:detalhe", pk=self.contrato.pk)
+
+    def _resposta_htmx_sucesso(self):
+        """Painel "Cobrar hoje" e mensagens atualizados via troca fora-de-banda.
+
+        O corpo do diálogo (alvo normal da requisição) fica vazio — o
+        listener `htmx:afterRequest` em static/js/cobrar_hoje.js fecha o
+        diálogo assim que a resposta chega, então o vazio nunca aparece na
+        tela.
+        """
+        painel_html = render_to_string(
+            "pagamentos/_cobrar_hoje_painel.html",
+            {**montar_agenda_do_dia(), "oob": True},
+            request=self.request,
+        )
+        mensagens_html = render_to_string(
+            "_mensagens.html", {"oob": True}, request=self.request
+        )
+        return HttpResponse(painel_html + mensagens_html)
 
     def _avisar_se_tudo_pago(self):
         ct = self.contrato
