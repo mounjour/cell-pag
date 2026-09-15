@@ -911,18 +911,22 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 @media (min-width: 640px) { .login-box { margin: 3.5rem auto; padding: 2.75rem 2.5rem; } }
 
 /* ---------- Movimento de entrada ---------- */
+/* Só no Início (a "capa" do site) — não em toda navegação. Repetir esse
+   reveal em cada troca de tela, o dia inteiro, cansa mais do que ajuda;
+   como um momento único de chegada, no painel que resume o dia, ele
+   continua tendo função. */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes rise {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: none; }
   }
-  main.wrap > * { animation: rise 0.34s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
-  main.wrap > :nth-child(1) { animation-delay: 0.03s; }
-  main.wrap > :nth-child(2) { animation-delay: 0.07s; }
-  main.wrap > :nth-child(3) { animation-delay: 0.11s; }
-  main.wrap > :nth-child(4) { animation-delay: 0.15s; }
-  main.wrap > :nth-child(5) { animation-delay: 0.19s; }
-  main.wrap > :nth-child(n + 6) { animation-delay: 0.22s; }
+  .painel-entrada > * { animation: rise 0.34s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  .painel-entrada > :nth-child(1) { animation-delay: 0.03s; }
+  .painel-entrada > :nth-child(2) { animation-delay: 0.07s; }
+  .painel-entrada > :nth-child(3) { animation-delay: 0.11s; }
+  .painel-entrada > :nth-child(4) { animation-delay: 0.15s; }
+  .painel-entrada > :nth-child(5) { animation-delay: 0.19s; }
+  .painel-entrada > :nth-child(n + 6) { animation-delay: 0.22s; }
 }
 
 @media (prefers-reduced-motion: reduce) {

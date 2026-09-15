@@ -21,10 +21,21 @@
     });
   }
 
-  Chart.defaults.color = v("--ink-faint", "#5f6368");
-  Chart.defaults.borderColor = v("--line", "#dde1e6");
+  Chart.defaults.color = v("--ink-faint", "#71847d");
+  Chart.defaults.borderColor = v("--line", "#dce4e1");
   Chart.defaults.font.family =
-    "Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+    "'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+
+  // O tooltip usa os mesmos tokens de "cartão" do resto da UI (superfície +
+  // tinta + linha) — sempre legível nos dois temas, sem inverter cores.
+  Chart.defaults.plugins.tooltip.backgroundColor = v("--surface", "#ffffff");
+  Chart.defaults.plugins.tooltip.titleColor = v("--ink", "#17231f");
+  Chart.defaults.plugins.tooltip.bodyColor = v("--ink-soft", "#4e5e58");
+  Chart.defaults.plugins.tooltip.borderColor = v("--line-strong", "#b9c7c2");
+  Chart.defaults.plugins.tooltip.borderWidth = 1;
+  Chart.defaults.plugins.tooltip.padding = 10;
+  Chart.defaults.plugins.tooltip.cornerRadius = 8;
+  Chart.defaults.plugins.tooltip.boxPadding = 4;
 
   var serie = dados("serie-data");
   if (serie) {
@@ -36,13 +47,13 @@
           {
             label: "Previsto",
             data: serie.previsto,
-            backgroundColor: v("--c-blue", "#1a73e8") + "55",
+            backgroundColor: v("--accent", "#0d6b63") + "45",
             borderRadius: 4,
           },
           {
             label: "Recebido",
             data: serie.recebido,
-            backgroundColor: v("--c-green", "#1e8e3e"),
+            backgroundColor: v("--ok", "#1e8e3e"),
             borderRadius: 4,
           },
         ],
