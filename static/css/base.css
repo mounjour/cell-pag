@@ -1,9 +1,10 @@
 /* Mobile-first. Estilos base valem para celular; @media (min-width: 640px) amplia.
    Linguagem visual: "Petróleo" — verde-azulado profundo (cor de livro-caixa e
-   patina), identidade própria em vez do Material Design do Google. Cada seção
-   ganha um acento de uma paleta de seis cores (azul, verde, roxo, laranja, ciano,
-   rosa) só como variedade decorativa; os blocos de dados viram cartões-métrica
-   com elevação e um leve movimento de entrada. Superfícies brancas sobre um
+   patina), identidade própria em vez do Material Design do Google. Títulos e
+   cartões-métrica usam um único acento (a cor da marca) em vez de uma paleta
+   decorativa girando por posição — a cor, aqui, marca "isto é um dado", não
+   tenta dizer mais que isso. Blocos de dados viram cartões-métrica com
+   elevação e um leve movimento de entrada. Superfícies brancas sobre um
    fundo neutro com leve viés esverdeado. Cantos generosos (14px nos cartões,
    8px nos controles), título em Fraunces / texto em Source Sans 3, sombras de
    duas camadas tingidas na tinta da marca. */
@@ -23,23 +24,18 @@
   --accent-wash: #dff0ec;  /* petróleo pálido — realce, :hover de linha, banner */
   --on-accent: #ffffff;    /* texto sobre o petróleo cheio (botão primário) */
 
-  --amber: #e8710a;        /* laranja Google — aviso intermediário */
+  --amber: #e8710a;        /* laranja — aviso intermediário */
   --amber-ink: #b06000;
   --amber-wash: #feefc3;
-  --critical: #d93025;     /* vermelho Google — erro, inadimplência */
+  --critical: #d93025;     /* vermelho — erro, inadimplência */
   --critical-ink: #c5221f;
   --critical-wash: #fce8e6;
-  --ok: #1e8e3e;           /* verde Google — sucesso, "em dia" */
+  --ok: #1e8e3e;           /* verde — sucesso, "em dia" */
   --ok-ink: #137333;
   --ok-wash: #e6f4ea;
 
-  /* Paleta de seções — o acento gira por esta ordem em h2 e nos cartões-métrica */
-  --c-blue: #1a73e8;   --c-blue-wash: #e8f0fe;
-  --c-green: #1e8e3e;  --c-green-wash: #e6f4ea;
-  --c-purple: #9334e6; --c-purple-wash: #f3e8fd;
-  --c-orange: #e8710a; --c-orange-wash: #fdecd8;
-  --c-teal: #0f9aa8;   --c-teal-wash: #e0f5f7;
-  --c-pink: #d01884;   --c-pink-wash: #fde7f3;
+  --wa-ink: #1fa855;       /* verde WhatsApp — selo "Msg" e ícone de contato */
+  --wa-wash: rgba(37, 211, 102, 0.14);
 
   --focus: #0d6b63;
   /* elevação — sombra de duas camadas tingida na tinta da marca (não cinza neutro) */
@@ -79,12 +75,8 @@
     --ok-ink: #81c995;
     --ok-wash: #1f352a;
 
-    --c-blue: #8ab4f8;   --c-blue-wash: #2b3b57;
-    --c-green: #81c995;  --c-green-wash: #1f352a;
-    --c-purple: #d7aefb; --c-purple-wash: #3c2c50;
-    --c-orange: #fcad70; --c-orange-wash: #402f1c;
-    --c-teal: #5ad0dd;   --c-teal-wash: #1c3b3e;
-    --c-pink: #ff8bcb;   --c-pink-wash: #45213a;
+    --wa-ink: #4ad17c;
+    --wa-wash: rgba(74, 209, 124, 0.18);
 
     --focus: #4fb8ac;
     --raise: 0 1px 2px 0 rgba(0, 0, 0, 0.6), 0 1px 3px 1px rgba(0, 0, 0, 0.35);
@@ -276,15 +268,9 @@ h2 {
   font-weight: 500;
   margin: 2rem 0 0.85rem;
   padding-left: 0.7rem;
-  border-left: 4px solid var(--c-blue);
+  border-left: 4px solid var(--accent);
   line-height: 1.3;
 }
-main h2:nth-of-type(6n + 1) { border-left-color: var(--c-blue); }
-main h2:nth-of-type(6n + 2) { border-left-color: var(--c-green); }
-main h2:nth-of-type(6n + 3) { border-left-color: var(--c-purple); }
-main h2:nth-of-type(6n + 4) { border-left-color: var(--c-orange); }
-main h2:nth-of-type(6n + 5) { border-left-color: var(--c-teal); }
-main h2:nth-of-type(6n + 6) { border-left-color: var(--c-pink); }
 .card > h2, .report-heading h2 { border-left: 0; padding-left: 0; margin-top: 0; }
 @media (min-width: 640px) { h1 { font-size: 1.8rem; } h2 { font-size: 1.15rem; } }
 
@@ -692,6 +678,20 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .pill.vencido { background: var(--critical-wash); color: var(--critical-ink); }
 .pill.cancelado { background: var(--surface-2); color: var(--ink-faint); }
 
+/* Selo de canal ("Pix"/"Msg" em Cobrar hoje, status Pix no painel Pix): cor
+   do próprio canal — petróleo (a cor do Pix real é bem próxima) e verde
+   WhatsApp — em vez do cinza neutro, enquanto não há nada a dizer sobre o
+   envio ainda (não gerado/preparado, ou "pendente" = aguardando geração).
+   Os :not() cobrem os status que já têm cor própria (pago/vencido/erro...)
+   pra essa regra nunca disputar com eles — não pode depender da ordem no
+   arquivo, porque o painel Pix usa as mesmas classes de status. */
+.pill.pill-pix:not(.aberto):not(.pago):not(.vencido):not(.cancelado):not(.erro) {
+  background: var(--accent-wash); color: var(--accent-ink);
+}
+.pill.pill-msg:not(.enviado):not(.entregue):not(.lido):not(.erro) {
+  background: var(--wa-wash); color: var(--wa-ink);
+}
+
 /* ─────────── Painel "Cobrar hoje" ─────────── */
 .atraso-dias { white-space: nowrap; color: var(--ink); font-size: 1.05rem; font-weight: 500; }
 .situacao-cell { white-space: normal; min-width: 10rem; }
@@ -736,11 +736,8 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .icon-btn svg { display: block; width: 20px; height: 20px; }
 .icon-btn--phone { color: var(--accent-ink); background: var(--accent-wash); border-color: transparent; }
 .icon-btn--phone:hover { background: var(--accent-wash); border-color: var(--accent); }
-.icon-btn--wa { color: #1fa855; background: rgba(37, 211, 102, 0.12); border-color: transparent; }
-.icon-btn--wa:hover { background: rgba(37, 211, 102, 0.2); border-color: #25d366; }
-@media (prefers-color-scheme: dark) {
-  .icon-btn--wa { color: #4ad17c; background: rgba(74, 209, 124, 0.16); }
-}
+.icon-btn--wa { color: var(--wa-ink); background: var(--wa-wash); border-color: transparent; }
+.icon-btn--wa:hover { background: var(--wa-wash); border-color: var(--wa-ink); }
 
 /* Botão "Registrar": a ação principal da linha — cheio, em cápsula, com ícone. */
 .btn-registrar {
@@ -826,19 +823,13 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
   display: grid; gap: 0.2rem; align-content: start;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-left: 3px solid var(--c-blue);
+  border-left: 3px solid var(--accent);
   border-radius: var(--radius-sm);
   padding: 0.8rem 0.95rem;
   box-shadow: var(--raise);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .meta > div:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); }
-.meta > div:nth-child(6n + 1) { border-left-color: var(--c-blue); }
-.meta > div:nth-child(6n + 2) { border-left-color: var(--c-green); }
-.meta > div:nth-child(6n + 3) { border-left-color: var(--c-purple); }
-.meta > div:nth-child(6n + 4) { border-left-color: var(--c-orange); }
-.meta > div:nth-child(6n + 5) { border-left-color: var(--c-teal); }
-.meta > div:nth-child(6n + 6) { border-left-color: var(--c-pink); }
 .meta dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); font-weight: 600; }
 .meta dd { margin: 0; color: var(--ink); font-size: 1.05rem; font-weight: 500; }
 /* auto-fill (não auto-fit): quando sobra um cartão na última linha ele mantém a
