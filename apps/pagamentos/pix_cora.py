@@ -86,13 +86,16 @@ def _aplicar_resposta(cobranca: CobrancaCora, resposta: dict) -> None:
     status = STATUS_CORA.get(str(resposta.get("status", "")).upper())
     if not status:
         raise cora_api.CoraErro(f"Status de fatura desconhecido: {resposta.get('status')!r}")
-    pix = resposta.get("pix") or (resposta.get("payment_options") or {}).get("pix") or {}
+    pix = resposta.get("pix") or {}
+    bank_slip = (resposta.get("payment_options") or {}).get("bank_slip") or {}
 
     cobranca.cora_id = resposta.get("id") or cobranca.cora_id
     cobranca.status = status
     cobranca.total_pago = Decimal(resposta.get("total_paid", 0)) / 100
     cobranca.pix_copia_e_cola = pix.get("emv", cobranca.pix_copia_e_cola)
-    cobranca.qr_code_url = pix.get("url") or cobranca.qr_code_url
+    # A Cora devolve a URL do PNG do QR code em payment_options.bank_slip.url,
+    # não dentro do objeto "pix" (que só tem o campo "emv").
+    cobranca.qr_code_url = bank_slip.get("url") or cobranca.qr_code_url
     cobranca.erro = ""
     if status == CobrancaCora.Status.PAGO:
         ocorrencia = resposta.get("occurrence_date")

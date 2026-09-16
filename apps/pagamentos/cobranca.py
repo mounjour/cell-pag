@@ -9,7 +9,7 @@ from django.utils import timezone
 from .agenda import montar_agenda_do_dia
 from .models import Cobranca
 from .pix_cora import obter_ou_criar_cobranca
-from .whatsapp import WhatsAppErro, enviar_mensagem, numero_so_digitos
+from .whatsapp import WhatsAppErro, enviar_imagem, enviar_mensagem, numero_so_digitos
 
 logger = logging.getLogger("pagamentos.cobranca")
 
@@ -132,6 +132,15 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             cobranca.erro = ""
             cobranca.enviado_em = timezone.now()
             resultado["enviadas"] += 1
+
+        if pix and pix.qr_code_url:
+            try:
+                enviar_imagem(destinatario=destinatario, url_imagem=pix.qr_code_url)
+            except WhatsAppErro as exc:
+                # O texto (com o copia-e-cola) já saiu — a imagem é um reforço,
+                # não derruba o status da cobrança nem conta como erro dela.
+                logger.warning("Falha ao enviar a imagem do QR code (cobrança %s): %s", cobranca.pk, exc)
+
         cobranca.save()
 
     return resultado

@@ -11,7 +11,8 @@ from validate_docbr import CPF as CPFGen
 from apps.clientes.models import Cliente
 from apps.contratos.models import Contrato
 from apps.pagamentos.cobranca import dados_da_mensagem, processar_cobrancas
-from apps.pagamentos.models import Cobranca, Vencimento
+from apps.pagamentos.models import Cobranca, CobrancaCora, Vencimento
+from apps.pagamentos.whatsapp import WhatsAppErro
 
 
 date = datetime.date
@@ -107,6 +108,65 @@ def test_envio_real_grava_id_e_nao_duplica(cliente_cobranca, settings, monkeypat
     assert segundo["ignoradas"] == 1
     assert cobranca.status == Cobranca.Status.ENVIADO
     assert cobranca.id_externo == "3EB0ABC123"
+
+
+@pytest.mark.django_db
+def test_envio_com_qr_code_envia_imagem(cliente_cobranca, settings, monkeypatch):
+    settings.WHATSAPP_PROVIDER = "evolution"
+    hoje = date(2026, 9, 4)
+    contrato = _contrato(cliente_cobranca, hoje)
+    vencimento = contrato.vencimentos.first()
+    CobrancaCora.objects.create(
+        vencimento=vencimento,
+        valor=Decimal("100.00"),
+        data_vencimento=vencimento.data_vencimento,
+        cora_id="inv_teste",
+        pix_copia_e_cola="00020101 copia e cola de teste",
+        qr_code_url="https://cora.example.com/qrcode.png",
+    )
+    monkeypatch.setattr(
+        "apps.pagamentos.cobranca.enviar_mensagem",
+        lambda **kwargs: {"simulado": False, "id": "3EB0ABC123"},
+    )
+    chamadas = []
+    monkeypatch.setattr(
+        "apps.pagamentos.cobranca.enviar_imagem",
+        lambda **kwargs: chamadas.append(kwargs) or {"simulado": False, "id": "img-1"},
+    )
+    processar_cobrancas(hoje)
+    assert len(chamadas) == 1
+    assert chamadas[0]["url_imagem"] == "https://cora.example.com/qrcode.png"
+    assert chamadas[0]["destinatario"] == "5583999991234"
+
+
+@pytest.mark.django_db
+def test_falha_ao_enviar_imagem_nao_derruba_a_cobranca(cliente_cobranca, settings, monkeypatch):
+    settings.WHATSAPP_PROVIDER = "evolution"
+    hoje = date(2026, 9, 4)
+    contrato = _contrato(cliente_cobranca, hoje)
+    vencimento = contrato.vencimentos.first()
+    CobrancaCora.objects.create(
+        vencimento=vencimento,
+        valor=Decimal("100.00"),
+        data_vencimento=vencimento.data_vencimento,
+        cora_id="inv_teste",
+        pix_copia_e_cola="00020101 copia e cola de teste",
+        qr_code_url="https://cora.example.com/qrcode.png",
+    )
+    monkeypatch.setattr(
+        "apps.pagamentos.cobranca.enviar_mensagem",
+        lambda **kwargs: {"simulado": False, "id": "3EB0ABC123"},
+    )
+
+    def _falha(**kwargs):
+        raise WhatsAppErro("Falha ao baixar a imagem do QR code da Cora.")
+
+    monkeypatch.setattr("apps.pagamentos.cobranca.enviar_imagem", _falha)
+    resultado = processar_cobrancas(hoje)
+    cobranca = Cobranca.objects.get()
+    assert resultado["enviadas"] == 1
+    assert cobranca.status == Cobranca.Status.ENVIADO
+    assert cobranca.erro == ""
 
 
 @pytest.mark.django_db
