@@ -9,7 +9,7 @@ from django.utils import timezone
 from .agenda import montar_agenda_do_dia
 from .models import Cobranca
 from .pix_cora import obter_ou_criar_cobranca
-from .whatsapp import WhatsAppErro, enviar_mensagem, numero_so_digitos
+from .whatsapp import WhatsAppErro, enviar_imagem, enviar_mensagem, numero_so_digitos
 
 logger = logging.getLogger("pagamentos.cobranca")
 
@@ -109,10 +109,17 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             continue
 
         try:
-            resposta = enviar_mensagem(
-                destinatario=destinatario,
-                texto=dados["mensagem"],
-            )
+            if pix and pix.qr_code_url:
+                resposta = enviar_imagem(
+                    destinatario=destinatario,
+                    imagem_url=pix.qr_code_url,
+                    legenda=dados["mensagem"],
+                )
+            else:
+                resposta = enviar_mensagem(
+                    destinatario=destinatario,
+                    texto=dados["mensagem"],
+                )
         except WhatsAppErro as exc:
             cobranca.status = Cobranca.Status.ERRO
             cobranca.erro = str(exc)

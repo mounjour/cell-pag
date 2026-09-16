@@ -11,7 +11,7 @@ from validate_docbr import CPF as CPFGen
 from apps.clientes.models import Cliente
 from apps.contratos.models import Contrato
 from apps.pagamentos.cobranca import dados_da_mensagem, processar_cobrancas
-from apps.pagamentos.models import Cobranca, Vencimento
+from apps.pagamentos.models import Cobranca, CobrancaCora, Vencimento
 
 
 date = datetime.date
@@ -107,6 +107,40 @@ def test_envio_real_grava_id_e_nao_duplica(cliente_cobranca, settings, monkeypat
     assert segundo["ignoradas"] == 1
     assert cobranca.status == Cobranca.Status.ENVIADO
     assert cobranca.id_externo == "3EB0ABC123"
+
+
+@pytest.mark.django_db
+def test_com_qr_code_manda_imagem_em_vez_de_texto(cliente_cobranca, settings, monkeypatch):
+    settings.WHATSAPP_PROVIDER = "evolution"
+    settings.CORA_PROVIDER = "log"  # sem conta Cora real: a fatura já vem pronta no banco
+    hoje = date(2026, 9, 4)
+    contrato = _contrato(cliente_cobranca, hoje)
+    CobrancaCora.objects.create(
+        vencimento=contrato.vencimentos.first(),
+        valor=Decimal("100.00"),
+        data_vencimento=hoje,
+        pix_copia_e_cola="00020126...copia-e-cola",
+        qr_code_url="https://cora.example/qr/abc.png",
+    )
+    chamadas = {}
+
+    def _fake_enviar_imagem(**kwargs):
+        chamadas["imagem"] = kwargs
+        return {"simulado": False, "id": "3EB0IMG"}
+
+    def _fake_enviar_mensagem(**kwargs):
+        chamadas["texto"] = kwargs
+        return {"simulado": False, "id": "3EB0TXT"}
+
+    monkeypatch.setattr("apps.pagamentos.cobranca.enviar_imagem", _fake_enviar_imagem)
+    monkeypatch.setattr("apps.pagamentos.cobranca.enviar_mensagem", _fake_enviar_mensagem)
+    processar_cobrancas(hoje)
+
+    assert "imagem" in chamadas
+    assert "texto" not in chamadas
+    assert chamadas["imagem"]["imagem_url"] == "https://cora.example/qr/abc.png"
+    assert "copia-e-cola" in chamadas["imagem"]["legenda"]
+    assert Cobranca.objects.get().id_externo == "3EB0IMG"
 
 
 @pytest.mark.django_db

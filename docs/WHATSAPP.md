@@ -30,6 +30,14 @@ EVOLUTION_WEBHOOK_TOKEN=um-token-aleatorio-forte
 O envio usa `POST {EVOLUTION_API_URL}/message/sendText/{EVOLUTION_INSTANCE}`
 com o cabeçalho `apikey` e corpo `{"number": "...", "text": "..."}`.
 
+Quando a cobrança já tem um QR code Pix gerado pela Cora (`CORA_PROVIDER=cora`),
+o envio troca para `POST {EVOLUTION_API_URL}/message/sendMedia/{EVOLUTION_INSTANCE}`
+(`{"number": "...", "mediatype": "image", "media": "<qr_code_url>", "caption":
+"<mesma mensagem>", "fileName": "qrcode-pix.png"}`) — o cliente recebe a imagem
+do QR code com a mensagem de cobrança como legenda, em vez de só o texto com o
+código "copia e cola". Sem QR real (`CORA_PROVIDER=log`), continua indo só o
+texto.
+
 ## Webhook de status
 
 Configure na Evolution o webhook para o evento `messages.update` apontando para
