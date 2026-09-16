@@ -5,6 +5,10 @@ API não-oficial de WhatsApp, self-hosted). Substitui a WhatsApp Cloud API da
 Meta — não há mais templates aprovados: a mensagem montada em
 `apps/pagamentos/cobranca.py` vai inteira como texto livre.
 
+Provedor de VPS escolhido para hospedar a Evolution: **DigitalOcean** (Droplet
+Ubuntu 24.04 LTS, 2GB RAM). Banco Postgres da Evolution: **Neon** (conexão
+direta, sem pooling).
+
 Enquanto não houver uma instância da Evolution conectada, mantenha:
 
 ```env

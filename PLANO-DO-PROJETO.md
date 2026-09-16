@@ -2,11 +2,13 @@
 
 > **Anteprojeto** · 28/08/2026 (atualizado com as respostas do formulário de 28/08)
 > **Base:** "Roteiro de Entrevista com Yslane v2" + "Respostas" + formulário de respostas da Yslane
-> **Status (atualizado 14/09):** Fases 1–7 têm código implementado (Fases 6 e 7 rodando
-> em modo seguro — `WHATSAPP_PROVIDER=log` / `CORA_PROVIDER=log` — até a ativação externa
-> descrita em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md)). Pendências reais:
-> confirmar a fronteira atrasado→inadimplente e o texto final da mensagem com o Alisson/Yslane
-> (seção 10), e a ativação externa das Fases 6/7. Ver backlog completo na [seção 14](#14-backlog--o-que-falta).
+> **Status (atualizado 14/09; banco revisado 16/09):** Fases 1–7 têm código implementado
+> (Fases 6 e 7 rodando em modo seguro — `WHATSAPP_PROVIDER=log` / `CORA_PROVIDER=log` — até
+> a ativação externa descrita em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md)).
+> Pendências reais: confirmar a fronteira atrasado→inadimplente e o texto final da mensagem
+> com o Alisson/Yslane (seção 10), a ativação externa das Fases 6/7, e a migração do banco de
+> produção de Render para **Supabase** (hospedagem do site continua no Render — seção 13).
+> Ver backlog completo na [seção 14](#14-backlog--o-que-falta).
 
 Site para controlar os pagamentos dos aparelhos vendidos a prazo — nas estruturas
 **diária, semanal, por dezena, quinzenal e mensal**. Uso principal de **Yslane** (financeiro),
@@ -458,7 +460,7 @@ manutenção por um único desenvolvedor**. Os itens marcados `[fase seguinte]` 
 | Camada | Escolha | Observação / alternativa |
 | :---- | :---- | :---- |
 | Back-end | **Django 5.x** | Django REST Framework só se surgir necessidade de API (não no início). |
-| Banco | **PostgreSQL** | SQLite no ambiente de desenvolvimento; Postgres gerenciado em produção. |
+| Banco | **PostgreSQL** (gerenciado via **Supabase**) | SQLite no ambiente de desenvolvimento; Postgres do Supabase em produção — troca decidida em 15/09 (antes seria o Postgres do próprio Render). |
 | Front-end | Django Templates + **HTMX** + **Alpine.js** + **Tailwind CSS** | Renderizado no servidor, responsivo. React + DRF seria trabalho desnecessário para este porte. |
 | Formulários | django-crispy-forms + crispy-tailwind, django-widget-tweaks | Telas de cadastro e de baixa rápidas e consistentes. |
 | Admin / backoffice | Django Admin + **django-unfold** + **django-import-export** | O admin já cobre boa parte do uso da Yslane. `import-export` migra a planilha atual de um `.xlsx`. |
@@ -475,8 +477,8 @@ manutenção por um único desenvolvedor**. Os itens marcados `[fase seguinte]` 
 | Autenticação | Django auth + **django-allauth** (reset de senha) | 2 usuários com perfis. django-two-factor-auth opcional (dado financeiro). |
 | Configuração / segredos | `django-environ` ou `python-decouple` | Variáveis em `.env`, sem segredo no código. |
 | Monitoramento de erro | **Sentry** (plano gratuito) | Recomendado para um app que movimenta cobrança. |
-| Hospedagem | **Render** ou **Railway** — Gunicorn + WhiteNoise | Postgres gerenciado + cron nativo + deploy por git. PythonAnywhere se quiser algo ainda mais simples. |
-| Backup | Backup do provedor + `pg_dump` noturno para Cloudflare R2 / Backblaze B2 (`django-dbbackup`) | Dado financeiro não pode depender de um único backup. |
+| Hospedagem | **Render** — Gunicorn + WhiteNoise | Continua no Render (cron nativo + deploy por git); só o banco saiu de lá — ver linha "Banco" acima. Netlify foi avaliado em 15/09 e descartado: não hospeda um processo Django/WSGI persistente nativamente. |
+| Backup | Backup gerenciado do **Supabase** (Postgres) + `pg_dump` noturno para Cloudflare R2 / Backblaze B2 (`django-dbbackup`) como camada extra | Dado financeiro não pode depender de um único backup. |
 | Testes | `pytest-django` + `model-bakery` | Cobrir a geração de vencimentos e o cálculo de atraso. |
 
 ### Notas de implementação para este projeto
@@ -645,7 +647,10 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
 
 - [ ] Migrar para **PostgreSQL** em produção (hoje SQLite) — **código pronto**
   (`DATABASE_URL` via `django-environ` já suportado em `config/settings.py`;
-  `psycopg[binary]` no `requirements.txt`); só falta o deploy real criar o banco.
+  `psycopg[binary]` no `requirements.txt`). O banco gerenciado passa a ser o
+  **Postgres do Supabase** (decidido 16/09), não mais o Postgres do próprio
+  Render — falta ajustar `render.yaml` (tirar o bloco `databases:` e apontar
+  `DATABASE_URL` pra connection string do Supabase) e criar o banco de verdade.
 - [ ] `django-unfold` no admin — **avaliado e revertido em 14/09.** Instalei,
   testei no navegador e a interface (menu, filtros, atalhos, tema) fica toda
   quebrada: o Alpine.js do pacote precisa de `'unsafe-eval'` no `script-src` do
@@ -654,11 +659,12 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
   visual do admin é uma troca de segurança que precisa ser decidida com o
   Alisson antes de tentar de novo (ou buscar outro tema sem Alpine/eval).
 - [ ] Configurar **Sentry** — precisa de conta/DSN (ação externa).
-- [ ] Deploy (Render — Gunicorn + WhiteNoise) — **blueprint pronto**
-  (`render.yaml` já define web + banco + cron); falta só apontar o Render
-  para o repositório (ação externa, precisa de acesso à conta).
-- [ ] Backup diário do banco — depende do deploy acima (Render já faz backup
-  diário do Postgres gerenciado; `django-dbbackup` para R2/B2 fica opcional).
+- [ ] Deploy (Render — Gunicorn + WhiteNoise) — **blueprint quase pronto**
+  (`render.yaml` define web + cron; falta atualizar o bloco `databases:` pra
+  refletir o Supabase — ver item de migração do banco acima); falta apontar o
+  Render para o repositório (ação externa, precisa de acesso à conta).
+- [ ] Backup diário do banco — o Postgres gerenciado do Supabase já faz backup
+  diário; `django-dbbackup` para R2/B2 fica opcional como camada extra.
 - [x] `python-dateutil` no `requirements.txt` (Fase 2) · [x] `django-auditlog` (Fase 3)
 - [x] Tarefas agendadas — **decisão tomada:** cron nativo do Render
   (`rotina_diaria`, `render.yaml`) em vez de Django-Q2, seguindo a alternativa
