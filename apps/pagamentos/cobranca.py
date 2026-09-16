@@ -139,6 +139,7 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             cobranca.erro = ""
             cobranca.enviado_em = timezone.now()
             resultado["enviadas"] += 1
+
         cobranca.save()
 
     return resultado
