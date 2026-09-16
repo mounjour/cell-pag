@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Contratos{% endblock %}
 
 {% block content %}
@@ -6,19 +7,19 @@
 
 <div class="toolbar">
   <form method="get">
-    <select name="estrutura" onchange="this.form.submit()">
+    <select name="estrutura" data-auto-submit>
       <option value="">Todos os tipos</option>
       {% for valor, rotulo in estrutura_opcoes %}
         <option value="{{ valor }}" {% if valor == estrutura_atual %}selected{% endif %}>{{ rotulo }}</option>
       {% endfor %}
     </select>
-    <select name="status" onchange="this.form.submit()">
+    <select name="status" data-auto-submit>
       <option value="">Todos os status</option>
       {% for valor, rotulo in status_opcoes %}
         <option value="{{ valor }}" {% if valor == status_atual %}selected{% endif %}>{{ rotulo }}</option>
       {% endfor %}
     </select>
-    <noscript><button class="btn secondary" type="submit">Filtrar</button></noscript>
+    <button class="btn secondary" type="submit">Filtrar</button>
   </form>
   <span class="spacer"></span>
   <a class="btn" href="{% url 'contratos:novo' %}">Novo contrato</a>
@@ -52,4 +53,8 @@
     {% if not status_atual and not estrutura_atual %}<a class="btn" href="{% url 'contratos:novo' %}">Cadastrar o primeiro contrato</a>{% endif %}
   </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/filtros.js' %}"></script>
 {% endblock %}
