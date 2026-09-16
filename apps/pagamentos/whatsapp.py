@@ -11,7 +11,6 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
-import uuid
 
 from django.conf import settings
 
@@ -55,6 +54,34 @@ def _config_evolution():
     )
 
 
+def _chamar_evolution(caminho: str, corpo: dict) -> dict:
+    base_url, api_key, instancia = _config_evolution()
+    url = f"{base_url}{caminho}/{urllib.parse.quote(instancia)}"
+    requisicao = urllib.request.Request(
+        url,
+        data=json.dumps(corpo).encode("utf-8"),
+        headers={"apikey": api_key, "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(requisicao, timeout=20) as resposta:
+            return json.loads(resposta.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detalhe = exc.read().decode("utf-8", errors="replace")[:500]
+        logger.warning("Evolution respondeu HTTP %s: %s", exc.code, detalhe)
+        raise WhatsAppErro(f"A Evolution recusou o envio (HTTP {exc.code}).") from exc
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.warning("Falha ao chamar a Evolution API: %s", exc)
+        raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
+
+
+def _extrair_id_mensagem(dados: dict) -> str:
+    identificador = (dados.get("key") or {}).get("id") or dados.get("id") or ""
+    if not identificador:
+        raise WhatsAppErro("A Evolution aceitou a requisição sem devolver o ID da mensagem.")
+    return identificador
+
+
 def enviar_mensagem(*, destinatario: str, texto: str) -> dict:
     """Envia uma mensagem de texto, ou apenas simula conforme ``WHATSAPP_PROVIDER``.
 
@@ -73,97 +100,39 @@ def enviar_mensagem(*, destinatario: str, texto: str) -> dict:
     if provider != "evolution":
         raise WhatsAppErro(f"WHATSAPP_PROVIDER desconhecido: {provider!r}")
 
-    base_url, api_key, instancia = _config_evolution()
-    url = f"{base_url}/message/sendText/{urllib.parse.quote(instancia)}"
-    corpo = {"number": destinatario, "text": texto}
-    requisicao = urllib.request.Request(
-        url,
-        data=json.dumps(corpo).encode("utf-8"),
-        headers={"apikey": api_key, "Content-Type": "application/json"},
-        method="POST",
+    dados = _chamar_evolution(
+        "/message/sendText",
+        {"number": destinatario, "text": texto},
     )
-    try:
-        with urllib.request.urlopen(requisicao, timeout=20) as resposta:
-            dados = json.loads(resposta.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        detalhe = exc.read().decode("utf-8", errors="replace")[:500]
-        logger.warning("Evolution respondeu HTTP %s: %s", exc.code, detalhe)
-        raise WhatsAppErro(f"A Evolution recusou o envio (HTTP {exc.code}).") from exc
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        logger.warning("Falha ao chamar a Evolution API: %s", exc)
-        raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
-
-    identificador = (dados.get("key") or {}).get("id") or dados.get("id") or ""
-    if not identificador:
-        raise WhatsAppErro("A Evolution aceitou a requisição sem devolver o ID da mensagem.")
-    return {"simulado": False, "id": identificador}
+    return {"simulado": False, "id": _extrair_id_mensagem(dados)}
 
 
-def enviar_imagem(*, destinatario: str, url_imagem: str, legenda: str = "") -> dict:
-    """Envia uma imagem (o PNG do QR code Pix), ou apenas simula.
+def enviar_imagem(*, destinatario: str, imagem_url: str, legenda: str) -> dict:
+    """Envia uma imagem (o QR code Pix) com a mensagem como legenda.
 
-    A Evolution exige o arquivo binário em ``multipart/form-data`` — não aceita
-    uma URL no corpo da requisição. Por isso baixamos o PNG da Cora aqui e
-    repassamos os bytes.
+    ``log`` só registra e devolve ``{"simulado": True, "id": ""}``.
+    ``evolution`` chama ``POST {EVOLUTION_API_URL}/message/sendMedia/{instância}``.
     """
     provider = settings.WHATSAPP_PROVIDER.lower().strip()
     if provider == "log":
         logger.info(
-            "[simulação WhatsApp -> %s] imagem (%d caractere(s) de legenda)",
+            "[simulação WhatsApp -> %s] imagem + legenda de %d caractere(s)",
             mascara_numero(destinatario),
             len(legenda),
         )
+        logger.debug("[simulação WhatsApp -> %s]\n%s\n%s", destinatario, imagem_url, legenda)
         return {"simulado": True, "id": ""}
     if provider != "evolution":
         raise WhatsAppErro(f"WHATSAPP_PROVIDER desconhecido: {provider!r}")
 
-    try:
-        with urllib.request.urlopen(url_imagem, timeout=20) as resposta_imagem:
-            imagem = resposta_imagem.read()
-    except (urllib.error.URLError, TimeoutError) as exc:
-        logger.warning("Falha ao baixar a imagem do QR code: %s", exc)
-        raise WhatsAppErro("Falha ao baixar a imagem do QR code da Cora.") from exc
-
-    base_url, api_key, instancia = _config_evolution()
-    url = f"{base_url}/message/sendMedia/{urllib.parse.quote(instancia)}"
-    boundary = uuid.uuid4().hex
-    campos = {"number": destinatario, "mediatype": "image", "caption": legenda}
-    corpo = bytearray()
-    for nome, valor in campos.items():
-        corpo += (
-            f"--{boundary}\r\n"
-            f'Content-Disposition: form-data; name="{nome}"\r\n\r\n'
-            f"{valor}\r\n"
-        ).encode("utf-8")
-    corpo += (
-        f"--{boundary}\r\n"
-        f'Content-Disposition: form-data; name="media"; filename="qrcode.png"\r\n'
-        f"Content-Type: image/png\r\n\r\n"
-    ).encode("utf-8")
-    corpo += imagem
-    corpo += f"\r\n--{boundary}--\r\n".encode("utf-8")
-
-    requisicao = urllib.request.Request(
-        url,
-        data=bytes(corpo),
-        headers={
-            "apikey": api_key,
-            "Content-Type": f"multipart/form-data; boundary={boundary}",
+    dados = _chamar_evolution(
+        "/message/sendMedia",
+        {
+            "number": destinatario,
+            "mediatype": "image",
+            "media": imagem_url,
+            "caption": legenda,
+            "fileName": "qrcode-pix.png",
         },
-        method="POST",
     )
-    try:
-        with urllib.request.urlopen(requisicao, timeout=30) as resposta:
-            dados = json.loads(resposta.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        detalhe = exc.read().decode("utf-8", errors="replace")[:500]
-        logger.warning("Evolution respondeu HTTP %s ao enviar imagem: %s", exc.code, detalhe)
-        raise WhatsAppErro(f"A Evolution recusou o envio da imagem (HTTP {exc.code}).") from exc
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        logger.warning("Falha ao chamar a Evolution API (imagem): %s", exc)
-        raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
-
-    identificador = (dados.get("key") or {}).get("id") or dados.get("id") or ""
-    if not identificador:
-        raise WhatsAppErro("A Evolution aceitou a imagem sem devolver o ID da mensagem.")
-    return {"simulado": False, "id": identificador}
+    return {"simulado": False, "id": _extrair_id_mensagem(dados)}

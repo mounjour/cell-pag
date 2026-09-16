@@ -109,10 +109,17 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             continue
 
         try:
-            resposta = enviar_mensagem(
-                destinatario=destinatario,
-                texto=dados["mensagem"],
-            )
+            if pix and pix.qr_code_url:
+                resposta = enviar_imagem(
+                    destinatario=destinatario,
+                    imagem_url=pix.qr_code_url,
+                    legenda=dados["mensagem"],
+                )
+            else:
+                resposta = enviar_mensagem(
+                    destinatario=destinatario,
+                    texto=dados["mensagem"],
+                )
         except WhatsAppErro as exc:
             cobranca.status = Cobranca.Status.ERRO
             cobranca.erro = str(exc)
@@ -132,14 +139,6 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             cobranca.erro = ""
             cobranca.enviado_em = timezone.now()
             resultado["enviadas"] += 1
-
-        if pix and pix.qr_code_url:
-            try:
-                enviar_imagem(destinatario=destinatario, url_imagem=pix.qr_code_url)
-            except WhatsAppErro as exc:
-                # O texto (com o copia-e-cola) já saiu — a imagem é um reforço,
-                # não derruba o status da cobrança nem conta como erro dela.
-                logger.warning("Falha ao enviar a imagem do QR code (cobrança %s): %s", cobranca.pk, exc)
 
         cobranca.save()
 
