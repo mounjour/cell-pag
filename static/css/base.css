@@ -693,7 +693,15 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 }
 
 /* ─────────── Painel "Cobrar hoje" ─────────── */
-.atraso-dias { white-space: nowrap; color: var(--ink); font-size: 1.05rem; font-weight: 500; }
+/* Cor acompanha a do selo de status (mesma linguagem visual das pills),
+   em vez do branco de --ink, que destoava do resto da linha — texto grande
+   demais e sem relação de cor com os selos acima dele. */
+.atraso-dias {
+  display: block; white-space: nowrap; margin-top: 0.3rem;
+  color: var(--ink-soft); font-size: 0.85rem; font-weight: 600;
+}
+.row-acento--atrasado .atraso-dias { color: var(--amber-ink); }
+.row-acento--inadimplente .atraso-dias { color: var(--critical-ink); }
 .situacao-cell { white-space: normal; min-width: 10rem; }
 @media (min-width: 640px) {
   /* Largura suficiente pra "Inadimplente" + "bloquear aparelho" caberem lado
