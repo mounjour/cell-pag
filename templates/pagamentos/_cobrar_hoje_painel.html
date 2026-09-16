@@ -96,8 +96,8 @@
                   </a>
                 </span>
                 <a class="btn btn-registrar"
-                   href="{% url 'pagamentos:novo' l.contrato.pk %}"
-                   hx-get="{% url 'pagamentos:novo' l.contrato.pk %}"
+                   href="{% url 'pagamentos:novo' l.contrato.pk %}{% if estrutura_atual %}?estrutura={{ estrutura_atual|urlencode }}{% endif %}"
+                   hx-get="{% url 'pagamentos:novo' l.contrato.pk %}{% if estrutura_atual %}?estrutura={{ estrutura_atual|urlencode }}{% endif %}"
                    hx-target="#dialog-registrar-corpo" hx-swap="innerHTML"
                    data-abre-dialog="dialog-registrar">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">

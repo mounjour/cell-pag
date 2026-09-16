@@ -6,6 +6,12 @@
 
 <div class="toolbar">
   <form method="get">
+    <select name="estrutura" onchange="this.form.submit()">
+      <option value="">Todos os tipos</option>
+      {% for valor, rotulo in estrutura_opcoes %}
+        <option value="{{ valor }}" {% if valor == estrutura_atual %}selected{% endif %}>{{ rotulo }}</option>
+      {% endfor %}
+    </select>
     <select name="status" onchange="this.form.submit()">
       <option value="">Todos os status</option>
       {% for valor, rotulo in status_opcoes %}
@@ -19,7 +25,7 @@
 </div>
 
 {% if contratos %}
-  <p class="count">{{ page_obj.paginator.count }} contrato{{ page_obj.paginator.count|pluralize }}{% if status_atual %} · filtro ativo{% endif %}</p>
+  <p class="count">{{ page_obj.paginator.count }} contrato{{ page_obj.paginator.count|pluralize }}{% if status_atual or estrutura_atual %} · filtro ativo{% endif %}</p>
   <div class="tbl-wrap cards">
     <table>
       <thead>
@@ -42,8 +48,8 @@
   {% include "_pagination.html" %}
 {% else %}
   <div class="empty">
-    <p>Nenhum contrato {% if status_atual %}com esse status{% else %}cadastrado ainda{% endif %}.</p>
-    {% if not status_atual %}<a class="btn" href="{% url 'contratos:novo' %}">Cadastrar o primeiro contrato</a>{% endif %}
+    <p>Nenhum contrato {% if status_atual or estrutura_atual %}com esse filtro{% else %}cadastrado ainda{% endif %}.</p>
+    {% if not status_atual and not estrutura_atual %}<a class="btn" href="{% url 'contratos:novo' %}">Cadastrar o primeiro contrato</a>{% endif %}
   </div>
 {% endif %}
 {% endblock %}

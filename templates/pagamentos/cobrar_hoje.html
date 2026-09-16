@@ -4,7 +4,19 @@
 {% block wrap_class %}wrap--wide{% endblock %}
 
 {% block content %}
-<h1>Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
+<div class="toolbar">
+  <h1>Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
+  <span class="spacer"></span>
+  <form method="get">
+    <select name="estrutura" onchange="this.form.submit()">
+      <option value="">Todos os tipos</option>
+      {% for valor, rotulo in estrutura_opcoes %}
+        <option value="{{ valor }}" {% if valor == estrutura_atual %}selected{% endif %}>{{ rotulo }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button class="btn secondary" type="submit">Filtrar</button></noscript>
+  </form>
+</div>
 
 {% include "pagamentos/_cobrar_hoje_painel.html" %}
 

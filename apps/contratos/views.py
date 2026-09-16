@@ -52,6 +52,9 @@ class ContratoListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("cliente").order_by("cliente__nome", "apelido")
+        self.estrutura = self.request.GET.get("estrutura", "").strip()
+        if self.estrutura:
+            qs = qs.filter(estrutura=self.estrutura)
         self.status = self.request.GET.get("status", "").strip()
         if not self.status:
             return qs
@@ -65,6 +68,8 @@ class ContratoListView(LoginRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["status_atual"] = self.status
         ctx["status_opcoes"] = Contrato.Status.choices
+        ctx["estrutura_atual"] = self.estrutura
+        ctx["estrutura_opcoes"] = Contrato.Estrutura.choices
         return ctx
 
 
