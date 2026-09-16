@@ -36,6 +36,38 @@ CORA_API_BASE_URL=https://matls-clients.api.stage.cora.com.br
 
 Nunca envie o certificado, a chave privada ou o `.env` ao GitHub.
 
+## Configuração de Produção
+
+O `client-id` é o mesmo nos dois ambientes — só o certificado/chave e as URLs
+mudam. Guarde os arquivos de cada ambiente em subpastas separadas para não
+misturar (`secrets/cora/stage/` e `secrets/cora/producao/` neste projeto):
+
+```env
+CORA_PROVIDER=cora
+CORA_CLIENT_ID=int-xxxxxxxxxxxxxxxxxxxx  # veja o valor real em secrets/cora/LEIA-ME.txt (não versionado)
+CORA_CERT_PATH=C:\...\secrets\cora\producao\certificate.pem
+CORA_KEY_PATH=C:\...\secrets\cora\producao\private-key.key
+CORA_TOKEN_URL=https://matls-clients.api.cora.com.br/token
+CORA_API_BASE_URL=https://matls-clients.api.cora.com.br
+```
+
+Credencial de produção emitida em 15/09/2026, vence em 15/09/2027 — pedir uma
+nova antes disso (Conta > Integrações via APIs > Integração Direta).
+
+### Validação feita em 15/09/2026
+
+- Autenticação mTLS + client-id: OK (token obtido).
+- `customer.email` **não é obrigatório** — o payload sem esse campo foi aceito
+  normalmente (a doc da Cora é inconsistente nesse ponto: a tabela descreve
+  como opcional, mas o schema OpenAPI lista como obrigatório; na prática a API
+  aceitou sem o campo).
+- Fatura de teste criada com sucesso em produção: `inv_JMhPWZRARZeeR1HyRidqew`,
+  R$5,00, CPF de teste genérico (`111.444.777-35`), **não paga de propósito**
+  (só validação de criação). Vai expirar sozinha após o vencimento.
+- Conta de produção já tinha chave Pix cadastrada — não houve o erro
+  `REC-0030` (Bank slip not registered in CIP) que apareceu no Stage por falta
+  de chave Pix na conta de teste.
+
 ## Rotina
 
 Depois de gerar os vencimentos, execute:

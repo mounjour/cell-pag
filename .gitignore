@@ -36,6 +36,8 @@ db.sqlite3-journal
 .env.*
 !.env.example
 *.pem
+*.key
+/secrets/
 
 # ───────────────── Cobertura / testes ─────────────────
 .coverage
