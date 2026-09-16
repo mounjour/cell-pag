@@ -29,7 +29,10 @@ class CobrarHojeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx.update(montar_agenda_do_dia())
+        estrutura = self.request.GET.get("estrutura", "").strip()
+        ctx.update(montar_agenda_do_dia(estrutura=estrutura or None))
+        ctx["estrutura_atual"] = estrutura
+        ctx["estrutura_opcoes"] = Contrato.Estrutura.choices
         return ctx
 
 
@@ -105,6 +108,10 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         ctx = super().get_context_data(**kwargs)
         ctx["contrato"] = self.contrato
         ctx["em_dialog"] = self._is_htmx()
+        # Segue no querystring do hx-post do formulário (ver
+        # _pagamento_form_conteudo.html) pra _resposta_htmx_sucesso saber
+        # qual filtro do Cobrar hoje reaplicar na troca fora-de-banda.
+        ctx["estrutura_atual"] = self.request.GET.get("estrutura", "")
         ctx["parcelas_abertas"] = self.contrato.vencimentos.exclude(
             status=Vencimento.Status.PAGO
         ).order_by("numero")
@@ -150,9 +157,14 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         diálogo assim que a resposta chega, então o vazio nunca aparece na
         tela.
         """
+        estrutura = self.request.GET.get("estrutura", "").strip()
         painel_html = render_to_string(
             "pagamentos/_cobrar_hoje_painel.html",
-            {**montar_agenda_do_dia(), "oob": True},
+            {
+                **montar_agenda_do_dia(estrutura=estrutura or None),
+                "oob": True,
+                "estrutura_atual": estrutura,
+            },
             request=self.request,
         )
         mensagens_html = render_to_string(

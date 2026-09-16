@@ -20,13 +20,17 @@ from apps.contratos.models import Contrato
 __all__ = ["montar_agenda_do_dia"]
 
 
-def montar_agenda_do_dia(hoje: datetime.date | None = None) -> dict:
+def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | None = None) -> dict:
     """Contratos a cobrar hoje + totais.
 
     Devolve um dict com ``hoje``, ``linhas`` (uma por contrato, ordenadas por
     dias de atraso decrescente) e os totais ``total_previsto``, ``n_atraso``
     e ``n_bloqueio``. Cada linha tem ``contrato``, ``situacao``
     (`SituacaoAtraso`), ``vence_hoje``, ``parcela`` e ``a_cobrar``.
+
+    ``estrutura`` filtra pelo tipo de contrato (`Contrato.Estrutura`) — usado
+    pelo painel "Cobrar hoje"; o lembrete diário chama sem esse argumento
+    (sempre todos os tipos).
     """
     if hoje is None:
         hoje = timezone.localdate()
@@ -36,6 +40,8 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None) -> dict:
         .select_related("cliente")
         .order_by("cliente__nome", "apelido")
     )
+    if estrutura:
+        contratos = contratos.filter(estrutura=estrutura)
 
     linhas = []
     total_previsto = Decimal("0.00")

@@ -8,7 +8,7 @@
 
 {% if parcelas_abertas %}
   <form method="post" class="form-grid form-page" enctype="multipart/form-data"
-        hx-post="{% url 'pagamentos:novo' contrato.pk %}"
+        hx-post="{% url 'pagamentos:novo' contrato.pk %}{% if estrutura_atual %}?estrutura={{ estrutura_atual|urlencode }}{% endif %}"
         hx-target="#dialog-registrar-corpo" hx-swap="innerHTML">
     {% csrf_token %}
     {% include "_form.html" %}
