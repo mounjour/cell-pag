@@ -117,6 +117,15 @@ class Contrato(models.Model):
         return f"{self.cliente.nome} — {self.apelido}"
 
     @property
+    def numero_interno(self) -> str:
+        """Nº legível pro dia a dia (Alisson, 02/09 — opcional, "pra depois").
+
+        Derivado do PK, sem campo novo no banco: mais simples que manter uma
+        sequência própria e não pode nunca divergir do ID real do contrato.
+        """
+        return f"CT-{self.pk:04d}" if self.pk else ""
+
+    @property
     def quitado(self) -> bool:
         return self.status == self.Status.QUITADO
 

@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="toolbar">
-  <h1>{{ contrato.cliente.nome }} — {{ contrato.apelido }}</h1>
+  <h1>{{ contrato.numero_interno }} · {{ contrato.cliente.nome }} — {{ contrato.apelido }}</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Ver cliente</a>
   <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">Editar</a>

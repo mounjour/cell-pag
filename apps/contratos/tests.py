@@ -64,6 +64,7 @@ def test_contrato_minimo(cliente):
     assert ct.proximo_vencimento is None
     assert not ct.quitado
     assert str(ct) == "Cliente Teste — iPhone 11"
+    assert ct.numero_interno == f"CT-{ct.pk:04d}"
 
 
 # ---------- Modelo: ligação com o cálculo de atraso (Fase 4) ----------

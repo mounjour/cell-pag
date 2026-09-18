@@ -39,7 +39,7 @@ class DocumentoContratoInline(admin.TabularInline):
 class ContratoAdmin(ImportExportModelAdmin):
     resource_classes = [ContratoResource]
     list_display = (
-        "cliente", "apelido", "estrutura", "valor_total",
+        "numero_interno", "cliente", "apelido", "estrutura", "valor_total",
         "status", "proximo_vencimento", "atraso_hoje", "data_inicio",
     )
     list_filter = ("estrutura", "status")
