@@ -2,6 +2,7 @@
 
 import datetime
 import logging
+from decimal import Decimal
 
 from django.conf import settings
 from django.utils import timezone
@@ -25,7 +26,14 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
     data_vencimento = vencimento.data_vencimento if vencimento else contrato.proximo_vencimento
     numero = vencimento.numero if vencimento else "-"
     chave_pix = chave_pix or settings.WHATSAPP_PIX_CHAVE or "a combinar"
-    valor = linha["a_cobrar"]
+    # O Pix automático (via Cora) cobra só o saldo da parcela — nunca o
+    # juros (decisão do Alisson, 18/09: juros fica de cobrança manual, já
+    # que o valor muda todo dia de atraso e a Cora não recria a cobrança
+    # sozinha). A mensagem não pode prometer um "valor atualizado" maior do
+    # que o Pix realmente vai pedir — por isso os dois valores vêm
+    # separados aqui, com o juros marcado como "a combinar".
+    parcela = linha.get("parcela") or Decimal("0.00")
+    juros = situacao.juros
 
     base = {
         "nome": contrato.cliente.nome,
@@ -33,16 +41,22 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
         "numero": str(numero),
         "data": data_vencimento.strftime("%d/%m/%Y") if data_vencimento else "-",
         "dias": str(situacao.dias_atraso),
-        "valor": _moeda(valor),
+        "parcela": _moeda(parcela),
+        "juros": _moeda(juros),
         "chave_pix": chave_pix,
     }
+    juros_txt = (
+        f" (+ R$ {base['juros']} de juros pelo atraso — isso a gente combina à parte)"
+        if juros
+        else ""
+    )
     if situacao.alertar_bloqueio:
         base.update(
             mensagem=(
                 f"Oi, {base['nome']}! A parcela {numero} do seu {base['aparelho']} está "
                 f"com {base['dias']} dias de atraso. Preciso que seja regularizada hoje para "
-                f"evitar o bloqueio do aparelho. Valor atualizado: R$ {base['valor']} - "
-                f"Pix ({chave_pix}). Me chama se precisar de ajuda pra resolver."
+                f"evitar o bloqueio do aparelho. Parcela: R$ {base['parcela']} - "
+                f"Pix ({chave_pix}){juros_txt}. Me chama se precisar de ajuda pra resolver."
             ),
         )
     elif situacao.dias_atraso:
@@ -50,15 +64,15 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
             mensagem=(
                 f"Oi, {base['nome']}! A parcela {numero} do seu {base['aparelho']}, que venceu "
                 f"em {base['data']}, está em aberto ({base['dias']} dia(s) de atraso). "
-                f"O valor atualizado está em R$ {base['valor']}. Assim que der, faz o Pix "
-                f"({chave_pix}) e me envia o comprovante. Se já pagou, é só desconsiderar."
+                f"Assim que der, faz o Pix de R$ {base['parcela']} "
+                f"({chave_pix}){juros_txt} e me envia o comprovante. Se já pagou, é só desconsiderar."
             ),
         )
     else:
         base.update(
             mensagem=(
                 f"Oi, {base['nome']}! Passando pra lembrar que hoje ({base['data']}) vence a "
-                f"parcela {numero} do seu {base['aparelho']}, no valor de R$ {base['valor']}. "
+                f"parcela {numero} do seu {base['aparelho']}, no valor de R$ {base['parcela']}. "
                 f"Você pode pagar via Pix ({chave_pix}) e me mandar o comprovante por aqui."
             ),
         )

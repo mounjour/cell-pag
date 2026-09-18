@@ -6,7 +6,7 @@
   <div><dt>Valor da parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
 </dl>
 
-{% if parcelas_abertas %}
+{% if pode_registrar %}
   <form method="post" class="form-grid form-page" enctype="multipart/form-data"
         hx-post="{% url 'pagamentos:novo' contrato.pk %}{% if estrutura_atual %}?estrutura={{ estrutura_atual|urlencode }}{% endif %}"
         hx-target="#dialog-registrar-corpo" hx-swap="innerHTML">
@@ -21,7 +21,25 @@
       {% endif %}
     </div>
   </form>
+{% elif parcelas_abertas %}
+  <p class="empty">
+    Todas as parcelas em aberto já têm uma baixa registrada — o saldo ainda
+    não foi repassado pra próxima parcela (confira a tabela abaixo, ou rode
+    <code>gerar_vencimentos</code>). Pra corrigir um lançamento, estorne a
+    baixa em <a href="{% url 'pagamentos:historico' %}">Histórico</a>.
+  </p>
+{% else %}
+  <p class="empty">
+    Não há parcela em aberto neste contrato.
+    {% if em_dialog %}
+      <button type="button" class="linkish" data-fechar-dialog>Fechar</button>
+    {% else %}
+      <a href="{% url 'contratos:detalhe' contrato.pk %}">Voltar ao contrato</a>.
+    {% endif %}
+  </p>
+{% endif %}
 
+{% if parcelas_abertas %}
   <h2>Parcelas em aberto</h2>
   {% with n_abertas=parcelas_abertas|length %}
   <p class="count">{{ n_abertas }} parcela{{ n_abertas|pluralize }} em aberto{% if n_abertas > 8 %} · mostrando as 8 primeiras{% endif %}.</p>
@@ -42,13 +60,4 @@
     </table>
   </div>
   {% endwith %}
-{% else %}
-  <p class="empty">
-    Não há parcela em aberto neste contrato.
-    {% if em_dialog %}
-      <button type="button" class="linkish" data-fechar-dialog>Fechar</button>
-    {% else %}
-      <a href="{% url 'contratos:detalhe' contrato.pk %}">Voltar ao contrato</a>.
-    {% endif %}
-  </p>
 {% endif %}

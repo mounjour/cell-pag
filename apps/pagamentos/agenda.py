@@ -54,8 +54,15 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
         if not situacao.dias_atraso and not vence_hoje:
             continue
 
-        parcela = ct.valor_parcela or Decimal("0.00")
-        a_cobrar = parcela + situacao.juros
+        vencimento_aberto = ct.parcela_em_aberto()
+        # Usa o saldo real da parcela em aberto, não o valor nominal do
+        # contrato: depois de uma baixa parcial, o saldo transportado já
+        # ajustou esse valor, e é ele que o Pix automático de fato cobra
+        # (ver apps/pagamentos/pix_cora.py) — painel e mensagem têm que bater
+        # com o que a Cora realmente gera. Sem vencimento gerado ainda,
+        # preserva `None` quando falta `valor_parcela` (o painel mostra "—").
+        parcela = vencimento_aberto.saldo if vencimento_aberto else ct.valor_parcela
+        a_cobrar = (parcela or Decimal("0.00")) + situacao.juros
         total_previsto += a_cobrar
         if situacao.dias_atraso:
             n_atraso += 1
@@ -67,7 +74,7 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
                 "contrato": ct,
                 "situacao": situacao,
                 "vence_hoje": vence_hoje and not situacao.dias_atraso,
-                "parcela": ct.valor_parcela,
+                "parcela": parcela,
                 "a_cobrar": a_cobrar,
             }
         )
