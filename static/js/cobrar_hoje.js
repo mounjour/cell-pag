@@ -18,13 +18,30 @@ document.addEventListener("DOMContentLoaded", function () {
     if (alvo) alvo.showModal();
   });
 
+  // O htmx, por padrão, ignora o corpo de respostas 4xx (não troca nada no
+  // DOM) — sem isso, um formulário inválido devolve 422 com o HTML dos erros
+  // pronto, mas a tela fica parada, sem mostrar nada (bug real: qualquer erro
+  // de validação nesse diálogo ficava invisível). Força a troca mesmo em
+  // erro só pra este formulário, pra exibir a mensagem devolvida pela view.
+  document.body.addEventListener("htmx:beforeSwap", function (e) {
+    var elt = e.detail.elt;
+    if (elt && elt.id === "dialog-registrar-corpo" && e.detail.xhr.status === 422) {
+      e.detail.shouldSwap = true;
+      e.detail.isError = false;
+    }
+  });
+
   // Fecha o diálogo só quando a baixa do formulário foi de fato aceita
-  // (POST com 2xx). Em caso de formulário inválido a view devolve 422 —
-  // `successful` fica falso e o diálogo continua aberto mostrando os erros.
+  // (POST com 2xx de verdade). Confere o status HTTP diretamente em vez de
+  // `e.detail.successful` — o `isError = false` do beforeSwap acima existe só
+  // pra liberar a troca de conteúdo em erro, mas também mudaria o valor de
+  // `successful`, o que fecharia o diálogo mesmo com o formulário inválido.
   document.body.addEventListener("htmx:afterRequest", function (e) {
     var verb = e.detail.requestConfig && e.detail.requestConfig.verb;
     var elt = e.detail.elt;
-    if (e.detail.successful && verb === "post" && elt && elt.id === "dialog-registrar-corpo") {
+    var status = e.detail.xhr && e.detail.xhr.status;
+    var deuCerto = status >= 200 && status < 300;
+    if (deuCerto && verb === "post" && elt && elt.id === "dialog-registrar-corpo") {
       dialog.close();
     }
   });

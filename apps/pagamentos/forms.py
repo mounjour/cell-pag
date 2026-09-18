@@ -32,7 +32,9 @@ class PagamentoForm(forms.ModelForm):
         self.fields["data_pagamento"].input_formats = ["%Y-%m-%d"]
 
         abertas = (
-            contrato.vencimentos.exclude(status=Vencimento.Status.PAGO).order_by("numero")
+            contrato.vencimentos.exclude(status=Vencimento.Status.PAGO)
+            .exclude(pagamentos__isnull=False)  # já tem baixa — só via estorno (clean_vencimento)
+            .order_by("numero")
             if contrato is not None
             else Vencimento.objects.none()
         )

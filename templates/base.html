@@ -8,19 +8,7 @@
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1715" media="(prefers-color-scheme: dark)">
   <title>{% block title %}Acompanhamento de Pagamentos{% endblock %}</title>
-  {% with secao_icone=request.resolver_match.app_name %}
-    {% if secao_icone == 'clientes' %}
-      <link rel="icon" type="image/svg+xml" href="{% static 'favicon-clientes.svg' %}">
-    {% elif secao_icone == 'contratos' %}
-      <link rel="icon" type="image/svg+xml" href="{% static 'favicon-contratos.svg' %}">
-    {% elif secao_icone == 'pagamentos' %}
-      <link rel="icon" type="image/svg+xml" href="{% static 'favicon-pagamentos.svg' %}">
-    {% elif secao_icone == 'relatorios' %}
-      <link rel="icon" type="image/svg+xml" href="{% static 'favicon-relatorios.svg' %}">
-    {% else %}
-      <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
-    {% endif %}
-  {% endwith %}
+  <link rel="icon" type="image/svg+xml" href="{% static favicon_arquivo %}">{# mapeamento em config/context_processors.py #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap">

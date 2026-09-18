@@ -115,6 +115,11 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         ctx["parcelas_abertas"] = self.contrato.vencimentos.exclude(
             status=Vencimento.Status.PAGO
         ).order_by("numero")
+        # Pode haver parcela "em aberto" pra mostrar (parcial) sem nenhuma
+        # selecionável no formulário — todas já com baixa, saldo ainda não
+        # repassado pra próxima (ver Contrato.parcela_em_aberto). Distingue
+        # esse caso de "não há mais nada a cobrar" no template.
+        ctx["pode_registrar"] = ctx["form"].fields["vencimento"].queryset.exists()
         return ctx
 
     def form_invalid(self, form):
