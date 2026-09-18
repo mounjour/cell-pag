@@ -125,7 +125,7 @@ contrato como um registro próprio, vinculado ao cliente.
 | Estrutura de pagamento | Definido | Diária / semanal / dezena / quinzenal / mensal. |
 | Valor da parcela | Definido (Alisson, 03/09) | **Manual.** Calculado fora do sistema (GPT "vendas dos celulares"); o sistema só armazena. |
 | Data de início | Definido | Referência para gerar os vencimentos. |
-| Nº / identificador único do contrato | Definido (Alisson, 02/09) | **Não existe** hoje. Opcional: o sistema pode gerar um nº interno; não é obrigatório para o negócio. |
+| Nº / identificador único do contrato | Definido (Alisson, 02/09) | Não é obrigatório para o negócio; **implementado (18/09)** como nº interno legível derivado do ID (`Contrato.numero_interno`, formato `CT-0001`), exibido na lista/detalhe/admin. |
 | Fiador / avalista | Definido (Alisson, 02/09) | **Não usar** — sem campo no cadastro. |
 | Documentos anexados | Definido | Foto do contrato (opcional). |
 | Status | Definido | Em dia / atrasado / inadimplente / quitado. Cor: verde (em dia) / vermelho (atraso). |

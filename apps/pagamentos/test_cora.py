@@ -1,4 +1,6 @@
 import datetime
+import io
+import urllib.error
 from decimal import Decimal
 
 import pytest
@@ -7,6 +9,7 @@ from validate_docbr import CPF as CPFGen
 
 from apps.clientes.models import Cliente
 from apps.contratos.models import Contrato
+from apps.pagamentos import cora_api
 from apps.pagamentos.models import CobrancaCora, EventoCora, Pagamento, Vencimento
 from apps.pagamentos.pix_cora import (
     obter_ou_criar_cobranca,
@@ -188,3 +191,50 @@ def test_painel_pix_mostra_pago_e_nao_pago(auth_client, parcela_cora):
     resposta = auth_client.get(reverse("pagamentos:pix_painel"))
     assert resposta.status_code == 200
     assert "Não pago" in resposta.content.decode()
+
+
+class _RespostaFalsa:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def read(self):
+        return b'{"ok": true}'
+
+
+def test_abrir_repete_em_erro_transitorio_e_depois_funciona(monkeypatch, settings):
+    settings.CORA_RETRY_TENTATIVAS = 3
+    settings.CORA_RETRY_ESPERA_BASE_SEGUNDOS = 0
+    chamadas = {"n": 0}
+
+    def urlopen_falso(requisicao, context=None, timeout=None):
+        chamadas["n"] += 1
+        if chamadas["n"] < 3:
+            raise urllib.error.HTTPError(
+                "https://cora.test", 503, "Service Unavailable", {}, io.BytesIO(b"fora do ar")
+            )
+        return _RespostaFalsa()
+
+    monkeypatch.setattr(cora_api.urllib.request, "urlopen", urlopen_falso)
+    resultado = cora_api._abrir(object(), contexto=None, autenticada=True)
+    assert resultado == {"ok": True}
+    assert chamadas["n"] == 3
+
+
+def test_abrir_nao_repete_em_erro_definitivo_do_cliente(monkeypatch, settings):
+    settings.CORA_RETRY_TENTATIVAS = 3
+    settings.CORA_RETRY_ESPERA_BASE_SEGUNDOS = 0
+    chamadas = {"n": 0}
+
+    def urlopen_falso(requisicao, context=None, timeout=None):
+        chamadas["n"] += 1
+        raise urllib.error.HTTPError(
+            "https://cora.test", 400, "Bad Request", {}, io.BytesIO(b"payload invalido")
+        )
+
+    monkeypatch.setattr(cora_api.urllib.request, "urlopen", urlopen_falso)
+    with pytest.raises(cora_api.CoraErro):
+        cora_api._abrir(object(), contexto=None, autenticada=True)
+    assert chamadas["n"] == 1

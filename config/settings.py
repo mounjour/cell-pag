@@ -216,6 +216,11 @@ CORA_TOKEN_URL = env("CORA_TOKEN_URL", default="")
 CORA_API_BASE_URL = env("CORA_API_BASE_URL", default="")
 # Token compartilhado exigido no webhook da Cora (via ?token= na URL cadastrada).
 CORA_WEBHOOK_TOKEN = env("CORA_WEBHOOK_TOKEN", default="")
+# Retry em falha transitória (timeout, 5xx, 429) ao chamar a API da Cora. A
+# Cora só cobra por QR code Pix compensado (pago) — retry usando a mesma
+# Idempotency-Key não gera cobrança nem fatura duplicada. Ver `cora_api.py`.
+CORA_RETRY_TENTATIVAS = env.int("CORA_RETRY_TENTATIVAS", default=3)
+CORA_RETRY_ESPERA_BASE_SEGUNDOS = env.int("CORA_RETRY_ESPERA_BASE_SEGUNDOS", default=5)
 
 # ── Segurança (aplicada quando DEBUG=False) ───────────────────────────────────
 if not DEBUG:

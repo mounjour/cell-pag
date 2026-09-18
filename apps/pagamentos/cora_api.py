@@ -1,4 +1,16 @@
-"""Cliente HTTP mTLS para a Integração Direta da Cora."""
+"""Cliente HTTP mTLS para a Integração Direta da Cora.
+
+Falha transitória (timeout, erro 5xx, "429 Too Many Requests") tem retry com
+espera crescente (`CORA_RETRY_TENTATIVAS` / `CORA_RETRY_ESPERA_BASE_SEGUNDOS`).
+Isso é seguro e não gera custo extra: os termos da Cora só cobram por QR code
+Pix **compensado** (pago) — não por cobrança criada, tentativa ou chamada de
+API que falhe (<https://www.cora.com.br/termos-e-condicoes-de-apis/>) — e
+`criar_fatura()` sempre manda o mesmo `Idempotency-Key` por `Vencimento`
+(`CobrancaCora.idempotency_key`), então repetir a chamada não duplica a
+fatura. Erro definitivo (4xx que não seja 429, ou fim das tentativas) sobe
+como `CoraErro` e a cobrança fica com `status=ERRO`, visível no painel Pix
+para a Yslane tentar de novo manualmente.
+"""
 
 import json
 import logging
@@ -113,19 +125,36 @@ class CoraErroNaoAutorizado(CoraErro):
     pass
 
 
+#: Códigos HTTP considerados falha transitória — vale repetir a chamada.
+_HTTP_TRANSITORIO = {429, 500, 502, 503, 504}
+
+
 def _abrir(requisicao, *, contexto, autenticada):
-    try:
-        with urllib.request.urlopen(requisicao, context=contexto, timeout=25) as resposta:
-            corpo = resposta.read()
-            return json.loads(corpo.decode("utf-8")) if corpo else {}
-    except urllib.error.HTTPError as exc:
-        detalhe = exc.read().decode("utf-8", errors="replace")[:500]
-        if autenticada and exc.code == 401:
-            raise CoraErroNaoAutorizado("Token Cora expirado ou inválido.") from exc
-        # O corpo da resposta pode repetir dados do cliente que enviamos — fica
-        # só no log do servidor, nunca na mensagem exibida na tela.
-        logger.warning("Cora respondeu HTTP %s: %s", exc.code, detalhe)
-        raise CoraErro(f"A Cora recusou a requisição (HTTP {exc.code}).") from exc
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-        logger.warning("Falha de comunicação com a Cora: %s", exc)
-        raise CoraErro("Falha de comunicação com a Cora.") from exc
+    tentativas = max(1, settings.CORA_RETRY_TENTATIVAS)
+    espera_base = settings.CORA_RETRY_ESPERA_BASE_SEGUNDOS
+    for tentativa in range(1, tentativas + 1):
+        ultima = tentativa == tentativas
+        try:
+            with urllib.request.urlopen(requisicao, context=contexto, timeout=25) as resposta:
+                corpo = resposta.read()
+                return json.loads(corpo.decode("utf-8")) if corpo else {}
+        except urllib.error.HTTPError as exc:
+            detalhe = exc.read().decode("utf-8", errors="replace")[:500]
+            if autenticada and exc.code == 401:
+                raise CoraErroNaoAutorizado("Token Cora expirado ou inválido.") from exc
+            # O corpo da resposta pode repetir dados do cliente que enviamos — fica
+            # só no log do servidor, nunca na mensagem exibida na tela.
+            logger.warning(
+                "Cora respondeu HTTP %s (tentativa %s/%s): %s",
+                exc.code, tentativa, tentativas, detalhe,
+            )
+            if ultima or exc.code not in _HTTP_TRANSITORIO:
+                raise CoraErro(f"A Cora recusou a requisição (HTTP {exc.code}).") from exc
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+            logger.warning(
+                "Falha de comunicação com a Cora (tentativa %s/%s): %s",
+                tentativa, tentativas, exc,
+            )
+            if ultima:
+                raise CoraErro("Falha de comunicação com a Cora.") from exc
+        time.sleep(espera_base * (2 ** (tentativa - 1)))

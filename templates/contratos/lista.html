@@ -30,11 +30,12 @@
   <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th>Apelido</th><th>Cliente</th><th>Estrutura</th><th class="num">Valor total</th><th class="num">Início</th><th>Status</th></tr>
+        <tr><th>Nº</th><th>Apelido</th><th>Cliente</th><th>Estrutura</th><th class="num">Valor total</th><th class="num">Início</th><th>Status</th></tr>
       </thead>
       <tbody>
         {% for ct in contratos %}
           <tr class="row-acento row-acento--{{ ct.status_efetivo }}">
+            <td data-label="Nº">{{ ct.numero_interno }}</td>
             <td><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
             <td data-label="Cliente"><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></td>
             <td data-label="Estrutura">{{ ct.get_estrutura_display }}</td>
