@@ -5,9 +5,10 @@
 > **Status (atualizado 14/09; banco revisado 16/09):** Fases 1–7 têm código implementado
 > (Fases 6 e 7 rodando em modo seguro — `WHATSAPP_PROVIDER=log` / `CORA_PROVIDER=log` — até
 > a ativação externa descrita em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md)).
-> Pendências reais: confirmar a fronteira atrasado→inadimplente e o texto final da mensagem
-> com o Alisson/Yslane (seção 10), a ativação externa das Fases 6/7, e a migração do banco de
-> produção de Render para **Supabase** (hospedagem do site continua no Render — seção 13).
+> Pendências reais: o texto final da mensagem com a Yslane (seção 10), a ativação externa das
+> Fases 6/7, e a migração do banco de produção de Render para **Supabase** (hospedagem do site
+> continua no Render — seção 13). Fronteira atrasado→inadimplente **confirmada com o Alisson
+> em 18/09** — ver seção 10.
 > Ver backlog completo na [seção 14](#14-backlog--o-que-falta).
 
 Site para controlar os pagamentos dos aparelhos vendidos a prazo — nas estruturas
@@ -395,6 +396,12 @@ Fases em sequência. As datas dependem do tamanho da equipe e serão definidas a
 **Com a Yslane (não bloqueiam):**
 
 - **Texto final da mensagem** de cobrança (Q22) — a Yslane manda o dela; até lá vale o rascunho provisório da [seção 8](#8-cobrança-automática--decisão-de-canal).
+
+**Respondido pelo Alisson (18/09, WhatsApp) — fronteira atrasado→inadimplente:**
+
+- Vale para todas as estruturas: **1 dia de atraso → atrasado**; **3 dias → inadimplente**;
+  **7 dias → alerta de bloqueio** do aparelho (já implementado em
+  `apps/pagamentos/atraso.py`, `LIMITE_INADIMPLENTE = 3`).
 
 **Respondido pelo Alisson (03/09) — destrava a Fase 2:**
 
