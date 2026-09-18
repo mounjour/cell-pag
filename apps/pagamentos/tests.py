@@ -90,13 +90,13 @@ def test_status_em_dia():
     assert atraso.classificar_status(0) == Contrato.Status.EM_DIA
 
 
-@pytest.mark.parametrize("dias", [1, 3, 6])
-def test_status_atrasado_ate_6_dias(dias):
+@pytest.mark.parametrize("dias", [1, 2])
+def test_status_atrasado_ate_2_dias(dias):
     assert atraso.classificar_status(dias) == Contrato.Status.ATRASADO
 
 
-@pytest.mark.parametrize("dias", [7, 15, 90])
-def test_status_inadimplente_a_partir_de_7_dias(dias):
+@pytest.mark.parametrize("dias", [3, 6, 7, 15, 90])
+def test_status_inadimplente_a_partir_de_3_dias(dias):
     assert atraso.classificar_status(dias) == Contrato.Status.INADIMPLENTE
 
 

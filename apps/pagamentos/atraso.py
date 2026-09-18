@@ -15,10 +15,9 @@ Este módulo é **lógica pura**: recebe datas e a estrutura, devolve números e
 Não gera ``Vencimento`` nem calcula valor de parcela (isso é Fase 2 e depende de
 regras ainda em aberto com o Alisson).
 
-``LIMITE_INADIMPLENTE`` (fronteira entre "atrasado" e "inadimplente") está fixado
-no mesmo gatilho do bloqueio — 7 dias. Isso é uma inferência: o formulário só
-definiu o gatilho dos 7 dias, não a fronteira dos status. Confirmar com o Alisson
-se a inadimplência deve começar em outro ponto.
+* **Fronteira dos status** (Alisson, 18/09, WhatsApp): 1 dia de atraso já é
+  "atrasado"; a partir de **3 dias** vira "inadimplente"; aos 7 dias soma-se o
+  alerta de bloqueio. Vale para todas as estruturas (diária, quinzenal, etc.).
 """
 
 import datetime
@@ -50,8 +49,8 @@ VALOR_JUROS_DIA = Decimal("5.00")
 DIAS_PARA_BLOQUEIO = 7
 
 #: Dias de atraso a partir dos quais o contrato é considerado inadimplente
-#: (ver observação no docstring do módulo — a confirmar com o Alisson).
-LIMITE_INADIMPLENTE = 7
+#: (confirmado com o Alisson em 18/09).
+LIMITE_INADIMPLENTE = 3
 
 _CENTAVOS = Decimal("0.01")
 

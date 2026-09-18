@@ -5,8 +5,8 @@ com dados dentro) e de massa para testes manuais. Cobre as 5 estruturas de
 pagamento e situações variadas:
 
 - em dia (vencimento no futuro) e vence exatamente hoje;
-- atrasado leve (3 e 5 dias) — com juros de R$ 5/dia;
-- inadimplente (7 e 10 dias) — dispara o alerta de bloqueio do aparelho;
+- atrasado leve (2 dias) — com juros de R$ 5/dia;
+- inadimplente (5 e 10 dias) e no limite do alerta de bloqueio (7 dias);
 - semanal dentro da janela (venceu nesta semana, ainda não conta atraso);
 - quitado (para de cobrar);
 - contrato recém-cadastrado sem `proximo_vencimento` (sem base de cálculo).
@@ -155,7 +155,7 @@ def contratos_demo(hoje: datetime.date) -> list[dict]:
             "data_prevista_quitacao": hoje - d(days=25),
             "observacoes": "Quitado antes do prazo.",
         },
-        # José Carlos — mensal, atraso leve (3 dias). `status` salvo desatualizado.
+        # José Carlos — mensal, atraso leve (2 dias). `status` salvo desatualizado.
         {
             "cpf": "96001338914",
             "apelido": "Moto G54",
@@ -167,7 +167,7 @@ def contratos_demo(hoje: datetime.date) -> list[dict]:
             "num_parcelas": 12,
             "data_inicio": hoje - d(days=90),
             "dia_referencia": "dia 5",
-            "proximo_vencimento": hoje - d(days=3),
+            "proximo_vencimento": hoje - d(days=2),
             "status": S.EM_DIA,  # desatualizado de propósito — a tela recalcula p/ Atrasado
             "data_prevista_quitacao": None,
             "observacoes": "",
@@ -189,7 +189,7 @@ def contratos_demo(hoje: datetime.date) -> list[dict]:
             "data_prevista_quitacao": None,
             "observacoes": "Prometeu pagar e não apareceu. Cobrar de novo.",
         },
-        # Francisco — por dezena, exatamente no limite de inadimplência (7 dias).
+        # Francisco — por dezena, no limite do alerta de bloqueio (7 dias).
         {
             "cpf": "02654235114",
             "apelido": "Galaxy A05",
@@ -240,7 +240,7 @@ def contratos_demo(hoje: datetime.date) -> list[dict]:
             "data_prevista_quitacao": None,
             "observacoes": "",
         },
-        # Patrícia — diária, atrasada (5 dias). `status` salvo desatualizado.
+        # Patrícia — diária, inadimplente (5 dias). `status` salvo desatualizado.
         {
             "cpf": "31034131656",
             "apelido": "Galaxy S21",
@@ -253,7 +253,7 @@ def contratos_demo(hoje: datetime.date) -> list[dict]:
             "data_inicio": hoje - d(days=25),
             "dia_referencia": "todo dia",
             "proximo_vencimento": hoje - d(days=5),
-            "status": S.EM_DIA,  # desatualizado — a tela recalcula p/ Atrasado
+            "status": S.EM_DIA,  # desatualizado — a tela recalcula p/ Inadimplente
             "data_prevista_quitacao": None,
             "observacoes": "Acordo verbal: paga toda sexta.\nFaltou duas semanas seguidas — cobrar pessoalmente.",
         },

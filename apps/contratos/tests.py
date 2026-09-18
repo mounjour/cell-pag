@@ -94,9 +94,9 @@ def test_situacao_atraso_atrasado_com_juros(cliente):
         proximo_vencimento=datetime.date(2026, 9, 10),
         estrutura=Contrato.Estrutura.MENSAL,
     )
-    s = ct.situacao_atraso(hoje=datetime.date(2026, 9, 13))
-    assert s.dias_atraso == 3
-    assert s.juros == Decimal("15.00")
+    s = ct.situacao_atraso(hoje=datetime.date(2026, 9, 12))
+    assert s.dias_atraso == 2
+    assert s.juros == Decimal("10.00")
     assert s.status == Contrato.Status.ATRASADO
     assert s.alertar_bloqueio is False
 
@@ -146,12 +146,12 @@ def test_sincronizar_status_grava_o_calculado(cliente):
         proximo_vencimento=datetime.date(2026, 9, 1),
         estrutura=Contrato.Estrutura.MENSAL,
     )
-    mudou = ct.sincronizar_status(hoje=datetime.date(2026, 9, 5))
+    mudou = ct.sincronizar_status(hoje=datetime.date(2026, 9, 3))
     assert mudou is True
     ct.refresh_from_db()
     assert ct.status == Contrato.Status.ATRASADO
     # segunda chamada no mesmo dia não muda nada
-    assert ct.sincronizar_status(hoje=datetime.date(2026, 9, 5)) is False
+    assert ct.sincronizar_status(hoje=datetime.date(2026, 9, 3)) is False
 
 
 @pytest.mark.django_db
