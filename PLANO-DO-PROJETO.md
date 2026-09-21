@@ -400,9 +400,12 @@ Fases em sequência. As datas dependem do tamanho da equipe e serão definidas a
 
 - Acesso à API da Cora: conta PJ, plano **CoraPro** (não é API aberta) e certificado `.PEM` + `.KEY`.
 - **Resolvido (18/09):** falha transitória na geração do PIX (timeout/5xx/429) agora
-  tem retry automático (`cora_api.py`, ver seção 14 técnico). Ainda em aberto: um
-  QR/dia x um QR/parcela (só relevante se o juro entrar no QR); o que fazer quando o
-  **envio automático ao cliente** falha (WhatsApp), separado da geração do PIX.
+  tem retry automático (`cora_api.py`, ver seção 14 técnico). Ainda em aberto: o que
+  fazer quando o **envio automático ao cliente** falha (WhatsApp), separado da
+  geração do PIX.
+- **Resolvido (18/09):** um QR/dia × um QR/parcela — decisão final é que o juro
+  **nunca** entra no QR (é sempre acertado à parte, manual, com a Yslane), então é
+  sempre um QR por parcela, com valor fixo. Ver [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md).
 - **Já decidido (03/09):** geração diária só da **diária** (domingo incluído; as demais
   geram na data da parcela); juro fica por fora do QR; **envio automático ao cliente,
   sem a Yslane** → puxa a Fase 6 como dependência dura; **pagamento parcial via PIX aceito**.
