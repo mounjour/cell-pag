@@ -400,9 +400,14 @@ Fases em sequência. As datas dependem do tamanho da equipe e serão definidas a
 
 - Acesso à API da Cora: conta PJ, plano **CoraPro** (não é API aberta) e certificado `.PEM` + `.KEY`.
 - **Resolvido (18/09):** falha transitória na geração do PIX (timeout/5xx/429) agora
-  tem retry automático (`cora_api.py`, ver seção 14 técnico). Ainda em aberto: o que
-  fazer quando o **envio automático ao cliente** falha (WhatsApp), separado da
-  geração do PIX.
+  tem retry automático (`cora_api.py`, ver seção 14 técnico).
+- **Resolvido (21/09):** falha no **envio automático ao cliente** (WhatsApp) — em
+  vez de retry dentro da própria chamada HTTP (que arriscaria mandar a mesma
+  mensagem duas vezes ao cliente em caso de timeout ambíguo, já que a Evolution
+  API não tem `Idempotency-Key` como a Cora), a rotina `enviar_cobrancas_clientes`
+  passou a rodar **mais duas vezes ao dia** (12:30 e 16:30 BRT, além das 08:30 —
+  ver `render.yaml`). É seguro: `processar_cobrancas()` já pula quem já recebeu
+  a mensagem, só tenta de novo quem ficou `erro`/`pendente`.
 - **Resolvido (18/09):** um QR/dia × um QR/parcela — decisão final é que o juro
   **nunca** entra no QR (é sempre acertado à parte, manual, com a Yslane), então é
   sempre um QR por parcela, com valor fixo. Ver [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md).

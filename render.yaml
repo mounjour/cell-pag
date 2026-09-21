@@ -104,3 +104,43 @@ services:
           name: cell-pag-db
           property: connectionString
       - fromGroup: cell-pag-config
+
+  # ── Retry das cobranças WhatsApp (cron, 21/09) ────────────────────────────
+  # Roda de novo `enviar_cobrancas_clientes` mais duas vezes no dia. É seguro
+  # sem risco de mensagem duplicada: `processar_cobrancas()` (cobranca.py) pula
+  # quem já está enviado/entregue/lido — só tenta de novo quem ficou `erro` ou
+  # `pendente` (ex.: a Evolution API caiu bem na hora do cron das 08:30).
+  # Cobre o caso de falha no envio automático ao cliente sem precisar de retry
+  # dentro da própria chamada HTTP (que arriscaria mandar a mesma mensagem
+  # duas vezes em caso de timeout ambíguo — ver PLANO-DO-PROJETO.md, seção 10).
+  - type: cron
+    name: cell-pag-retry-cobrancas-meio-dia
+    runtime: python
+    plan: free
+    schedule: "30 15 * * *" # 15:30 UTC = 12:30 BRT
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py enviar_cobrancas_clientes"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.10"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cell-pag-db
+          property: connectionString
+      - fromGroup: cell-pag-config
+
+  - type: cron
+    name: cell-pag-retry-cobrancas-tarde
+    runtime: python
+    plan: free
+    schedule: "30 19 * * *" # 19:30 UTC = 16:30 BRT
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py enviar_cobrancas_clientes"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.10"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cell-pag-db
+          property: connectionString
+      - fromGroup: cell-pag-config
