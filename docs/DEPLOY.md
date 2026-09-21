@@ -115,6 +115,17 @@ Que executa, **nesta ordem**:
 Se uma etapa falhar, as outras ainda rodam e a execução termina com erro
 (o Render marca a run como *failed* e fica no histórico do cron).
 
+### Retry das cobranças WhatsApp (21/09)
+
+Além da rotina das 08:30, dois crons extras (`cell-pag-retry-cobrancas-meio-dia`
+às 12:30 BRT e `cell-pag-retry-cobrancas-tarde` às 16:30 BRT) rodam só
+`enviar_cobrancas_clientes` de novo. Cobre o caso de a Evolution API estar fora
+do ar bem na hora do cron das 08:30 — sem isso, a mensagem só sairia no dia
+seguinte. É seguro rodar de novo no mesmo dia: `processar_cobrancas()`
+(`apps/pagamentos/cobranca.py`) pula quem já está `enviado`/`entregue`/`lido` —
+só tenta de novo quem ficou `erro` ou `pendente`. Não precisa mexer em nada pra
+isso funcionar; os dois crons já vêm no `render.yaml`.
+
 ### Testar sem esperar o horário
 
 Na aba *Shell*, ou localmente:
