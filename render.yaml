@@ -1,17 +1,13 @@
-# Blueprint do Render — cria de uma vez o site, o banco PostgreSQL e o cron
-# diário. Passo a passo e o que preencher à mão: docs/DEPLOY.md.
+# Blueprint do Render — cria de uma vez o site e os crons. Passo a passo e o
+# que preencher à mão: docs/DEPLOY.md.
+#
+# Banco: Postgres gerenciado pelo Supabase (decidido 16/09) — não é mais
+# provisionado aqui pelo Render. Crie o projeto no Supabase e cole a connection
+# string em DATABASE_URL no grupo de variáveis abaixo (painel do Render).
 #
 # Depois de subir para o GitHub: Render → New → Blueprint → aponta para este repo.
 
-databases:
-  - name: cell-pag-db
-    databaseName: cellpag
-    user: cellpag
-    # basic-256mb (~US$ 7/mês): tem backup diário e não expira. O plano "free"
-    # expira em 30 dias e não faz backup — inaceitável para registro financeiro.
-    plan: basic-256mb
-
-# Variáveis compartilhadas entre o site e o cron (o resto é preenchido no painel).
+# Variáveis compartilhadas entre o site e os crons (o resto é preenchido no painel).
 envVarGroups:
   - name: cell-pag-config
     envVars:
@@ -19,6 +15,11 @@ envVarGroups:
         generateValue: true
       - key: DEBUG
         value: "False"
+      # Connection string do Postgres do Supabase (Settings → Database →
+      # Connection string → URI). Prefira o "connection pooling" (porta 6543)
+      # em vez da conexão direta, pra aguentar os workers do Gunicorn + crons.
+      - key: DATABASE_URL
+        sync: false
       # ALLOWED_HOSTS não é definido aqui de propósito: o settings.py usa o
       # RENDER_EXTERNAL_HOSTNAME (host real do serviço). Um curinga como
       # ".onrender.com" aceitaria o header Host de qualquer app do Render.
@@ -80,10 +81,6 @@ services:
         value: "3.12.10"
       - key: WEB_CONCURRENCY
         value: "2"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: cell-pag-db
-          property: connectionString
       - fromGroup: cell-pag-config
 
   # ── Rotina diária (cron) ───────────────────────────────────────────────────
@@ -99,10 +96,6 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.10"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: cell-pag-db
-          property: connectionString
       - fromGroup: cell-pag-config
 
   # ── Retry das cobranças WhatsApp (cron, 21/09) ────────────────────────────
@@ -123,10 +116,6 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.10"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: cell-pag-db
-          property: connectionString
       - fromGroup: cell-pag-config
 
   - type: cron
@@ -139,8 +128,4 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.10"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: cell-pag-db
-          property: connectionString
       - fromGroup: cell-pag-config

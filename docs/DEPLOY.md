@@ -3,11 +3,13 @@
 Este guia coloca o sistema no ar no [Render](https://render.com) com:
 
 - **site** (Gunicorn + WhiteNoise) em `https://cell-pag.onrender.com`;
-- **PostgreSQL** gerenciado;
 - **cron diário** que roda `manage.py rotina_diaria` às 08:30 (horário de Brasília):
-  gera as parcelas, monta o lembrete da Yslane e prepara/dispara as cobranças.
+  gera as parcelas, monta o lembrete da Yslane e prepara/dispara as cobranças;
+- mais dois crons de retry das cobranças (12:30 e 16:30 BRT).
 
-O [`render.yaml`](../render.yaml) na raiz descreve os três de uma vez (Blueprint).
+O banco **PostgreSQL** é gerenciado pelo [Supabase](https://supabase.com) (decidido
+16/09) — não é mais provisionado pelo Render. O [`render.yaml`](../render.yaml) na
+raiz descreve o site e os crons (Blueprint); o banco você cria à parte no Supabase.
 
 ---
 
@@ -16,6 +18,7 @@ O [`render.yaml`](../render.yaml) na raiz descreve os três de uma vez (Blueprin
 | Item | Onde | Necessário para |
 |---|---|---|
 | Criar conta no Render e conectar este repositório do GitHub | render.com | tudo |
+| Criar o projeto e o banco Postgres no Supabase, pegar a connection string | supabase.com | o site e os crons subirem (sem banco não tem `migrate`) |
 | Subir uma instância da **Evolution API** (Docker) e conectar um número por QR Code | servidor próprio | envio real de lembrete/cobrança — ver [`WHATSAPP.md`](WHATSAPP.md) |
 | Contratar **CoraPro** + gerar certificado mTLS | app/Web da Cora | geração real de Pix — ver [`CORA.md`](CORA.md) |
 
@@ -34,24 +37,35 @@ git commit -m "Deploy: rotina diária + configs do Render"
 git push
 ```
 
-## 2. Criar tudo pelo Blueprint
+## 2. Criar o banco no Supabase
+
+1. [supabase.com](https://supabase.com) → **New project** → escolha uma região
+   próxima (ex.: `sa-east-1`, São Paulo) e defina a senha do banco.
+2. Depois que o projeto subir: **Settings → Database → Connection string → URI**.
+   Prefira o modo **connection pooling** (porta `6543`, "Transaction" mode) em vez
+   da conexão direta (porta `5432`) — aguenta melhor os workers do Gunicorn junto
+   com os 3 crons rodando em paralelo.
+3. Guarde essa URL — ela vai no `DATABASE_URL` do passo 4.
+
+## 3. Criar o site e os crons pelo Blueprint
 
 1. Render → **New** → **Blueprint**.
 2. Aponte para o repositório `cell-pag`. O Render lê o `render.yaml` e mostra:
    - serviço web `cell-pag`
-   - cron `cell-pag-rotina-diaria`
-   - banco `cell-pag-db`
+   - cron `cell-pag-rotina-diaria` + os dois crons de retry
    - grupo de variáveis `cell-pag-config`
 3. **Apply**. O primeiro build roda `pip install`, `collectstatic` e, no
-   `preDeployCommand`, o `migrate`.
+   `preDeployCommand`, o `migrate` — que só funciona depois do passo 4 (`DATABASE_URL`
+   preenchido).
 
-## 3. Preencher as variáveis marcadas `sync: false`
+## 4. Preencher as variáveis marcadas `sync: false`
 
 No painel do grupo **cell-pag-config**, preencha (pode deixar em branco o que
 ainda não tem — o modo `log` não exige):
 
 | Variável | Valor agora |
 |---|---|
+| `DATABASE_URL` | connection string do Supabase (passo 2) — **obrigatório**, sem ela o `migrate` falha e o deploy não sobe |
 | `YSLANE_WHATSAPP_NUMERO` | número da Yslane em E.164, ex.: `+5583988887777` |
 | `WHATSAPP_PROVIDER` | `log` (troque para `evolution` quando a instância estiver conectada) |
 | `WHATSAPP_PIX_CHAVE`, `EVOLUTION_*` | em branco por enquanto — ver [`WHATSAPP.md`](WHATSAPP.md) |
@@ -59,9 +73,9 @@ ainda não tem — o modo `log` não exige):
 | `CORA_*` (demais) | em branco por enquanto — ver [`CORA.md`](CORA.md) |
 
 `SECRET_KEY` é gerada automaticamente (e o app **recusa** subir com `DEBUG=False`
-sem ela). `DATABASE_URL`, `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS` se resolvem
-sozinhos no Render via `RENDER_EXTERNAL_HOSTNAME` — **não** defina `ALLOWED_HOSTS`
-com curinga (`.onrender.com`); se usar domínio próprio, coloque o host exato.
+sem ela). `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS` se resolvem sozinhos no Render
+via `RENDER_EXTERNAL_HOSTNAME` — **não** defina `ALLOWED_HOSTS` com curinga
+(`.onrender.com`); se usar domínio próprio, coloque o host exato.
 
 > **Certificado da Cora:** o Render não tem sistema de arquivos persistente para
 > subir `.pem` pelo painel. Quando for ativar a Cora, use um
@@ -75,7 +89,7 @@ com curinga (`.onrender.com`); se usar domínio próprio, coloque o host exato.
 > A validação (pdf/jpg/png/webp até 10 MB) e a entrega autenticada já estão no
 > código; falta só o disco quando quiserem guardar anexos de verdade.
 
-## 4. Primeiro acesso
+## 5. Primeiro acesso
 
 Abra um **Shell** no serviço web (aba *Shell* do Render) e crie o login:
 
@@ -93,7 +107,7 @@ Acesse `https://cell-pag.onrender.com/entrar/`.
 
 ---
 
-## 5. Como a rotina diária funciona
+## 6. Como a rotina diária funciona
 
 O cron `cell-pag-rotina-diaria` roda todo dia às **11:30 UTC = 08:30 America/Sao_Paulo**
 (o Brasil não tem mais horário de verão, então o offset é fixo em −3h):
@@ -158,7 +172,7 @@ python manage.py reconciliar_cora
 
 ---
 
-## 6. Custos (referência, planos do Render em 2026)
+## 7. Custos (referência, planos do Render e Supabase em 2026)
 
 O Render cobra em dois níveis que se somam: a **assinatura do workspace** (fixa) e
 o **preço de cada recurso** por tamanho de instância. Para este projeto o workspace
@@ -170,16 +184,17 @@ fica folgado no Hobby.
 
 | Recurso | Como está no blueprint | Custo/mês |
 |---|---|---|
-| Workspace | Hobby | US$ 0 |
+| Workspace Render | Hobby | US$ 0 |
 | Site (web) `cell-pag` | `plan: starter` — obrigatório: tem disco (o free não monta disco) e tira o cold-start | ~US$ 7 |
 | Disco persistente (anexos) | `sizeGB: 1` — US$ 0,25/GB | ~US$ 0,25 |
-| PostgreSQL `cell-pag-db` | `plan: basic-256mb` — backup diário, não expira | ~US$ 6–7 |
-| Cron `cell-pag-rotina-diaria` | `plan: free` — roda ~1 min/dia | US$ 0 |
-| **Total no Render** | | **≈ US$ 13–15/mês** |
+| Cron `cell-pag-rotina-diaria` + 2 crons de retry | `plan: free` — cada um roda ~1 min/dia | US$ 0 |
+| **Total no Render** | | **≈ US$ 7–8/mês** |
+| Projeto Supabase (banco) | plano **Free** cobre este porte (2 usuários, ~25 clientes); **Pro** (US$ 25/mês) só se precisar de backup point-in-time ou o banco pausar por inatividade incomodar | US$ 0 (Free) |
 
-Com IOF + spread de câmbio (~+6%): **≈ R$ 75–90/mês**. Mais a retenção de US$ 1
-na validação do cartão no cadastro. Pagamento só em cartão internacional — o
-Render não aceita Pix nem boleto.
+Com IOF + spread de câmbio (~+6%): **≈ R$ 40–50/mês** só de Render (Free do
+Supabase não entra na conta). Mais a retenção de US$ 1 na validação do cartão
+no cadastro do Render. Pagamento só em cartão internacional — nem Render nem
+Supabase aceitam Pix ou boleto.
 
 ### Fora dessa conta
 
@@ -190,19 +205,22 @@ Render não aceita Pix nem boleto.
   não de infraestrutura. Com `CORA_PROVIDER=log`, custo zero.
 - **Sentry** — o tier grátis atende.
 
-### Free não serve para produção aqui
+### Free não serve para tudo
 
-- **Postgres free** expira em 30 dias e some — inaceitável para registro
-  financeiro (por isso o blueprint fixa `basic-256mb`).
-- **Web free** dorme após 15 min, volta em ~1 min e **não monta disco** — os
-  anexos sumiriam a cada deploy. A Yslane usa todo dia no celular.
+- **Supabase free** pausa o projeto após 1 semana sem uso (reativa sozinho no
+  próximo acesso, mas leva alguns segundos) — como o cron roda todo dia, isso
+  não deve acontecer na prática; se pausar mesmo assim, o **Pro** (US$ 25/mês)
+  remove essa pausa e adiciona backup point-in-time.
+- **Web free** (Render) dorme após 15 min, volta em ~1 min e **não monta disco**
+  — os anexos sumiriam a cada deploy. A Yslane usa todo dia no celular.
 
-Para avaliação rápida, dá para trocar tudo para free e voltar depois sem mexer no
-código. Para uso diário de verdade, conte com **~US$ 15/mês** no Render.
+Para avaliação rápida, dá para trocar o site pra free e voltar depois sem mexer
+no código. Para uso diário de verdade, conte com **~US$ 7–8/mês** no Render
+(Supabase Free cobre este porte).
 
 ---
 
-## 7. Checklist de ativação dos canais (depois)
+## 8. Checklist de ativação dos canais (depois)
 
 **WhatsApp** (detalhe em [`WHATSAPP.md`](WHATSAPP.md)):
 

@@ -678,12 +678,12 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
 
 ### Técnico / infra (transversal)
 
-- [ ] Migrar para **PostgreSQL** em produção (hoje SQLite) — **código pronto**
-  (`DATABASE_URL` via `django-environ` já suportado em `config/settings.py`;
-  `psycopg[binary]` no `requirements.txt`). O banco gerenciado passa a ser o
-  **Postgres do Supabase** (decidido 16/09), não mais o Postgres do próprio
-  Render — falta ajustar `render.yaml` (tirar o bloco `databases:` e apontar
-  `DATABASE_URL` pra connection string do Supabase) e criar o banco de verdade.
+- [ ] Migrar para **PostgreSQL** em produção (hoje SQLite) — **código e config
+  prontos** (`DATABASE_URL` via `django-environ` em `config/settings.py`;
+  `psycopg[binary]` no `requirements.txt`; `render.yaml` ajustado em 21/09 — sem
+  o bloco `databases:` do Render, `DATABASE_URL` vem do grupo `cell-pag-config`
+  como `sync: false`). Falta só criar o projeto de verdade no Supabase e colar a
+  connection string — passo a passo em [`docs/DEPLOY.md`](docs/DEPLOY.md).
 - [ ] `django-unfold` no admin — **avaliado e revertido em 14/09.** Instalei,
   testei no navegador e a interface (menu, filtros, atalhos, tema) fica toda
   quebrada: o Alpine.js do pacote precisa de `'unsafe-eval'` no `script-src` do
@@ -692,10 +692,11 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
   visual do admin é uma troca de segurança que precisa ser decidida com o
   Alisson antes de tentar de novo (ou buscar outro tema sem Alpine/eval).
 - [ ] Configurar **Sentry** — precisa de conta/DSN (ação externa).
-- [ ] Deploy (Render — Gunicorn + WhiteNoise) — **blueprint quase pronto**
-  (`render.yaml` define web + cron; falta atualizar o bloco `databases:` pra
-  refletir o Supabase — ver item de migração do banco acima); falta apontar o
-  Render para o repositório (ação externa, precisa de acesso à conta).
+- [ ] Deploy (Render — Gunicorn + WhiteNoise) — **blueprint pronto**
+  (`render.yaml` define web + 3 crons, sem depender mais do Postgres do
+  próprio Render); falta criar o banco no Supabase e apontar o Render para o
+  repositório (ações externas, precisam de acesso às contas) — passo a passo
+  em [`docs/DEPLOY.md`](docs/DEPLOY.md).
 - [ ] Backup diário do banco — o Postgres gerenciado do Supabase já faz backup
   diário; `django-dbbackup` para R2/B2 fica opcional como camada extra.
 - [x] `python-dateutil` no `requirements.txt` (Fase 2) · [x] `django-auditlog` (Fase 3)
