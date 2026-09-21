@@ -287,7 +287,7 @@ Respostas da Yslane (formulário de 28/08):
 | :---- | :---- |
 | Mensagem direta ao cliente x lembrete para a Yslane | **Lembrete para a Yslane** é a preferência; "os dois seria ótimo". |
 | Horário de envio | **08:30 da manhã**. |
-| Conteúdo da mensagem ao cliente | A Yslane vai **preparar o texto final**. Até lá, usar o **rascunho provisório** abaixo (Alisson, 02/09). |
+| Conteúdo da mensagem ao cliente | **Definido (21/09).** A Yslane nunca chegou a mandar o texto dela; o Alisson autorizou fechar com o texto abaixo em vez de esperar. |
 | Número de origem (se enviar ao cliente) | **Número pessoal da Yslane**. |
 | Quem dá a baixa | **O próprio sistema**, se conseguir saber que o pagamento entrou; senão, baixa manual. |
 | Cliente não paga no dia | **Continua cobrando todo dia** (não muda a mensagem). |
@@ -308,22 +308,36 @@ template aprovado, igual à Modalidade B). Decisão do Alisson (04/09): **"deixa
 conta ainda"** — `lembrete.enviar()` é um stub que só loga o texto; trocar pelo envio real
 quando a conta existir, sem mexer no resto do fluxo.
 
-### Texto da mensagem `[RASCUNHO PROVISÓRIO — substituir pelo texto da Yslane]`
+### Texto da mensagem `[DEFINIDO — 21/09]`
 
-Rascunho para o botão "abrir no WhatsApp". Placeholders entre `{}` preenchidos pelo sistema.
-Chave Pix e forma de pagamento a confirmar com a Yslane.
+A Yslane não chegou a mandar o texto final dela (Q22 ficou em aberto desde 28/08); o
+Alisson decidiu (21/09) fechar com o texto abaixo em vez de continuar esperando. É o
+texto **realmente implementado e enviado** — fonte da verdade é
+`apps/pagamentos/cobranca.py::dados_da_mensagem()`, não este trecho do plano (se um
+dia o texto mudar no código, atualizar aqui também). Placeholders entre `{}`
+preenchidos pelo sistema; a chave Pix vem de `settings.WHATSAPP_PIX_CHAVE` (mostra "a
+combinar" enquanto não configurada) ou do copia-e-cola gerado pela Cora quando existe.
 
-**Lembrete no dia do vencimento:**
+Desde a correção de 18/09 (separar parcela de juros), a mensagem **nunca promete um
+valor que o Pix automático não vai cobrar**: o Pix da Cora cobra só a parcela; o juro
+de atraso é sinalizado à parte, como algo "a combinar" com a Yslane — porque ele muda
+todo dia e a Cora não recria a cobrança sozinha.
 
-> Oi, {nome}! Passando pra lembrar que hoje ({data_venc}) vence a parcela {n_parcela} do seu {aparelho}, no valor de R$ {valor}. Você pode pagar via Pix ({chave_pix}) e me mandar o comprovante por aqui. Qualquer dúvida é só chamar. Obrigada!
+**Vence hoje (sem atraso):**
 
-**Cobrança em atraso (1 a 6 dias):**
+> Oi, {nome}! Passando pra lembrar que hoje ({data}) vence a parcela {numero} do seu {aparelho}, no valor de R$ {parcela}. Você pode pagar via Pix ({chave_pix}) e me mandar o comprovante por aqui.
 
-> Oi, {nome}! A parcela {n_parcela} do seu {aparelho}, que venceu em {data_venc}, está em aberto ({dias_atraso} dia(s) de atraso). Com os R$ 5,00/dia, o valor atualizado está em R$ {valor_com_juros}. Assim que der, faz o Pix ({chave_pix}) e me envia o comprovante. Se já pagou, é só desconsiderar. Obrigada!
+**Em atraso, sem alerta de bloqueio (1 a 6 dias):**
 
-**Aviso de bloqueio (7 dias de atraso):**
+> Oi, {nome}! A parcela {numero} do seu {aparelho}, que venceu em {data}, está em aberto ({dias} dia(s) de atraso). Assim que der, faz o Pix de R$ {parcela} ({chave_pix}) (+ R$ {juros} de juros pelo atraso — isso a gente combina à parte) e me envia o comprovante. Se já pagou, é só desconsiderar.
 
-> Oi, {nome}! A parcela {n_parcela} do seu {aparelho} está com {dias_atraso} dias de atraso. Preciso que seja regularizada hoje para evitar o bloqueio do aparelho. Valor atualizado: R$ {valor_com_juros} — Pix ({chave_pix}). Me chama se precisar de ajuda pra resolver.
+**Alerta de bloqueio (7+ dias de atraso):**
+
+> Oi, {nome}! A parcela {numero} do seu {aparelho} está com {dias} dias de atraso. Preciso que seja regularizada hoje para evitar o bloqueio do aparelho. Parcela: R$ {parcela} - Pix ({chave_pix}) (+ R$ {juros} de juros pelo atraso — isso a gente combina à parte). Me chama se precisar de ajuda pra resolver.
+
+Se a Yslane algum dia quiser mandar o texto dela mesmo assim, é só trocar o corpo de
+`dados_da_mensagem()` — os testes de `apps/pagamentos/test_cobrancas.py` cobrem o
+comportamento (parcela × juros separados, placeholders), não o texto literal.
 
 ### Modalidade B — Mensagem direto ao cliente `[FASE 6 / desejável]`
 
@@ -385,17 +399,21 @@ Fases em sequência. As datas dependem do tamanho da equipe e serão definidas a
 **Com o Alisson (bloqueiam a cobrança PIX automática — ver [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md)):**
 
 - Acesso à API da Cora: conta PJ, plano **CoraPro** (não é API aberta) e certificado `.PEM` + `.KEY`.
-- Ainda em aberto: um QR/dia x um QR/parcela (se algum dia o juro entrar no QR);
-  comportamento quando a API da Cora ou o envio automático falha.
+- **Resolvido (18/09):** falha transitória na geração do PIX (timeout/5xx/429) agora
+  tem retry automático (`cora_api.py`, ver seção 14 técnico). Ainda em aberto: um
+  QR/dia x um QR/parcela (só relevante se o juro entrar no QR); o que fazer quando o
+  **envio automático ao cliente** falha (WhatsApp), separado da geração do PIX.
 - **Já decidido (03/09):** geração diária só da **diária** (domingo incluído; as demais
   geram na data da parcela); juro fica por fora do QR; **envio automático ao cliente,
   sem a Yslane** → puxa a Fase 6 como dependência dura; **pagamento parcial via PIX aceito**.
 - Dependência das Fases 2, 3 e 6 **satisfeita em código** (14/09) — falta só o
   acesso à API da Cora acima. Reescrita, dependências e faseamento **7a–7d** no doc.
 
-**Com a Yslane (não bloqueiam):**
+**Resolvido (21/09) — texto final da mensagem de cobrança (Q22):**
 
-- **Texto final da mensagem** de cobrança (Q22) — a Yslane manda o dela; até lá vale o rascunho provisório da [seção 8](#8-cobrança-automática--decisão-de-canal).
+- A Yslane nunca mandou o texto dela; o Alisson autorizou fechar sem esperar mais.
+  Texto definitivo na [seção 8](#8-cobrança-automática--decisão-de-canal), já
+  implementado em `apps/pagamentos/cobranca.py::dados_da_mensagem()`.
 
 **Respondido pelo Alisson (18/09, WhatsApp) — fronteira atrasado→inadimplente:**
 
@@ -521,10 +539,11 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
 
 **Ainda em aberto:**
 
-- [ ] Confirmar a fronteira "atrasado → inadimplente" (hoje inferida em 7 dias, `LIMITE_INADIMPLENTE`) — Alisson
+- [x] Fronteira "atrasado → inadimplente" — Alisson (18/09): `LIMITE_INADIMPLENTE = 3`
 - [x] Mensal: mesmo dia do mês da `data_inicio`, recorrente (`relativedelta(months=n)`) — Alisson (03/09, confirmado na Fase 2)
 - [x] Quinzenal: a cada 15 dias corridos da `data_inicio` (`data_inicio + 15·n`) — Alisson (03/09, confirmado na Fase 2)
-- [ ] Texto final da mensagem de cobrança (há rascunho provisório na [seção 8](#8-cobrança-automática--decisão-de-canal)) — Yslane
+- [x] Texto final da mensagem de cobrança — fechado pelo Alisson (21/09), sem
+  esperar mais a Yslane. Texto definitivo na [seção 8](#8-cobrança-automática--decisão-de-canal)
 - [ ] Cobrança PIX automática via Cora — ver [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md) (Fase 7)
 
 ### Fase 1 — Cadastros (quase completa)
@@ -611,8 +630,7 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
   usam o `Vencimento` em aberto mais antigo; `proximo_vencimento` manual vira *fallback*
   só quando o contrato ainda não tem vencimentos gerados
 - [x] Status calculado na **lista/filtro** de contratos e nos cards do cliente
-- Em aberto: confirmar com o Alisson a fronteira "atrasado → inadimplente"
-  (`LIMITE_INADIMPLENTE`, hoje inferida nos mesmos 7 dias do gatilho de bloqueio)
+- [x] Fronteira "atrasado → inadimplente" confirmada com o Alisson (18/09)
 
 ### Fase 5 — Relatórios (não iniciada)
 
@@ -629,8 +647,8 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
   (cliente HTTP), webhook de status em `apps/pagamentos/webhooks.py`
   (autenticado por `EVOLUTION_WEBHOOK_TOKEN`, falha fechado sem token — corrigido 14/09)
 - [x] Mensagens automáticas de vencimento e atraso — `apps/pagamentos/cobranca.py`
-  + `manage.py enviar_cobrancas_clientes`, com os 3 textos da [seção 8](#8-cobrança-automática--decisão-de-canal)
-  (rascunho ainda provisório, falta o texto final da Yslane)
+  + `manage.py enviar_cobrancas_clientes`, com os 3 textos definitivos da
+  [seção 8](#8-cobrança-automática--decisão-de-canal) (fechados 21/09)
 - [ ] **Ativação externa (não é código):** contratar VPS, hospedar a Evolution
   API, número dedicado, credenciais reais. `WHATSAPP_PROVIDER=log` por padrão
   (nada é enviado). Passo a passo em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md).
