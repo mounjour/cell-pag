@@ -36,7 +36,7 @@
         {% for ct in contratos %}
           <tr class="row-acento row-acento--{{ ct.status_efetivo }}">
             <td data-label="Nº">{{ ct.numero_interno }}</td>
-            <td><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
+            <td data-label="Aparelho"><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
             <td data-label="Cliente"><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></td>
             <td data-label="Estrutura">{{ ct.get_estrutura_display }}</td>
             <td class="num" data-label="Valor total">R$ {{ ct.valor_total }}</td>

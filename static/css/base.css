@@ -151,15 +151,25 @@ summary:focus-visible {
   text-decoration: none;
   color: var(--ink);
   font-size: 1.05rem;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
+  /* Nome longo: uma linha só, com reticências, em vez de quebrar e crescer a barra. */
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.brand-short { display: none; }
+@media (max-width: 639px) {
+  .brand { font-size: 1rem; gap: 0.45rem; }
+  /* Nome completo não cabe ao lado do menu e do "Sair": versão curta no celular. */
+  .brand-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .brand-short { display: inline; }
+}
+@media (min-width: 640px) { .brand { overflow: visible; } }
 .brand:hover { text-decoration: none; }
 .brand-mark { flex: none; }
 .nav-toggle-input { position: absolute; opacity: 0; pointer-events: none; }
 .nav-toggle {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 40px; height: 40px; flex: none; order: 1;
+  width: var(--tap); height: var(--tap); flex: none; order: 1;
   border: 1px solid var(--line); border-radius: var(--radius-sm);
   background: var(--surface); color: var(--ink-soft);
   cursor: pointer;
@@ -218,8 +228,10 @@ summary:focus-visible {
   background: none; border: none; color: var(--accent-ink);
   cursor: pointer; font: inherit; font-weight: 500; padding: 0.35rem 0.25rem;
   text-decoration: none; border-radius: var(--radius-sm);
-  flex: none;
+  flex: none; white-space: nowrap;
 }
+/* Alvo de toque de 44px só nos botões da barra (o "estornar" das tabelas fica compacto). */
+.logout .linkish { min-height: var(--tap); padding-inline: 0.5rem; }
 .linkish:hover { text-decoration: underline; }
 
 @media (min-width: 640px) {
@@ -307,6 +319,14 @@ h2 {
 }
 .toolbar form .btn { width: auto; flex: none; }
 .toolbar > .btn { width: 100%; }
+/* Filtros (selects) no celular: dois lado a lado sem cortar o texto, botão
+   "Filtrar" embaixo em largura total. */
+@media (max-width: 639px) {
+  .toolbar form select { min-width: 0; text-overflow: ellipsis; }
+  .toolbar form:has(select + select) { flex-wrap: wrap; }
+  .toolbar form:has(select + select) select { flex: 1 1 calc(50% - 0.25rem); width: auto; padding-inline: 0.65rem; }
+  .toolbar form:has(select + select) .btn { flex: 1 1 100%; }
+}
 .spacer { display: none; }
 @media (min-width: 640px) {
   .toolbar { flex-direction: row; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
@@ -386,7 +406,7 @@ h2 {
 /* Botão "Copiar código" (Pix): compacto pra caber numa célula de tabela. */
 .btn-copiar-pix {
   display: inline-flex; align-items: center; justify-content: center;
-  min-height: 34px; padding: 0.4rem 0.9rem; white-space: nowrap;
+  min-height: var(--tap); padding: 0.4rem 0.9rem; white-space: nowrap;
   background: var(--surface); color: var(--accent-ink);
   border: 1px solid var(--line); border-radius: var(--radius-sm);
   font: inherit; font-size: 0.8125rem; font-weight: 500; cursor: pointer;
@@ -482,7 +502,7 @@ tbody tr:hover td { background: var(--accent-wash); }
   .tbl-wrap.cards tr.row-acento--quitado { border-left: 4px solid var(--ink-faint); }
   .tbl-wrap.cards td {
     border: none;
-    padding: 0.4rem 0;
+    padding: 0.3rem 0;
     white-space: normal;
     display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem;
   }
@@ -499,8 +519,11 @@ tbody tr:hover td { background: var(--accent-wash); }
   }
   .tbl-wrap.cards td.card-stack::before { margin-right: 0; }
   .tbl-wrap.cards a[href^="tel:"] { white-space: nowrap; }
+  /* Alvo de toque: links de texto dentro dos cartões ganham área de ~44px de
+     altura sem aumentar o cartão (padding compensado por margem negativa). */
+  .tbl-wrap.cards td a:not(.btn):not(.icon-btn) { padding-block: 0.6rem; margin-block: -0.6rem; }
   .tbl-wrap.cards td:first-child {
-    font-size: 1rem; padding: 0.45rem 0 0.6rem; margin-bottom: 0.35rem;
+    font-size: 1rem; padding: 0.3rem 0 0.45rem; margin-bottom: 0.2rem;
     border-bottom: 1px solid var(--line);
   }
   .tbl-wrap.cards td:first-child::before { display: none; }
@@ -568,6 +591,10 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .zap {
   font-size: 0.78rem; font-weight: 500;
   letter-spacing: 0; margin-left: 0.15rem; white-space: nowrap;
+}
+@media (max-width: 639px) {
+  /* Telefone e "WhatsApp" nos detalhes: mesma técnica de área de toque ampliada. */
+  .meta dd a { display: inline-block; padding-block: 0.6rem; margin-block: -0.6rem; }
 }
 .zap::before { content: "·\00a0"; color: var(--ink-faint); font-weight: 400; margin-right: 0.15rem; }
 
@@ -850,6 +877,17 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
    em vez do auto-fill genérico, que deixa colunas fantasma sem esticar os
    cartões existentes quando sobra espaço na linha. */
 @media (min-width: 640px) { .meta--4col { grid-template-columns: repeat(4, 1fr); } }
+/* Celular: 4 cartões em grade 2×2 e mais baixos — em coluna única eles
+   empurravam o primeiro cliente pra fora da primeira tela. */
+@media (max-width: 639px) {
+  .meta--4col { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin: 0.6rem 0 0.9rem; }
+  .meta--4col > div { padding: 0.55rem 0.7rem; }
+  .meta--4col > div:hover { transform: none; }
+  .meta--4col dt { font-size: 0.62rem; letter-spacing: 0.04em; line-height: 1.25; }
+  .meta--4col dd { font-size: 1.05rem; }
+  /* O aviso de "como usar" vira uma linha discreta no celular. */
+  #painel-cobrar-hoje > .note { margin-bottom: 0.8rem; padding: 0.55rem 0.8rem; font-size: 0.8rem; }
+}
 
 .pagination { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; color: var(--ink-faint); font-size: 0.9rem; }
 
@@ -867,8 +905,15 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 /* ---------- Tela inicial (painel) ---------- */
 /* 6 números-chave: colunas fixas para caírem sempre 3+3 (ou 2+2+2), sem cartão
    órfão esticado na última linha. */
-.painel-kpis { grid-template-columns: 1fr; }
-@media (min-width: 520px) { .painel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.painel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 519px) {
+  /* Celular: 2 colunas compactas (3 linhas) em vez de 6 cartões empilhados. */
+  .painel-kpis { gap: 0.5rem; }
+  .painel-kpis > div { padding: 0.6rem 0.7rem; }
+  .painel-kpis > div:hover { transform: none; }
+  .painel-kpis dt { font-size: 0.62rem; letter-spacing: 0.04em; }
+  .painel-kpis dd { font-size: 1.15rem; }
+}
 @media (min-width: 920px) { .painel-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .painel-kpis dd { font-size: 1.35rem; font-weight: 600; line-height: 1.25; }
 .painel-kpis .kpi-sub {
@@ -960,6 +1005,15 @@ dialog.dialog-registrar #dialog-registrar-corpo {
 }
 dialog.dialog-registrar #dialog-registrar-corpo h1 { margin-top: 0; }
 @media (max-width: 639px) {
+  /* Dados do contrato em grade compacta (Cliente e Contrato em linha própria,
+     Valor da parcela ao lado) e botões lado a lado — sobra espaço pros campos. */
+  dialog.dialog-registrar .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; margin: 0.6rem 0 0.9rem; }
+  dialog.dialog-registrar .meta > div { padding: 0.45rem 0.7rem; }
+  dialog.dialog-registrar .meta > div:hover { transform: none; }
+  dialog.dialog-registrar .meta > div:first-child { grid-column: 1 / -1; }
+  dialog.dialog-registrar .meta dd { font-size: 0.95rem; }
+  dialog.dialog-registrar .form-page .form-actions { flex-direction: row-reverse; gap: 0.5rem; }
+  dialog.dialog-registrar .form-page .form-actions .btn { flex: 1; width: auto; padding-inline: 0.75rem; }
   dialog.dialog-registrar {
     width: 100vw;
     max-width: 100vw;
