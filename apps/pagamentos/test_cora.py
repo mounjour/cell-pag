@@ -187,6 +187,113 @@ def test_cancelar_pix_sem_fatura_na_cora_cancela_so_localmente(parcela_cora, set
 
 
 @pytest.mark.django_db
+def test_botao_cancelar_pix_exige_login_e_post(auth_client, parcela_cora, settings):
+    from django.test import Client
+
+    settings.CORA_PROVIDER = "log"
+    cobranca = CobrancaCora.objects.create(
+        vencimento=parcela_cora, valor=Decimal("100.00"), data_vencimento=parcela_cora.data_vencimento
+    )
+    url = reverse("pagamentos:pix_cancelar", args=[cobranca.pk])
+    # `client` e `auth_client` são o mesmo objeto: um cliente novo é o anônimo de verdade.
+    assert Client().post(url).status_code == 302  # anônimo vai pro login
+    cobranca.refresh_from_db()
+    assert cobranca.status == CobrancaCora.Status.PENDENTE
+    assert auth_client.get(url).status_code == 405
+
+
+@pytest.mark.django_db
+def test_botao_cancelar_pix_cancela_e_volta_para_a_tela_de_origem(auth_client, parcela_cora, settings):
+    settings.CORA_PROVIDER = "log"
+    cobranca = CobrancaCora.objects.create(
+        vencimento=parcela_cora, valor=Decimal("100.00"), data_vencimento=parcela_cora.data_vencimento
+    )
+    resposta = auth_client.post(
+        reverse("pagamentos:pix_cancelar", args=[cobranca.pk]),
+        {"next": reverse("pagamentos:cobrar_hoje")},
+        follow=True,
+    )
+    cobranca.refresh_from_db()
+    assert cobranca.status == CobrancaCora.Status.CANCELADO
+    assert resposta.redirect_chain[-1][0] == reverse("pagamentos:cobrar_hoje")
+    assert "cancelado" in resposta.content.decode().lower()
+
+
+@pytest.mark.django_db
+def test_botao_cancelar_pix_ignora_next_de_outro_site(auth_client, parcela_cora, settings):
+    settings.CORA_PROVIDER = "log"
+    cobranca = CobrancaCora.objects.create(
+        vencimento=parcela_cora, valor=Decimal("100.00"), data_vencimento=parcela_cora.data_vencimento
+    )
+    resposta = auth_client.post(
+        reverse("pagamentos:pix_cancelar", args=[cobranca.pk]), {"next": "https://malicioso.example/"}
+    )
+    assert resposta.status_code == 302
+    assert resposta["Location"] == reverse("pagamentos:pix_painel")
+
+
+@pytest.mark.django_db
+def test_botao_cancelar_pix_pago_mostra_erro_e_nao_cancela(auth_client, parcela_cora, settings):
+    settings.CORA_PROVIDER = "log"
+    cobranca = CobrancaCora.objects.create(
+        vencimento=parcela_cora,
+        valor=Decimal("100.00"),
+        data_vencimento=parcela_cora.data_vencimento,
+        status=CobrancaCora.Status.PAGO,
+    )
+    resposta = auth_client.post(reverse("pagamentos:pix_cancelar", args=[cobranca.pk]), follow=True)
+    cobranca.refresh_from_db()
+    assert cobranca.status == CobrancaCora.Status.PAGO
+    assert "já foi pago" in resposta.content.decode()
+
+
+@pytest.mark.django_db
+def test_botao_cancelar_pix_com_cora_fora_do_ar_avisa_e_nao_altera(auth_client, parcela_cora, settings, monkeypatch):
+    settings.CORA_PROVIDER = "cora"
+    cobranca = _pix_aberto(parcela_cora)
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.consultar_fatura",
+        lambda cora_id: {"id": cora_id, "status": "OPEN", "total_paid": 0, "pix": {"emv": "00020126PIX-VIVO"}},
+    )
+
+    def _falha(cora_id):
+        raise cora_api.CoraErro("fora do ar")
+
+    monkeypatch.setattr("apps.pagamentos.cora_api.cancelar_fatura", _falha)
+    resposta = auth_client.post(reverse("pagamentos:pix_cancelar", args=[cobranca.pk]), follow=True)
+    cobranca.refresh_from_db()
+    assert cobranca.status == CobrancaCora.Status.ABERTO
+    assert "Nada foi alterado" in resposta.content.decode()
+
+
+@pytest.mark.django_db
+def test_pix_cancelado_nao_e_recriado_pela_cora(parcela_cora, settings, monkeypatch):
+    settings.CORA_PROVIDER = "cora"
+    CobrancaCora.objects.create(
+        vencimento=parcela_cora,
+        valor=Decimal("100.00"),
+        data_vencimento=parcela_cora.data_vencimento,
+        status=CobrancaCora.Status.CANCELADO,
+    )
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.criar_fatura",
+        lambda *args, **kwargs: pytest.fail("não pode recriar a fatura de um Pix cancelado"),
+    )
+    cobranca = obter_ou_criar_cobranca(parcela_cora, hoje=date(2026, 9, 4))
+    assert cobranca.status == CobrancaCora.Status.CANCELADO
+
+
+@pytest.mark.django_db
+def test_botoes_de_cancelar_so_aparecem_enquanto_o_pix_esta_em_aberto(auth_client, parcela_cora):
+    cobranca = _pix_aberto(parcela_cora)
+    url_cancelar = reverse("pagamentos:pix_cancelar", args=[cobranca.pk])
+    assert url_cancelar in auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
+    cobranca.status = CobrancaCora.Status.PAGO
+    cobranca.save()
+    assert url_cancelar not in auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
+
+
+@pytest.mark.django_db
 def test_confirmacao_cora_da_baixa_automatica(parcela_cora, monkeypatch):
     cobranca = CobrancaCora.objects.create(
         vencimento=parcela_cora,

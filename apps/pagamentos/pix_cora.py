@@ -36,6 +36,10 @@ def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
             "data_vencimento": vencimento.data_vencimento,
         },
     )
+    # Pix cancelado de propósito (botão "Cancelar Pix"): não recria a fatura — quem
+    # cancelou quis parar a cobrança automática dessa parcela.
+    if cobranca.status == CobrancaCora.Status.CANCELADO:
+        return cobranca
     if cobranca.cora_id or settings.CORA_PROVIDER == "log":
         return cobranca
     if settings.CORA_PROVIDER != "cora":

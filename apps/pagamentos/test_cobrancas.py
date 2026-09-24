@@ -147,6 +147,31 @@ def test_com_qr_code_manda_imagem_em_vez_de_texto(cliente_cobranca, settings, mo
 
 
 @pytest.mark.django_db
+def test_pix_cancelado_suspende_a_cobranca_automatica_da_parcela(cliente_cobranca, settings, monkeypatch):
+    settings.WHATSAPP_PROVIDER = "evolution"
+    settings.CORA_PROVIDER = "cora"
+    hoje = date(2026, 9, 4)
+    contrato = _contrato(cliente_cobranca, hoje)
+    CobrancaCora.objects.create(
+        vencimento=contrato.vencimentos.first(),
+        valor=Decimal("100.00"),
+        data_vencimento=hoje,
+        cora_id="inv_cancelada",
+        status=CobrancaCora.Status.CANCELADO,
+    )
+    for nome in ("enviar_mensagem", "enviar_imagem"):
+        monkeypatch.setattr(
+            f"apps.pagamentos.cobranca.{nome}",
+            lambda **kwargs: pytest.fail("não pode cobrar uma parcela com o Pix cancelado"),
+        )
+    resultado = processar_cobrancas(hoje)
+    assert resultado["ignoradas"] == 1
+    assert resultado["erros"] == 0
+    assert resultado["enviadas"] == 0
+    assert not Cobranca.objects.exists()
+
+
+@pytest.mark.django_db
 def test_falha_so_no_copia_e_cola_nao_marca_erro_nem_reenvia(cliente_cobranca, settings, monkeypatch):
     from apps.pagamentos.whatsapp import WhatsAppErro
 
