@@ -4,8 +4,12 @@
 
 {% block content %}
 <div class="painel-entrada">
-<div class="toolbar">
-  <h1>Início · {{ painel.hoje|date:"d/m/Y" }}</h1>
+<div class="toolbar dashboard-heading">
+  <div>
+    <span class="eyebrow">Visão geral · {{ painel.hoje|date:"d/m/Y" }}</span>
+    <h1>Seu financeiro, em dia.</h1>
+    <p class="page-description">Acompanhe os recebimentos e organize as próximas cobranças.</p>
+  </div>
   <span class="spacer"></span>
   <a class="btn" href="{% url 'pagamentos:cobrar_hoje' %}">Ir para Cobrar hoje</a>
 </div>
