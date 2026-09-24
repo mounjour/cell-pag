@@ -114,22 +114,23 @@ def test_com_qr_code_manda_imagem_em_vez_de_texto(cliente_cobranca, settings, mo
     settings.WHATSAPP_PROVIDER = "evolution"
     settings.CORA_PROVIDER = "log"  # sem conta Cora real: a fatura já vem pronta no banco
     hoje = date(2026, 9, 4)
+    codigo = "00020126580014br.gov.bcb.pix0136abcdef12 ALISSON ERLLEN 6304ABCD" + "0" * 40
     contrato = _contrato(cliente_cobranca, hoje)
     CobrancaCora.objects.create(
         vencimento=contrato.vencimentos.first(),
         valor=Decimal("100.00"),
         data_vencimento=hoje,
-        pix_copia_e_cola="00020126...copia-e-cola",
+        pix_copia_e_cola=codigo,
         qr_code_url="https://cora.example/qr/abc.png",
     )
-    chamadas = {}
+    chamadas = {"textos": []}
 
     def _fake_enviar_imagem(**kwargs):
         chamadas["imagem"] = kwargs
         return {"simulado": False, "id": "3EB0IMG"}
 
     def _fake_enviar_mensagem(**kwargs):
-        chamadas["texto"] = kwargs
+        chamadas["textos"].append(kwargs)
         return {"simulado": False, "id": "3EB0TXT"}
 
     monkeypatch.setattr("apps.pagamentos.cobranca.enviar_imagem", _fake_enviar_imagem)
@@ -137,10 +138,46 @@ def test_com_qr_code_manda_imagem_em_vez_de_texto(cliente_cobranca, settings, mo
     processar_cobrancas(hoje)
 
     assert "imagem" in chamadas
-    assert "texto" not in chamadas
     assert chamadas["imagem"]["imagem_url"] == "https://cora.example/qr/abc.png"
-    assert "copia-e-cola" in chamadas["imagem"]["legenda"]
+    # O código copia-e-cola vai SOZINHO, em mensagem separada (não na legenda).
+    assert codigo not in chamadas["imagem"]["legenda"]
+    assert "copia e cola" in chamadas["imagem"]["legenda"]
+    assert [t["texto"] for t in chamadas["textos"]] == [codigo]
     assert Cobranca.objects.get().id_externo == "3EB0IMG"
+
+
+@pytest.mark.django_db
+def test_falha_so_no_copia_e_cola_nao_marca_erro_nem_reenvia(cliente_cobranca, settings, monkeypatch):
+    from apps.pagamentos.whatsapp import WhatsAppErro
+
+    settings.WHATSAPP_PROVIDER = "evolution"
+    settings.CORA_PROVIDER = "log"
+    hoje = date(2026, 9, 4)
+    contrato = _contrato(cliente_cobranca, hoje)
+    CobrancaCora.objects.create(
+        vencimento=contrato.vencimentos.first(),
+        valor=Decimal("100.00"),
+        data_vencimento=hoje,
+        pix_copia_e_cola="0" * 120,
+        qr_code_url="https://cora.example/qr/abc.png",
+    )
+    monkeypatch.setattr(
+        "apps.pagamentos.cobranca.enviar_imagem",
+        lambda **kwargs: {"simulado": False, "id": "3EB0IMG"},
+    )
+
+    def _falha(**kwargs):
+        raise WhatsAppErro("fora do ar")
+
+    monkeypatch.setattr("apps.pagamentos.cobranca.enviar_mensagem", _falha)
+    primeiro = processar_cobrancas(hoje)
+    segundo = processar_cobrancas(hoje)
+
+    cobranca = Cobranca.objects.get()
+    assert primeiro["enviadas"] == 1 and primeiro["erros"] == 0
+    assert segundo["ignoradas"] == 1  # a cobrança principal já saiu: sem reenvio
+    assert cobranca.status == Cobranca.Status.ENVIADO
+    assert "Copia-e-cola não enviado" in cobranca.erro
 
 
 @pytest.mark.django_db
