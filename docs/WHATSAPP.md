@@ -5,9 +5,29 @@ API não-oficial de WhatsApp, self-hosted). Substitui a WhatsApp Cloud API da
 Meta — não há mais templates aprovados: a mensagem montada em
 `apps/pagamentos/cobranca.py` vai inteira como texto livre.
 
-Provedor de VPS escolhido para hospedar a Evolution: **DigitalOcean** (Droplet
-Ubuntu 24.04 LTS, 2GB RAM). Banco Postgres da Evolution: **Neon** (conexão
-direta, sem pooling).
+Provedor de VPS escolhido para hospedar a Evolution: **KingHost** (VPS Ubuntu
+24.04 LTS com Docker, 4 GB de RAM, 2 vCPU), com o **Coolify** por cima (HTTPS
+automático e deploy por painel). Banco Postgres da Evolution: **Neon** (conexão
+direta, sem pooling). Redis local, no mesmo compose.
+
+## Como está no ar (produção)
+
+- Endereço: `https://evolution-celulares.vps-kinghost.net` (manager em `/manager`).
+- Imagem: `evoapicloud/evolution-api:v2.3.7`. A `atendai/evolution-api` foi
+  descontinuada no Docker Hub e o download é recusado.
+- Subida: recurso **Docker Compose** no Coolify, com `evolution` (porta interna
+  8080) e `redis`. O domínio se cadastra em **Domains** do serviço (protocolo
+  `https`, domínio sem `https://` e sem porta, campo **Port** = `8080`); depois
+  de salvar, **Restart** para o Traefik receber as etiquetas.
+- Variáveis (Coolify → Environment Variables): `EVOLUTION_API_KEY`,
+  `DATABASE_CONNECTION_URI` (Neon, `?sslmode=require&connection_limit=15&pool_timeout=30`)
+  e `DATABASE_SAVE_IS_ON_WHATSAPP=false`. Sem o pool maior e sem esta última, a
+  sincronização inicial dos contatos estoura o limite de conexões com o Neon.
+- Instância `celulares` (`WHATSAPP-BAILEYS`), criada por
+  `POST /instance/create` e conectada pelo QR no manager. Após um Restart ela
+  reconecta sozinha. O "Bad Gateway" logo após o Restart é só a demora de subir.
+- Números sempre com o código do país: `5588...`. Sem o `55` a Evolution
+  responde 400 (`exists: false`).
 
 Enquanto não houver uma instância da Evolution conectada, mantenha:
 
