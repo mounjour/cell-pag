@@ -8,7 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from .agenda import montar_agenda_do_dia
-from .models import Cobranca
+from .models import Cobranca, CobrancaCora
 from .pix_cora import obter_ou_criar_cobranca
 from .whatsapp import WhatsAppErro, enviar_imagem, enviar_mensagem, numero_so_digitos
 
@@ -114,6 +114,11 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             if dados_iniciais["vencimento"]
             else None
         )
+        if pix and pix.status == CobrancaCora.Status.CANCELADO:
+            # Alguém cancelou o Pix desta parcela: a cobrança automática dela está
+            # suspensa. Não manda mensagem (o QR não vale mais) nem marca erro.
+            resultado["ignoradas"] += 1
+            continue
         dados = dados_da_mensagem(
             linha,
             chave_pix=pix.pix_copia_e_cola if pix and pix.pix_copia_e_cola else None,

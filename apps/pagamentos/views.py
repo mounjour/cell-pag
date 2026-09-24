@@ -12,6 +12,8 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
 from django.utils import timezone
@@ -19,9 +21,11 @@ from django.utils import timezone
 from apps.arquivos import servir_anexo
 from apps.contratos.models import Contrato
 
+from . import cora_api
 from .agenda import montar_agenda_do_dia
 from .forms import PagamentoForm
 from .models import CobrancaCora, Pagamento, Vencimento
+from .pix_cora import CancelamentoRecusado, cancelar_cobranca
 
 
 class CobrarHojeView(LoginRequiredMixin, TemplateView):
@@ -65,6 +69,36 @@ class PixPainelView(LoginRequiredMixin, TemplateView):
             erros=sum(c.status == CobrancaCora.Status.ERRO for c in cobrancas),
         )
         return ctx
+
+
+class PixCancelarView(LoginRequiredMixin, View):
+    """Cancela o Pix (fatura da Cora) de uma parcela e suspende a cobrança
+    automática dela (POST). Nunca cancela um Pix já pago."""
+
+    def post(self, request, pk):
+        cobranca = get_object_or_404(
+            CobrancaCora.objects.select_related("vencimento__contrato__cliente"), pk=pk
+        )
+        parcela = f"parcela {cobranca.vencimento.numero} de {cobranca.vencimento.contrato.cliente.nome}"
+        try:
+            cancelar_cobranca(cobranca)
+        except CancelamentoRecusado as exc:
+            messages.error(request, f"{exc} ({parcela})")
+        except cora_api.CoraErro as exc:
+            messages.error(
+                request, f"Não consegui cancelar o Pix da {parcela}: {exc} Nada foi alterado."
+            )
+        else:
+            messages.success(
+                request,
+                f"Pix da {parcela} cancelado. A cobrança automática dessa parcela ficou suspensa.",
+            )
+        destino = request.POST.get("next", "")
+        if not url_has_allowed_host_and_scheme(
+            destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+        ):
+            destino = reverse("pagamentos:pix_painel")
+        return redirect(destino)
 
 
 class PagamentoCreateView(LoginRequiredMixin, CreateView):

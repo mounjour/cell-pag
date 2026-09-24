@@ -412,6 +412,20 @@ h2 {
   font: inherit; font-size: 0.8125rem; font-weight: 500; cursor: pointer;
   transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
+/* "Cancelar Pix": ação destrutiva, então discreta (texto vermelho, sem fundo) e
+   separada do "Copiar código" — nada de botão cheio ao lado de uma ação segura. */
+.form-cancelar-pix { display: block; margin-top: 0.4rem; }
+.btn-cancelar-pix {
+  display: inline-flex; align-items: center; min-height: var(--tap);
+  padding: 0.35rem 0.4rem; background: none; border: none; cursor: pointer;
+  color: var(--critical-ink); font: inherit; font-size: 0.8rem; font-weight: 500;
+  border-radius: var(--radius-sm);
+}
+.btn-cancelar-pix:hover { text-decoration: underline; background: var(--critical-wash); }
+.btn-cancelar-pix:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 639px) {
+  .envio-cell .form-cancelar-pix { margin-top: 0; flex-basis: 100%; text-align: right; }
+}
 .btn-copiar-pix:hover { background: var(--accent-wash); border-color: var(--line-strong); }
 .btn-copiar-pix:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .btn-copiar-pix.copiado { background: var(--ok-wash); color: var(--ok-ink); border-color: transparent; }

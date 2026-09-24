@@ -76,6 +76,7 @@
                   </span>
                 {% endif %}
               </span>
+              {% if l.pix %}{% include "pagamentos/_pix_cancelar.html" with pix=l.pix %}{% endif %}
             </td>
             <td data-label="Contato" class="contato-cell">
               <div class="contato-actions">

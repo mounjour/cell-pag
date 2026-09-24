@@ -34,6 +34,7 @@
           {% if c.pix_copia_e_cola %}
             <button type="button" class="btn-copiar-pix" data-pix="{{ c.pix_copia_e_cola }}">Copiar código</button>
           {% else %}—{% endif %}
+          {% include "pagamentos/_pix_cancelar.html" with pix=c %}
         </td>
       </tr>
     {% endfor %}

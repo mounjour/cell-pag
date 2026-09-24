@@ -1,0 +1,13 @@
+{% comment %}
+  Botão "Cancelar Pix": cancela a fatura na Cora e suspende a cobrança automática
+  da parcela. Só aparece enquanto o Pix não foi pago nem cancelado.
+  Uso: {% include "pagamentos/_pix_cancelar.html" with pix=... %}
+{% endcomment %}
+{% if pix.status == 'aberto' or pix.status == 'vencido' or pix.status == 'erro' or pix.status == 'pendente' %}
+  <form method="post" action="{% url 'pagamentos:pix_cancelar' pix.pk %}" class="form-cancelar-pix"
+        onsubmit="return confirm('Cancelar o Pix da parcela {{ pix.vencimento.numero }} de {{ pix.vencimento.contrato.cliente.nome|escapejs }}? O QR code enviado deixa de valer e a cobrança automática dessa parcela fica suspensa.')">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button type="submit" class="btn-cancelar-pix">Cancelar Pix</button>
+  </form>
+{% endif %}
