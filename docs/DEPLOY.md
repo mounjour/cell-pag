@@ -175,11 +175,15 @@ fica folgado no Hobby.
 | Disco persistente (anexos) | `sizeGB: 1` — US$ 0,25/GB | ~US$ 0,25 |
 | PostgreSQL `cell-pag-db` | `plan: basic-256mb` — backup diário, não expira | ~US$ 6–7 |
 | Cron `cell-pag-rotina-diaria` | `plan: free` — roda ~1 min/dia | US$ 0 |
-| **Total no Render** | | **≈ US$ 13–15/mês** |
+| **Total no Render** | | **≈ US$ 13,25–14,25/mês** (7 + 0,25 + 6 a 7) |
 
-Com IOF + spread de câmbio (~+6%): **≈ R$ 75–90/mês**. Mais a retenção de US$ 1
-na validação do cartão no cadastro. Pagamento só em cartão internacional — o
-Render não aceita Pix nem boleto.
+Conversão para reais (exemplo com dólar a **R$ 5,50** — confira a cotação do dia):
+US$ 13,25–14,25 × 5,50 = R$ 73–78; com IOF + spread de câmbio (~+6%):
+**≈ R$ 77–83/mês**. Cada R$ 0,10 a mais no dólar soma cerca de R$ 1,50/mês.
+
+A retenção de US$ 1 na validação do cartão no cadastro é uma pré-autorização
+(fica presa no limite por um tempo e é liberada) — não entra na conta mensal.
+Pagamento só em cartão internacional — o Render não aceita Pix nem boleto.
 
 ### Fora dessa conta
 
