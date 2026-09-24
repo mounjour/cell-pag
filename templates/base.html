@@ -11,10 +11,12 @@
   <link rel="icon" type="image/svg+xml" href="{% static favicon_arquivo %}">{# mapeamento em config/context_processors.py #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/workspace.css' %}">
 </head>
-<body>
+<body class="{% if user.is_authenticated %}app-shell{% else %}auth-shell{% endif %}">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <header class="topbar">
     <a class="brand" href="{% url 'clientes:lista' %}">
       <svg class="brand-mark" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
@@ -36,7 +38,7 @@
         </svg>
       </label>
       {% with secao=request.resolver_match.app_name pagina=request.resolver_match.url_name %}
-      <nav class="nav">
+      <nav class="nav" aria-label="Navegação principal">
         <a href="{% url 'relatorios:inicio' %}"{% if pagina == 'inicio' %} class="active" aria-current="page"{% endif %}>Início</a>
         <a href="{% url 'pagamentos:cobrar_hoje' %}"{% if pagina == 'cobrar_hoje' %} class="active" aria-current="page"{% endif %}>Cobrar hoje</a>
         <a href="{% url 'pagamentos:pix_painel' %}"{% if pagina == 'pix_painel' %} class="active" aria-current="page"{% endif %}>Pix</a>
@@ -48,13 +50,21 @@
       {% endwith %}
       <form class="logout" method="post" action="{% url 'usuarios:logout' %}">
         {% csrf_token %}
-        <span class="whoami">{{ user }}</span>
+        <span class="user-identity" title="Usuário conectado: {{ user }}">
+        <span class="user-avatar" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 36 36" fill="currentColor" focusable="false">
+            <circle cx="18" cy="13" r="6"/>
+            <path d="M6 34v-5a12 12 0 0 1 24 0v5Z"/>
+          </svg>
+        </span>
+        <span class="user-name">{{ user }}</span>
+        </span>
         <button type="submit" class="linkish">Sair</button>
       </form>
     {% endif %}
   </header>
 
-  <main class="wrap {% block wrap_class %}{% endblock %}">
+  <main id="conteudo" tabindex="-1" class="wrap {% block wrap_class %}{% endblock %}">
     {% include "_mensagens.html" %}
     {% block content %}{% endblock %}
   </main>

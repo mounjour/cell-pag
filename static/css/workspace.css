@@ -1,0 +1,154 @@
+/* Camada visual do aplicativo. Componentes funcionais permanecem em base.css. */
+:root {
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 2.5rem;
+  --paper: #f5f6f8;
+  --surface-2: #f3f5f6;
+  --ink: #182c30;
+  --ink-soft: #52656b;
+  --ink-faint: #62747a;
+  --line: #e1e7e9;
+  --line-strong: #bccbd0;
+  --accent: #126e63;
+  --accent-ink: #09594f;
+  --accent-wash: #e6f3ee;
+  --raise: 0 1px 2px rgb(24 44 48 / 3%), 0 6px 20px rgb(24 44 48 / 4%);
+  --raise-hover: 0 4px 8px rgb(24 44 48 / 4%), 0 12px 28px rgb(24 44 48 / 8%);
+  --card-sheen: linear-gradient(145deg, rgb(255 255 255 / 35%), transparent 65%);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+body { background-image: none; }
+h1, h2, .brand { font-family: "Source Sans 3", "Segoe UI", sans-serif; }
+h1 { font-weight: 600; letter-spacing: -0.035em; line-height: 1.2; }
+h2 { font-weight: 600; }
+.skip-link { position: fixed; left: 1rem; top: -6rem; z-index: 100; padding: 0.8rem 1rem; background: var(--surface); border: 2px solid var(--focus); border-radius: 8px; }
+.skip-link:focus { top: 1rem; }
+.topbar { box-shadow: none; }
+.brand-mark { width: 32px; height: 32px; }
+.brand { font-weight: 600; }
+.user-identity { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.user-name { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; color: var(--ink-soft); }
+.user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-faint);
+}
+.nav a { min-height: 44px; display: flex; align-items: center; border-radius: 9px; color: var(--ink-soft); }
+.nav-toggle-input:focus-visible + .nav-toggle { outline: 2px solid var(--focus); outline-offset: 3px; }
+.wrap { max-width: 1120px; padding-top: 2rem; }
+/* Usar a largura disponível depois da navegação em todas as telas internas. */
+.app-shell > .wrap { width: 100%; max-width: none; }
+.page-description { margin: 0.65rem 0 0; color: var(--ink-soft); font-size: 0.95rem; }
+.dashboard-heading { align-items: center; margin-bottom: 1.75rem; gap: 1rem; }
+.dashboard-heading h1 { margin: 0.45rem 0 0; font-size: clamp(1.8rem, 3vw, 2.65rem); }
+.eyebrow { letter-spacing: 0.12em; font-size: 0.7rem; }
+.meta { gap: var(--space-2); }
+.meta > div { border-left: 1px solid var(--line); padding: var(--space-2) var(--space-3); min-width: 0; border-radius: var(--radius); background-image: var(--card-sheen); }
+.meta > div:hover, .card:hover { transform: none; box-shadow: var(--raise); }
+.meta dt { text-transform: none; letter-spacing: 0; font-size: 0.85rem; font-weight: 500; }
+.painel-kpis { margin-bottom: var(--space-4); }
+.painel-kpis > div { min-height: 144px; align-content: start; gap: 0.9rem; padding: 1.4rem 1.6rem; }
+.painel-kpis dd { font-size: clamp(1.3rem, 2vw, 2.1rem); letter-spacing: -0.035em; }
+.painel-kpis .kpi-sub { letter-spacing: 0; font-size: 0.8rem; margin-top: 0.5rem; }
+.painel-kpis > div:first-child {
+  background: linear-gradient(120deg, #104c46, #197d6e);
+  border-color: #348f7e;
+  box-shadow: inset 0 1px rgb(255 255 255 / 12%), 0 8px 24px rgb(13 70 59 / 15%);
+}
+.painel-kpis > div:first-child dt { color: #c5e8df; }
+.painel-kpis > div:first-child dd { color: #ffffff; }
+.meta dd.critical-text { color: var(--critical-ink); }
+.painel-graficos { gap: var(--space-3); }
+.card, .form-page, .report-filter { background-image: var(--card-sheen); }
+.painel-graficos .card { padding: 1.75rem; }
+.painel-graficos .chart-box { height: clamp(260px, 23vw, 340px); }
+.painel-graficos .card h2 { padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.btn { font-weight: 600; box-shadow: none; }
+.btn-registrar { box-shadow: none; }
+th { background: var(--surface-2); font-weight: 600; padding-block: 1rem; }
+tbody tr:nth-child(even) td { background: var(--surface); }
+tbody tr:hover td { background: var(--accent-wash); }
+.tbl-wrap:hover { box-shadow: var(--raise); }
+.login-box { width: 100%; max-width: 440px; border-top: 4px solid var(--accent); }
+.login-box h1 { font-weight: 600; font-size: 2rem; margin-bottom: 0; }
+.login-box .page-description { margin-bottom: 2rem; }
+/* Menu recolhível até haver espaço real para a navegação completa. */
+@media (min-width: 640px) and (max-width: 1099px) {
+  .app-shell .topbar { flex-wrap: wrap; gap: 0.5rem 1rem; }
+  .app-shell .brand { flex: 1; }
+  .app-shell .brand-full { font-size: 0.95rem; }
+  .app-shell .nav-toggle { display: inline-flex; }
+  .app-shell .logout { order: 2; }
+  .app-shell .nav { order: 3; width: 100%; display: none; flex-wrap: wrap; }
+  .app-shell .nav-toggle-input:checked ~ .nav { display: flex; }
+}
+@media (max-width: 639px) {
+  .user-name { max-width: 64px; }
+  .nav { visibility: hidden; }
+  .nav-toggle-input:checked ~ .nav { visibility: visible; }
+  .wrap { padding-top: 1.4rem; }
+  .dashboard-heading .spacer { display: none; }
+  .dashboard-heading > .btn { width: 100%; }
+  .painel-kpis { gap: 0.65rem; }
+  .painel-kpis > div { min-height: 120px; padding: 0.9rem; }
+  .painel-kpis dt { font-size: 0.75rem; }
+  .painel-kpis dd { font-size: 1.2rem; overflow-wrap: anywhere; }
+  .painel-graficos .card { padding: 1rem; }
+  .login-box { padding: 1.75rem 1.5rem; }
+}
+@media (min-width: 1100px) {
+  .app-shell { padding-left: 236px; }
+  .app-shell .topbar { position: fixed; inset: 0 auto 0 0; width: 236px; flex-direction: column; align-items: stretch; padding: 2rem 1.2rem 1.25rem; gap: 2rem; border-bottom: 0; border-right: 1px solid var(--line); background: var(--surface); backdrop-filter: none; }
+  .app-shell .brand { white-space: normal; gap: 0.7rem; font-size: 1.1rem; line-height: 1.25; }
+  .app-shell .nav { flex-direction: column; align-items: stretch; gap: 0.4rem; width: 100%; }
+  .app-shell .nav a { padding: 0.75rem 1rem; font-size: 0.95rem; }
+  .app-shell .nav a.active { box-shadow: inset 3px 0 var(--accent); }
+  .app-shell .logout { margin: auto 0 0; padding-top: 1.2rem; border-top: 1px solid var(--line); justify-content: space-between; }
+  .app-shell .wrap { padding: 2.25rem clamp(1.5rem, 2.2vw, 3rem) 4rem; }
+  .app-shell .topbar { overflow-y: auto; }
+}
+@media (prefers-color-scheme: dark) {
+  :root { --surface: #172326; --card-sheen: linear-gradient(145deg, rgb(255 255 255 / 3%), transparent 65%); }
+  :root { --paper: #10191c; --surface-2: #1c2a2e; --ink: #e5edef; --ink-soft: #b0c1c6; --ink-faint: #94aab0; --line: #2b3c41; --line-strong: #49636b; --accent: #66c9af; --accent-ink: #8adcc6; --accent-wash: #203c35; --raise: 0 2px 6px rgb(0 0 0 / 10%); --raise-hover: 0 8px 24px rgb(0 0 0 / 15%); }
+}
+@media print {
+  .app-shell { padding-left: 0; }
+  .topbar, .skip-link { display: none; }
+  .app-shell .wrap { max-width: none; padding: 0; }
+}
+/* Microinterações curtas, sem movimento contínuo ou mudanças de layout. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes page-enter {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+  }
+  /* Todos os templates compartilham este main; não animar a barra lateral. */
+  main.wrap { animation: page-enter 220ms ease-out; }
+  /* A entrada global substitui a sequência antiga exclusiva do painel. */
+  .painel-entrada > * { animation: none; }
+  .nav a, .logout .linkish {
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+  }
+  .meta > div, .card, .tbl-wrap, .form-page, .report-filter {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+  .nav a:active, .btn:active { transform: scale(0.98); }
+  .logout .linkish:hover { background: var(--accent-wash); text-decoration: none; }
+  @media (hover: hover) and (pointer: fine) {
+    .nav a:hover { transform: translateX(2px); }
+    .meta > div:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); }
+    .card:hover, .tbl-wrap:hover, .form-page:hover, .report-filter:hover { border-color: var(--line-strong); box-shadow: var(--raise-hover); }
+  }
+}
