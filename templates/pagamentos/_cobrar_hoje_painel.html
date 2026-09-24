@@ -6,7 +6,7 @@
     <div><dt>Alerta de bloqueio</dt><dd class="num">{{ n_bloqueio }}</dd></div>
     <div><dt>Total previsto (parcela + juros)</dt><dd class="num">R$ {{ total_previsto }}</dd></div>
   </dl>
-  <p class="note">Use “registrar pagamento” em cada linha para dar baixa. O painel segue a <strong>parcela em aberto</strong> mais antiga de cada contrato.</p>
+  <p class="note">Esta tela mostra só os <strong>avisos e o status</strong> de cada cobrança, seguindo a parcela em aberto mais antiga de cada contrato. Abra o cliente para dar baixa, suspender a cobrança automática ou ver o histórico.</p>
 
   <div class="tbl-wrap cards cobrar-hoje">
     <table>
@@ -76,7 +76,7 @@
                   </span>
                 {% endif %}
               </span>
-              {% if l.pix %}{% include "pagamentos/_pix_cancelar.html" with pix=l.pix %}{% endif %}
+              {% if l.pix.status == 'cancelado' %}<span class="pill atrasado" title="A rotina diária não cobra esta parcela até você retomar no cliente.">Suspensa</span>{% endif %}
             </td>
             <td data-label="Contato" class="contato-cell">
               <div class="contato-actions">
@@ -96,15 +96,13 @@
                     </svg>
                   </a>
                 </span>
-                <a class="btn btn-registrar"
-                   href="{% url 'pagamentos:novo' l.contrato.pk %}{% if estrutura_atual %}?estrutura={{ estrutura_atual|urlencode }}{% endif %}"
-                   hx-get="{% url 'pagamentos:novo' l.contrato.pk %}{% if estrutura_atual %}?estrutura={{ estrutura_atual|urlencode }}{% endif %}"
-                   hx-target="#dialog-registrar-corpo" hx-swap="innerHTML"
-                   data-abre-dialog="dialog-registrar">
+                {% comment %}Ação principal da linha: abrir o cliente (baixa, suspender cobrança, histórico). A classe btn-registrar é o estilo de "botão principal da linha".{% endcomment %}
+                <a class="btn btn-registrar" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}"
+                   aria-label="Abrir {{ l.contrato.cliente.nome }}">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">
-                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1.1 14.2-3.6-3.6 1.4-1.4 2.2 2.2 4.9-4.9 1.4 1.4-6.3 6.3z"/>
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                   </svg>
-                  Registrar
+                  Abrir cliente
                 </a>
               </div>
             </td>
