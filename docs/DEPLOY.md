@@ -3,11 +3,11 @@
 Este guia coloca o sistema no ar no [Render](https://render.com) com:
 
 - **site** (Gunicorn + WhiteNoise) em `https://cell-pag.onrender.com`;
-- **PostgreSQL** gerenciado;
+- **PostgreSQL** no **Supabase** (fora do Render — só a connection string entra aqui);
 - **cron diário** que roda `manage.py rotina_diaria` às 08:30 (horário de Brasília):
   gera as parcelas, monta o lembrete da Yslane e prepara/dispara as cobranças.
 
-O [`render.yaml`](../render.yaml) na raiz descreve os três de uma vez (Blueprint).
+O [`render.yaml`](../render.yaml) na raiz descreve o site e os crons de uma vez (Blueprint).
 
 ---
 
@@ -16,6 +16,7 @@ O [`render.yaml`](../render.yaml) na raiz descreve os três de uma vez (Blueprin
 | Item | Onde | Necessário para |
 |---|---|---|
 | Criar conta no Render e conectar este repositório do GitHub | render.com | tudo |
+| Criar o projeto no **Supabase** e copiar a connection string (pooler) | supabase.com | banco de produção |
 | Subir uma instância da **Evolution API** (Docker) e conectar um número por QR Code | servidor próprio | envio real de lembrete/cobrança — ver [`WHATSAPP.md`](WHATSAPP.md) |
 | Contratar **CoraPro** + gerar certificado mTLS | app/Web da Cora | geração real de Pix — ver [`CORA.md`](CORA.md) |
 
@@ -40,7 +41,6 @@ git push
 2. Aponte para o repositório `cell-pag`. O Render lê o `render.yaml` e mostra:
    - serviço web `cell-pag`
    - cron `cell-pag-rotina-diaria`
-   - banco `cell-pag-db`
    - grupo de variáveis `cell-pag-config`
 3. **Apply**. O primeiro build roda `pip install`, `collectstatic` e, no
    `preDeployCommand`, o `migrate`.
@@ -52,6 +52,7 @@ ainda não tem — o modo `log` não exige):
 
 | Variável | Valor agora |
 |---|---|
+| `DATABASE_URL` | connection string do Postgres do Supabase (`postgresql://...`, pooler). Vale para o site e para os crons |
 | `YSLANE_WHATSAPP_NUMERO` | número da Yslane em E.164, ex.: `+5583988887777` |
 | `WHATSAPP_PROVIDER` | `log` (troque para `evolution` quando a instância estiver conectada) |
 | `WHATSAPP_PIX_CHAVE`, `EVOLUTION_*` | em branco por enquanto — ver [`WHATSAPP.md`](WHATSAPP.md) |
@@ -59,7 +60,7 @@ ainda não tem — o modo `log` não exige):
 | `CORA_*` (demais) | em branco por enquanto — ver [`CORA.md`](CORA.md) |
 
 `SECRET_KEY` é gerada automaticamente (e o app **recusa** subir com `DEBUG=False`
-sem ela). `DATABASE_URL`, `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS` se resolvem
+sem ela). `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS` se resolvem
 sozinhos no Render via `RENDER_EXTERNAL_HOSTNAME` — **não** defina `ALLOWED_HOSTS`
 com curinga (`.onrender.com`); se usar domínio próprio, coloque o host exato.
 
@@ -173,13 +174,13 @@ fica folgado no Hobby.
 | Workspace | Hobby | US$ 0 |
 | Site (web) `cell-pag` | `plan: starter` — obrigatório: tem disco (o free não monta disco) e tira o cold-start | ~US$ 7 |
 | Disco persistente (anexos) | `sizeGB: 1` — US$ 0,25/GB | ~US$ 0,25 |
-| PostgreSQL `cell-pag-db` | `plan: basic-256mb` — backup diário, não expira | ~US$ 6–7 |
+| PostgreSQL | não está no Render — é o do Supabase (ver "Fora dessa conta") | US$ 0 aqui |
 | Cron `cell-pag-rotina-diaria` | `plan: free` — roda ~1 min/dia | US$ 0 |
-| **Total no Render** | | **≈ US$ 13,25–14,25/mês** (7 + 0,25 + 6 a 7) |
+| **Total no Render** | | **≈ US$ 7,25/mês** (7 + 0,25) |
 
 Conversão para reais (exemplo com dólar a **R$ 5,50** — confira a cotação do dia):
-US$ 13,25–14,25 × 5,50 = R$ 73–78; com IOF + spread de câmbio (~+6%):
-**≈ R$ 77–83/mês**. Cada R$ 0,10 a mais no dólar soma cerca de R$ 1,50/mês.
+US$ 7,25 × 5,50 ≈ R$ 40; com IOF + spread de câmbio (~+6%):
+**≈ R$ 42/mês**. Cada R$ 0,10 a mais no dólar soma cerca de R$ 0,80/mês.
 
 A retenção de US$ 1 na validação do cartão no cadastro é uma pré-autorização
 (fica presa no limite por um tempo e é liberada) — não entra na conta mensal.
@@ -187,6 +188,10 @@ Pagamento só em cartão internacional — o Render não aceita Pix nem boleto.
 
 ### Fora dessa conta
 
+- **Supabase (Postgres)** — plano free tem 500 MB e pausa o projeto após 1
+  semana sem atividade; como o cron diário acessa o banco, não pausa na prática,
+  mas confira. O plano Pro (US$ 25/mês) dá backup diário gerenciado. Ver
+  `PLANO-DO-PROJETO.md` (seção Stack/Backup).
 - **Evolution API (WhatsApp)** — não roda no Render; é Docker em servidor próprio
   (item 0). Com `WHATSAPP_PROVIDER=log`, custo zero. Para ativar de verdade: um
   VPS pequeno (~US$ 4–6/mês) ou uma VM que já exista.
@@ -196,13 +201,10 @@ Pagamento só em cartão internacional — o Render não aceita Pix nem boleto.
 
 ### Free não serve para produção aqui
 
-- **Postgres free** expira em 30 dias e some — inaceitável para registro
-  financeiro (por isso o blueprint fixa `basic-256mb`).
 - **Web free** dorme após 15 min, volta em ~1 min e **não monta disco** — os
   anexos sumiriam a cada deploy. A Yslane usa todo dia no celular.
 
-Para avaliação rápida, dá para trocar tudo para free e voltar depois sem mexer no
-código. Para uso diário de verdade, conte com **~US$ 15/mês** no Render.
+Para uso diário de verdade, conte com **~US$ 7,25/mês** no Render (mais o Supabase).
 
 ---
 

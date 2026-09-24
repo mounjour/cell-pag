@@ -80,8 +80,8 @@ Painel: **dashboard.render.com** → serviço `cell-pag`.
 > e o **HSTS fica em 1 dia** — não subir para 1 ano / preload (item 10 do
 > `SEGURANCA.md`).
 
-> **Custo da Seção B: ~US$ 15/mês** — web `starter` (7) + Postgres `basic-256mb`
-> (7) + cron por uso (~1). O `render.yaml` já foi ajustado para esses planos
+> **Custo da Seção B no Render: ~US$ 7,25/mês** — web `starter` (7) + disco (0,25);
+> o Postgres é do Supabase, fora do Render. O `render.yaml` já foi ajustado para esses planos
 > (commit "infra: planos pagos + disco"); falta aplicar (abaixo).
 
 ### B1. ⬜ Disco persistente montado em `MEDIA_ROOT`
@@ -114,21 +114,14 @@ O **cron `cell-pag-rotina-diaria`** não precisa de disco (não grava anexo).
 (*Manual Deploy → Clear build cache & deploy*) e confirme que o arquivo ainda
 abre. Na aba **Disks** o `media` aparece montado.
 
-### B2. ⬜ PostgreSQL pago
+### B2. ⬜ Backup do PostgreSQL (Supabase)
 
-O plano **free do Postgres expira em 30 dias e não tem backup** — inaceitável
-para registro financeiro. O `render.yaml` já traz `plan: basic-256mb` (~US$ 7/mês).
+O banco de produção é o **Postgres do Supabase**, não o do Render (o `render.yaml`
+não cria mais banco). Confira no painel do Supabase se o plano tem **backup
+diário** (o plano free não tem — Pro sim) e se o projeto não está sujeito a
+pausa por inatividade.
 
-**Como aplicar:**
-
-- Junto do **Blueprint sync** do B1 o Render troca o plano do banco; **ou**
-- banco **`cell-pag-db`** → **Settings → Change Plan → Basic 256 MB**.
-
-> Trocar de `free` para pago **não perde dados**. Mas se o free já estiver perto
-> dos 30 dias, faça antes um `pg_dump` pelo Shell (ver B3) por garantia.
-
-**Conferir:** aba **Backups** / **Recovery** do banco mostra backups diários
-sendo gerados.
+**Conferir:** Supabase → **Database → Backups** mostra backups diários.
 
 ### B3. ⬜ Backup off-site do banco  ⏸️ *(decisão adiada — 09/09/2026)*
 
