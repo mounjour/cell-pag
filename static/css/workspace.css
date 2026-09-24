@@ -103,6 +103,64 @@ tbody tr:hover td { background: var(--accent-wash); }
 .login-box { width: 100%; max-width: 440px; border-top: 4px solid var(--accent); }
 .login-box h1 { font-weight: 600; font-size: 2rem; margin-bottom: 0; }
 .login-box .page-description { margin-bottom: 2rem; }
+/* Central do cliente: dados, ações e automação com hierarquia própria. */
+.cliente-cabecalho {
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card-sheen), var(--surface);
+  box-shadow: var(--raise);
+  margin-bottom: 1.5rem;
+}
+.cliente-cabecalho > div { min-width: 0; }
+.cliente-cabecalho h1 { overflow-wrap: anywhere; }
+.cliente-cabecalho .icon-btn { width: 44px; height: 44px; }
+.avisos { gap: 0.75rem; }
+.aviso { padding-block: 0.9rem; line-height: 1.5; }
+.aviso::before { top: 0.9rem; }
+.painel-contrato {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background-image: var(--card-sheen);
+}
+.painel-contrato__topo { padding-bottom: 1rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--line); }
+.painel-contrato__topo > div { min-width: 0; overflow-wrap: anywhere; }
+.painel-contrato__topo h3 { font-size: 1.2rem; letter-spacing: -0.02em; }
+.painel-contrato__topo > .pill { flex: none; }
+.painel-contrato__dados { gap: 1rem; margin-bottom: 1.25rem; }
+.painel-contrato__dados > div {
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  min-width: 0;
+  gap: 0.5rem;
+}
+.painel-contrato__dados dd { font-size: 1.05rem; overflow-wrap: anywhere; }
+.painel-contrato__dados > div:last-child { background: var(--accent-wash); border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); }
+.painel-contrato__dados > div:last-child dd { color: var(--accent-ink); font-size: 1.6rem; font-weight: 600; letter-spacing: -0.025em; }
+.painel-contrato__dados .helptext { letter-spacing: 0; margin-top: 0.25rem; }
+.painel-contrato__acoes { gap: 0.75rem; margin-bottom: 1.25rem; }
+.cobranca-auto { padding: 1rem 1.15rem; gap: 1rem; }
+.cobranca-auto__estado { flex: 1 1 240px; }
+.cobranca-auto__estado strong { font-size: 0.9rem; font-weight: 600; }
+.cobranca-auto form { max-width: 100%; }
+.cobranca-auto button { white-space: normal; text-align: center; }
+.cobranca-auto--ativa { border-left: 3px solid var(--ok-ink); }
+.cobranca-auto--suspensa { border-left: 3px solid var(--amber-ink); }
+.cobrar-hoje .contato-cell .btn-registrar { border-radius: var(--radius-sm); }
+.cobrar-hoje .cli-cell a { font-weight: 600; }
+@media (min-width: 640px) {
+  .painel-contrato__dados { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cobrar-hoje td { padding-block: 1.15rem; }
+}
+@media (max-width: 639px) {
+  .cliente-cabecalho, .painel-contrato { padding: 1rem; }
+  .painel-contrato__topo { flex-wrap: wrap; }
+  .painel-contrato__dados { grid-template-columns: minmax(0, 1fr); gap: 0.65rem; }
+  .painel-contrato__dados > div { padding: 0.85rem; }
+  .cobranca-auto { padding: 0.85rem; }
+}
 /* Menu recolhível até haver espaço real para a navegação completa. */
 @media (min-width: 640px) and (max-width: 1099px) {
   .app-shell .topbar { flex-wrap: wrap; gap: 0.5rem 1rem; }
@@ -160,7 +218,7 @@ tbody tr:hover td { background: var(--accent-wash); }
   .nav a, .logout .linkish, .btn-cancelar-pix {
     transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
   }
-  .meta > div, .card, .tbl-wrap, .form-page, .report-filter {
+  .meta > div, .card, .tbl-wrap, .form-page, .report-filter, .painel-contrato {
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   }
   .nav a:active, .btn:active, .btn-cancelar-pix:active { transform: scale(0.98); }
@@ -169,5 +227,6 @@ tbody tr:hover td { background: var(--accent-wash); }
     .nav a:hover { transform: translateX(2px); }
     .meta > div:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); }
     .card:hover, .tbl-wrap:hover, .form-page:hover, .report-filter:hover { border-color: var(--line-strong); box-shadow: var(--raise-hover); }
+    .painel-contrato:hover { box-shadow: var(--raise-hover); }
   }
 }
