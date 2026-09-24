@@ -112,6 +112,8 @@ if env("DATABASE_URL", default=None):
     DATABASES = {"default": env.db("DATABASE_URL")}
     # Reaproveita a conexão por 10 min em vez de abrir uma por request.
     DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=600)
+    # Testa a conexão persistente antes de usar: evita erro se o banco reiniciou/pausou.
+    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 else:
     DATABASES = {
         "default": {
