@@ -16,7 +16,7 @@ O [`render.yaml`](../render.yaml) na raiz descreve o site e os crons de uma vez 
 | Item | Onde | Necessário para |
 |---|---|---|
 | Criar conta no Render e conectar este repositório do GitHub | render.com | tudo |
-| Criar o projeto no **Supabase** e copiar a connection string (pooler) | supabase.com | banco de produção |
+| Criar o projeto no **Supabase** e copiar a connection string **Session pooler** (porta 5432) | supabase.com | banco de produção |
 | Subir uma instância da **Evolution API** (Docker) e conectar um número por QR Code | servidor próprio | envio real de lembrete/cobrança — ver [`WHATSAPP.md`](WHATSAPP.md) |
 | Contratar **CoraPro** + gerar certificado mTLS | app/Web da Cora | geração real de Pix — ver [`CORA.md`](CORA.md) |
 
@@ -52,7 +52,7 @@ ainda não tem — o modo `log` não exige):
 
 | Variável | Valor agora |
 |---|---|
-| `DATABASE_URL` | connection string do Postgres do Supabase (`postgresql://...`, pooler). Vale para o site e para os crons |
+| `DATABASE_URL` | connection string do Postgres do Supabase (`postgresql://...`) — **Session pooler**, porta 5432; não use *Direct connection* (IPv6) nem *Transaction pooler* (6543). Senha com caractere especial vai codificada (`@` = `%40`). Vale para o site e para os crons |
 | `YSLANE_WHATSAPP_NUMERO` | número da Yslane em E.164, ex.: `+5583988887777` |
 | `WHATSAPP_PROVIDER` | `log` (troque para `evolution` quando a instância estiver conectada) |
 | `WHATSAPP_PIX_CHAVE`, `EVOLUTION_*` | em branco por enquanto — ver [`WHATSAPP.md`](WHATSAPP.md) |

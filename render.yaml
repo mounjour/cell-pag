@@ -12,8 +12,11 @@ envVarGroups:
         generateValue: true
       - key: DEBUG
         value: "False"
-      # Connection string do Postgres do Supabase (use a do pooler, porta 6543
-      # ou 5432 em modo session). Site e crons usam o mesmo banco.
+      # Connection string do Postgres do Supabase: use a "Session pooler"
+      # (porta 5432). Não use a "Direct connection" (só IPv6, o Render não
+      # alcança) nem a "Transaction pooler" (6543, dá problema com o psycopg).
+      # Senha com caractere especial precisa ir codificada na URL (@ = %40).
+      # Site e crons usam o mesmo banco.
       - key: DATABASE_URL
         sync: false
       # ALLOWED_HOSTS não é definido aqui de propósito: o settings.py usa o
