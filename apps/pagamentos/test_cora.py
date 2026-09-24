@@ -12,6 +12,8 @@ from apps.contratos.models import Contrato
 from apps.pagamentos import cora_api
 from apps.pagamentos.models import CobrancaCora, EventoCora, Pagamento, Vencimento
 from apps.pagamentos.pix_cora import (
+    CancelamentoRecusado,
+    cancelar_cobranca,
     obter_ou_criar_cobranca,
     reconciliar_abertas,
     sincronizar_cobranca,
@@ -81,6 +83,107 @@ def test_cria_pix_com_idempotencia_e_valor_em_centavos(parcela_cora, settings, m
     assert cobranca.status == CobrancaCora.Status.ABERTO
     assert cobranca.cora_id == "inv_123"
     assert cobranca.pix_copia_e_cola == "000201PIX-COPIA-E-COLA"
+
+
+def _pix_aberto(parcela):
+    return CobrancaCora.objects.create(
+        vencimento=parcela,
+        cora_id="inv_cancelar",
+        status=CobrancaCora.Status.ABERTO,
+        valor=Decimal("100.00"),
+        data_vencimento=parcela.data_vencimento,
+        pix_copia_e_cola="00020126PIX-VIVO",
+        qr_code_url="https://cora.example/qr/vivo.png",
+    )
+
+
+@pytest.mark.django_db
+def test_cancelar_pix_em_aberto_cancela_na_cora_e_limpa_o_codigo(parcela_cora, settings, monkeypatch):
+    settings.CORA_PROVIDER = "cora"
+    cobranca = _pix_aberto(parcela_cora)
+    estados = iter(["OPEN", "CANCELLED"])  # consulta antes de cancelar, e a confirmação depois
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.consultar_fatura",
+        lambda cora_id: {"id": cora_id, "status": next(estados), "total_paid": 0},
+    )
+    canceladas = []
+    monkeypatch.setattr("apps.pagamentos.cora_api.cancelar_fatura", lambda cora_id: canceladas.append(cora_id) or {})
+
+    cancelar_cobranca(cobranca)
+
+    cobranca.refresh_from_db()
+    assert canceladas == ["inv_cancelar"]
+    assert cobranca.status == CobrancaCora.Status.CANCELADO
+    # o código cancelado não pode ser reenviado ao cliente
+    assert cobranca.pix_copia_e_cola == ""
+    assert cobranca.qr_code_url == ""
+
+
+@pytest.mark.django_db
+def test_cancelar_pix_ja_pago_e_recusado_sem_chamar_a_cora(parcela_cora, settings, monkeypatch):
+    settings.CORA_PROVIDER = "cora"
+    cobranca = _pix_aberto(parcela_cora)
+    cobranca.status = CobrancaCora.Status.PAGO
+    cobranca.save()
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.cancelar_fatura",
+        lambda cora_id: pytest.fail("não pode cancelar fatura paga"),
+    )
+    with pytest.raises(CancelamentoRecusado):
+        cancelar_cobranca(cobranca)
+
+
+@pytest.mark.django_db
+def test_cancelar_pix_que_a_cora_diz_estar_pago_da_baixa_e_recusa(parcela_cora, settings, monkeypatch):
+    settings.CORA_PROVIDER = "cora"
+    cobranca = _pix_aberto(parcela_cora)  # aqui ainda "aberto": o pagamento acabou de ocorrer
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.consultar_fatura",
+        lambda cora_id: {"id": cora_id, "status": "PAID", "total_paid": 10000, "pix": {"emv": "PIX"}},
+    )
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.cancelar_fatura",
+        lambda cora_id: pytest.fail("não pode cancelar fatura paga"),
+    )
+    with pytest.raises(CancelamentoRecusado):
+        cancelar_cobranca(cobranca)
+    assert Pagamento.objects.filter(vencimento=parcela_cora).exists()
+
+
+@pytest.mark.django_db
+def test_cancelar_pix_com_falha_da_cora_deixa_tudo_como_estava(parcela_cora, settings, monkeypatch):
+    settings.CORA_PROVIDER = "cora"
+    cobranca = _pix_aberto(parcela_cora)
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.consultar_fatura",
+        lambda cora_id: {"id": cora_id, "status": "OPEN", "total_paid": 0, "pix": {"emv": "00020126PIX-VIVO"}},
+    )
+
+    def _falha(cora_id):
+        raise cora_api.CoraErro("fora do ar")
+
+    monkeypatch.setattr("apps.pagamentos.cora_api.cancelar_fatura", _falha)
+    with pytest.raises(cora_api.CoraErro):
+        cancelar_cobranca(cobranca)
+    cobranca.refresh_from_db()
+    assert cobranca.status == CobrancaCora.Status.ABERTO
+    assert cobranca.pix_copia_e_cola == "00020126PIX-VIVO"
+
+
+@pytest.mark.django_db
+def test_cancelar_pix_sem_fatura_na_cora_cancela_so_localmente(parcela_cora, settings, monkeypatch):
+    settings.CORA_PROVIDER = "log"
+    cobranca = CobrancaCora.objects.create(
+        vencimento=parcela_cora, valor=Decimal("100.00"), data_vencimento=parcela_cora.data_vencimento
+    )
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.cancelar_fatura",
+        lambda cora_id: pytest.fail("sem fatura na Cora, não há o que cancelar lá"),
+    )
+    cancelar_cobranca(cobranca)
+    cobranca.refresh_from_db()
+    assert cobranca.status == CobrancaCora.Status.CANCELADO
+    assert cancelar_cobranca(cobranca).status == CobrancaCora.Status.CANCELADO  # idempotente
 
 
 @pytest.mark.django_db
