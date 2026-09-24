@@ -293,6 +293,125 @@ def test_botoes_de_cancelar_so_aparecem_enquanto_o_pix_esta_em_aberto(auth_clien
     assert url_cancelar not in auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
 
 
+# ── Suspender / retomar a cobrança automática de uma parcela ────────────────
+
+@pytest.mark.django_db
+def test_suspender_antes_de_existir_pix_registra_pix_cancelado(parcela_cora, settings, monkeypatch):
+    from apps.pagamentos.pix_cora import suspender_cobranca
+
+    settings.CORA_PROVIDER = "cora"
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.criar_fatura",
+        lambda *args, **kwargs: pytest.fail("suspensa: não pode criar fatura na Cora"),
+    )
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.cancelar_fatura",
+        lambda cora_id: pytest.fail("não havia fatura para cancelar"),
+    )
+    cobranca = suspender_cobranca(parcela_cora)
+    assert cobranca.status == CobrancaCora.Status.CANCELADO
+    assert cobranca.cora_id is None
+    # a rotina diária passa por aqui e não recria a fatura
+    assert obter_ou_criar_cobranca(parcela_cora, hoje=date(2026, 9, 4)).status == CobrancaCora.Status.CANCELADO
+
+
+@pytest.mark.django_db
+def test_suspender_com_pix_aberto_cancela_na_cora(parcela_cora, settings, monkeypatch):
+    from apps.pagamentos.pix_cora import suspender_cobranca
+
+    settings.CORA_PROVIDER = "cora"
+    _pix_aberto(parcela_cora)
+    estados = iter(["OPEN", "CANCELLED"])
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.consultar_fatura",
+        lambda cora_id: {"id": cora_id, "status": next(estados), "total_paid": 0},
+    )
+    canceladas = []
+    monkeypatch.setattr("apps.pagamentos.cora_api.cancelar_fatura", lambda cora_id: canceladas.append(cora_id) or {})
+    cobranca = suspender_cobranca(parcela_cora)
+    assert canceladas == ["inv_cancelar"]
+    assert cobranca.status == CobrancaCora.Status.CANCELADO
+
+
+@pytest.mark.django_db
+def test_suspender_parcela_paga_e_recusado(parcela_cora):
+    from apps.pagamentos.pix_cora import suspender_cobranca
+
+    parcela_cora.status = Vencimento.Status.PAGO
+    parcela_cora.save()
+    with pytest.raises(CancelamentoRecusado):
+        suspender_cobranca(parcela_cora)
+    assert not CobrancaCora.objects.exists()
+
+
+@pytest.mark.django_db
+def test_retomar_zera_o_registro_e_a_proxima_rotina_gera_fatura_nova(parcela_cora, settings, monkeypatch):
+    from apps.pagamentos.pix_cora import retomar_cobranca
+
+    settings.CORA_PROVIDER = "cora"
+    cobranca = _pix_aberto(parcela_cora)
+    cobranca.status = CobrancaCora.Status.CANCELADO
+    cobranca.pix_copia_e_cola = ""
+    cobranca.qr_code_url = ""
+    cobranca.save()
+    chave_antiga = cobranca.idempotency_key
+
+    retomar_cobranca(cobranca)
+    cobranca.refresh_from_db()
+    assert cobranca.status == CobrancaCora.Status.PENDENTE
+    assert cobranca.cora_id is None
+    assert cobranca.idempotency_key != chave_antiga
+
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.criar_fatura",
+        lambda payload, chave: {"id": "inv_nova", "status": "OPEN", "total_paid": 0, "pix": {"emv": "000201NOVO"}},
+    )
+    nova = obter_ou_criar_cobranca(parcela_cora, hoje=date(2026, 9, 4))
+    assert nova.cora_id == "inv_nova"
+    assert nova.status == CobrancaCora.Status.ABERTO
+
+
+@pytest.mark.django_db
+def test_views_suspender_e_retomar(auth_client, parcela_cora, settings):
+    from django.test import Client
+
+    settings.CORA_PROVIDER = "log"
+    url_suspender = reverse("pagamentos:cobranca_suspender", args=[parcela_cora.pk])
+    assert Client().post(url_suspender).status_code == 302  # anônimo → login
+    assert not CobrancaCora.objects.exists()
+    assert auth_client.get(url_suspender).status_code == 405
+
+    destino = reverse("clientes:detalhe", args=[parcela_cora.contrato.cliente_id])
+    resposta = auth_client.post(url_suspender, {"next": destino}, follow=True)
+    cobranca = CobrancaCora.objects.get(vencimento=parcela_cora)
+    assert cobranca.status == CobrancaCora.Status.CANCELADO
+    assert resposta.redirect_chain[-1][0] == destino
+    assert "suspensa" in resposta.content.decode()
+
+    resposta = auth_client.post(reverse("pagamentos:cobranca_retomar", args=[cobranca.pk]), {"next": destino}, follow=True)
+    cobranca.refresh_from_db()
+    assert cobranca.status == CobrancaCora.Status.PENDENTE
+    assert "retomada" in resposta.content.decode()
+
+
+@pytest.mark.django_db
+def test_tela_do_cliente_mostra_suspender_e_depois_retomar(auth_client, parcela_cora, settings):
+    settings.CORA_PROVIDER = "log"
+    url = reverse("clientes:detalhe", args=[parcela_cora.contrato.cliente_id])
+    corpo = auth_client.get(url).content.decode()
+    assert reverse("pagamentos:cobranca_suspender", args=[parcela_cora.pk]) in corpo
+    assert "Dar baixa" in corpo
+
+    cobranca = CobrancaCora.objects.create(
+        vencimento=parcela_cora, valor=Decimal("100.00"), data_vencimento=parcela_cora.data_vencimento,
+        status=CobrancaCora.Status.CANCELADO,
+    )
+    corpo = auth_client.get(url).content.decode()
+    assert reverse("pagamentos:cobranca_retomar", args=[cobranca.pk]) in corpo
+    assert reverse("pagamentos:cobranca_suspender", args=[parcela_cora.pk]) not in corpo
+    assert "cobrança automática suspensa" in corpo  # aparece nos avisos
+
+
 @pytest.mark.django_db
 def test_confirmacao_cora_da_baixa_automatica(parcela_cora, monkeypatch):
     cobranca = CobrancaCora.objects.create(

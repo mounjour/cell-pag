@@ -861,6 +861,72 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
   }
 }
 
+/* ---------- Tela do cliente: cabeçalho, avisos e painel por contrato ---------- */
+.cliente-cabecalho h1 { margin: 0.1rem 0 0; }
+.cliente-cabecalho .contato-vias { justify-content: flex-start; }
+@media (max-width: 639px) {
+  .cliente-cabecalho .contato-vias { width: 100%; }
+  .cliente-cabecalho .contato-vias .icon-btn { width: 46px; height: 46px; }
+  .cliente-cabecalho > .btn { width: 100%; }
+}
+
+/* Avisos: o que precisa de atenção neste cliente, antes dos dados. Cor + ícone
+   (não só cor) para o nível ficar claro sem depender de distinguir cores. */
+.avisos { list-style: none; margin: 0 0 1.25rem; padding: 0; display: grid; gap: 0.5rem; }
+.aviso {
+  padding: 0.7rem 1rem 0.7rem 2.4rem; position: relative;
+  border: 1px solid var(--line); border-left-width: 4px; border-radius: var(--radius-sm);
+  background: var(--surface); font-size: 0.9rem;
+}
+.aviso::before { position: absolute; left: 0.85rem; top: 0.65rem; font-weight: 700; }
+.aviso--critico { border-left-color: var(--critical-ink); background: var(--critical-wash); }
+.aviso--critico::before { content: "⚠"; color: var(--critical-ink); }
+.aviso--atencao { border-left-color: var(--amber-ink); background: var(--amber-wash); }
+.aviso--atencao::before { content: "!"; color: var(--amber-ink); }
+.aviso--info { border-left-color: var(--accent); background: var(--accent-wash); }
+.aviso--info::before { content: "i"; color: var(--accent-ink); }
+
+.painel-contrato {
+  margin: 0 0 1rem; padding: 1rem 1.15rem;
+  background: var(--surface); border: 1px solid var(--line);
+  border-left: 4px solid var(--line-strong); border-radius: var(--radius);
+  box-shadow: var(--raise);
+}
+.painel-contrato.row-acento--inadimplente { border-left-color: var(--critical-ink); }
+.painel-contrato.row-acento--atrasado { border-left-color: var(--amber-ink); }
+.painel-contrato.row-acento--em_dia { border-left-color: var(--ok-ink); }
+.painel-contrato.row-acento--quitado { border-left-color: var(--ink-faint); }
+.painel-contrato__topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+.painel-contrato__topo h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.painel-contrato__dados {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem;
+  margin: 0 0 0.9rem;
+}
+.painel-contrato__dados > div { display: grid; gap: 0.15rem; align-content: start; }
+.painel-contrato__dados dt { font-size: 0.75rem; color: var(--ink-faint); font-weight: 600; }
+.painel-contrato__dados dd { margin: 0; font-weight: 500; }
+.painel-contrato__dados .helptext { display: block; font-weight: 400; }
+.painel-contrato__acoes { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.9rem; }
+@media (max-width: 639px) {
+  .painel-contrato { padding: 0.9rem; }
+  .painel-contrato__acoes .btn { flex: 1 1 calc(50% - 0.25rem); }
+}
+
+/* Cobrança automática da parcela em aberto: estado à esquerda, ação à direita. */
+.cobranca-auto {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem;
+  padding: 0.75rem 0.9rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.cobranca-auto--suspensa { border-color: var(--amber-ink); background: var(--amber-wash); }
+.cobranca-auto__estado { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.7rem; min-width: 0; }
+.cobranca-auto .helptext { flex-basis: 100%; }
+.cobranca-auto form { flex: none; }
+.cobranca-auto .btn-cancelar-pix, .cobranca-auto .btn { min-height: var(--tap); }
+/* Título do contrato é link: área de toque de ~44px sem crescer o cartão. */
+.painel-contrato__topo h3 a { display: inline-block; padding-block: 0.6rem; margin-block: -0.6rem; }
+@media (max-width: 639px) { .cobranca-auto form, .cobranca-auto form .btn, .cobranca-auto form button { width: 100%; } }
+
 /* ---------- Cartões-métrica (grade de dados do detalhe) ---------- */
 .meta {
   display: grid; grid-template-columns: 1fr; gap: 0.75rem;

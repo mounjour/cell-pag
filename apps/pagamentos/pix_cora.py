@@ -1,6 +1,7 @@
 """Geração, conciliação e baixa automática das cobranças Pix da Cora."""
 
 import datetime
+import uuid
 from decimal import Decimal
 
 from django.conf import settings
@@ -124,6 +125,49 @@ def cancelar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
     cobranca.qr_code_url = ""
     cobranca.erro = ""
     cobranca.save(update_fields=["status", "pix_copia_e_cola", "qr_code_url", "erro", "atualizado_em"])
+    return cobranca
+
+
+def suspender_cobranca(vencimento: Vencimento) -> CobrancaCora:
+    """Suspende a cobrança automática de uma parcela — mesmo antes de o Pix existir.
+
+    Se já há Pix, cancela a fatura na Cora (`cancelar_cobranca`); se ainda não há,
+    registra um Pix já cancelado, que a rotina diária respeita (não cria fatura
+    nem manda mensagem para essa parcela). Nunca mexe em parcela paga.
+    """
+    if vencimento.status == Vencimento.Status.PAGO:
+        raise CancelamentoRecusado("Esta parcela já está paga.")
+    cobranca, _ = CobrancaCora.objects.get_or_create(
+        vencimento=vencimento,
+        defaults={
+            "valor": max(vencimento.saldo, Decimal("0.00")),
+            "data_vencimento": vencimento.data_vencimento,
+        },
+    )
+    return cancelar_cobranca(cobranca)
+
+
+def retomar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
+    """Volta a cobrar uma parcela suspensa: a próxima rotina gera uma fatura nova.
+
+    A fatura antiga fica cancelada na Cora; aqui o registro é zerado (nova chave de
+    idempotência, sem `cora_id`) para o fluxo normal criar outra do zero.
+    """
+    if cobranca.status != CobrancaCora.Status.CANCELADO:
+        return cobranca
+    vencimento = cobranca.vencimento
+    if vencimento.status == Vencimento.Status.PAGO:
+        raise CancelamentoRecusado("Esta parcela já está paga.")
+    cobranca.status = CobrancaCora.Status.PENDENTE
+    cobranca.cora_id = None
+    cobranca.idempotency_key = uuid.uuid4()
+    cobranca.valor = max(vencimento.saldo, Decimal("0.00"))
+    cobranca.data_vencimento = vencimento.data_vencimento
+    cobranca.total_pago = Decimal("0.00")
+    cobranca.pix_copia_e_cola = ""
+    cobranca.qr_code_url = ""
+    cobranca.erro = ""
+    cobranca.save()
     return cobranca
 
 

@@ -10,6 +10,12 @@ urlpatterns = [
     path("cobrar-hoje/", views.CobrarHojeView.as_view(), name="cobrar_hoje"),
     path("pix/", views.PixPainelView.as_view(), name="pix_painel"),
     path("pix/<int:pk>/cancelar/", views.PixCancelarView.as_view(), name="pix_cancelar"),
+    path(
+        "parcela/<int:vencimento_pk>/suspender/",
+        views.CobrancaSuspenderView.as_view(),
+        name="cobranca_suspender",
+    ),
+    path("pix/<int:pk>/retomar/", views.CobrancaRetomarView.as_view(), name="cobranca_retomar"),
     path("historico/", views.HistoricoPagamentosView.as_view(), name="historico"),
     path(
         "comprovante/<int:pk>/",

@@ -1,10 +1,12 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from apps.pagamentos.models import Pagamento
+from apps.pagamentos.models import Cobranca, CobrancaCora, Pagamento
 
 from .forms import ClienteForm
 from .models import Cliente
@@ -36,13 +38,67 @@ class ClienteDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["contratos"] = self.object.contratos.all()
+        contratos = list(self.object.contratos.all())
+        ctx["contratos"] = contratos
+        paineis = [_painel_do_contrato(ct) for ct in contratos]
+        ctx["paineis"] = paineis
+        ctx["avisos"] = [aviso for painel in paineis for aviso in painel["avisos"]]
+        ctx["mensagens"] = Cobranca.objects.filter(contrato__cliente=self.object).select_related(
+            "contrato"
+        )[:10]
         pagamentos = Pagamento.objects.filter(
             contrato__cliente=self.object
         ).select_related("contrato", "vencimento", "usuario_baixa")
         ctx["pagamentos"] = pagamentos[:50]
         ctx["pagamentos_total"] = pagamentos.count()
         return ctx
+
+
+def _painel_do_contrato(contrato) -> dict:
+    """Tudo que a tela do cliente mostra de um contrato: situação, quanto cobrar,
+    estado da cobrança automática da parcela em aberto e os avisos que isso gera."""
+    parcela = contrato.parcela_em_aberto()
+    situacao = contrato.situacao_atraso()
+    pix = getattr(parcela, "cobranca_cora", None) if parcela else None
+    saldo = (parcela.saldo if parcela else contrato.valor_parcela) or Decimal("0.00")
+    juros = situacao.juros if situacao else Decimal("0.00")
+
+    # Cobrança automática: "suspensa" quando o Pix da parcela foi cancelado.
+    if contrato.quitado or parcela is None:
+        automatica = None
+    elif pix and pix.status == CobrancaCora.Status.CANCELADO:
+        automatica = "suspensa"
+    elif pix and pix.status == CobrancaCora.Status.PAGO:
+        automatica = "paga"
+    else:
+        automatica = "ativa"
+
+    avisos = []
+    if situacao and situacao.alertar_bloqueio:
+        avisos.append(
+            ("critico", f"{contrato.apelido}: {situacao.dias_atraso} dias de atraso — hora de bloquear o aparelho (ação manual).")
+        )
+    elif situacao and situacao.dias_atraso:
+        avisos.append(
+            ("atencao", f"{contrato.apelido}: {situacao.dias_atraso} dia(s) de atraso, juros de R$ {situacao.juros}.")
+        )
+    if pix and pix.status == CobrancaCora.Status.ERRO:
+        avisos.append(("critico", f"{contrato.apelido}: o Pix da parcela {parcela.numero} deu erro ao ser gerado."))
+    if automatica == "suspensa":
+        avisos.append(("info", f"{contrato.apelido}: cobrança automática suspensa na parcela {parcela.numero}."))
+
+    return {
+        "contrato": contrato,
+        "situacao": situacao,
+        "parcela": parcela,
+        "pix": pix,
+        "automatica": automatica,
+        "saldo": saldo,
+        "juros": juros,
+        "a_cobrar": saldo + juros,
+        "ultima_mensagem": contrato.cobrancas.first(),
+        "avisos": avisos,
+    }
 
 
 class ClienteCreateView(LoginRequiredMixin, CreateView):
