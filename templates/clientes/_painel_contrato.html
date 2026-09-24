@@ -1,0 +1,78 @@
+{% comment %}
+  Painel de um contrato na tela do cliente: situação, quanto cobrar, ações e o
+  estado da cobrança automática. Recebe `p` (ver `_painel_do_contrato` em
+  apps/clientes/views.py).
+{% endcomment %}
+{% with ct=p.contrato %}
+<section class="painel-contrato row-acento--{{ ct.status_efetivo }}">
+  <header class="painel-contrato__topo">
+    <div>
+      <h3><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></h3>
+      <span class="helptext">{{ ct.aparelho_modelo }} · {{ ct.get_estrutura_display }} · {{ ct.numero_interno }}</span>
+    </div>
+    <span class="pill {{ ct.status_efetivo }}">{{ ct.status_efetivo_label }}</span>
+  </header>
+
+  {% if ct.quitado %}
+    <p class="helptext">Contrato quitado{% if ct.quitado_em %} em {{ ct.quitado_em|date:"d/m/Y" }}{% endif %}.</p>
+  {% else %}
+    <dl class="painel-contrato__dados">
+      <div>
+        <dt>Situação</dt>
+        <dd>
+          {% if p.situacao.dias_atraso %}
+            <span class="{% if p.situacao.alertar_bloqueio %}critical-text{% endif %}">{{ p.situacao.dias_atraso }} dia{{ p.situacao.dias_atraso|pluralize }} de atraso</span>
+          {% elif p.situacao %}Em dia{% else %}—{% endif %}
+        </dd>
+      </div>
+      <div>
+        <dt>Parcela em aberto</dt>
+        <dd class="num">{% if p.parcela %}nº {{ p.parcela.numero }} · vence {{ p.parcela.data_vencimento|date:"d/m/Y" }}{% else %}—{% endif %}</dd>
+      </div>
+      <div>
+        <dt>A cobrar</dt>
+        <dd class="num">
+          {% if p.a_cobrar %}R$ {{ p.a_cobrar }}
+            <span class="helptext">parcela R$ {{ p.saldo }}{% if p.juros %} + juros R$ {{ p.juros }}{% endif %}</span>
+          {% else %}—{% endif %}
+        </dd>
+      </div>
+    </dl>
+
+    <div class="painel-contrato__acoes">
+      <a class="btn" href="{% url 'pagamentos:novo' ct.pk %}">Dar baixa</a>
+      <a class="btn secondary" href="{% url 'contratos:detalhe' ct.pk %}">Ver contrato</a>
+    </div>
+
+    {% if p.automatica %}
+      <div class="cobranca-auto cobranca-auto--{{ p.automatica }}">
+        <div class="cobranca-auto__estado">
+          <strong>Cobrança automática</strong>
+          {% if p.automatica == 'ativa' %}<span class="pill em_dia">Ativa</span>
+          {% elif p.automatica == 'suspensa' %}<span class="pill atrasado">Suspensa</span>
+          {% else %}<span class="pill pago">Parcela paga</span>{% endif %}
+          <span class="helptext">
+            Pix: {% if p.pix %}{{ p.pix.get_status_display|lower }}{% else %}ainda não gerado{% endif %}
+            {% if p.ultima_mensagem %} · última mensagem: {{ p.ultima_mensagem.data_alvo|date:"d/m" }}, {{ p.ultima_mensagem.get_status_display|lower }}{% endif %}
+          </span>
+        </div>
+
+        {% if p.automatica == 'ativa' %}
+          <form method="post" action="{% url 'pagamentos:cobranca_suspender' p.parcela.pk %}"
+                onsubmit="return confirm('Suspender a cobrança automática da parcela {{ p.parcela.numero }} de {{ ct.cliente.nome|escapejs }}? Nenhuma mensagem nem Pix será enviado até você retomar. Se já existe um Pix em aberto, ele é cancelado na Cora.')">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn-cancelar-pix">Suspender cobrança automática</button>
+          </form>
+        {% elif p.automatica == 'suspensa' %}
+          <form method="post" action="{% url 'pagamentos:cobranca_retomar' p.pix.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn secondary">Retomar cobrança automática</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endif %}
+</section>
+{% endwith %}

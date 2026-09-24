@@ -25,7 +25,12 @@ from . import cora_api
 from .agenda import montar_agenda_do_dia
 from .forms import PagamentoForm
 from .models import CobrancaCora, Pagamento, Vencimento
-from .pix_cora import CancelamentoRecusado, cancelar_cobranca
+from .pix_cora import (
+    CancelamentoRecusado,
+    cancelar_cobranca,
+    retomar_cobranca,
+    suspender_cobranca,
+)
 
 
 class CobrarHojeView(LoginRequiredMixin, TemplateView):
@@ -93,12 +98,62 @@ class PixCancelarView(LoginRequiredMixin, View):
                 request,
                 f"Pix da {parcela} cancelado. A cobrança automática dessa parcela ficou suspensa.",
             )
-        destino = request.POST.get("next", "")
-        if not url_has_allowed_host_and_scheme(
-            destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()
-        ):
-            destino = reverse("pagamentos:pix_painel")
-        return redirect(destino)
+        return _voltar_para_origem(request)
+
+
+class CobrancaSuspenderView(LoginRequiredMixin, View):
+    """Suspende a cobrança automática de uma parcela (POST) — com ou sem Pix já
+    gerado. A rotina diária deixa de cobrá-la até alguém retomar."""
+
+    def post(self, request, vencimento_pk):
+        vencimento = get_object_or_404(
+            Vencimento.objects.select_related("contrato__cliente"), pk=vencimento_pk
+        )
+        parcela = f"parcela {vencimento.numero} de {vencimento.contrato.cliente.nome}"
+        try:
+            suspender_cobranca(vencimento)
+        except CancelamentoRecusado as exc:
+            messages.error(request, f"{exc} ({parcela})")
+        except cora_api.CoraErro as exc:
+            messages.error(
+                request, f"Não consegui suspender a cobrança da {parcela}: {exc} Nada foi alterado."
+            )
+        else:
+            messages.success(
+                request,
+                f"Cobrança automática da {parcela} suspensa. Nenhuma mensagem nem Pix será enviado até você retomar.",
+            )
+        return _voltar_para_origem(request)
+
+
+class CobrancaRetomarView(LoginRequiredMixin, View):
+    """Volta a cobrar automaticamente uma parcela suspensa (POST)."""
+
+    def post(self, request, pk):
+        cobranca = get_object_or_404(
+            CobrancaCora.objects.select_related("vencimento__contrato__cliente"), pk=pk
+        )
+        parcela = f"parcela {cobranca.vencimento.numero} de {cobranca.vencimento.contrato.cliente.nome}"
+        try:
+            retomar_cobranca(cobranca)
+        except CancelamentoRecusado as exc:
+            messages.error(request, f"{exc} ({parcela})")
+        else:
+            messages.success(
+                request,
+                f"Cobrança automática da {parcela} retomada. Um novo Pix é gerado na próxima rotina.",
+            )
+        return _voltar_para_origem(request)
+
+
+def _voltar_para_origem(request):
+    """Redireciona para o `next` do formulário — só se for uma página deste site."""
+    destino = request.POST.get("next", "")
+    if not url_has_allowed_host_and_scheme(
+        destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        destino = reverse("pagamentos:pix_painel")
+    return redirect(destino)
 
 
 class PagamentoCreateView(LoginRequiredMixin, CreateView):
