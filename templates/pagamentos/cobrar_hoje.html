@@ -19,14 +19,8 @@
 </div>
 
 {% include "pagamentos/_cobrar_hoje_painel.html" %}
-
-<dialog id="dialog-registrar" class="dialog-registrar" aria-label="Registrar pagamento">
-  <div id="dialog-registrar-corpo"></div>
-</dialog>
 {% endblock %}
 
 {% block scripts %}
   <script src="{% static 'js/filtros.js' %}"></script>
-  <script src="{% static 'js/htmx.min.js' %}"></script>
-  <script src="{% static 'js/cobrar_hoje.js' %}"></script>
 {% endblock %}

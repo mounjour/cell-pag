@@ -413,6 +413,35 @@ def test_tela_do_cliente_mostra_suspender_e_depois_retomar(auth_client, parcela_
 
 
 @pytest.mark.django_db
+def test_cobrar_hoje_so_mostra_avisos_e_status_e_leva_ao_cliente(auth_client, parcela_cora, settings):
+    settings.CORA_PROVIDER = "log"
+    cliente_pk = parcela_cora.contrato.cliente_id
+    corpo = auth_client.get(reverse("pagamentos:cobrar_hoje")).content.decode()
+
+    # a ação principal da linha é abrir o cliente; ligar e WhatsApp continuam à mão
+    assert reverse("clientes:detalhe", args=[cliente_pk]) in corpo
+    assert "Abrir cliente" in corpo
+    assert 'href="tel:+5583999994444"' in corpo
+    assert "wa.me" in corpo
+    # baixa, cancelar/suspender cobrança e o diálogo de registrar foram para a tela do cliente
+    assert reverse("pagamentos:novo", args=[parcela_cora.contrato_id]) not in corpo
+    assert "dialog-registrar" not in corpo
+    assert "Cancelar Pix" not in corpo
+    assert "Suspender cobrança" not in corpo
+
+
+@pytest.mark.django_db
+def test_cobrar_hoje_sinaliza_cobranca_suspensa(auth_client, parcela_cora, settings):
+    settings.CORA_PROVIDER = "log"
+    CobrancaCora.objects.create(
+        vencimento=parcela_cora, valor=Decimal("100.00"), data_vencimento=parcela_cora.data_vencimento,
+        status=CobrancaCora.Status.CANCELADO,
+    )
+    corpo = auth_client.get(reverse("pagamentos:cobrar_hoje")).content.decode()
+    assert "Suspensa" in corpo
+
+
+@pytest.mark.django_db
 def test_confirmacao_cora_da_baixa_automatica(parcela_cora, monkeypatch):
     cobranca = CobrancaCora.objects.create(
         vencimento=parcela_cora,
