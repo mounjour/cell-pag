@@ -8,6 +8,12 @@
         onsubmit="return confirm('Cancelar o Pix da parcela {{ pix.vencimento.numero }} de {{ pix.vencimento.contrato.cliente.nome|escapejs }}? O QR code enviado deixa de valer e a cobrança automática dessa parcela fica suspensa.')">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
-    <button type="submit" class="btn-cancelar-pix">Cancelar Pix</button>
+    <button type="submit" class="btn-cancelar-pix">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="m6 6 12 12"/>
+      </svg>
+      <span>Cancelar Pix</span>
+    </button>
   </form>
 {% endif %}
