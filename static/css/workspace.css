@@ -77,6 +77,25 @@ h2 { font-weight: 600; }
 .painel-graficos .card h2 { padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
 .btn { font-weight: 600; box-shadow: none; }
 .btn-registrar { box-shadow: none; }
+.btn-cancelar-pix {
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--critical-ink) 28%, var(--surface));
+  background: color-mix(in srgb, var(--critical-wash) 55%, var(--surface));
+  color: var(--critical-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn-cancelar-pix svg { flex: none; }
+.btn-cancelar-pix:hover {
+  background: var(--critical-wash);
+  border-color: var(--critical-ink);
+  text-decoration: none;
+}
+.btn-cancelar-pix:focus-visible { outline-color: var(--critical-ink); }
+.btn-cancelar-pix:disabled { opacity: 0.5; cursor: not-allowed; }
 th { background: var(--surface-2); font-weight: 600; padding-block: 1rem; }
 tbody tr:nth-child(even) td { background: var(--surface); }
 tbody tr:hover td { background: var(--accent-wash); }
@@ -138,13 +157,13 @@ tbody tr:hover td { background: var(--accent-wash); }
   main.wrap { animation: page-enter 220ms ease-out; }
   /* A entrada global substitui a sequência antiga exclusiva do painel. */
   .painel-entrada > * { animation: none; }
-  .nav a, .logout .linkish {
+  .nav a, .logout .linkish, .btn-cancelar-pix {
     transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
   }
   .meta > div, .card, .tbl-wrap, .form-page, .report-filter {
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   }
-  .nav a:active, .btn:active { transform: scale(0.98); }
+  .nav a:active, .btn:active, .btn-cancelar-pix:active { transform: scale(0.98); }
   .logout .linkish:hover { background: var(--accent-wash); text-decoration: none; }
   @media (hover: hover) and (pointer: fine) {
     .nav a:hover { transform: translateX(2px); }
