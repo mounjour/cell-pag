@@ -45,35 +45,55 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
         "juros": _moeda(juros),
         "chave_pix": chave_pix,
     }
-    juros_txt = (
-        f" (+ R$ {base['juros']} de juros pelo atraso — isso a gente combina à parte)"
-        if juros
-        else ""
-    )
+    # WhatsApp: *texto* é negrito e "\n" é quebra de linha. O código copia-e-cola
+    # NÃO vai nesta mensagem: é longo, tem espaços no meio (nome do recebedor) e
+    # o WhatsApp quebra a linha neles, o que atrapalha copiar. Ele segue sozinho
+    # numa mensagem à parte (ver `processar_cobrancas`), que o cliente copia com
+    # um toque. Um código Pix de verdade tem bem mais de 40 caracteres; abaixo
+    # disso é a chave configurada (e-mail, telefone...) ou o "a combinar".
+    base["codigo_pix"] = chave_pix if len(chave_pix) > 40 else None
+    if base["codigo_pix"]:
+        bloco_pix = "*Pix copia e cola:* copie o código da mensagem abaixo ⬇️"
+    else:
+        bloco_pix = f"*Chave Pix:* {chave_pix}"
+    linha_valor = f"💰 *Parcela: R$ {base['parcela']}*"
+    if juros:
+        linha_valor += (
+            f"\n➕ Juros pelo atraso: R$ {base['juros']} (isso a gente combina à parte)"
+        )
     if situacao.alertar_bloqueio:
         base.update(
             mensagem=(
-                f"Oi, {base['nome']}! A parcela {numero} do seu {base['aparelho']} está "
-                f"com {base['dias']} dias de atraso. Preciso que seja regularizada hoje para "
-                f"evitar o bloqueio do aparelho. Parcela: R$ {base['parcela']} - "
-                f"Pix ({chave_pix}){juros_txt}. Me chama se precisar de ajuda pra resolver."
+                f"Olá, {base['nome']}! 👋\n\n"
+                f"A parcela {numero} do seu {base['aparelho']} está com "
+                f"{base['dias']} dias de atraso.\n\n"
+                f"⚠️ Preciso que seja regularizada *hoje* para evitar o bloqueio do aparelho.\n\n"
+                f"{linha_valor}\n\n"
+                f"{bloco_pix}\n\n"
+                f"Me chama se precisar de ajuda pra resolver."
             ),
         )
     elif situacao.dias_atraso:
         base.update(
             mensagem=(
-                f"Oi, {base['nome']}! A parcela {numero} do seu {base['aparelho']}, que venceu "
-                f"em {base['data']}, está em aberto ({base['dias']} dia(s) de atraso). "
-                f"Assim que der, faz o Pix de R$ {base['parcela']} "
-                f"({chave_pix}){juros_txt} e me envia o comprovante. Se já pagou, é só desconsiderar."
+                f"Oi, {base['nome']}! 👋\n\n"
+                f"A parcela {numero} do seu {base['aparelho']}, que venceu em {base['data']}, "
+                f"está em aberto ({base['dias']} dia(s) de atraso).\n\n"
+                f"{linha_valor}\n\n"
+                f"{bloco_pix}\n\n"
+                f"Assim que der, faz o Pix e me envia o comprovante. "
+                f"Se já pagou, é só desconsiderar. 🙏"
             ),
         )
     else:
         base.update(
             mensagem=(
-                f"Oi, {base['nome']}! Passando pra lembrar que hoje ({base['data']}) vence a "
-                f"parcela {numero} do seu {base['aparelho']}, no valor de R$ {base['parcela']}. "
-                f"Você pode pagar via Pix ({chave_pix}) e me mandar o comprovante por aqui."
+                f"Oi, {base['nome']}! 👋\n\n"
+                f"Passando pra lembrar que hoje ({base['data']}) vence a parcela {numero} "
+                f"do seu {base['aparelho']}.\n\n"
+                f"{linha_valor}\n\n"
+                f"{bloco_pix}\n\n"
+                f"Depois é só me mandar o comprovante por aqui. 😊"
             ),
         )
     base["vencimento"] = vencimento
@@ -153,6 +173,16 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             cobranca.erro = ""
             cobranca.enviado_em = timezone.now()
             resultado["enviadas"] += 1
+            # Copia-e-cola sozinho, por último: é a mensagem que o cliente toca e
+            # segura para copiar. Se só ele falhar, a cobrança principal já saiu
+            # (o cliente tem o QR) — registra o aviso sem marcar como erro, para
+            # o retry não reenviar tudo de novo.
+            if dados["codigo_pix"]:
+                try:
+                    enviar_mensagem(destinatario=destinatario, texto=dados["codigo_pix"])
+                except WhatsAppErro as exc:
+                    cobranca.erro = f"Copia-e-cola não enviado: {exc}"
+                    logger.warning("Copia-e-cola da cobrança %s não enviado: %s", cobranca.pk, exc)
 
         cobranca.save()
 
