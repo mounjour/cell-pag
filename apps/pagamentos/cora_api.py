@@ -91,6 +91,11 @@ def consultar_fatura(cora_id: str) -> dict:
     return _requisicao_api(f"/v2/invoices/{urllib.parse.quote(cora_id)}", metodo="GET")
 
 
+def cancelar_fatura(cora_id: str) -> dict:
+    """Cancela uma fatura em aberto (DELETE /v2/invoices/{id})."""
+    return _requisicao_api(f"/v2/invoices/{urllib.parse.quote(cora_id)}", metodo="DELETE")
+
+
 def _requisicao_api(caminho, *, metodo, payload=None, cabecalhos=None, repetir_401=True):
     config = _configuracao()
     url = config["CORA_API_BASE_URL"].rstrip("/") + caminho

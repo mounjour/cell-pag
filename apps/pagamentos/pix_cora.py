@@ -81,6 +81,48 @@ def sincronizar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
     return cobranca
 
 
+class CancelamentoRecusado(Exception):
+    """A fatura não pode ser cancelada (ex.: já foi paga)."""
+
+
+def cancelar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
+    """Cancela o Pix de uma parcela — na Cora e no nosso banco.
+
+    Serve para quando o cliente vai pagar por outro meio, a parcela é renegociada
+    ou a cobrança foi criada por engano: sem isso o QR continuaria valendo e o
+    cliente poderia pagar duas vezes.
+
+    Nunca cancela fatura já paga (levanta `CancelamentoRecusado`). Antes de
+    cancelar, consulta a Cora, porque o pagamento pode ter acontecido há pouco e
+    ainda não estar refletido aqui. Depois de cancelada, o QR e o copia-e-cola
+    guardados são apagados — o código deixou de valer, e a rotina de cobrança não
+    pode reenviá-lo ao cliente. Falha de comunicação com a Cora propaga como
+    `cora_api.CoraErro` e deixa o registro como estava.
+    """
+    if cobranca.status == CobrancaCora.Status.CANCELADO:
+        return cobranca
+    if cobranca.status == CobrancaCora.Status.PAGO:
+        raise CancelamentoRecusado("Este Pix já foi pago e não pode ser cancelado.")
+
+    if cobranca.cora_id and settings.CORA_PROVIDER == "cora":
+        sincronizar_cobranca(cobranca)  # pode descobrir que já foi paga (e dar a baixa)
+        if cobranca.status == CobrancaCora.Status.PAGO:
+            raise CancelamentoRecusado("Este Pix acabou de ser pago e não pode ser cancelado.")
+        if cobranca.status != CobrancaCora.Status.CANCELADO:
+            cora_api.cancelar_fatura(cobranca.cora_id)
+            sincronizar_cobranca(cobranca)
+            if cobranca.status != CobrancaCora.Status.CANCELADO:
+                raise cora_api.CoraErro(
+                    f"A Cora não confirmou o cancelamento (status {cobranca.get_status_display()})."
+                )
+    cobranca.status = CobrancaCora.Status.CANCELADO
+    cobranca.pix_copia_e_cola = ""
+    cobranca.qr_code_url = ""
+    cobranca.erro = ""
+    cobranca.save(update_fields=["status", "pix_copia_e_cola", "qr_code_url", "erro", "atualizado_em"])
+    return cobranca
+
+
 @transaction.atomic
 def _aplicar_resposta(cobranca: CobrancaCora, resposta: dict) -> None:
     status = STATUS_CORA.get(str(resposta.get("status", "")).upper())
