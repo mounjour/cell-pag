@@ -132,7 +132,7 @@ LOGOUT_REDIRECT_URL = "usuarios:login"
 # django-axes intercepta a autenticação antes do backend padrão do Django.
 AUTHENTICATION_BACKENDS = [
     "axes.backends.AxesStandaloneBackend",
-    "django.contrib.auth.backends.ModelBackend",
+    "apps.usuarios.backends.UsuarioOuEmailBackend",
 ]
 
 # Lockout de força-bruta no login. Trava a combinação usuário+IP: mesmo que o

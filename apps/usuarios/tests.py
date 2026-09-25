@@ -127,6 +127,49 @@ def test_login_valido_dentro_do_limite(client, django_user_model, settings):
     assert entrou.status_code == 302
 
 
+# ---------- Login por usuário OU e-mail ----------
+
+@pytest.mark.django_db
+def test_login_por_email_funciona(client, django_user_model):
+    django_user_model.objects.create_user("op4", password=_SENHA, email="op4@exemplo.com")
+    resp = client.post(_LOGIN_URL, {"username": "op4@exemplo.com", "password": _SENHA})
+    assert resp.status_code == 302
+
+
+@pytest.mark.django_db
+def test_login_por_email_ignora_maiusculas(client, django_user_model):
+    django_user_model.objects.create_user("op5", password=_SENHA, email="Op5@Exemplo.com")
+    resp = client.post(_LOGIN_URL, {"username": "OP5@EXEMPLO.COM", "password": _SENHA})
+    assert resp.status_code == 302
+
+
+@pytest.mark.django_db
+def test_login_continua_funcionando_por_username(client, django_user_model):
+    django_user_model.objects.create_user("op6", password=_SENHA, email="op6@exemplo.com")
+    resp = client.post(_LOGIN_URL, {"username": "op6", "password": _SENHA})
+    assert resp.status_code == 302
+
+
+@pytest.mark.django_db
+def test_login_email_de_outro_usuario_nao_cola_com_senha_errada(client, django_user_model):
+    django_user_model.objects.create_user("op7", password=_SENHA, email="op7@exemplo.com")
+    resp = client.post(_LOGIN_URL, {"username": "op7@exemplo.com", "password": "errada-123"})
+    assert resp.status_code == 200
+    assert "Usuário ou senha inválidos" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_login_email_inexistente_nao_quebra(client, django_user_model):
+    resp = client.post(_LOGIN_URL, {"username": "ninguem@exemplo.com", "password": _SENHA})
+    assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_rotulo_do_campo_convida_a_usar_email(client):
+    corpo = client.get(_LOGIN_URL).content.decode()
+    assert "Usuário ou e-mail" in corpo
+
+
 # ---------- Content-Security-Policy ----------
 
 @pytest.mark.django_db
