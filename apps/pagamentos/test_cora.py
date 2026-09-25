@@ -400,7 +400,7 @@ def test_tela_do_cliente_mostra_suspender_e_depois_retomar(auth_client, parcela_
     url = reverse("clientes:detalhe", args=[parcela_cora.contrato.cliente_id])
     corpo = auth_client.get(url).content.decode()
     assert reverse("pagamentos:cobranca_suspender", args=[parcela_cora.pk]) in corpo
-    assert "Dar baixa" in corpo
+    assert "Registrar pagamento" in corpo
 
     cobranca = CobrancaCora.objects.create(
         vencimento=parcela_cora, valor=Decimal("100.00"), data_vencimento=parcela_cora.data_vencimento,

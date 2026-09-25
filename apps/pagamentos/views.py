@@ -209,6 +209,8 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         # repassado pra próxima (ver Contrato.parcela_em_aberto). Distingue
         # esse caso de "não há mais nada a cobrar" no template.
         ctx["pode_registrar"] = ctx["form"].fields["vencimento"].queryset.exists()
+        situacao = self.contrato.situacao_atraso()
+        ctx["juros_ate_hoje"] = situacao.juros if situacao else None
         return ctx
 
     def form_invalid(self, form):
@@ -226,16 +228,21 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         pagamento.registrar()
         self.object = pagamento
 
+        if pagamento.juros_pago:
+            juros_fmt = f"{pagamento.juros_pago:.2f}".replace(".", ",")
+            juros_txt = f" + R$ {juros_fmt} de juros"
+        else:
+            juros_txt = ""
         venc = pagamento.vencimento
         if venc is not None:
             venc.refresh_from_db()
             messages.success(
                 self.request,
-                f"Baixa registrada na parcela {venc.numero} — agora "
+                f"Pagamento registrado na parcela {venc.numero}{juros_txt} — agora "
                 f"{venc.get_status_display().lower()}.",
             )
         else:
-            messages.success(self.request, "Pagamento registrado.")
+            messages.success(self.request, f"Pagamento registrado{juros_txt}.")
 
         self._avisar_se_tudo_pago()
 

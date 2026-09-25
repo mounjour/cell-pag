@@ -12,7 +12,7 @@
   <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th class="num">Data</th><th>Cliente</th><th>Contrato</th><th>Parcela</th><th class="num">Valor</th><th>Forma</th><th>Baixa</th></tr>
+        <tr><th class="num">Data</th><th>Cliente</th><th>Contrato</th><th>Parcela</th><th class="num">Valor</th><th class="num">Juros</th><th>Forma</th><th>Baixa</th></tr>
       </thead>
       <tbody>
         {% for p in pagamentos %}
@@ -22,6 +22,7 @@
             <td data-label="Contrato"><a href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.apelido }}</a></td>
             <td data-label="Parcela">{% if p.vencimento %}nº {{ p.vencimento.numero }}{% else %}—{% endif %}</td>
             <td class="num" data-label="Valor">R$ {{ p.valor_pago }}</td>
+            <td class="num" data-label="Juros">{% if p.juros_pago %}R$ {{ p.juros_pago }}{% else %}—{% endif %}</td>
             <td data-label="Forma">{{ p.get_forma_display }}</td>
             <td data-label="Baixa">{{ p.usuario_baixa|default:"—" }} · {{ p.criado_em|date:"d/m/Y H:i" }}</td>
           </tr>

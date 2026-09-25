@@ -1,5 +1,7 @@
 """Formulário de baixa de pagamento (Fase 3)."""
 
+from decimal import Decimal
+
 from django import forms
 from django.utils import timezone
 
@@ -10,17 +12,36 @@ from .models import Pagamento, Vencimento
 
 class PagamentoForm(forms.ModelForm):
     # Dinheiro entra como texto para aceitar vírgula decimal (mesmo padrão do
-    # ContratoForm); convertido em clean_valor_pago.
+    # ContratoForm); convertido em clean_valor_pago / clean_juros_pago.
     valor_pago = forms.CharField(
-        label="Valor pago",
+        label="Valor da parcela recebido",
         widget=forms.TextInput(
             attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}
+        ),
+    )
+    juros_pago = forms.CharField(
+        label="Juros recebidos (opcional)",
+        required=False,
+        widget=forms.TextInput(
+            attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}
+        ),
+        help_text=(
+            "Só preencha se o cliente pagou o juros do atraso junto. Fica "
+            "registrado à parte — não altera o valor da parcela nem da próxima."
         ),
     )
 
     class Meta:
         model = Pagamento
-        fields = ["vencimento", "data_pagamento", "valor_pago", "forma", "comprovante", "observacao"]
+        fields = [
+            "vencimento",
+            "data_pagamento",
+            "valor_pago",
+            "juros_pago",
+            "forma",
+            "comprovante",
+            "observacao",
+        ]
         widgets = {
             "data_pagamento": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "observacao": forms.Textarea(attrs={"rows": 2, "placeholder": "Opcional"}),
@@ -47,6 +68,7 @@ class PagamentoForm(forms.ModelForm):
             primeira = abertas.first()
             self.initial.setdefault("vencimento", primeira.pk)
             self.initial.setdefault("valor_pago", _formata_moeda(primeira.saldo))
+            self.initial.setdefault("juros_pago", "0,00")
             self.initial.setdefault("data_pagamento", timezone.localdate())
 
     @staticmethod
@@ -60,6 +82,15 @@ class PagamentoForm(forms.ModelForm):
         valor = moeda_para_decimal(self.cleaned_data.get("valor_pago"))
         if valor is None or valor <= 0:
             raise forms.ValidationError("Informe um valor pago maior que zero.")
+        return valor
+
+    def clean_juros_pago(self):
+        bruto = self.cleaned_data.get("juros_pago")
+        if not bruto:
+            return Decimal("0.00")
+        valor = moeda_para_decimal(bruto)
+        if valor is None or valor < 0:
+            raise forms.ValidationError("Informe um valor de juros válido (ou deixe em branco).")
         return valor
 
     def clean_data_pagamento(self):
