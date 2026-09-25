@@ -38,10 +38,23 @@ def _gerar_parcelas_ao_salvar(request, contrato):
     if contrato.quitado or contrato.valor_parcela is None:
         return
     novos = contrato.gerar_vencimentos()
+    removidas = contrato.podar_vencimentos_excedentes()
     contrato.atualizar_data_prevista_quitacao()
     contrato.sincronizar_status()
     if novos:
         messages.info(request, f"{len(novos)} parcela(s) gerada(s) automaticamente.")
+    if removidas:
+        messages.info(
+            request,
+            f"Nº de parcelas reduzido: {len(removidas)} parcela(s) além do novo "
+            f"total ({contrato.num_parcelas}) foram removidas automaticamente.",
+        )
+    elif removidas is None:
+        messages.warning(
+            request,
+            "O nº de parcelas foi reduzido, mas há parcela além dele com pagamento "
+            "ou Pix já gerado — nada foi apagado. Revise as parcelas na mão.",
+        )
 
 
 class ContratoListView(LoginRequiredMixin, ListView):
