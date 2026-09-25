@@ -162,6 +162,27 @@ tbody tr:hover td { background: var(--accent-wash); }
   .cobranca-auto { padding: 0.85rem; }
 }
 /* Menu recolhível até haver espaço real para a navegação completa. */
+.user-menu { display: none; }
+@media (max-width: 1099px) {
+  .app-shell .nav-toggle { order: -1; }
+  .app-shell .logout--desktop { display: none; }
+  .user-menu { display: block; position: relative; order: 2; margin-left: auto; flex: none; }
+  .user-menu > summary {
+    display: flex; align-items: center; gap: 0.4rem; min-height: var(--tap);
+    padding: 0.25rem 0.4rem; border-radius: var(--radius-sm);
+    list-style: none; cursor: pointer; color: var(--ink-soft);
+  }
+  .user-menu > summary::-webkit-details-marker { display: none; }
+  .user-menu > summary:hover, .user-menu[open] > summary { background: var(--accent-wash); }
+  .user-menu[open] .user-menu-chevron { transform: rotate(180deg); }
+  .user-menu-panel {
+    position: absolute; right: 0; top: calc(100% + 8px); z-index: 30;
+    width: 160px; margin: 0; padding: 6px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--raise-hover);
+  }
+  .user-menu-panel .linkish { display: block; width: 100%; min-height: var(--tap); padding: 0.6rem 0.8rem; text-align: left; border-radius: 6px; }
+  .user-menu-panel .linkish:hover { background: var(--accent-wash); }
+}
 @media (min-width: 640px) and (max-width: 1099px) {
   .app-shell .topbar { flex-wrap: wrap; gap: 0.5rem 1rem; }
   .app-shell .brand { flex: 1; }
@@ -172,6 +193,13 @@ tbody tr:hover td { background: var(--accent-wash); }
   .app-shell .nav-toggle-input:checked ~ .nav { display: flex; }
 }
 @media (max-width: 639px) {
+  .app-shell .topbar { display: grid; grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr); column-gap: 0.5rem; }
+  .app-shell .nav-toggle { grid-column: 1; grid-row: 1; justify-self: start; }
+  .app-shell .brand { grid-column: 2; grid-row: 1; justify-self: center; justify-content: center; overflow: hidden; }
+  .app-shell .brand-mark { display: none; }
+  .app-shell .user-menu { grid-column: 3; grid-row: 1; justify-self: end; margin-left: 0; min-width: 0; }
+  .app-shell .user-menu .user-name { display: none; }
+  .app-shell .nav { grid-column: 1 / -1; grid-row: 2; }
   .user-name { max-width: 64px; }
   .nav { visibility: hidden; }
   .nav-toggle-input:checked ~ .nav { visibility: visible; }
