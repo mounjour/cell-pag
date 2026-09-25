@@ -22,6 +22,39 @@
   <a class="btn" href="{% url 'contratos:novo' %}?cliente={{ cliente.pk }}">Novo contrato</a>
 </div>
 
+{% if not cliente.ativo %}
+  <p class="note">
+    <strong>Cliente arquivado.</strong> Some da lista principal, mas o cadastro e o histórico continuam aqui.
+    <form method="post" action="{% url 'clientes:reativar' cliente.pk %}" style="display:inline">
+      {% csrf_token %}
+      <button type="submit" class="linkish">Reativar</button>
+    </form>
+  </p>
+{% elif cliente.todos_contratos_quitados %}
+  <div class="note">
+    <strong>Todos os contratos deste cliente estão quitados.</strong>
+    Não há mais nada a cobrar. Você pode arquivar o cadastro — ele some da lista
+    principal, mas o histórico de pagamentos continua guardado.
+    <div class="form-actions" style="margin-top:0.6rem">
+      <form method="post" action="{% url 'clientes:arquivar' cliente.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn secondary">Arquivar cliente</button>
+      </form>
+    </div>
+  </div>
+{% elif cliente.pode_ser_excluido %}
+  <div class="note">
+    <strong>Este cliente ainda não tem nenhum contrato.</strong>
+    <div class="form-actions" style="margin-top:0.6rem">
+      <form method="post" action="{% url 'clientes:excluir' cliente.pk %}"
+            onsubmit="return confirm('Excluir {{ cliente.nome|escapejs }}? Essa ação não pode ser desfeita.')">
+        {% csrf_token %}
+        <button type="submit" class="btn-cancelar-pix">Excluir cadastro</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
 {% if avisos %}
   <ul class="avisos" aria-label="Avisos deste cliente">
     {% for nivel, texto in avisos %}
@@ -79,7 +112,7 @@
   <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th class="num">Data</th><th>Contrato</th><th>Parcela</th><th class="num">Valor</th><th>Forma</th></tr>
+        <tr><th class="num">Data</th><th>Contrato</th><th>Parcela</th><th class="num">Valor</th><th class="num">Juros</th><th>Forma</th></tr>
       </thead>
       <tbody>
         {% for p in pagamentos %}
@@ -88,6 +121,7 @@
             <td data-label="Contrato"><a href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.apelido }}</a></td>
             <td data-label="Parcela">{% if p.vencimento %}nº {{ p.vencimento.numero }}{% else %}—{% endif %}</td>
             <td class="num" data-label="Valor">R$ {{ p.valor_pago }}</td>
+            <td class="num" data-label="Juros">{% if p.juros_pago %}R$ {{ p.juros_pago }}{% else %}—{% endif %}</td>
             <td data-label="Forma">{{ p.get_forma_display }}</td>
           </tr>
         {% endfor %}

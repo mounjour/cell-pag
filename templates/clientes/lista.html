@@ -2,15 +2,21 @@
 {% block title %}Clientes{% endblock %}
 
 {% block content %}
-<h1>Clientes</h1>
+<h1>{% if arquivados %}Clientes arquivados{% else %}Clientes{% endif %}</h1>
 
 <div class="toolbar">
   <form method="get">
+    {% if arquivados %}<input type="hidden" name="arquivados" value="1">{% endif %}
     <input type="search" name="q" value="{{ busca }}" placeholder="Buscar por nome ou CPF">
     <button class="btn secondary" type="submit">Buscar</button>
   </form>
   <span class="spacer"></span>
-  <a class="btn" href="{% url 'clientes:novo' %}">Novo cliente</a>
+  {% if arquivados %}
+    <a class="btn secondary" href="{% url 'clientes:lista' %}">Ver ativos</a>
+  {% else %}
+    <a class="btn secondary" href="?arquivados=1">Ver arquivados</a>
+    <a class="btn" href="{% url 'clientes:novo' %}">Novo cliente</a>
+  {% endif %}
 </div>
 
 {% if clientes %}
