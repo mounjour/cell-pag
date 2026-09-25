@@ -17,6 +17,7 @@ não tem vencimentos gerados.
 """
 
 import datetime
+import math
 from decimal import Decimal
 
 from django.conf import settings
@@ -214,6 +215,24 @@ class Contrato(models.Model):
         if novos:
             Vencimento.objects.bulk_create(novos)
         return novos
+
+    def calcular_num_parcelas(self, *, salvar: bool = True) -> bool:
+        """Preenche ``num_parcelas`` = ``valor_total ÷ valor_parcela`` (arredondado
+        para cima — a última parcela pode ficar menor), do mesmo jeito que
+        ``atualizar_data_prevista_quitacao()`` deriva a data final a partir do
+        início.
+
+        Só age quando ``num_parcelas`` ainda **não foi informado**: não
+        sobrescreve um ajuste manual (ex.: parcela final combinada à parte com
+        o cliente). Sem ``valor_parcela`` não há o que calcular. Devolve
+        ``True`` se preencheu.
+        """
+        if self.num_parcelas or not self.valor_parcela or self.valor_parcela <= 0:
+            return False
+        self.num_parcelas = math.ceil(self.valor_total / self.valor_parcela)
+        if salvar:
+            self.save(update_fields=["num_parcelas", "atualizado_em"])
+        return True
 
     def atualizar_data_prevista_quitacao(self, salvar: bool = True) -> bool:
         """Recalcula ``data_prevista_quitacao`` (= data da parcela nº

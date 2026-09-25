@@ -124,6 +124,84 @@ def test_pagamento_a_maior_cascateia_pelas_proximas(cliente):
     assert ct.vencimentos.get(numero=4).valor_previsto == Decimal("40.00")
 
 
+# ── juros_pago: registro à parte, nunca mexe na parcela seguinte ────────────
+# Antes, quem pagasse a parcela + o juros do atraso no mesmo valor via a
+# diferença "abatendo" a próxima parcela (tratada como crédito) — o juros não
+# é adiantamento, é compensação pelo atraso já vencido. Por isso agora tem
+# campo próprio, fora de `valor_pago`.
+
+@pytest.mark.django_db
+def test_juros_pago_nao_afeta_a_parcela_nem_a_proxima(cliente):
+    ct = _contrato_com_parcelas(cliente)
+    _baixa(ct, 1, "40.00", juros_pago=Decimal("15.00"))  # parcela + 3 dias de juros
+
+    v1 = ct.vencimentos.get(numero=1)
+    v2 = ct.vencimentos.get(numero=2)
+    assert v1.status == Vencimento.Status.PAGO
+    assert v1.valor_pago == Decimal("40.00")  # só a parcela — juros não entra aqui
+    assert v2.valor_previsto == Decimal("40.00")  # intacta, sem "crédito" dos juros
+    ct.refresh_from_db()
+    assert ct.saldo_transportado == Decimal("0.00")
+
+
+@pytest.mark.django_db
+def test_juros_pago_fica_registrado_no_pagamento(cliente):
+    ct = _contrato_com_parcelas(cliente)
+    pag = _baixa(ct, 1, "40.00", juros_pago=Decimal("15.00"))
+    pag.refresh_from_db()
+    assert pag.juros_pago == Decimal("15.00")
+
+
+@pytest.mark.django_db
+def test_juros_pago_e_opcional_e_default_zero(cliente):
+    ct = _contrato_com_parcelas(cliente)
+    pag = _baixa(ct, 1, "40.00")
+    assert pag.juros_pago == Decimal("0.00")
+
+
+@pytest.mark.django_db
+def test_form_registra_pagamento_com_juros_separado(auth_client, cliente):
+    ct = _contrato_com_parcelas(cliente)
+    v1 = ct.vencimentos.get(numero=1)
+    resp = auth_client.post(
+        reverse("pagamentos:novo", args=[ct.pk]),
+        {
+            "vencimento": v1.pk,
+            "data_pagamento": "2026-02-20",
+            "valor_pago": "40,00",
+            "juros_pago": "15,00",
+            "forma": Pagamento.Forma.PIX,
+            "observacao": "",
+        },
+        follow=True,
+    )
+    assert resp.status_code == 200
+    pag = Pagamento.objects.get(vencimento=v1)
+    assert pag.valor_pago == Decimal("40.00")
+    assert pag.juros_pago == Decimal("15.00")
+    assert "R$ 15,00 de juros" in resp.content.decode()
+    v2 = ct.vencimentos.get(numero=2)
+    assert v2.valor_previsto == Decimal("40.00")  # não foi tocada
+
+
+@pytest.mark.django_db
+def test_form_sem_juros_preenchido_grava_zero(auth_client, cliente):
+    ct = _contrato_com_parcelas(cliente)
+    v1 = ct.vencimentos.get(numero=1)
+    auth_client.post(
+        reverse("pagamentos:novo", args=[ct.pk]),
+        {
+            "vencimento": v1.pk,
+            "data_pagamento": "2026-02-20",
+            "valor_pago": "40,00",
+            "juros_pago": "",
+            "forma": Pagamento.Forma.PIX,
+            "observacao": "",
+        },
+    )
+    assert Pagamento.objects.get(vencimento=v1).juros_pago == Decimal("0.00")
+
+
 @pytest.mark.django_db
 def test_gerar_vencimentos_drena_saldo_transportado(cliente):
     ct = _contrato(cliente, num_parcelas=5)

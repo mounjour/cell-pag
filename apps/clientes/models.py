@@ -33,6 +33,14 @@ class Cliente(models.Model):
     )
     telefone_whatsapp = PhoneNumberField("telefone / WhatsApp", region="BR")
     endereco = models.CharField("endereço", max_length=255, blank=True)
+    ativo = models.BooleanField(
+        "ativo",
+        default=True,
+        help_text=(
+            "Desmarcado = arquivado (some da lista principal, mas o cadastro e o "
+            "histórico de contratos/pagamentos continuam intactos)."
+        ),
+    )
 
     criado_em = models.DateTimeField("criado em", auto_now_add=True)
     atualizado_em = models.DateTimeField("atualizado em", auto_now=True)
@@ -82,3 +90,18 @@ class Cliente(models.Model):
     @property
     def contratos_ativos(self):
         return self.contratos.exclude(status=self.contratos.model.Status.QUITADO)
+
+    @property
+    def pode_ser_excluido(self) -> bool:
+        """Só dá para apagar de vez um cliente sem nenhum contrato — com
+        contrato (mesmo quitado) o banco protege o histórico financeiro
+        (``on_delete=PROTECT`` em Contrato → Cliente). Para esses casos, a
+        ação correta é arquivar (ver `ativo`), não excluir."""
+        return not self.contratos.exists()
+
+    @property
+    def todos_contratos_quitados(self) -> bool:
+        """True quando o cliente tem pelo menos 1 contrato e todos estão
+        quitados — momento de avisar que dá pra arquivar o cadastro."""
+        contratos = list(self.contratos.all())
+        return bool(contratos) and all(ct.quitado for ct in contratos)

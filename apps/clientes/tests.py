@@ -109,3 +109,87 @@ def test_editar_cliente(auth_client):
     c.refresh_from_db()
     assert c.nome == "Nome Novo"
     assert c.endereco == "Rua 1"
+
+
+# ---------- Arquivar / reativar / excluir ----------
+
+def _contrato_quitado(cliente):
+    import datetime
+
+    return Contrato.objects.create(
+        cliente=cliente,
+        apelido="iPhone 11",
+        aparelho_modelo="iPhone 11",
+        valor_total="400.00",
+        estrutura=Contrato.Estrutura.MENSAL,
+        data_inicio=datetime.date(2026, 1, 1),
+        status=Contrato.Status.QUITADO,
+    )
+
+
+@pytest.mark.django_db
+def test_cliente_novo_comeca_ativo():
+    c = novo_cliente()
+    assert c.ativo is True
+
+
+@pytest.mark.django_db
+def test_lista_esconde_arquivados_por_padrao(auth_client):
+    ativo = novo_cliente(nome="Ativa")
+    arquivado = novo_cliente(nome="Arquivada", ativo=False)
+    nomes = {c.nome for c in auth_client.get(reverse("clientes:lista")).context["clientes"]}
+    assert nomes == {"Ativa"}
+    nomes_arquivados = {
+        c.nome for c in auth_client.get(reverse("clientes:lista"), {"arquivados": "1"}).context["clientes"]
+    }
+    assert nomes_arquivados == {"Arquivada"}
+
+
+@pytest.mark.django_db
+def test_arquivar_e_reativar_cliente(auth_client):
+    c = novo_cliente()
+    resp = auth_client.post(reverse("clientes:arquivar", args=[c.pk]), follow=True)
+    c.refresh_from_db()
+    assert c.ativo is False
+    assert "arquivado" in resp.content.decode().lower()
+
+    resp = auth_client.post(reverse("clientes:reativar", args=[c.pk]), follow=True)
+    c.refresh_from_db()
+    assert c.ativo is True
+    assert "reativado" in resp.content.decode().lower()
+
+
+@pytest.mark.django_db
+def test_excluir_cliente_sem_contrato_funciona(auth_client):
+    c = novo_cliente()
+    assert c.pode_ser_excluido is True
+    auth_client.post(reverse("clientes:excluir", args=[c.pk]))
+    assert not Cliente.objects.filter(pk=c.pk).exists()
+
+
+@pytest.mark.django_db
+def test_excluir_cliente_com_contrato_e_recusado(auth_client):
+    c = novo_cliente()
+    _contrato_quitado(c)
+    assert c.pode_ser_excluido is False
+    resp = auth_client.post(reverse("clientes:excluir", args=[c.pk]), follow=True)
+    assert Cliente.objects.filter(pk=c.pk).exists()
+    assert "Arquivar" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_todos_contratos_quitados_mostra_aviso_para_arquivar(auth_client):
+    c = novo_cliente()
+    _contrato_quitado(c)
+    assert c.todos_contratos_quitados is True
+    corpo = auth_client.get(reverse("clientes:detalhe", args=[c.pk])).content.decode()
+    assert "estão quitados" in corpo
+    assert reverse("clientes:arquivar", args=[c.pk]) in corpo
+
+
+@pytest.mark.django_db
+def test_sem_contrato_nenhum_mostra_aviso_de_excluir(auth_client):
+    c = novo_cliente()
+    assert c.todos_contratos_quitados is False  # sem contrato nenhum não conta
+    corpo = auth_client.get(reverse("clientes:detalhe", args=[c.pk])).content.decode()
+    assert reverse("clientes:excluir", args=[c.pk]) in corpo

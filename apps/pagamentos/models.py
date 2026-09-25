@@ -139,6 +139,18 @@ class Pagamento(models.Model):
     )
     data_pagamento = models.DateField("data do pagamento", default=timezone.localdate)
     valor_pago = models.DecimalField("valor pago", max_digits=10, decimal_places=2)
+    juros_pago = models.DecimalField(
+        "juros recebidos",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text=(
+            "Opcional. Só registro — não conta como parcela: não abate o "
+            "valor_previsto nem transporta saldo para a próxima parcela (o "
+            "juros é um valor à parte, calculado por dia de atraso, e nunca "
+            "muda o que se espera da parcela seguinte)."
+        ),
+    )
     forma = models.CharField(
         "forma de pagamento", max_length=10, choices=Forma.choices, default=Forma.PIX
     )
