@@ -105,6 +105,10 @@ horários abaixo já estão convertidos de Brasília (UTC−3):
 
 O retry é seguro: `processar_cobrancas` pula quem já foi enviado.
 
+Deploy automático a cada push na `main` já configurado: GitHub → Settings →
+Webhooks aponta para o "Manual Git webhook" do Coolify (aba Webhooks da
+aplicação).
+
 ## 6. Webhooks
 
 - **Evolution → site:** `https://SEU-DOMINIO/pagamentos/webhooks/whatsapp/`, evento
