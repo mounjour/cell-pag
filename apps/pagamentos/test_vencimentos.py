@@ -259,6 +259,76 @@ def test_sem_valor_parcela_nao_calcula_num_parcelas(cliente):
     assert ct.num_parcelas is None
 
 
+# ── Contrato.podar_vencimentos_excedentes ────────────────────────────────────
+
+@pytest.mark.django_db
+def test_reduzir_num_parcelas_remove_as_extras_sem_pagamento(cliente):
+    ct = _contrato(cliente, num_parcelas=7, valor_parcela=Decimal("40.00"))
+    ct.gerar_vencimentos(dias_a_frente=3650, hoje=INICIO)
+    assert ct.vencimentos.count() == 7
+
+    ct.num_parcelas = 3
+    ct.save(update_fields=["num_parcelas"])
+    removidas = ct.podar_vencimentos_excedentes()
+
+    assert removidas == [4, 5, 6, 7]
+    assert list(ct.vencimentos.order_by("numero").values_list("numero", flat=True)) == [1, 2, 3]
+
+
+@pytest.mark.django_db
+def test_podar_nao_mexe_em_parcela_ja_paga(cliente):
+    from apps.pagamentos.models import Pagamento
+
+    ct = _contrato(cliente, num_parcelas=7, valor_parcela=Decimal("40.00"))
+    ct.gerar_vencimentos(dias_a_frente=3650, hoje=INICIO)
+    v5 = ct.vencimentos.get(numero=5)
+    Pagamento(contrato=ct, vencimento=v5, valor_pago=v5.valor_previsto).registrar()
+
+    ct.num_parcelas = 3
+    ct.save(update_fields=["num_parcelas"])
+    removidas = ct.podar_vencimentos_excedentes()
+
+    assert removidas is None  # bloqueado — parcela 5 tem pagamento
+    assert ct.vencimentos.count() == 7  # nada foi apagado
+
+
+@pytest.mark.django_db
+def test_podar_sem_excedente_nao_faz_nada(cliente):
+    ct = _contrato(cliente, num_parcelas=3, valor_parcela=Decimal("40.00"))
+    ct.gerar_vencimentos(dias_a_frente=3650, hoje=INICIO)
+    assert ct.podar_vencimentos_excedentes() == []
+    assert ct.vencimentos.count() == 3
+
+
+@pytest.mark.django_db
+def test_editar_contrato_pela_web_poda_parcelas_reduzidas(auth_client, cliente):
+    ct = _contrato(
+        cliente, estrutura=Contrato.Estrutura.MENSAL, num_parcelas=7, valor_parcela=Decimal("40.00")
+    )
+    ct.gerar_vencimentos(dias_a_frente=3650, hoje=INICIO)
+    dados = {
+        "cliente": cliente.pk,
+        "apelido": ct.apelido,
+        "aparelho_modelo": ct.aparelho_modelo,
+        "imei": "",
+        "valor_total": "280,00",
+        "estrutura": Contrato.Estrutura.MENSAL,
+        "valor_parcela": "40,00",
+        "num_parcelas": "3",
+        "data_inicio": INICIO.isoformat(),
+        "dia_referencia": "",
+        "proximo_vencimento": "",
+        "status": Contrato.Status.EM_DIA,
+        "data_prevista_quitacao": "",
+        "observacoes": "",
+    }
+    resp = auth_client.post(reverse("contratos:editar", args=[ct.pk]), dados, follow=True)
+    assert resp.status_code == 200
+    ct.refresh_from_db()
+    assert ct.vencimentos.count() == 3
+    assert "removidas automaticamente" in resp.content.decode()
+
+
 # ── Contrato: parcela × total (aviso) ────────────────────────────────────────
 
 @pytest.mark.django_db

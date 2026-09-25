@@ -216,6 +216,33 @@ class Contrato(models.Model):
             Vencimento.objects.bulk_create(novos)
         return novos
 
+    def podar_vencimentos_excedentes(self):
+        """Remove os `Vencimento` além de `num_parcelas` — o caso de alguém
+        reduzir o nº de parcelas **depois** de já terem sido geradas
+        (`gerar_vencimentos` só cria o que falta, nunca apaga sozinho).
+
+        Nunca mexe em parcela com pagamento ou Pix (Cora) vinculado — as duas
+        relações são ``on_delete=PROTECT``, então a tentativa inteira falha
+        sem apagar nada nesse caso (devolve ``None`` para o chamador avisar e
+        deixar a revisão manual).
+
+        Devolve a lista de números removidos (``[]`` se não havia o quê podar)
+        ou ``None`` quando a poda foi bloqueada por parcela já paga/com Pix.
+        """
+        from django.db.models import ProtectedError
+
+        if not self.num_parcelas:
+            return []
+        excedentes = self.vencimentos.filter(numero__gt=self.num_parcelas).order_by("numero")
+        numeros = list(excedentes.values_list("numero", flat=True))
+        if not numeros:
+            return []
+        try:
+            excedentes.delete()
+        except ProtectedError:
+            return None
+        return numeros
+
     def calcular_num_parcelas(self, *, salvar: bool = True) -> bool:
         """Preenche ``num_parcelas`` = ``valor_total ÷ valor_parcela`` (arredondado
         para cima — a última parcela pode ficar menor), do mesmo jeito que
