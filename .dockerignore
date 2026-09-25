@@ -1,0 +1,19 @@
+# Nada disto deve entrar na imagem — principalmente segredos e dados locais.
+.git
+.github
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+db.sqlite3
+db.sqlite3-journal
+.env
+.env.*
+!.env.example
+secrets/
+media/
+staticfiles/
+*.pem
+*.key
+.claude
