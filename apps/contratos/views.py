@@ -120,6 +120,7 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Contrato cadastrado.")
+        self.object.calcular_num_parcelas()
         _avisar_se_parcela_nao_bate(self.request, self.object)
         _gerar_parcelas_ao_salvar(self.request, self.object)
         return response
@@ -136,6 +137,7 @@ class ContratoUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Contrato atualizado.")
+        self.object.calcular_num_parcelas()
         _avisar_se_parcela_nao_bate(self.request, self.object)
         _gerar_parcelas_ao_salvar(self.request, self.object)
         return response

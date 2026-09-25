@@ -77,6 +77,12 @@ class ContratoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for campo in ("data_inicio", "proximo_vencimento", "data_prevista_quitacao"):
             self.fields[campo].input_formats = ["%Y-%m-%d"]
+        self.fields["num_parcelas"].required = False
+        self.fields["num_parcelas"].help_text = (
+            "Deixe em branco para calcular sozinho (valor total ÷ valor da "
+            "parcela, arredondado para cima — a última parcela pode ficar "
+            "menor). Preencha só para um número diferente do calculado."
+        )
         # Ao editar, mostra os valores de dinheiro já formatados com vírgula.
         if self.instance and self.instance.pk:
             if self.instance.valor_total is not None:

@@ -292,6 +292,45 @@ def test_cadastro_com_valor_parcela_ja_gera_vencimentos(auth_client, cliente):
 
 
 @pytest.mark.django_db
+def test_cadastro_sem_num_parcelas_calcula_sozinho(auth_client, cliente):
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(
+            cliente,
+            valor_total="2400,00",
+            estrutura=Contrato.Estrutura.MENSAL,
+            valor_parcela="200,00",
+            num_parcelas="",  # deixado em branco de propósito
+            data_inicio="2026-08-01",
+        ),
+        follow=True,
+    )
+    assert resp.status_code == 200
+    ct = Contrato.objects.get(cliente=cliente)
+    assert ct.num_parcelas == 12  # 2400 / 200
+    assert ct.data_prevista_quitacao is not None  # já usa o num_parcelas calculado
+
+
+@pytest.mark.django_db
+def test_cadastro_com_num_parcelas_informado_nao_e_sobrescrito(auth_client, cliente):
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(
+            cliente,
+            valor_total="2400,00",
+            estrutura=Contrato.Estrutura.MENSAL,
+            valor_parcela="200,00",
+            num_parcelas="20",  # divergente do cálculo (12) — decisão do vendedor
+            data_inicio="2026-08-01",
+        ),
+        follow=True,
+    )
+    assert resp.status_code == 200
+    ct = Contrato.objects.get(cliente=cliente)
+    assert ct.num_parcelas == 20
+
+
+@pytest.mark.django_db
 def test_cadastro_sem_valor_parcela_nao_gera_nada(auth_client, cliente):
     resp = auth_client.post(
         reverse("contratos:novo"),
