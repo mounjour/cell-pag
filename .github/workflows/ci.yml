@@ -1,0 +1,50 @@
+﻿name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  testes:
+    name: Testes (pytest)
+    runs-on: ubuntu-latest
+    env:
+      # DEBUG nao tem valor padrao em config/settings.py — precisa vir de algum
+      # lugar mesmo em CI, onde nao existe .env.
+      DEBUG: "True"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements-dev.txt
+
+      - name: Checagem do Django (config/imports)
+        run: python manage.py check
+
+      - name: Rodar a suite de testes
+        run: python -m pytest
+
+  segredos:
+    name: Procurar segredos commitados (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # historico completo, gitleaks varre todos os commits
+
+      - name: Baixar o gitleaks (binario, sem precisar de licenca)
+        run: |
+          VERSAO=$(curl -sSf https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep -Po '"tag_name": "v\K[^"]*')
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSAO}/gitleaks_${VERSAO}_linux_x64.tar.gz" -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+
+      - name: Rodar o gitleaks
+        run: >
+          ./gitleaks detect --source . --redact --verbose
+          --baseline-path .gitleaks-baseline.json
