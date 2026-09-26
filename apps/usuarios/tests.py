@@ -74,6 +74,7 @@ def test_mixin_dono_passa(django_user_model):
 
 _LOGIN_URL = reverse("usuarios:login")
 _SENHA = "s3nha-forte-1234"
+_SENHA_ADMIN = "Senha-forte-731"
 
 
 @pytest.fixture(autouse=True)
@@ -194,3 +195,221 @@ def test_sucesso_zera_o_contador(client, django_user_model, settings):
     for _ in range(2):
         resposta = client.post(_LOGIN_URL, {"username": "op3", "password": "errada"})
         assert resposta.status_code == 200
+
+
+# ---------- Manter conectado ----------
+
+@pytest.mark.django_db
+def test_login_sem_marcar_usa_sessao_padrao(client, django_user_model, settings):
+    django_user_model.objects.create_user("mc1", password=_SENHA)
+    resp = client.post(_LOGIN_URL, {"username": "mc1", "password": _SENHA})
+    assert resp.status_code == 302
+    assert client.session.get_expiry_age() == pytest.approx(settings.SESSION_COOKIE_AGE, abs=5)
+
+
+@pytest.mark.django_db
+def test_login_manter_conectado_estende_a_sessao(client, django_user_model, settings):
+    django_user_model.objects.create_user("mc2", password=_SENHA)
+    resp = client.post(
+        _LOGIN_URL, {"username": "mc2", "password": _SENHA, "manter_conectado": "on"}
+    )
+    assert resp.status_code == 302
+    esperado = settings.SESSION_MANTER_CONECTADO_DIAS * 24 * 60 * 60
+    assert client.session.get_expiry_age() == pytest.approx(esperado, abs=5)
+
+
+@pytest.mark.django_db
+def test_login_mostra_manter_conectado_e_link_de_senha(client):
+    html = client.get(_LOGIN_URL).content.decode()
+    assert 'name="manter_conectado"' in html
+    assert reverse("usuarios:senha_esqueci") in html
+    assert 'autocomplete="current-password"' in html
+
+
+# ---------- Esqueci minha senha ----------
+
+@pytest.mark.django_db
+def test_esqueci_senha_envia_email_para_conta_existente(client, django_user_model, mailoutbox):
+    django_user_model.objects.create_user("rs1", password=_SENHA, email="rs1@exemplo.com")
+    resp = client.post(reverse("usuarios:senha_esqueci"), {"email": "rs1@exemplo.com"})
+    assert resp.status_code == 302
+    assert resp.url == reverse("usuarios:senha_esqueci_enviado")
+    assert len(mailoutbox) == 1
+    assert mailoutbox[0].to == ["rs1@exemplo.com"]
+    assert "/senha/redefinir/" in mailoutbox[0].body
+
+
+@pytest.mark.django_db
+def test_esqueci_senha_nao_revela_se_o_email_existe(client, mailoutbox):
+    resp = client.post(reverse("usuarios:senha_esqueci"), {"email": "ninguem@exemplo.com"})
+    assert resp.status_code == 302
+    assert resp.url == reverse("usuarios:senha_esqueci_enviado")
+    assert mailoutbox == []
+
+
+@pytest.mark.django_db
+def test_redefinir_senha_pelo_link_do_email(client, django_user_model, mailoutbox):
+    django_user_model.objects.create_user("rs2", password=_SENHA, email="rs2@exemplo.com")
+    client.post(reverse("usuarios:senha_esqueci"), {"email": "rs2@exemplo.com"})
+    link = next(l for l in mailoutbox[0].body.splitlines() if "/senha/redefinir/" in l)
+    caminho = "/" + link.split("://", 1)[1].split("/", 1)[1]
+
+    # o Django troca o token da URL por um marcador na sessão antes do POST
+    resp = client.get(caminho, follow=True)
+    assert resp.status_code == 200
+    nova = "Outra-senha-forte-91"
+    resp = client.post(resp.request["PATH_INFO"], {"new_password1": nova, "new_password2": nova})
+    assert resp.status_code == 302
+    assert resp.url == reverse("usuarios:senha_redefinida")
+
+    client.logout()
+    assert client.post(_LOGIN_URL, {"username": "rs2", "password": nova}).status_code == 302
+
+
+@pytest.mark.django_db
+def test_link_de_redefinicao_invalido_mostra_aviso(client):
+    resp = client.get(reverse("usuarios:senha_redefinir", args=["xx", "token-falso"]))
+    assert resp.status_code == 200
+    assert "Link inválido" in resp.content.decode()
+
+
+# ---------- Nome e e-mail obrigatórios ----------
+
+def _dados_admin(**extra):
+    dados = {
+        "username": "novo",
+        "first_name": "Novo",
+        "last_name": "",
+        "email": "novo@exemplo.com",
+        "perfil": "financeiro",
+        "password1": _SENHA_ADMIN,
+        "password2": _SENHA_ADMIN,
+    }
+    dados.update(extra)
+    return dados
+
+
+@pytest.mark.django_db
+def test_cadastro_no_admin_exige_nome_e_email():
+    from apps.usuarios.admin import UsuarioCriacaoForm
+
+    assert UsuarioCriacaoForm(_dados_admin()).is_valid()
+    sem_nome = UsuarioCriacaoForm(_dados_admin(first_name=""))
+    assert not sem_nome.is_valid() and "first_name" in sem_nome.errors
+    sem_email = UsuarioCriacaoForm(_dados_admin(email=""))
+    assert not sem_email.is_valid() and "email" in sem_email.errors
+
+
+@pytest.mark.django_db
+def test_email_repetido_e_recusado_sem_diferenciar_maiusculas(django_user_model):
+    from apps.usuarios.admin import UsuarioCriacaoForm
+
+    django_user_model.objects.create_user("a1", password=_SENHA, email="ana@exemplo.com", first_name="Ana")
+    form = UsuarioCriacaoForm(_dados_admin(username="a2", email="ANA@exemplo.com"))
+    assert not form.is_valid()
+    assert "Já existe um usuário com este e-mail." in form.errors["email"]
+
+
+@pytest.mark.django_db
+def test_editar_o_proprio_usuario_nao_conta_como_email_repetido(django_user_model):
+    u = django_user_model.objects.create_user("a3", password=_SENHA, email="bia@exemplo.com", first_name="Bia")
+    u.full_clean(exclude=["password"])  # não levanta
+
+
+@pytest.mark.django_db
+def test_nome_aparece_no_lugar_do_login(client, django_user_model):
+    django_user_model.objects.create_user(
+        "op9", password=_SENHA, email="op9@exemplo.com", first_name="Yslane", last_name="Souza"
+    )
+    client.post(_LOGIN_URL, {"username": "op9", "password": _SENHA})
+    html = client.get(reverse("clientes:lista")).content.decode()
+    assert '<span class="user-name">Yslane</span>' in html
+    assert ">op9<" not in html
+    u = django_user_model.objects.get(username="op9")
+    assert str(u) == "Yslane Souza"
+
+
+@pytest.mark.django_db
+def test_conta_antiga_sem_nome_cai_no_login(django_user_model):
+    u = django_user_model.objects.create_user("antigo", password=_SENHA)
+    assert u.nome_curto == "antigo" and str(u) == "antigo"
+
+
+# ---------- Modo escuro (botão sol/lua) ----------
+
+@pytest.mark.django_db
+def test_botao_de_tema_no_login_e_no_sistema(client, django_user_model):
+    login = client.get(_LOGIN_URL).content.decode()
+    assert "data-tema-toggle" in login and "js/tema.js" in login
+    assert 'class="icone-sol"' in login and 'class="icone-lua"' in login
+
+    django_user_model.objects.create_user("tm", password=_SENHA, email="tm@exemplo.com", first_name="Tê")
+    client.post(_LOGIN_URL, {"username": "tm", "password": _SENHA})
+    html = client.get(reverse("clientes:lista")).content.decode()
+    assert html.count("data-tema-toggle") == 1  # um só, na barra superior (computador e celular)
+    # o script vem no <head>, antes do CSS, para não piscar o tema errado
+    assert html.index("js/tema.js") < html.index("css/base.css")
+
+
+# ---------- Tema salvo na conta ----------
+
+@pytest.fixture
+def logado(client, django_user_model):
+    u = django_user_model.objects.create_user("tp", password=_SENHA, email="tp@exemplo.com", first_name="Teo")
+    client.post(_LOGIN_URL, {"username": "tp", "password": _SENHA})
+    return u
+
+
+@pytest.mark.django_db
+def test_tema_padrao_e_claro(client, logado):
+    html = client.get(reverse("clientes:lista")).content.decode()
+    assert 'data-tema="escuro"' not in html
+    assert f'data-tema-url="{reverse("usuarios:tema")}"' in html
+
+
+@pytest.mark.django_db
+def test_escolher_escuro_grava_na_conta_e_vale_no_proximo_acesso(client, logado):
+    resp = client.post(reverse("usuarios:tema"), {"tema": "escuro"})
+    assert resp.status_code == 204
+    logado.refresh_from_db()
+    assert logado.tema == "escuro"
+
+    # "outro aparelho": sessão nova, sem nada guardado no navegador
+    from django.test import Client
+    outro = Client()
+    outro.post(_LOGIN_URL, {"username": "tp", "password": _SENHA})
+    html = outro.get(reverse("clientes:lista")).content.decode()
+    assert '<html lang="pt-br" data-tema-url' in html and 'data-tema="escuro"' in html
+
+
+@pytest.mark.django_db
+def test_voltar_ao_claro_grava_na_conta(client, logado):
+    client.post(reverse("usuarios:tema"), {"tema": "escuro"})
+    client.post(reverse("usuarios:tema"), {"tema": "claro"})
+    logado.refresh_from_db()
+    assert logado.tema == "claro"
+
+
+@pytest.mark.django_db
+def test_tema_de_um_usuario_nao_afeta_outro(client, logado, django_user_model):
+    outro = django_user_model.objects.create_user("tq", password=_SENHA, email="tq@exemplo.com", first_name="Quê")
+    client.post(reverse("usuarios:tema"), {"tema": "escuro"})
+    outro.refresh_from_db()
+    assert outro.tema == "claro"
+
+
+@pytest.mark.django_db
+def test_tema_invalido_e_recusado(client, logado):
+    resp = client.post(reverse("usuarios:tema"), {"tema": "roxo"})
+    assert resp.status_code == 400
+    logado.refresh_from_db()
+    assert logado.tema == "claro"
+
+
+@pytest.mark.django_db
+def test_tema_exige_login_e_post(client, logado):
+    from django.test import Client
+    anonimo = Client()
+    resp = anonimo.post(reverse("usuarios:tema"), {"tema": "escuro"})
+    assert resp.status_code == 302 and "/entrar/" in resp.url
+    assert client.get(reverse("usuarios:tema")).status_code == 405

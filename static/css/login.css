@@ -1,4 +1,4 @@
-/* Cartão de login centralizado com a paleta original do aplicativo. */
+/* Cartão de login centralizado. */
 .login-page { min-height: 100vh; background: var(--paper); color: var(--ink); }
 .login-wrap.wrap { min-height: 100vh; min-height: 100svh; max-width: none; padding: 0; }
 .login-layout {
@@ -8,9 +8,9 @@
 .login-card {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center; gap: 48px; width: 100%; max-width: 940px; padding: 48px;
-  border: 1px solid var(--line); border-top: 4px solid var(--accent);
+  border: 1px solid var(--line);
   border-radius: var(--radius); background: var(--surface);
-  box-shadow: var(--raise-hover); min-width: 0;
+  box-shadow: var(--raise); min-width: 0;
 }
 .login-content { min-width: 0; }
 .login-art { text-align: center; }
@@ -21,14 +21,14 @@
 .login-content h1 { margin: 0; font-size: 28px; line-height: 1.2; letter-spacing: -0.035em; color: var(--ink); }
 .login-description { margin: 12px 0 28px; color: var(--ink-soft); font-size: 15px; }
 .login-form { display: grid; gap: 16px; }
-.login-field label { display: block; margin: 0 0 6px 16px; color: var(--ink-soft); font-size: 13px; font-weight: 500; transition: color 180ms ease; }
+.login-field label { display: block; margin: 0 0 6px 2px; color: var(--ink-soft); font-size: 13px; font-weight: 500; transition: color 180ms ease; }
 .login-field:focus-within label { color: var(--accent-ink); }
 .login-input { position: relative; }
 .login-input > svg { position: absolute; top: 17px; left: 19px; width: 19px; height: 19px; color: var(--ink-faint); pointer-events: none; transition: color 180ms ease, transform 180ms ease; }
 .login-input:focus-within > svg { color: var(--accent); transform: scale(1.08); }
 .login-input input {
   width: 100%; min-height: 54px; padding: 13px 20px 13px 50px;
-  border: 1px solid var(--line); border-radius: 999px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
   background: var(--surface-2); color: var(--ink); font: inherit;
   caret-color: var(--accent);
   box-shadow: 0 0 0 0 transparent;
@@ -36,7 +36,7 @@
 }
 .login-input input:focus {
   outline: none; border-color: var(--accent); background: var(--surface);
-  box-shadow: 0 0 0 4px var(--accent-wash), 0 3px 10px rgb(18 110 99 / 8%);
+  box-shadow: 0 0 0 4px var(--accent-wash);
 }
 @media (hover: hover) {
   .login-input input:hover:not(:focus) { border-color: var(--line-strong); background: var(--surface); }
@@ -48,7 +48,7 @@
 }
 .login-submit {
   display: flex; align-items: center; justify-content: center; gap: 14px;
-  width: 100%; min-height: 54px; margin-top: 8px; border: 0; border-radius: 999px;
+  width: 100%; min-height: 54px; margin-top: 8px; border: 0; border-radius: var(--radius-sm);
   background: var(--accent); color: var(--on-accent); font: inherit; font-weight: 600; cursor: pointer;
   box-shadow: var(--raise); transition: background 160ms, box-shadow 160ms;
 }
@@ -76,3 +76,15 @@
   .login-input input, .login-input > svg, .login-field label, .login-submit { transition: none; }
   .login-input:focus-within > svg { transform: none; }
 }
+
+/* Opções abaixo da senha e telas simples de conta (recuperação de senha). */
+.login-opcoes { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; font-size: 14px; }
+.login-check { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-soft); cursor: pointer; }
+.login-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.login-opcoes a, .login-voltar a { font-weight: 500; }
+.login-voltar { margin: 24px 0 0; font-size: 14px; }
+.login-ajuda { margin-top: 6px; color: var(--ink-faint); font-size: 13px; }
+.login-ajuda ul { margin: 4px 0 0; padding-left: 18px; }
+.login-card--simples { grid-template-columns: minmax(0, 1fr); max-width: 460px; gap: 0; padding: 40px; }
+@media (max-width: 760px) { .login-card--simples { padding: 28px 24px; } }
+a.login-submit, a.login-submit:hover { text-decoration: none; color: var(--on-accent); }

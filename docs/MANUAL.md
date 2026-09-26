@@ -161,7 +161,7 @@ precisar entrar em Relatórios.
 - **Contratos ativos** — quantidade (não quitados).
 - **Inadimplentes** — quantidade de contratos com 7+ dias de atraso, com o
   total de atrasados (1+ dia) ao lado.
-- **Ticket médio** — valor médio dos contratos.
+- **Valor médio por contrato** — média do valor total dos contratos ativos (o preço do aparelho a prazo, não o que já foi pago).
 
 **Gráficos:**
 - **Recebido × previsto por mês** — barras dos últimos 6 meses.

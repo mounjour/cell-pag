@@ -24,7 +24,7 @@
   Chart.defaults.color = v("--ink-faint", "#71847d");
   Chart.defaults.borderColor = v("--line", "#dce4e1");
   Chart.defaults.font.family =
-    "'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+    "'DM Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif";
 
   // O tooltip usa os mesmos tokens de "cartão" do resto da UI (superfície +
   // tinta + linha) — sempre legível nos dois temas, sem inverter cores.
@@ -53,7 +53,7 @@
           {
             label: "Recebido",
             data: serie.recebido,
-            backgroundColor: v("--ok", "#1e8e3e"),
+            backgroundColor: v("--money", "#12a150"),
             borderRadius: 4,
           },
         ],

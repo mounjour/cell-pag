@@ -99,6 +99,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "config.context_processors.favicon",
+                "config.context_processors.shell",
             ],
         },
     },
@@ -163,6 +164,26 @@ AUTH_PASSWORD_VALIDATORS = [
 # Sessão de app financeiro — expira em 12 h por padrão (ajustável por env).
 SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=60 * 60 * 12)
 SESSION_SAVE_EVERY_REQUEST = True  # renova a validade a cada request ativo
+# "Manter conectado" no login: a sessão dura mais (dias) em vez das 12 h acima.
+SESSION_MANTER_CONECTADO_DIAS = env.int("SESSION_MANTER_CONECTADO_DIAS", default=30)
+
+# ── E-mail (recuperação de senha) ─────────────────────────────────────────────
+# Sem EMAIL_HOST o e-mail só vai para o log do servidor (nada é enviado de
+# verdade) — o padrão seguro, como WHATSAPP_PROVIDER=log. Para enviar de
+# verdade, preencha EMAIL_HOST (+ usuário/senha) — ver docs/DEPLOY-VPS.md.
+EMAIL_HOST = env("EMAIL_HOST", default="")
+EMAIL_BACKEND = (
+    "django.core.mail.backends.smtp.EmailBackend"
+    if EMAIL_HOST
+    else "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Acompanhamento de Pagamentos <nao-responda@localhost>")
+# O link de redefinição vale 1 h (o padrão do Django é 3 dias).
+PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=60 * 60)
 
 # ── Internacionalização ───────────────────────────────────────────────────────
 LANGUAGE_CODE = "pt-br"

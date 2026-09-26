@@ -1,14 +1,18 @@
+import re
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, ProtectedError, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
 from apps.pagamentos.models import Cobranca, CobrancaCora, Pagamento
+
+from apps.contratos.models import Contrato
 
 from .forms import ClienteForm
 from .models import Cliente
@@ -32,10 +36,6 @@ class ClienteListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["arquivados"] = self.arquivados
-        return ctx
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
         ctx["busca"] = self.busca
         return ctx
 
@@ -187,3 +187,92 @@ class ClienteUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("clientes:detalhe", args=[self.object.pk])
+
+
+BUSCA_MINIMO = 2
+
+
+def pesquisar(q: str, limite: int):
+    """Busca única do menu: clientes (nome, CPF) e contratos (apelido,
+    aparelho, IMEI, nº do contrato, nome do cliente). Devolve
+    ``(clientes, contratos)``; vazio se ``q`` for curta demais."""
+    q = q.strip()
+    if len(q) < BUSCA_MINIMO:
+        return [], []
+    digitos = "".join(c for c in q if c.isdigit())
+    filtro_cliente = Q(nome__icontains=q)
+    if len(digitos) >= 3:  # CPF é guardado só com dígitos
+        filtro_cliente |= Q(cpf__icontains=digitos)
+    clientes = list(
+        Cliente.objects.filter(filtro_cliente)
+        .annotate(num_contratos=Count("contratos", distinct=True))
+        .order_by("-ativo", "nome")[:limite]
+    )
+    filtro_contrato = (
+        Q(apelido__icontains=q)
+        | Q(aparelho_modelo__icontains=q)
+        | Q(imei__icontains=q)
+        | Q(cliente__nome__icontains=q)
+    )
+    numero = re.fullmatch(r"(?i)ct-?0*(\d+)", q)  # "CT-0004" -> contrato 4
+    if numero:
+        filtro_contrato |= Q(pk=int(numero.group(1)))
+    contratos = list(
+        Contrato.objects.filter(filtro_contrato)
+        .select_related("cliente")
+        .order_by("cliente__nome", "apelido")[:limite]
+    )
+    return clientes, contratos
+
+
+class BuscaGlobalView(LoginRequiredMixin, TemplateView):
+    """Página de resultados da busca do menu."""
+
+    template_name = "busca.html"
+    LIMITE = 20
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        q = self.request.GET.get("q", "").strip()
+        clientes, contratos = pesquisar(q, self.LIMITE)
+        ctx.update(
+            q=q,
+            curta=0 < len(q) < BUSCA_MINIMO,
+            clientes=clientes,
+            contratos=contratos,
+            total=len(clientes) + len(contratos),
+        )
+        return ctx
+
+
+class BuscaSugestoesView(LoginRequiredMixin, View):
+    """Sugestões da busca enquanto se digita (JSON, poucos itens)."""
+
+    LIMITE = 5
+
+    def get(self, request):
+        q = request.GET.get("q", "").strip()
+        clientes, contratos = pesquisar(q, self.LIMITE)
+        return JsonResponse(
+            {
+                "q": q,
+                "clientes": [
+                    {
+                        "titulo": c.nome,
+                        "detalhe": c.cpf_formatado,
+                        "arquivado": not c.ativo,
+                        "url": reverse("clientes:detalhe", args=[c.pk]),
+                    }
+                    for c in clientes
+                ],
+                "contratos": [
+                    {
+                        "titulo": f"{ct.numero_interno} · {ct.apelido}",
+                        "detalhe": ct.cliente.nome,
+                        "arquivado": False,
+                        "url": reverse("contratos:detalhe", args=[ct.pk]),
+                    }
+                    for ct in contratos
+                ],
+            }
+        )

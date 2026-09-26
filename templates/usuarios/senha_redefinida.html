@@ -1,0 +1,7 @@
+{% extends "usuarios/conta_base.html" %}
+{% block title %}Senha alterada · Acompanhamento de Pagamentos{% endblock %}
+{% block titulo %}Senha alterada{% endblock %}
+{% block corpo %}
+<p class="login-description">Sua nova senha já está valendo. Entre para continuar.</p>
+<a class="login-submit" href="{% url 'usuarios:login' %}">Ir para o login <span aria-hidden="true">→</span></a>
+{% endblock %}

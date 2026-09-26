@@ -15,8 +15,8 @@
       </thead>
       <tbody>
         {% for l in linhas %}
-          <tr class="row-acento row-acento--{% if l.vence_hoje %}em_dia{% else %}{{ l.situacao.status }}{% endif %}">
-            <td class="cli-cell"><a href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a></td>
+          <tr class="linha-link row-acento row-acento--{% if l.vence_hoje %}em_dia{% else %}{{ l.situacao.status }}{% endif %}">
+            <td class="cli-cell"><a class="link-linha" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a></td>
             <td class="contrato-cell" data-label="Contrato">
               <a href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a>
               <span class="estrutura">· {{ l.contrato.get_estrutura_display }}</span>

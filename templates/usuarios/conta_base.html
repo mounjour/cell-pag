@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/login.css' %}">{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block header %}{% endblock %}
+{% block wrap_class %}login-wrap{% endblock %}
+{% block content %}
+<div class="tema-flutuante">{% include "_tema.html" %}</div>
+<section class="login-layout" aria-labelledby="conta-titulo">
+  <div class="login-card login-card--simples">
+    <div class="login-content">
+      <span class="login-brand">Acompanhamento de Pagamentos</span>
+      <h1 id="conta-titulo">{% block titulo %}{% endblock %}</h1>
+      {% block corpo %}{% endblock %}
+    </div>
+  </div>
+</section>
+{% endblock %}
