@@ -15,17 +15,17 @@
 </div>
 
 <dl class="meta painel-kpis">
-  <div>
+  <div class="kpi--dinheiro">
     <dt>A receber em aberto</dt>
-    <dd class="num">R$ {{ painel.a_receber|floatformat:2 }}</dd>
+    <dd class="num kpi-dinheiro">R$ {{ painel.a_receber|floatformat:2 }}</dd>
   </div>
   <div>
     <dt>Em atraso (hoje)</dt>
-    <dd class="num critical-text">R$ {{ painel.total_atrasado|floatformat:2 }}<span class="kpi-sub">{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }}</span></dd>
+    <dd class="num{% if painel.total_atrasado %} critical-text{% endif %}">R$ {{ painel.total_atrasado|floatformat:2 }}<span class="kpi-sub">{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }}</span></dd>
   </div>
   <div>
     <dt>Recebido no mês</dt>
-    <dd class="num">R$ {{ painel.recebido_mes|floatformat:2 }}<span class="kpi-sub">de R$ {{ painel.previsto_mes|floatformat:2 }} previstos</span></dd>
+    <dd class="num kpi-dinheiro">R$ {{ painel.recebido_mes|floatformat:2 }}<span class="kpi-sub">de R$ {{ painel.previsto_mes|floatformat:2 }} previstos</span></dd>
   </div>
   <div>
     <dt>Contratos ativos</dt>
@@ -33,11 +33,11 @@
   </div>
   <div>
     <dt>Inadimplentes</dt>
-    <dd class="num">{{ painel.inadimplentes }}<span class="kpi-sub">{{ painel.atrasados_contratos }} atrasado{{ painel.atrasados_contratos|pluralize }}</span></dd>
+    <dd class="num{% if painel.inadimplentes %} critical-text{% endif %}">{{ painel.inadimplentes }}<span class="kpi-sub">{{ painel.atrasados_contratos }} atrasado{{ painel.atrasados_contratos|pluralize }}</span></dd>
   </div>
   <div>
-    <dt>Ticket médio</dt>
-    <dd class="num">R$ {{ painel.ticket_medio|floatformat:2 }}</dd>
+    <dt>Valor médio por contrato</dt>
+    <dd class="num">R$ {{ painel.ticket_medio|floatformat:2 }}<span class="kpi-sub">média entre {{ painel.contratos_ativos }} contrato{{ painel.contratos_ativos|pluralize }} ativo{{ painel.contratos_ativos|pluralize }}</span></dd>
   </div>
 </dl>
 

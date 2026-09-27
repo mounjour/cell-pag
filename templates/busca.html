@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{% if q %}Busca: {{ q }}{% else %}Buscar{% endif %}{% endblock %}
+
+{% block content %}
+<h1>Buscar</h1>
+
+<form class="busca-pagina" role="search" action="{% url 'buscar' %}" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Cliente, CPF ou contrato" aria-label="Buscar cliente, CPF ou contrato" autocomplete="off"{% if not q %} autofocus{% endif %}>
+  <button class="btn" type="submit">Buscar</button>
+</form>
+
+{% if not q %}
+  <div class="empty">
+    <p>Digite o nome ou CPF de um cliente, ou o apelido, aparelho, IMEI ou número (CT-0001) de um contrato.</p>
+    <p class="helptext">Dica: aperte <kbd>/</kbd> em qualquer tela para buscar.</p>
+  </div>
+{% elif curta %}
+  <div class="empty"><p>Digite pelo menos 2 caracteres.</p></div>
+{% elif not total %}
+  <div class="empty"><p>Nada encontrado para “{{ q }}”.</p></div>
+{% else %}
+  <p class="count">{{ total }} resultado{{ total|pluralize }} para “{{ q }}”</p>
+
+  {% if clientes %}
+    <h2 class="resultado-grupo">Clientes <small>{{ clientes|length }}</small></h2>
+    <div class="tbl-wrap cards">
+      <table>
+        <thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th class="num">Contratos</th></tr></thead>
+        <tbody>
+          {% for c in clientes %}
+            <tr class="linha-link">
+              <td><a class="link-linha" href="{% url 'clientes:detalhe' c.pk %}">{{ c.nome }}</a>{% if not c.ativo %} <span class="pill">arquivado</span>{% endif %}</td>
+              <td data-label="CPF">{{ c.cpf_formatado }}</td>
+              <td data-label="Telefone"><a href="tel:{{ c.telefone_whatsapp.as_e164 }}">{{ c.telefone_exibicao }}</a></td>
+              <td class="num" data-label="Contratos">{{ c.num_contratos }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  {% if contratos %}
+    <h2 class="resultado-grupo">Contratos <small>{{ contratos|length }}</small></h2>
+    <div class="tbl-wrap cards">
+      <table>
+        <thead><tr><th>Nº</th><th>Apelido</th><th>Cliente</th><th>Aparelho</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for ct in contratos %}
+            <tr class="linha-link row-acento row-acento--{{ ct.status_efetivo }}">
+              <td data-label="Nº">{{ ct.numero_interno }}</td>
+              <td data-label="Apelido"><a class="link-linha" href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
+              <td data-label="Cliente"><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></td>
+              <td data-label="Aparelho">{{ ct.aparelho_modelo }}</td>
+              <td class="status-cell" data-label="Status"><span class="pill {{ ct.status_efetivo }}">{{ ct.status_efetivo_label }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+{% endif %}
+{% endblock %}

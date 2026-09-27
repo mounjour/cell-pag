@@ -21,6 +21,18 @@ FAVICON_POR_PAGINA = {
 }
 
 
+def shell(request):
+    """Dados do menu. O contador de "Cobrar hoje" é preguiçoso: só é calculado
+    (e vem do cache) se o template realmente o usar."""
+    if not request.user.is_authenticated:
+        return {}
+    from django.utils.functional import SimpleLazyObject
+
+    from apps.pagamentos.badge import contagem_cobrar_hoje
+
+    return {"cobrar_hoje_n": SimpleLazyObject(contagem_cobrar_hoje)}
+
+
 def favicon(request):
     resolver_match = getattr(request, "resolver_match", None)
     view_name = getattr(resolver_match, "view_name", None)

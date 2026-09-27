@@ -2,6 +2,7 @@
 {% block title %}{{ cliente.nome }}{% endblock %}
 
 {% block content %}
+{% url 'clientes:lista' as lista_url %}{% include "_voltar.html" with url=lista_url %}
 <div class="toolbar cliente-cabecalho">
   <div>
     <span class="eyebrow">Cliente</span>

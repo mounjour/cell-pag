@@ -28,8 +28,8 @@
       </thead>
       <tbody>
         {% for c in clientes %}
-          <tr>
-            <td><a href="{% url 'clientes:detalhe' c.pk %}">{{ c.nome }}</a></td>
+          <tr class="linha-link">
+            <td><a class="link-linha" href="{% url 'clientes:detalhe' c.pk %}">{{ c.nome }}</a></td>
             <td data-label="CPF">{{ c.cpf_formatado }}</td>
             <td data-label="Telefone"><a href="tel:{{ c.telefone_whatsapp.as_e164 }}">{{ c.telefone_exibicao }}</a></td>
             <td class="num" data-label="Contratos">{{ c.num_contratos }}</td>

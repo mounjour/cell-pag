@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="form-centered">
+  {% url 'contratos:detalhe' contrato.pk as contrato_url %}{% include "_voltar.html" with url=contrato_url %}
   {% include "pagamentos/_pagamento_form_conteudo.html" %}
 </div>
 {% endblock %}

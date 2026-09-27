@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="form-centered">
+{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk as volta_url %}{% else %}{% url 'contratos:lista' as volta_url %}{% endif %}{% include "_voltar.html" with url=volta_url %}
 <h1>{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}</h1>
 
 <details class="note">

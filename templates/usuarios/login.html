@@ -6,6 +6,7 @@
 {% block header %}{% endblock %}
 {% block wrap_class %}login-wrap{% endblock %}
 {% block content %}
+<div class="tema-flutuante">{% include "_tema.html" %}</div>
 <section class="login-layout" aria-labelledby="login-title">
   <div class="login-card">
   <div class="login-art" aria-hidden="true">
@@ -20,6 +21,7 @@
     <form method="post" class="login-form">
       {% csrf_token %}
       {% for field in form %}
+        {% if field.name != 'manter_conectado' %}
         <div class="login-field">
           {{ field.label_tag }}
           <div class="login-input">
@@ -34,7 +36,12 @@
           </div>
           {% if field.errors %}<div class="login-field-error">{{ field.errors }}</div>{% endif %}
         </div>
+        {% endif %}
       {% endfor %}
+      <div class="login-opcoes">
+        <label class="login-check">{{ form.manter_conectado }} <span>{{ form.manter_conectado.label }}</span></label>
+        <a href="{% url 'usuarios:senha_esqueci' %}">Esqueci minha senha</a>
+      </div>
       <button type="submit" class="login-submit">Entrar <span aria-hidden="true">→</span></button>
       <input type="hidden" name="next" value="{{ next }}">
     </form>

@@ -2,10 +2,14 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
 
+from apps.clientes.views import BuscaGlobalView, BuscaSugestoesView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", RedirectView.as_view(pattern_name="relatorios:inicio", permanent=False)),
     path("", include("apps.usuarios.urls")),
+    path("buscar/", BuscaGlobalView.as_view(), name="buscar"),
+    path("buscar/sugestoes/", BuscaSugestoesView.as_view(), name="buscar_sugestoes"),
     path("clientes/", include("apps.clientes.urls")),
     path("contratos/", include("apps.contratos.urls")),
     path("pagamentos/", include("apps.pagamentos.urls")),
