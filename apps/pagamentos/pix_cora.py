@@ -1,6 +1,7 @@
 """Geração, conciliação e baixa automática das cobranças Pix da Cora."""
 
 import datetime
+import logging
 import uuid
 from decimal import Decimal
 
@@ -9,7 +10,10 @@ from django.db import transaction
 from django.utils import timezone
 
 from . import cora_api
+from .comprovantes import ao_confirmar_pix
 from .models import CobrancaCora, EventoCora, Pagamento, Vencimento
+
+logger = logging.getLogger("pagamentos.cora")
 
 
 STATUS_CORA = {
@@ -198,22 +202,49 @@ def _aplicar_resposta(cobranca: CobrancaCora, resposta: dict) -> None:
                 cobranca.pago_em = timezone.now()
         else:
             cobranca.pago_em = timezone.now()
-    cobranca.save()
+    # Grava só o que a resposta da Cora altera. Um save() completo apagaria, com o
+    # valor antigo deste objeto, campos que outros trechos preenchem por conta
+    # própria (confirmacao_enviada_em, duplicada, duplicidade_resolvida_em).
+    cobranca.save(
+        update_fields=[
+            "cora_id", "status", "total_pago", "pix_copia_e_cola", "qr_code_url",
+            "erro", "pago_em", "atualizado_em",
+        ]
+    )
     if status == CobrancaCora.Status.PAGO and cobranca.total_pago > 0:
         _dar_baixa(cobranca)
 
 
+PREFIXO_BAIXA_AUTOMATICA = "Baixa automática pela Cora"
+
+
 def _dar_baixa(cobranca: CobrancaCora) -> None:
-    if Pagamento.objects.filter(vencimento=cobranca.vencimento).exists():
+    existente = Pagamento.objects.filter(vencimento=cobranca.vencimento).first()
+    if existente is not None:
+        # A parcela já tem baixa. Se foi este mesmo Pix (repetição do aviso da
+        # Cora), nada a fazer. Se foi outro meio (ex.: dinheiro), o cliente pagou
+        # duas vezes: o valor entrou na Cora sem constar no sistema, então marca
+        # a duplicidade para o painel Pix mostrar e o financeiro devolver.
+        if not existente.observacao.startswith(PREFIXO_BAIXA_AUTOMATICA) and not cobranca.duplicada:
+            cobranca.duplicada = True
+            cobranca.save(update_fields=["duplicada", "atualizado_em"])
+            logger.warning(
+                "Pix %s pago em duplicidade: a parcela %s já tinha baixa por outro meio.",
+                cobranca.cora_id,
+                cobranca.vencimento_id,
+            )
         return
-    Pagamento(
+    pagamento = Pagamento(
         contrato=cobranca.vencimento.contrato,
         vencimento=cobranca.vencimento,
         data_pagamento=(cobranca.pago_em or timezone.now()).date(),
         valor_pago=cobranca.total_pago,
         forma=Pagamento.Forma.PIX,
-        observacao=f"Baixa automática pela Cora ({cobranca.cora_id}).",
-    ).registrar()
+        observacao=f"{PREFIXO_BAIXA_AUTOMATICA} ({cobranca.cora_id}).",
+    )
+    pagamento.registrar()
+    # Resolve os avisos de comprovante da parcela e confirma ao cliente por WhatsApp.
+    ao_confirmar_pix(cobranca, pagamento)
 
 
 def reconciliar_abertas() -> dict:

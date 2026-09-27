@@ -25,7 +25,7 @@ h2 { font-weight: 600; }
 .painel-kpis .kpi-sub { letter-spacing: 0; font-size: 0.8rem; margin-top: 0.5rem; }
 /* Cor dos números: verde = dinheiro entrando, vermelho = problema, neutro = o resto. */
 .painel-kpis > div.kpi--dinheiro { background: var(--money-wash); border-color: color-mix(in srgb, var(--money) 30%, var(--line)); }
-.painel-kpis dd.kpi-dinheiro { color: var(--money); }
+.painel-kpis dd.kpi-dinheiro, .meta dd.kpi-dinheiro { color: var(--money); }
 .meta dd.critical-text { color: var(--critical-ink); }
 .painel-graficos { gap: var(--space-3); }
 .painel-graficos .card { padding: 1.75rem; }
@@ -175,3 +175,25 @@ tbody tr:hover td { background: var(--accent-wash); }
 :root[data-tema="escuro"] .tema-toggle .icone-lua { display: block; }
 .tema-flutuante { position: fixed; top: 12px; right: 12px; z-index: 20; }
 @media print { .tema-toggle, .tema-flutuante { display: none; } }
+
+/* Pix pago em duplicidade: dinheiro que entrou e precisa ser devolvido. */
+.alerta-duplicidade {
+  margin: 0 0 1.5rem; padding: 1.1rem 1.25rem; border: 1px solid color-mix(in srgb, var(--critical) 35%, var(--line));
+  border-left: 4px solid var(--critical); border-radius: var(--radius); background: var(--critical-wash);
+}
+.alerta-duplicidade h2 { margin: 0 0 0.4rem; font-size: 1.05rem; color: var(--critical-ink); }
+.alerta-duplicidade p { margin: 0 0 0.8rem; }
+.duplicidade-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.6rem; }
+.duplicidade-lista li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; padding-top: 0.6rem; border-top: 1px solid color-mix(in srgb, var(--critical) 20%, transparent); }
+.duplicidade-lista li:first-child { padding-top: 0; border-top: 0; }
+
+/* Comprovantes recebidos aguardando a Cora: aviso âmbar (falta conferir, não é erro). */
+.alerta-comprovante {
+  margin: 0 0 1.5rem; padding: 1.1rem 1.25rem; border: 1px solid color-mix(in srgb, var(--amber) 40%, var(--line));
+  border-left: 4px solid var(--amber); border-radius: var(--radius); background: var(--amber-wash);
+}
+.alerta-comprovante h2 { margin: 0 0 0.4rem; font-size: 1.05rem; color: var(--amber-ink); }
+.alerta-comprovante p { margin: 0 0 0.8rem; }
+.alerta-comprovante .duplicidade-lista li { border-top-color: color-mix(in srgb, var(--amber) 25%, transparent); }
+.comprovante-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.comprovante-acoes form { margin: 0; }

@@ -32,7 +32,7 @@
       <p class="nav-grupo">Dia a dia</p>
       <a href="{% url 'relatorios:inicio' %}"{% if pagina == 'inicio' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="inicio" %}<span>Início</span></a>
       <a href="{% url 'pagamentos:cobrar_hoje' %}"{% if pagina == 'cobrar_hoje' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="cobrar" %}<span>Cobrar hoje</span>{% if cobrar_hoje_n %}<span class="selo"><span class="sr-only">{{ cobrar_hoje_n }} para cobrar hoje</span><span aria-hidden="true">{{ cobrar_hoje_n }}</span></span>{% endif %}</a>
-      <a href="{% url 'pagamentos:pix_painel' %}"{% if pagina == 'pix_painel' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="pix" %}<span>Pix</span></a>
+      <a href="{% url 'pagamentos:pix_painel' %}"{% if pagina == 'pix_painel' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="pix" %}<span>Pix</span>{% if pix_alertas_n %}<span class="selo selo--alerta"><span class="sr-only">{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span><span aria-hidden="true">{{ pix_alertas_n }}</span></span>{% endif %}</a>
       <a href="{% url 'pagamentos:historico' %}"{% if pagina == 'historico' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="historico" %}<span>Histórico</span></a>
       <p class="nav-grupo">Cadastros</p>
       <a href="{% url 'clientes:lista' %}"{% if secao == 'clientes' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="clientes" %}<span>Clientes</span></a>
@@ -87,7 +87,7 @@
     <details class="menu-pop menu-mais">
       <summary{% if pagina == 'pix_painel' or pagina == 'historico' or secao == 'relatorios' and pagina != 'inicio' %} class="active"{% endif %}>{% include "_icone.html" with nome="mais" %}<span>Mais</span></summary>
       <div class="menu-painel">
-        <a class="menu-item" href="{% url 'pagamentos:pix_painel' %}">{% include "_icone.html" with nome="pix" %}<span>Pix</span></a>
+        <a class="menu-item" href="{% url 'pagamentos:pix_painel' %}">{% include "_icone.html" with nome="pix" %}<span>Pix</span>{% if pix_alertas_n %}<span class="selo selo--alerta"><span class="sr-only">{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span><span aria-hidden="true">{{ pix_alertas_n }}</span></span>{% endif %}</a>
         <a class="menu-item" href="{% url 'pagamentos:historico' %}">{% include "_icone.html" with nome="historico" %}<span>Histórico de pagamentos</span></a>
         {% if user.is_dono %}<a class="menu-item" href="{% url 'relatorios:painel' %}">{% include "_icone.html" with nome="relatorios" %}<span>Relatórios</span></a>{% endif %}
       </div>

@@ -6,6 +6,8 @@ lembrete no WhatsApp da Yslane às 08:30 já tem o texto e o job prontos; falta
 só a conta WhatsApp Business para o envio de verdade (ver `lembrete.py`).
 """
 
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
@@ -24,7 +26,9 @@ from apps.contratos.models import Contrato
 from . import cora_api
 from .agenda import montar_agenda_do_dia
 from .forms import PagamentoForm
-from .models import CobrancaCora, Pagamento, Vencimento
+from .comprovantes import conferir_na_cora
+from .limpeza import encerrar_cobranca_automatica
+from .models import CobrancaCora, ComprovanteRecebido, Pagamento, Vencimento
 from .pix_cora import (
     CancelamentoRecusado,
     cancelar_cobranca,
@@ -32,6 +36,8 @@ from .pix_cora import (
     suspender_cobranca,
 )
 
+
+logger = logging.getLogger("pagamentos.views")
 
 class CobrarHojeView(LoginRequiredMixin, TemplateView):
     template_name = "pagamentos/cobrar_hoje.html"
@@ -72,6 +78,12 @@ class PixPainelView(LoginRequiredMixin, TemplateView):
             nao_pagas=sum(c.status == CobrancaCora.Status.VENCIDO for c in cobrancas),
             aguardando=sum(c.status in {CobrancaCora.Status.PENDENTE, CobrancaCora.Status.ABERTO} for c in cobrancas),
             erros=sum(c.status == CobrancaCora.Status.ERRO for c in cobrancas),
+            duplicadas=CobrancaCora.objects.select_related("vencimento__contrato__cliente")
+            .filter(duplicada=True, duplicidade_resolvida_em__isnull=True)
+            .order_by("pago_em"),
+            comprovantes=ComprovanteRecebido.objects.select_related("cliente", "vencimento__contrato")
+            .filter(status=ComprovanteRecebido.Status.AGUARDANDO)
+            .order_by("recebido_em"),
         )
         return ctx
 
@@ -123,6 +135,60 @@ class CobrancaSuspenderView(LoginRequiredMixin, View):
                 request,
                 f"Cobrança automática da {parcela} suspensa. Nenhuma mensagem nem Pix será enviado até você retomar.",
             )
+        return _voltar_para_origem(request)
+
+
+class PixDuplicidadeResolvidaView(LoginRequiredMixin, View):
+    """Marca como resolvida (valor devolvido ao cliente) uma duplicidade de Pix (POST)."""
+
+    def post(self, request, pk):
+        cobranca = get_object_or_404(
+            CobrancaCora.objects.select_related("vencimento__contrato__cliente"), pk=pk, duplicada=True
+        )
+        if cobranca.duplicidade_resolvida_em is None:
+            cobranca.duplicidade_resolvida_em = timezone.now()
+            cobranca.save(update_fields=["duplicidade_resolvida_em", "atualizado_em"])
+        cliente = cobranca.vencimento.contrato.cliente.nome
+        messages.success(request, f"Duplicidade de {cliente} marcada como resolvida.")
+        return _voltar_para_origem(request)
+
+
+class ComprovanteConferirView(LoginRequiredMixin, View):
+    """Consulta a Cora agora sobre o comprovante enviado pelo cliente (POST)."""
+
+    def post(self, request, pk):
+        comprovante = get_object_or_404(
+            ComprovanteRecebido.objects.select_related("cliente", "vencimento"), pk=pk
+        )
+        nome = comprovante.cliente.nome
+        if comprovante.status != ComprovanteRecebido.Status.AGUARDANDO:
+            messages.info(request, f"O comprovante de {nome} já foi resolvido.")
+        elif not conferir_na_cora(comprovante):
+            messages.warning(
+                request,
+                f"Não consegui consultar a Cora para {nome} (sem Pix gerado ou Cora fora do ar). "
+                "Confira a conta e, se o dinheiro entrou, registre o pagamento.",
+            )
+        else:
+            comprovante.refresh_from_db()
+            if comprovante.status == ComprovanteRecebido.Status.CONFIRMADO:
+                messages.success(request, f"Pix de {nome} confirmado pela Cora — baixa dada e cliente avisado.")
+            else:
+                messages.warning(request, f"O Pix de {nome} ainda não caiu na Cora.")
+        return _voltar_para_origem(request)
+
+
+class ComprovanteDescartarView(LoginRequiredMixin, View):
+    """Descarta um arquivo que não era comprovante (foto qualquer etc.) (POST)."""
+
+    def post(self, request, pk):
+        comprovante = get_object_or_404(ComprovanteRecebido, pk=pk)
+        if comprovante.status == ComprovanteRecebido.Status.AGUARDANDO:
+            comprovante.status = ComprovanteRecebido.Status.DESCARTADO
+            comprovante.resolvido_em = timezone.now()
+            comprovante.resolvido_por = request.user
+            comprovante.save(update_fields=["status", "resolvido_em", "resolvido_por"])
+            messages.success(request, "Aviso descartado.")
         return _voltar_para_origem(request)
 
 
@@ -227,6 +293,7 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         pagamento.usuario_baixa = self.request.user
         pagamento.registrar()
         self.object = pagamento
+        self._encerrar_cobranca_automatica(pagamento)
 
         if pagamento.juros_pago:
             juros_fmt = f"{pagamento.juros_pago:.2f}".replace(".", ",")
@@ -249,6 +316,21 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         if self._is_htmx():
             return self._resposta_htmx_sucesso()
         return redirect("contratos:detalhe", pk=self.contrato.pk)
+
+    def _encerrar_cobranca_automatica(self, pagamento):
+        """Cancela o Pix em aberto e resolve a mensagem de cobrança já enviada.
+        Nunca desfaz o pagamento: qualquer falha vira um aviso na tela."""
+        try:
+            avisos = encerrar_cobranca_automatica(pagamento)
+        except Exception:  # noqa: BLE001 — o pagamento já foi salvo; só avisa
+            logger.exception("Falha ao encerrar a cobrança automática do pagamento %s", pagamento.pk)
+            avisos = [(
+                "warning",
+                "O pagamento foi registrado, mas não consegui encerrar a cobrança automática. "
+                "Confira o Pix no painel Pix e a mensagem enviada ao cliente.",
+            )]
+        for nivel, texto in avisos:
+            getattr(messages, nivel)(self.request, texto)
 
     def _resposta_htmx_sucesso(self):
         """Painel "Cobrar hoje" e mensagens atualizados via troca fora-de-banda.

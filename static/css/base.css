@@ -648,7 +648,9 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .envio-vias { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
 .envio-vias .pill { white-space: nowrap; cursor: help; min-width: 3.25rem; justify-content: center; }
 .envio-glifo { margin-left: 0.3em; font-weight: 700; }
-.valor-cobrar { font-weight: 600; font-size: 1.1rem; white-space: nowrap; }
+/* Valor a cobrar = dinheiro a entrar: verde. Negrito e 1.2rem para o contraste valer como texto grande. */
+.valor-cobrar { font-weight: 700; font-size: 1.2rem; white-space: nowrap; }
+.valor-cobrar.num { color: var(--money); }
 .cobrar-cell { white-space: normal; }
 .cobrar-cell .helptext { display: block; }
 .contrato-cell .estrutura { color: var(--ink-faint); }

@@ -224,6 +224,11 @@ YSLANE_WHATSAPP_NUMERO = env("YSLANE_WHATSAPP_NUMERO", default="")
 # prepara a fila sem enviar; "evolution" dispara as mensagens de verdade quando
 # EVOLUTION_API_URL / _API_KEY / _INSTANCE estiverem preenchidos.
 WHATSAPP_PROVIDER = env("WHATSAPP_PROVIDER", default="log")
+# Quando uma parcela é paga por outro meio (dinheiro etc.), a mensagem de cobrança
+# já enviada é apagada do WhatsApp do cliente — só dentro desta janela, que é o
+# limite do próprio WhatsApp para "apagar para todos". False = só avisa.
+WHATSAPP_APAGAR_AO_BAIXAR = env.bool("WHATSAPP_APAGAR_AO_BAIXAR", default=True)
+WHATSAPP_APAGAR_JANELA_HORAS = env.int("WHATSAPP_APAGAR_JANELA_HORAS", default=48)
 WHATSAPP_PIX_CHAVE = env("WHATSAPP_PIX_CHAVE", default="")
 EVOLUTION_API_URL = env("EVOLUTION_API_URL", default="")
 EVOLUTION_API_KEY = env("EVOLUTION_API_KEY", default="")

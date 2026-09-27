@@ -80,6 +80,37 @@ Os ACKs da Evolution (texto `SERVER_ACK`/`DELIVERY_ACK`/`READ`/`PLAYED`, ou os
 números `1..4`) viram os estados: enviado, entregue e lido. `ERROR` marca erro.
 O webhook nunca regride um estado já alcançado.
 
+## Comprovantes e confirmação de pagamento
+
+Para o sistema saber que o cliente mandou um comprovante, o mesmo webhook precisa
+receber também o evento **`messages.upsert`** (mensagens recebidas). Na Evolution,
+inclua `MESSAGES_UPSERT` nos eventos do webhook (além de `MESSAGES_UPDATE`) e
+deixe **desligado** o envio da mídia em base64 (`webhook_base64: false`): o sistema
+não guarda a imagem e uma mídia grande no aviso só atrapalha.
+
+O que acontece quando um cliente cadastrado manda uma **imagem ou PDF**:
+
+1. O sistema reconhece o cliente pelo número e a parcela em aberto mais antiga.
+   Texto, áudio, figurinhas, grupos e números que não são de cliente são ignorados.
+2. Consulta a Cora. Se o Pix já foi pago, dá a baixa e confirma ao cliente.
+3. Se ainda não caiu, responde ao cliente ("recebemos o comprovante, ainda não
+   identificamos o Pix; avisamos quando cair", no máximo uma vez a cada 6 horas) e
+   mostra o alerta no painel **Pix** (com selo no menu). O financeiro pode abrir o
+   WhatsApp, conferir na Cora ou descartar se não for comprovante.
+
+**A imagem nunca conta como pagamento** — só a Cora confirma. O arquivo não é
+guardado, apenas o aviso de que chegou (quem, quando, tipo, legenda).
+
+**Confirmação:** todo Pix confirmado pela Cora gera, junto com a baixa automática,
+uma mensagem "Recebemos o seu pagamento de R$ X (parcela N)" ao cliente, uma única
+vez. Em `WHATSAPP_PROVIDER=log` nada é enviado.
+
+**Pagamento em dinheiro depois da cobrança:** ao registrar a baixa manual, o Pix em
+aberto é cancelado e a mensagem de cobrança já enviada é apagada do WhatsApp do
+cliente (`WHATSAPP_APAGAR_AO_BAIXAR`, dentro de `WHATSAPP_APAGAR_JANELA_HORAS`
+horas — o limite do próprio WhatsApp). Se não for possível, a tela avisa. Se o
+cliente pagar o Pix também, o painel Pix mostra a duplicidade para devolução.
+
 ## Rotina diária
 
 Depois de gerar os vencimentos, execute:

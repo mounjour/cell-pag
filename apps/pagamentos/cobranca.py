@@ -141,7 +141,13 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             cobranca.save(update_fields=["status", "erro", "atualizado_em"])
             resultado["erros"] += 1
             continue
-        if cobranca.status in {Cobranca.Status.ENVIADO, Cobranca.Status.ENTREGUE, Cobranca.Status.LIDO}:
+        if cobranca.status in {
+            Cobranca.Status.ENVIADO,
+            Cobranca.Status.ENTREGUE,
+            Cobranca.Status.LIDO,
+            Cobranca.Status.CANCELADO,
+            Cobranca.Status.APAGADO,
+        }:
             resultado["ignoradas"] += 1
             continue
         if somente_preparar:
@@ -184,7 +190,8 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
             # o retry não reenviar tudo de novo.
             if dados["codigo_pix"]:
                 try:
-                    enviar_mensagem(destinatario=destinatario, texto=dados["codigo_pix"])
+                    resposta_codigo = enviar_mensagem(destinatario=destinatario, texto=dados["codigo_pix"])
+                    cobranca.id_externo_codigo = resposta_codigo.get("id", "")
                 except WhatsAppErro as exc:
                     cobranca.erro = f"Copia-e-cola não enviado: {exc}"
                     logger.warning("Copia-e-cola da cobrança %s não enviado: %s", cobranca.pk, exc)

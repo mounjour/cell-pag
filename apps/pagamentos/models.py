@@ -267,6 +267,10 @@ class Cobranca(models.Model):
         ENTREGUE = "entregue", "Entregue"
         LIDO = "lido", "Lido"
         ERRO = "erro", "Erro"
+        # A parcela foi paga por outro meio: a mensagem não é mais enviada
+        # (CANCELADO) ou foi apagada do WhatsApp do cliente (APAGADO).
+        CANCELADO = "cancelado", "Cancelado"
+        APAGADO = "apagado", "Apagado do WhatsApp"
 
     contrato = models.ForeignKey(
         "contratos.Contrato",
@@ -286,6 +290,11 @@ class Cobranca(models.Model):
     mensagem = models.TextField()
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDENTE)
     id_externo = models.CharField("ID no provedor", max_length=160, blank=True, db_index=True)
+    # Segunda mensagem da cobrança (o copia-e-cola do Pix): guardada para poder
+    # apagá-la junto com a principal quando a parcela for paga por outro meio.
+    id_externo_codigo = models.CharField(
+        "ID do copia-e-cola no provedor", max_length=160, blank=True
+    )
     erro = models.TextField(blank=True)
     tentativas = models.PositiveSmallIntegerField(default=0)
     enviado_em = models.DateTimeField(null=True, blank=True)
@@ -340,6 +349,12 @@ class CobrancaCora(models.Model):
     qr_code_url = models.URLField(blank=True, max_length=500)
     erro = models.TextField(blank=True)
     pago_em = models.DateTimeField(null=True, blank=True)
+    # O cliente pagou o Pix de uma parcela que já tinha sido baixada por outro
+    # meio (ex.: dinheiro): o valor entrou na Cora e precisa ser devolvido.
+    duplicada = models.BooleanField("pago em duplicidade", default=False)
+    duplicidade_resolvida_em = models.DateTimeField(null=True, blank=True)
+    # Confirmação "recebemos seu pagamento" mandada ao cliente por WhatsApp (só uma vez).
+    confirmacao_enviada_em = models.DateTimeField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 
@@ -370,3 +385,46 @@ class EventoCora(models.Model):
 
     def __str__(self):
         return f"{self.tipo} - {self.recurso_id}"
+
+
+class ComprovanteRecebido(models.Model):
+    """Arquivo (imagem/PDF) que um cliente mandou por WhatsApp como "comprovante".
+
+    O arquivo em si NÃO é guardado (só o aviso de que chegou): uma imagem não
+    prova pagamento — quem prova é a Cora. Este registro serve para o financeiro
+    conferir o Pix e, quando ele cair, o cliente receber a confirmação.
+    """
+
+    class Status(models.TextChoices):
+        AGUARDANDO = "aguardando", "Aguardando a Cora"
+        CONFIRMADO = "confirmado", "Pix confirmado"
+        DESCARTADO = "descartado", "Descartado"
+
+    class Tipo(models.TextChoices):
+        IMAGEM = "imagem", "Imagem"
+        DOCUMENTO = "documento", "Documento/PDF"
+
+    cliente = models.ForeignKey(
+        "clientes.Cliente", on_delete=models.PROTECT, related_name="comprovantes_recebidos"
+    )
+    vencimento = models.ForeignKey(
+        Vencimento, on_delete=models.SET_NULL, null=True, blank=True, related_name="comprovantes_recebidos"
+    )
+    id_externo = models.CharField("ID da mensagem no WhatsApp", max_length=160, unique=True)
+    tipo = models.CharField(max_length=12, choices=Tipo.choices)
+    nome_arquivo = models.CharField(max_length=200, blank=True)
+    legenda = models.TextField(blank=True)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.AGUARDANDO)
+    recebido_em = models.DateTimeField(default=timezone.now)
+    resposta_enviada_em = models.DateTimeField(null=True, blank=True)
+    resolvido_em = models.DateTimeField(null=True, blank=True)
+    resolvido_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
+    class Meta:
+        ordering = ["-recebido_em"]
+
+    def __str__(self):
+        return f"{self.cliente} - {self.get_tipo_display()} - {self.get_status_display()}"
+

@@ -30,7 +30,21 @@ def shell(request):
 
     from apps.pagamentos.badge import contagem_cobrar_hoje
 
-    return {"cobrar_hoje_n": SimpleLazyObject(contagem_cobrar_hoje)}
+    def pix_alertas():
+        from apps.pagamentos.models import CobrancaCora, ComprovanteRecebido
+
+        duplicadas = CobrancaCora.objects.filter(
+            duplicada=True, duplicidade_resolvida_em__isnull=True
+        ).count()
+        comprovantes = ComprovanteRecebido.objects.filter(
+            status=ComprovanteRecebido.Status.AGUARDANDO
+        ).count()
+        return duplicadas + comprovantes
+
+    return {
+        "cobrar_hoje_n": SimpleLazyObject(contagem_cobrar_hoje),
+        "pix_alertas_n": SimpleLazyObject(pix_alertas),  # duplicidades + comprovantes a conferir
+    }
 
 
 def favicon(request):
