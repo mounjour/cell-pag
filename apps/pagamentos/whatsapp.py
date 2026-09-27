@@ -54,14 +54,14 @@ def _config_evolution():
     )
 
 
-def _chamar_evolution(caminho: str, corpo: dict) -> dict:
+def _chamar_evolution(caminho: str, corpo: dict, metodo: str = "POST") -> dict:
     base_url, api_key, instancia = _config_evolution()
     url = f"{base_url}{caminho}/{urllib.parse.quote(instancia)}"
     requisicao = urllib.request.Request(
         url,
         data=json.dumps(corpo).encode("utf-8"),
         headers={"apikey": api_key, "Content-Type": "application/json"},
-        method="POST",
+        method=metodo,
     )
     try:
         with urllib.request.urlopen(requisicao, timeout=20) as resposta:
@@ -69,7 +69,7 @@ def _chamar_evolution(caminho: str, corpo: dict) -> dict:
     except urllib.error.HTTPError as exc:
         detalhe = exc.read().decode("utf-8", errors="replace")[:500]
         logger.warning("Evolution respondeu HTTP %s: %s", exc.code, detalhe)
-        raise WhatsAppErro(f"A Evolution recusou o envio (HTTP {exc.code}).") from exc
+        raise WhatsAppErro(f"A Evolution recusou a operação (HTTP {exc.code}).") from exc
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         logger.warning("Falha ao chamar a Evolution API: %s", exc)
         raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
@@ -136,3 +136,30 @@ def enviar_imagem(*, destinatario: str, imagem_url: str, legenda: str) -> dict:
         },
     )
     return {"simulado": False, "id": _extrair_id_mensagem(dados)}
+
+
+def apagar_mensagem(*, destinatario: str, id_mensagem: str) -> dict:
+    """Apaga, para os dois lados, uma mensagem que enviamos ao cliente.
+
+    ``log`` só registra e devolve ``{"simulado": True}``.
+    ``evolution`` chama ``DELETE {EVOLUTION_API_URL}/chat/deleteMessageForEveryone/{instância}``.
+    O WhatsApp só deixa apagar para todos dentro de uma janela de tempo depois do
+    envio; passada a janela, a Evolution recusa e isto levanta ``WhatsAppErro``.
+    """
+    provider = settings.WHATSAPP_PROVIDER.lower().strip()
+    if provider == "log":
+        logger.info("[simulação WhatsApp -> %s] apagar mensagem", mascara_numero(destinatario))
+        return {"simulado": True}
+    if provider != "evolution":
+        raise WhatsAppErro(f"WHATSAPP_PROVIDER desconhecido: {provider!r}")
+
+    _chamar_evolution(
+        "/chat/deleteMessageForEveryone",
+        {
+            "id": id_mensagem,
+            "remoteJid": f"{numero_so_digitos(destinatario)}@s.whatsapp.net",
+            "fromMe": True,
+        },
+        metodo="DELETE",
+    )
+    return {"simulado": False}

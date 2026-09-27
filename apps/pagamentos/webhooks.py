@@ -17,6 +17,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from .comprovantes import processar_mensagem_recebida
 from .models import Cobranca
 
 logger = logging.getLogger("pagamentos.whatsapp")
@@ -59,7 +60,8 @@ class WhatsAppWebhookView(View):
         except json.JSONDecodeError:
             return HttpResponse("JSON inválido.", status=400)
         atualizadas = _processar(payload)
-        return JsonResponse({"recebido": True, "atualizadas": atualizadas})
+        comprovantes = _registrar_arquivos_recebidos(payload)
+        return JsonResponse({"recebido": True, "atualizadas": atualizadas, "comprovantes": comprovantes})
 
 
 def _token_valido(request) -> bool:
@@ -91,6 +93,17 @@ def _eventos(payload):
         yield dados
 
 
+def _registrar_arquivos_recebidos(payload) -> int:
+    """Imagens/PDFs que clientes mandaram (evento ``messages.upsert``)."""
+    if not isinstance(payload, dict) or payload.get("event") != "messages.upsert":
+        return 0
+    novos = 0
+    for dado in _eventos(payload):
+        if processar_mensagem_recebida(dado) is not None:
+            novos += 1
+    return novos
+
+
 def _novo_status(bruto):
     if isinstance(bruto, bool) or bruto is None:
         return None
@@ -113,6 +126,8 @@ def _processar(payload) -> int:
         cobranca = Cobranca.objects.filter(id_externo=identificador).first()
         if not cobranca:
             continue
+        if cobranca.status in (Cobranca.Status.CANCELADO, Cobranca.Status.APAGADO):
+            continue  # já encerrada por pagamento em outro meio: aviso atrasado não reabre
         if novo != Cobranca.Status.ERRO and _ORDEM[novo] < _ORDEM[cobranca.status]:
             continue
         agora = timezone.now()

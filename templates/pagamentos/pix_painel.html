@@ -6,6 +6,56 @@
 <h1>Acompanhamento Pix · {{ hoje|date:"d/m/Y" }}</h1>
 <p class="note">Cada parcela recebe uma cobrança Pix da Cora. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
 
+{% if comprovantes %}
+<section class="alerta-comprovante" role="alert">
+  <h2>Comprovantes recebidos · conferir na Cora</h2>
+  <p>O cliente mandou um arquivo pelo WhatsApp, mas o Pix ainda não aparece na Cora. <strong>O arquivo não prova o pagamento</strong> (pode ser qualquer foto): abra a conversa para ver, confira a Cora e, se for falso, descarte. Quando o Pix cair, o sistema dá a baixa e avisa o cliente sozinho.</p>
+  <ul class="duplicidade-lista">
+    {% for c in comprovantes %}
+      <li>
+        <span>
+          <a href="{% url 'clientes:detalhe' c.cliente.pk %}">{{ c.cliente.nome }}</a>
+          · {{ c.get_tipo_display }}{% if c.nome_arquivo %} “{{ c.nome_arquivo }}”{% endif %}
+          · {% if c.vencimento %}parcela {{ c.vencimento.numero }} de {{ c.vencimento.contrato.apelido }}{% else %}<em>sem parcela em aberto</em>{% endif %}
+          · recebido em {{ c.recebido_em|date:"d/m/Y H:i" }}
+          {% if c.legenda %}<span class="helptext">“{{ c.legenda }}”</span>{% endif %}
+        </span>
+        <span class="comprovante-acoes">
+          <a class="btn secondary" href="{{ c.cliente.whatsapp_url }}" target="_blank" rel="noopener">Abrir WhatsApp</a>
+          <form method="post" action="{% url 'pagamentos:comprovante_conferir' c.pk %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn">Conferir na Cora</button>
+          </form>
+          <form method="post" action="{% url 'pagamentos:comprovante_descartar' c.pk %}">
+            {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn secondary">Descartar</button>
+          </form>
+        </span>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if duplicadas %}
+<section class="alerta-duplicidade" role="alert">
+  <h2>Pago em duplicidade · devolver ao cliente</h2>
+  <p>O cliente pagou o Pix de uma parcela que já tinha sido paga por outro meio (por exemplo, em dinheiro). O valor entrou na Cora e <strong>não foi lançado no sistema</strong>: devolva-o ao cliente e depois marque como devolvido.</p>
+  <ul class="duplicidade-lista">
+    {% for c in duplicadas %}
+      <li>
+        <span><a href="{% url 'clientes:detalhe' c.vencimento.contrato.cliente.pk %}">{{ c.vencimento.contrato.cliente.nome }}</a> · {{ c.vencimento.contrato.apelido }} · parcela {{ c.vencimento.numero }} · <strong class="num">R$ {{ c.total_pago|floatformat:2 }}</strong>{% if c.pago_em %} · pago em {{ c.pago_em|date:"d/m/Y H:i" }}{% endif %}</span>
+        <form method="post" action="{% url 'pagamentos:pix_duplicidade_resolvida' c.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn secondary">Marcar como devolvido</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
 <dl class="meta report-metrics meta--5col">
   <div><dt>Na tela</dt><dd class="num">{{ total }}</dd></div>
   <div><dt>✅ Pagos hoje</dt><dd class="num">{{ pagas }}</dd></div>

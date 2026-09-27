@@ -16,6 +16,13 @@ urlpatterns = [
         name="cobranca_suspender",
     ),
     path("pix/<int:pk>/retomar/", views.CobrancaRetomarView.as_view(), name="cobranca_retomar"),
+    path("comprovantes/<int:pk>/conferir/", views.ComprovanteConferirView.as_view(), name="comprovante_conferir"),
+    path("comprovantes/<int:pk>/descartar/", views.ComprovanteDescartarView.as_view(), name="comprovante_descartar"),
+    path(
+        "pix/<int:pk>/duplicidade-resolvida/",
+        views.PixDuplicidadeResolvidaView.as_view(),
+        name="pix_duplicidade_resolvida",
+    ),
     path("historico/", views.HistoricoPagamentosView.as_view(), name="historico"),
     path(
         "comprovante/<int:pk>/",

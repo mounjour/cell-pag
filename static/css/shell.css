@@ -182,3 +182,5 @@
 .busca-item-detalhe { color: var(--ink-faint); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .busca-todos { margin-top: 4px; border-top: 1px solid var(--line); border-radius: 0 0 var(--radius-sm) var(--radius-sm); color: var(--accent-ink); font-size: 0.88rem; font-weight: 600; }
 .busca-vazio { padding: 0.9rem 0.7rem; color: var(--ink-faint); font-size: 0.9rem; }
+
+.selo--alerta { background: var(--critical); color: #fff; }
