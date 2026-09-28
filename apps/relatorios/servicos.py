@@ -8,6 +8,7 @@ from django.utils import timezone
 from apps.clientes.models import Cliente
 from apps.contratos.models import Contrato
 from apps.pagamentos.models import Pagamento, Vencimento
+from apps.pagamentos.agenda import parcelas_a_cobrar
 from apps.pagamentos.atraso import dias_de_atraso
 
 MESES_PT = [
@@ -145,13 +146,21 @@ def montar_painel_inicial(hoje: datetime.date | None = None, meses: int = 6) -> 
         status = situacao.status if situacao else contrato.status
         contagem[status] = contagem.get(status, 0) + 1
         if situacao and situacao.dias_atraso:
-            parcela = contrato.parcela_em_aberto()
-            saldo = parcela.saldo if parcela else Decimal("0.00")
+            # Mesma conta da cobrança e da mensagem: todas as parcelas vencidas,
+            # cada uma com o próprio juros (não só a mais antiga).
+            parcelas = parcelas_a_cobrar(contrato, hoje)
+            if parcelas:
+                em_aberto = sum((p.total for p in parcelas), Decimal("0.00"))
+            else:
+                parcela = contrato.parcela_em_aberto()
+                saldo = parcela.saldo if parcela else Decimal("0.00")
+                em_aberto = saldo + situacao.juros
             atencao.append(
                 {
                     "contrato": contrato,
                     "dias_atraso": situacao.dias_atraso,
-                    "em_aberto": saldo + situacao.juros,
+                    "n_parcelas": len(parcelas),
+                    "em_aberto": em_aberto,
                 }
             )
     contagem["quitado"] = Contrato.objects.filter(

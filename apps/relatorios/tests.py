@@ -226,3 +226,19 @@ def test_painel_renderiza_seletor_de_periodo_com_o_intervalo(dono_client, dados_
     assert 'id="periodo-botao"' in html
     assert 'data-inicio="2026-09-01"' in html
     assert 'data-fim="2026-09-02"' in html
+
+
+@pytest.mark.django_db
+def test_painel_inicial_soma_todas_as_parcelas_vencidas(dados_relatorio):
+    from apps.relatorios.servicos import montar_painel_inicial
+
+    contrato, vencido, _ = dados_relatorio
+    contrato.vencimentos.filter(numero=2).update(status=Vencimento.Status.ABERTO)
+    Pagamento.objects.filter(vencimento__contrato=contrato).delete()
+    contrato.vencimentos.filter(numero=2).update(valor_pago=Decimal("0.00"))
+    # Parcelas 1 (01/09) e 2 (02/09) vencidas em aberto, R$ 100 cada, em 03/09.
+    painel = montar_painel_inicial(hoje=date(2026, 9, 3))
+    item = painel["atencao"][0]
+    assert item["n_parcelas"] == 2
+    # 200 de parcelas + juros de cada uma: 2 dias (R$ 10) + 1 dia (R$ 5)
+    assert item["em_aberto"] == Decimal("215.00")

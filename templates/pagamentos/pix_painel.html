@@ -73,7 +73,7 @@
       <tr>
         <td><a href="{% url 'clientes:detalhe' c.contrato.cliente.pk %}">{{ c.contrato.cliente.nome }}</a></td>
         <td data-label="Contrato"><a href="{% url 'contratos:detalhe' c.contrato.pk %}">{{ c.contrato.apelido }}</a></td>
-        <td data-label="Parcela" class="num">{{ c.vencimento.numero }}</td>
+        <td data-label="Parcela" class="num">{{ c.rotulo_parcelas }}</td>
         <td data-label="Vencimento" class="num">{{ c.data_vencimento|date:"d/m/Y" }}</td>
         <td data-label="Valor" class="num">R$ {{ c.valor|floatformat:2 }}</td>
         <td data-label="Status">

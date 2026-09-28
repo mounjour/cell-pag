@@ -216,3 +216,18 @@ def test_pagar_o_pix_total_quita_todas_as_parcelas(settings, monkeypatch):
     status = list(contrato.vencimentos.order_by("numero").values_list("status", flat=True))
     assert status == ["pago", "pago", "pago"]  # as duas seguintes quitadas pelo crédito
     assert contrato.parcela_em_aberto() is None  # nada mais a cobrar amanhã
+
+
+@pytest.mark.django_db
+def test_painel_pix_mostra_as_parcelas_que_o_pix_cobre(auth_client, settings, monkeypatch):
+    from django.urls import reverse
+    from django.utils import timezone
+
+    settings.CORA_PROVIDER = "cora"
+    contrato = _contrato_com_parcelas(3)
+    monkeypatch.setattr("apps.pagamentos.cora_api.criar_fatura", lambda p, k: _fatura("inv_1"))
+    obter_ou_criar_cobranca(contrato.vencimentos.get(numero=1), hoje=HOJE)
+    monkeypatch.setattr(timezone, "localdate", lambda: HOJE)
+
+    html = auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
+    assert '<td data-label="Parcela" class="num">1, 2, 3</td>' in html
