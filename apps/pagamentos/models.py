@@ -224,12 +224,19 @@ class Pagamento(models.Model):
             novo_valor = alvo.valor_previsto + restante
             if novo_valor < 0:
                 alvo.valor_previsto = Decimal("0.00")
-                alvo.save(update_fields=["valor_previsto", "atualizado_em"])
                 restante = novo_valor
             else:
                 alvo.valor_previsto = novo_valor
-                alvo.save(update_fields=["valor_previsto", "atualizado_em"])
                 restante = Decimal("0.00")
+            campos = ["valor_previsto", "atualizado_em"]
+            if alvo.valor_previsto == 0:
+                # Quitada pelo crédito (ex.: um Pix que pagou várias parcelas de
+                # uma vez): sem isso ficava "em aberto" com valor zero e ainda
+                # entrava na cobrança de amanhã.
+                alvo.status = Vencimento.Status.PAGO
+                campos.append("status")
+            alvo.save(update_fields=campos)
+            if restante == 0:
                 break
         if restante:
             self.contrato.saldo_transportado = (
