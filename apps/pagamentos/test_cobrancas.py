@@ -100,7 +100,7 @@ def test_mensagem_lista_cada_parcela_com_o_atraso_dela(cliente_cobranca):
     assert "*Parcela 3* (vence hoje): R$ 100,00" in msg
     assert "Total das parcelas: R$ 300,00" in msg
     assert "Juros pelo atraso: R$ 15,00" in msg
-    assert "Pix abaixo é da *parcela 1*" in msg
+    assert "pagar o total das parcelas — *R$ 300,00*" in msg
     # o painel cobra o conjunto: 300 de parcelas + 15 de juros
     assert linha["a_cobrar"] == Decimal("315.00")
 

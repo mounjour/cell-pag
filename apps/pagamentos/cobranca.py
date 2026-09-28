@@ -59,8 +59,8 @@ def _mensagem_varias_parcelas(base, parcelas, numero_pix, bloco_pix, *, alertar_
             "preciso que seja regularizada *hoje* para evitar o bloqueio do aparelho."
         )
     partes.append(
-        f"O Pix abaixo é da *parcela {numero_pix}* (R$ {_moeda(mais_antiga.saldo)}). "
-        "Depois dela, me chama que eu mando o das próximas.\n\n" + bloco_pix
+        f"Pra deixar tudo em dia, é só pagar o total das parcelas — *R$ {_moeda(soma)}* — "
+        "no Pix abaixo.\n\n" + bloco_pix
     )
     partes.append("Depois é só me mandar o comprovante por aqui. Se já pagou, é só desconsiderar. 🙏")
     return "\n\n".join(partes)

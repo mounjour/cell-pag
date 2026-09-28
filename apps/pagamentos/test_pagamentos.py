@@ -122,6 +122,10 @@ def test_pagamento_a_maior_cascateia_pelas_proximas(cliente):
     assert ct.vencimentos.get(numero=2).valor_previsto == Decimal("0.00")
     assert ct.vencimentos.get(numero=3).valor_previsto == Decimal("0.00")
     assert ct.vencimentos.get(numero=4).valor_previsto == Decimal("40.00")
+    # zeradas pelo crédito = pagas (senão continuariam a ser cobradas por R$ 0)
+    assert ct.vencimentos.get(numero=2).status == Vencimento.Status.PAGO
+    assert ct.vencimentos.get(numero=3).status == Vencimento.Status.PAGO
+    assert ct.vencimentos.get(numero=4).status == Vencimento.Status.ABERTO
 
 
 # ── juros_pago: registro à parte, nunca mexe na parcela seguinte ────────────

@@ -32,12 +32,72 @@ STATUS_CORA = {
 FORMAS_PAGAMENTO = ["PIX"]
 
 
+def parcelas_do_pix(vencimento: Vencimento, hoje) -> list:
+    """Parcelas que o Pix desta parcela quita: todas as vencidas em aberto do contrato.
+
+    O Pix fica preso à parcela **mais antiga** em aberto, mas cobra o total das
+    parcelas vencidas (o juros fica de fora — é combinado à parte). Quando só há
+    ela, é só ela. Se ``vencimento`` não é a mais antiga, cobra só o saldo dele.
+    """
+    from .agenda import parcelas_a_cobrar
+
+    parcelas = parcelas_a_cobrar(vencimento.contrato, hoje)
+    if len(parcelas) > 1 and parcelas[0].numero == vencimento.numero:
+        return parcelas
+    return []
+
+
+def valor_do_pix(vencimento: Vencimento, hoje) -> Decimal:
+    parcelas = parcelas_do_pix(vencimento, hoje)
+    if parcelas:
+        return sum((p.saldo for p in parcelas), Decimal("0.00"))
+    return max(vencimento.saldo, Decimal("0.00"))
+
+
+def _substituir_fatura(cobranca: CobrancaCora, valor: Decimal) -> bool:
+    """Troca a fatura aberta por outra de ``valor`` diferente (total que mudou).
+
+    Cancela a antiga na Cora e zera o registro para o fluxo normal criar uma nova
+    (nova chave de idempotência, sem ``cora_id``). Nunca troca fatura já paga
+    (a consulta antes de cancelar pode descobrir o pagamento e dar a baixa).
+    Devolve ``False`` — e mantém a fatura antiga — se ela foi paga ou se a Cora
+    não confirmou o cancelamento: melhor um QR com valor velho do que dois vivos.
+    """
+    try:
+        sincronizar_cobranca(cobranca)  # pode descobrir que já foi paga
+        if cobranca.status == CobrancaCora.Status.PAGO:
+            return False
+        if cobranca.status != CobrancaCora.Status.CANCELADO:
+            cora_api.cancelar_fatura(cobranca.cora_id)
+            sincronizar_cobranca(cobranca)
+            if cobranca.status != CobrancaCora.Status.CANCELADO:
+                raise cora_api.CoraErro(
+                    f"A Cora não confirmou o cancelamento (status {cobranca.get_status_display()})."
+                )
+    except cora_api.CoraErro as exc:
+        cobranca.erro = f"Não foi possível atualizar o valor do Pix: {exc}"
+        cobranca.save(update_fields=["erro", "atualizado_em"])
+        logger.warning("Pix %s não substituído: %s", cobranca.cora_id, exc)
+        return False
+    cobranca.status = CobrancaCora.Status.PENDENTE
+    cobranca.cora_id = None
+    cobranca.idempotency_key = uuid.uuid4()
+    cobranca.valor = valor
+    cobranca.total_pago = Decimal("0.00")
+    cobranca.pix_copia_e_cola = ""
+    cobranca.qr_code_url = ""
+    cobranca.erro = ""
+    cobranca.save()
+    return True
+
+
 def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
     hoje = hoje or timezone.localdate()
+    valor = valor_do_pix(vencimento, hoje)
     cobranca, _ = CobrancaCora.objects.get_or_create(
         vencimento=vencimento,
         defaults={
-            "valor": max(vencimento.saldo, Decimal("0.00")),
+            "valor": valor,
             "data_vencimento": vencimento.data_vencimento,
         },
     )
@@ -45,6 +105,16 @@ def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
     # cancelou quis parar a cobrança automática dessa parcela.
     if cobranca.status == CobrancaCora.Status.CANCELADO:
         return cobranca
+    if cobranca.status == CobrancaCora.Status.PAGO:
+        return cobranca
+    if cobranca.valor != valor:
+        # O total a cobrar mudou (entrou outra parcela vencida, ou saiu uma).
+        if cobranca.cora_id:
+            if settings.CORA_PROVIDER != "cora" or not _substituir_fatura(cobranca, valor):
+                return cobranca
+        else:
+            cobranca.valor = valor
+            cobranca.save(update_fields=["valor", "atualizado_em"])
     if cobranca.cora_id or settings.CORA_PROVIDER == "log":
         return cobranca
     if settings.CORA_PROVIDER != "cora":
@@ -54,16 +124,23 @@ def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
         return cobranca
 
     contrato = vencimento.contrato
+    numeros = [p.numero for p in parcelas_do_pix(vencimento, hoje)] or [vencimento.numero]
+    rotulo = (
+        f"Parcela {numeros[0]}"
+        if len(numeros) == 1
+        else "Parcelas " + ", ".join(str(n) for n in numeros)
+    )
     payload = {
-        "code": f"vencimento-{vencimento.pk}",
+        # Sufixo da chave: uma fatura substituída (total mudou) não repete o código.
+        "code": f"vencimento-{vencimento.pk}-{str(cobranca.idempotency_key)[:8]}",
         "customer": {
             "name": contrato.cliente.nome[:60],
             "document": {"identity": contrato.cliente.cpf, "type": "CPF"},
         },
         "services": [
             {
-                "name": f"Parcela {vencimento.numero}"[:60],
-                "description": f"{contrato.apelido} - parcela {vencimento.numero}"[:100],
+                "name": rotulo[:60],
+                "description": f"{contrato.apelido} - {rotulo.lower()}"[:100],
                 "amount": int(cobranca.valor * 100),
             }
         ],
