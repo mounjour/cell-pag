@@ -242,3 +242,19 @@ def test_painel_inicial_soma_todas_as_parcelas_vencidas(dados_relatorio):
     assert item["n_parcelas"] == 2
     # 200 de parcelas + juros de cada uma: 2 dias (R$ 10) + 1 dia (R$ 5)
     assert item["em_aberto"] == Decimal("215.00")
+
+
+@pytest.mark.django_db
+def test_recebido_separa_periodo_atrasadas_e_adiantado(dados_relatorio, dono):
+    contrato, vencido, pago = dados_relatorio  # pago: parcela 2 (02/09), R$ 100
+    # Pagamento de uma parcela que vencia ANTES do período (atrasada).
+    Pagamento(
+        contrato=contrato, vencimento=vencido, data_pagamento=date(2026, 9, 3),
+        valor_pago=Decimal("100.00"), usuario_baixa=dono,
+    ).registrar()
+    rel = montar_relatorio(date(2026, 9, 2), date(2026, 9, 3))
+    assert rel["total_recebido"] == Decimal("200.00")
+    assert rel["recebido_do_periodo"] == Decimal("100.00")     # parcela de 02/09
+    assert rel["recebido_de_atrasadas"] == Decimal("100.00")   # parcela de 01/09
+    assert rel["recebido_adiantado"] == Decimal("0.00")
+    assert rel["falta_do_periodo"] == Decimal("0.00")

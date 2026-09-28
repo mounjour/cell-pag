@@ -57,6 +57,29 @@ def _gerar_parcelas_ao_salvar(request, contrato):
         )
 
 
+LIMITE_PARCELAS_NO_CONTRATO = 24
+LIMITE_PAGAMENTOS_NO_CONTRATO = 30
+
+
+def _parcelas_relevantes(vencimentos, *, todas=False):
+    """Parcelas mostradas na tela do contrato.
+
+    Contrato longo: em vez das 24 primeiras (que escondiam as parcelas atuais
+    depois do dia 24), mostra uma janela que começa um pouco antes da primeira
+    parcela ainda não paga — o que a Yslane precisa ver para cobrar.
+    """
+    if todas or len(vencimentos) <= LIMITE_PARCELAS_NO_CONTRATO:
+        return vencimentos
+    primeira_aberta = next(
+        (i for i, v in enumerate(vencimentos) if v.status != v.Status.PAGO),
+        len(vencimentos) - 1,
+    )
+    inicio = min(
+        max(0, primeira_aberta - 3), len(vencimentos) - LIMITE_PARCELAS_NO_CONTRATO
+    )
+    return vencimentos[inicio : inicio + LIMITE_PARCELAS_NO_CONTRATO]
+
+
 class ContratoListView(LoginRequiredMixin, ListView):
     model = Contrato
     template_name = "contratos/lista.html"
@@ -114,6 +137,15 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
             not contrato.quitado
             and bool(contrato.num_parcelas)
             and pagas >= contrato.num_parcelas
+        )
+        ver_todas = self.request.GET.get("todas") == "1"
+        ctx["ver_todas"] = ver_todas
+        ctx["total_venc"] = len(vencimentos)
+        ctx["vencimentos_exibidos"] = _parcelas_relevantes(vencimentos, todas=ver_todas)
+        pagamentos = list(contrato.pagamentos.all())
+        ctx["total_pagamentos"] = len(pagamentos)
+        ctx["pagamentos_exibidos"] = (
+            pagamentos if ver_todas else pagamentos[:LIMITE_PAGAMENTOS_NO_CONTRATO]
         )
         return ctx
 

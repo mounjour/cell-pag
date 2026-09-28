@@ -78,7 +78,7 @@
 <h2>Parcelas</h2>
 {% with vencimentos=contrato.vencimentos.all total_venc=contrato.vencimentos.count %}
   {% if vencimentos %}
-    <p class="count">{{ total_venc }} parcela{{ total_venc|pluralize }} gerada{{ total_venc|pluralize }}{% if total_venc > 24 %} · mostrando as 24 primeiras{% endif %}.</p>
+    <p class="count">{{ total_venc }} parcela{{ total_venc|pluralize }} gerada{{ total_venc|pluralize }}{% if total_venc > vencimentos_exibidos|length %} · mostrando {{ vencimentos_exibidos|length }} (a partir da primeira em aberto) · <a href="?todas=1">ver todas</a>{% elif ver_todas and total_venc > 24 %} · <a href="?">mostrar menos</a>{% endif %}.</p>
     {% if not contrato.quitado and contrato.valor_parcela %}
       <form method="post" action="{% url 'contratos:gerar_vencimentos' contrato.pk %}" style="margin:-0.35rem 0 1rem">
         {% csrf_token %}
@@ -89,7 +89,7 @@
       <table>
         <thead><tr><th>Nº</th><th class="num">Vencimento</th><th class="num">Previsto</th><th class="num">Pago</th><th class="num">Saldo</th><th>Status</th><th></th></tr></thead>
         <tbody>
-          {% for v in vencimentos|slice:":24" %}
+          {% for v in vencimentos_exibidos %}
             <tr>
               <td>{{ v.numero }}</td>
               <td class="num" data-label="Vencimento">{{ v.data_vencimento|date:"d/m/Y" }}</td>
@@ -134,7 +134,7 @@
 {% endif %}
 
 <h2>Pagamentos</h2>
-{% with pagamentos=contrato.pagamentos.all %}
+{% with pagamentos=pagamentos_exibidos %}
   {% if pagamentos %}
     <div class="tbl-wrap cards">
       <table>
@@ -161,6 +161,9 @@
         </tbody>
       </table>
     </div>
+    {% if total_pagamentos > pagamentos|length %}
+      <p class="count">Mostrando os {{ pagamentos|length }} mais recentes de {{ total_pagamentos }} · <a href="?todas=1">ver todos</a></p>
+    {% endif %}
   {% else %}
     <p class="empty">Nenhum pagamento registrado neste contrato.</p>
   {% endif %}

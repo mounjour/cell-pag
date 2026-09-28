@@ -49,6 +49,19 @@ def montar_relatorio(inicio, fim):
     total_recebido = pagamentos.aggregate(v=Coalesce(Sum("valor_pago"), ZERO))["v"]
     total_juros = pagamentos.aggregate(v=Coalesce(Sum("juros_pago"), ZERO))["v"]
 
+    # De onde veio o recebido: parcela que vencia no período, parcela de antes
+    # (atrasada) ou de depois (adiantada). Sem isso, comparar recebido com
+    # previsto engana: o recebido inclui dinheiro de outras datas.
+    def _recebido(**filtro):
+        return pagamentos.filter(**filtro).aggregate(v=Coalesce(Sum("valor_pago"), ZERO))["v"]
+
+    recebido_do_periodo = _recebido(vencimento__data_vencimento__range=(inicio, fim))
+    recebido_de_atrasadas = _recebido(vencimento__data_vencimento__lt=inicio)
+    recebido_adiantado = _recebido(vencimento__data_vencimento__gt=fim)
+    recebido_sem_parcela = (
+        total_recebido - recebido_do_periodo - recebido_de_atrasadas - recebido_adiantado
+    )
+
     # Calcula o retrato no fim do período, respeitando a janela especial da
     # semanal. Uma parcela paga depois desse dia ainda aparece como atrasada no
     # relatório histórico; uma paga até esse dia não aparece.
@@ -100,6 +113,11 @@ def montar_relatorio(inicio, fim):
         "total_previsto": total_previsto,
         "total_recebido": total_recebido,
         "total_juros": total_juros,
+        "recebido_do_periodo": recebido_do_periodo,
+        "recebido_de_atrasadas": recebido_de_atrasadas,
+        "recebido_adiantado": recebido_adiantado,
+        "recebido_sem_parcela": recebido_sem_parcela,
+        "falta_do_periodo": max(total_previsto - recebido_do_periodo, Decimal("0.00")),
         "diferenca": total_recebido - total_previsto,
         "total_atrasado": total_atrasado,
         "quantidade_atrasados": len(atrasados),
