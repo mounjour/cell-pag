@@ -125,6 +125,34 @@ def test_relatorio_historico_inclui_pagamento_feito_depois(dados_relatorio, dono
 
 
 @pytest.mark.django_db
+def test_baixa_parcial_nao_conta_o_saldo_duas_vezes(dados_relatorio, dono):
+    contrato, vencido, _ = dados_relatorio
+    Vencimento.objects.create(
+        contrato=contrato,
+        numero=3,
+        data_vencimento=date(2026, 9, 3),
+        valor_previsto=Decimal("100.00"),
+    )
+    Pagamento(
+        contrato=contrato,
+        vencimento=vencido,
+        data_pagamento=date(2026, 9, 2),
+        valor_pago=Decimal("60.00"),
+        juros_pago=Decimal("10.00"),
+        usuario_baixa=dono,
+    ).registrar()
+    # Parcela 1: 60 pagos, 40 transportados p/ a parcela 3 (previsto 140).
+    rel = montar_relatorio(date(2026, 9, 1), date(2026, 9, 4))
+    # 60 (p.1) + 100 (p.2) + 140 (p.3) = 300 — e não 100 + 100 + 140.
+    assert rel["total_previsto"] == Decimal("300.00")
+    assert rel["total_recebido"] == Decimal("160.00")
+    assert rel["total_juros"] == Decimal("10.00")
+    # Só a parcela 3 está em atraso; o saldo da p.1 não é contado de novo.
+    assert rel["total_atrasado"] == Decimal("140.00")
+    assert rel["quantidade_atrasados"] == 1
+
+
+@pytest.mark.django_db
 def test_relatorio_exige_perfil_dono(auth_client):
     resposta = auth_client.get(reverse("relatorios:painel"))
     assert resposta.status_code == 403

@@ -28,6 +28,7 @@
   <dl class="meta report-metrics">
     <div><dt>Previsto no período</dt><dd class="num">R$ {{ relatorio.total_previsto|floatformat:2 }}</dd></div>
     <div><dt>Recebido no período</dt><dd class="num">R$ {{ relatorio.total_recebido|floatformat:2 }}</dd></div>
+    <div><dt>Juros recebidos (à parte)</dt><dd class="num">R$ {{ relatorio.total_juros|floatformat:2 }}</dd></div>
     <div><dt>Total em atraso</dt><dd class="num critical-text">R$ {{ relatorio.total_atrasado|floatformat:2 }}</dd></div>
     <div><dt>Parcelas atrasadas</dt><dd class="num">{{ relatorio.quantidade_atrasados }}</dd></div>
     <div><dt>Novos clientes</dt><dd class="num">{{ relatorio.novos_clientes }}</dd></div>
