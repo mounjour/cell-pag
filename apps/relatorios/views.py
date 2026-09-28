@@ -39,7 +39,7 @@ def _contexto(request):
     }
     form = PeriodoForm(dados)
     if not form.is_valid():
-        return {"form": form, "relatorio": None, "querystring": ""}
+        return {"form": form, "relatorio": None, "querystring": "", "inicio_iso": "", "fim_iso": ""}
     relatorio = montar_relatorio(form.cleaned_data["inicio"], form.cleaned_data["fim"])
     querystring = urlencode(
         {
@@ -49,7 +49,13 @@ def _contexto(request):
             "fim": form.cleaned_data["fim"].isoformat(),
         }
     )
-    return {"form": form, "relatorio": relatorio, "querystring": querystring}
+    return {
+        "form": form,
+        "relatorio": relatorio,
+        "querystring": querystring,
+        "inicio_iso": form.cleaned_data["inicio"].isoformat(),
+        "fim_iso": form.cleaned_data["fim"].isoformat(),
+    }
 
 
 class InicioView(LoginRequiredMixin, TemplateView):

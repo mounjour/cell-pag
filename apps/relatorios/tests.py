@@ -214,3 +214,15 @@ def test_quitacao_grava_data_real(dono_client, dados_relatorio, monkeypatch):
     assert resposta.status_code == 302
     contrato.refresh_from_db()
     assert contrato.quitado_em == date(2026, 9, 4)
+
+
+@pytest.mark.django_db
+def test_painel_renderiza_seletor_de_periodo_com_o_intervalo(dono_client, dados_relatorio):
+    resposta = dono_client.get(
+        reverse("relatorios:painel"),
+        {"periodo": "personalizado", "inicio": "2026-09-01", "fim": "2026-09-02"},
+    )
+    html = resposta.content.decode()
+    assert 'id="periodo-botao"' in html
+    assert 'data-inicio="2026-09-01"' in html
+    assert 'data-fim="2026-09-02"' in html
