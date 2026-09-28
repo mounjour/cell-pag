@@ -240,15 +240,15 @@
 }
 .periodo-seta:hover { background: var(--accent-wash); color: var(--accent-ink); }
 .periodo-mes-titulo { text-align: center; font-weight: 600; font-size: 0.95rem; text-transform: capitalize; margin: 0.4rem 0 0.8rem; }
-.periodo-grade { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 2px; }
+.periodo-grade { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; }
 .periodo-dow { text-align: center; font-size: 0.7rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-faint); padding: 0 0 0.4rem; }
 .periodo-dia {
-  position: relative; isolation: isolate; height: 38px; padding: 0;
+  position: relative; isolation: isolate; height: 36px; padding: 0;
   background: transparent; color: var(--ink); border: 0; border-radius: 0;
   font: inherit; font-size: 0.9rem; font-variant-numeric: tabular-nums; cursor: pointer;
 }
 .periodo-dia::before {
-  content: ""; position: absolute; z-index: -1; inset: 2px calc(50% - 17px);
+  content: ""; position: absolute; z-index: -1; inset: 0 calc(50% - 18px);
   border-radius: 50%; transition: background .1s;
 }
 .periodo-dia.fds { color: var(--ink-soft); }
@@ -257,8 +257,12 @@
   content: ""; position: absolute; left: 50%; bottom: 4px; width: 4px; height: 4px;
   margin-left: -2px; border-radius: 50%; background: var(--accent);
 }
-/* faixa contínua do intervalo */
+/* faixa contínua do intervalo: mesma altura do círculo, pontas de pílula
+   no começo/fim de cada linha da semana */
 .periodo-dia.no-periodo, .periodo-dia.previa { background: var(--accent-wash); }
+.periodo-dia.ini-semana.no-periodo, .periodo-dia.ini-semana.previa { border-radius: 18px 0 0 18px; }
+.periodo-dia.fim-semana.no-periodo, .periodo-dia.fim-semana.previa { border-radius: 0 18px 18px 0; }
+.periodo-dia.ini-semana.fim-semana.no-periodo { border-radius: 18px; }
 .periodo-dia.no-periodo:hover::before, .periodo-dia.previa:hover::before { background: var(--accent-wash); box-shadow: inset 0 0 0 1px var(--accent); }
 /* pontas: círculo cheio + meia faixa do lado do intervalo */
 .periodo-dia.ponta { color: var(--on-accent); font-weight: 600; }

@@ -128,6 +128,8 @@
       b.setAttribute("aria-label", br(d));
       if (mesmoDia(d, h)) b.classList.add("hoje");
       if (d.getDay() === 0 || d.getDay() === 6) b.classList.add("fds");
+      if (d.getDay() === 1 || dia === 1) b.classList.add("ini-semana");
+      if (d.getDay() === 0 || dia === total) b.classList.add("fim-semana");
       if (ini && fim && d >= ini && d <= fim) b.classList.add("no-periodo");
       if (mesmoDia(d, ini)) b.classList.add("ponta", "ponta-ini");
       if (mesmoDia(d, fim)) b.classList.add("ponta", "ponta-fim");
