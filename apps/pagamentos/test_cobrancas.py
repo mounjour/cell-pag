@@ -76,6 +76,46 @@ def test_mensagem_de_atraso_e_bloqueio(cliente_cobranca):
     assert "evitar o bloqueio" in dados["mensagem"]
 
 
+@pytest.mark.django_db
+def test_mensagem_lista_cada_parcela_com_o_atraso_dela(cliente_cobranca):
+    """Várias parcelas em aberto: uma linha por parcela, cada uma com o seu atraso."""
+    from apps.pagamentos.agenda import montar_agenda_do_dia
+
+    hoje = date(2026, 9, 28)
+    contrato = _contrato(cliente_cobranca, hoje, atraso=2)  # parcela 1 venceu 26/09
+    for numero, atraso in ((2, 1), (3, 0)):
+        Vencimento.objects.create(
+            contrato=contrato,
+            numero=numero,
+            data_vencimento=hoje - datetime.timedelta(days=atraso),
+            valor_previsto=Decimal("100.00"),
+        )
+
+    linha = montar_agenda_do_dia(hoje)["linhas"][0]
+    msg = dados_da_mensagem(linha)["mensagem"]
+
+    assert "3 parcelas em aberto" in msg
+    assert "*Parcela 1* (venceu 26/09, 2 dias de atraso): R$ 100,00 + R$ 10,00 de juros" in msg
+    assert "*Parcela 2* (venceu 27/09, 1 dia de atraso): R$ 100,00 + R$ 5,00 de juros" in msg
+    assert "*Parcela 3* (vence hoje): R$ 100,00" in msg
+    assert "Total das parcelas: R$ 300,00" in msg
+    assert "Juros pelo atraso: R$ 15,00" in msg
+    assert "Pix abaixo é da *parcela 1*" in msg
+    # o painel cobra o conjunto: 300 de parcelas + 15 de juros
+    assert linha["a_cobrar"] == Decimal("315.00")
+
+
+@pytest.mark.django_db
+def test_uma_parcela_so_mantem_a_mensagem_de_sempre(cliente_cobranca):
+    from apps.pagamentos.agenda import montar_agenda_do_dia
+
+    hoje = date(2026, 9, 10)
+    _contrato(cliente_cobranca, hoje, atraso=2)
+    msg = dados_da_mensagem(montar_agenda_do_dia(hoje)["linhas"][0])["mensagem"]
+    assert "parcelas em aberto" not in msg
+    assert "A parcela 1 do seu iPhone 13" in msg
+
+
 # ── processar_cobrancas ─────────────────────────────────────────────────
 
 @pytest.mark.django_db

@@ -12,12 +12,61 @@ gerados) é hoje. Reaproveita `Contrato.situacao_atraso` (Fase 4).
 
 import datetime
 from decimal import Decimal
+from typing import NamedTuple
 
 from django.utils import timezone
 
 from apps.contratos.models import Contrato
 
-__all__ = ["montar_agenda_do_dia"]
+__all__ = ["montar_agenda_do_dia", "parcelas_a_cobrar", "ParcelaACobrar"]
+
+
+class ParcelaACobrar(NamedTuple):
+    """Uma parcela em aberto que já pode ser cobrada, com o atraso dela."""
+
+    numero: int
+    data_vencimento: datetime.date
+    dias_atraso: int
+    saldo: Decimal
+    juros: Decimal
+
+    @property
+    def total(self) -> Decimal:
+        return self.saldo + self.juros
+
+
+def parcelas_a_cobrar(contrato, hoje: datetime.date) -> list[ParcelaACobrar]:
+    """Cada parcela em aberto vencida (ou que vence hoje), do nº mais antigo ao mais novo.
+
+    O atraso e o juros são **de cada parcela** (contados a partir do próprio
+    vencimento), não do contrato. Parcela que já recebeu baixa fica de fora —
+    o que faltou nela já foi transportado para a seguinte (ver
+    ``Pagamento.registrar``). Vazia quando o contrato ainda não tem vencimentos
+    gerados.
+    """
+    from apps.pagamentos import atraso
+    from apps.pagamentos.models import Vencimento
+
+    abertas = (
+        contrato.vencimentos.exclude(status=Vencimento.Status.PAGO)
+        .exclude(pagamentos__isnull=False)
+        .order_by("numero")
+    )
+    itens = []
+    for venc in abertas:
+        dias = atraso.dias_de_atraso(venc.data_vencimento, hoje, contrato.estrutura)
+        if dias <= 0 and venc.data_vencimento != hoje:
+            continue  # ainda não venceu
+        itens.append(
+            ParcelaACobrar(
+                numero=venc.numero,
+                data_vencimento=venc.data_vencimento,
+                dias_atraso=dias,
+                saldo=venc.saldo,
+                juros=atraso.juros_acumulados(dias),
+            )
+        )
+    return itens
 
 
 def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | None = None) -> dict:
@@ -63,6 +112,10 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
         # preserva `None` quando falta `valor_parcela` (o painel mostra "—").
         parcela = vencimento_aberto.saldo if vencimento_aberto else ct.valor_parcela
         a_cobrar = (parcela or Decimal("0.00")) + situacao.juros
+        # Várias parcelas em aberto: cobra o conjunto, cada uma com o seu atraso.
+        parcelas = parcelas_a_cobrar(ct, hoje)
+        if len(parcelas) > 1:
+            a_cobrar = sum((p.total for p in parcelas), Decimal("0.00"))
         total_previsto += a_cobrar
         if situacao.dias_atraso:
             n_atraso += 1
@@ -75,6 +128,7 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
                 "situacao": situacao,
                 "vence_hoje": vence_hoje and not situacao.dias_atraso,
                 "parcela": parcela,
+                "parcelas": parcelas,
                 "a_cobrar": a_cobrar,
             }
         )
