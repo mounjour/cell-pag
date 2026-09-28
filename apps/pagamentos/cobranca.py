@@ -19,6 +19,53 @@ def _moeda(valor) -> str:
     return f"{valor:.2f}".replace(".", ",")
 
 
+def _dias(n: int) -> str:
+    return f"{n} dia" if n == 1 else f"{n} dias"
+
+
+def _linha_da_parcela(p) -> str:
+    """Uma linha por parcela: vencimento, atraso e valor **dela** (não do contrato)."""
+    data = p.data_vencimento.strftime("%d/%m")
+    if p.dias_atraso:
+        situacao = f"venceu {data}, {_dias(p.dias_atraso)} de atraso"
+    else:
+        situacao = "vence hoje"
+    linha = f"• *Parcela {p.numero}* ({situacao}): R$ {_moeda(p.saldo)}"
+    if p.juros:
+        linha += f" + R$ {_moeda(p.juros)} de juros"
+    return linha
+
+
+def _mensagem_varias_parcelas(base, parcelas, numero_pix, bloco_pix, *, alertar_bloqueio) -> str:
+    """Cobrança de um contrato com mais de uma parcela em aberto.
+
+    Lista cada parcela com o atraso próprio. O Pix desta mensagem cobra só a
+    mais antiga (a Cora gera uma fatura por parcela) — o texto diz isso, para o
+    cliente não achar que o QR quita tudo.
+    """
+    soma = sum((p.saldo for p in parcelas), Decimal("0.00"))
+    juros = sum((p.juros for p in parcelas), Decimal("0.00"))
+    mais_antiga = parcelas[0]
+    partes = [
+        f"Oi, {base['nome']}! 👋",
+        f"O seu {base['aparelho']} tem {len(parcelas)} parcelas em aberto:",
+        "\n".join(_linha_da_parcela(p) for p in parcelas),
+        f"💰 *Total das parcelas: R$ {_moeda(soma)}*"
+        + (f"\n➕ Juros pelo atraso: R$ {_moeda(juros)} (isso a gente combina à parte)" if juros else ""),
+    ]
+    if alertar_bloqueio:
+        partes.append(
+            f"⚠️ A parcela {mais_antiga.numero} já passou de {_dias(mais_antiga.dias_atraso)} de atraso: "
+            "preciso que seja regularizada *hoje* para evitar o bloqueio do aparelho."
+        )
+    partes.append(
+        f"O Pix abaixo é da *parcela {numero_pix}* (R$ {_moeda(mais_antiga.saldo)}). "
+        "Depois dela, me chama que eu mando o das próximas.\n\n" + bloco_pix
+    )
+    partes.append("Depois é só me mandar o comprovante por aqui. Se já pagou, é só desconsiderar. 🙏")
+    return "\n\n".join(partes)
+
+
 def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
     contrato = linha["contrato"]
     situacao = linha["situacao"]
@@ -61,7 +108,12 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
         linha_valor += (
             f"\n➕ Juros pelo atraso: R$ {base['juros']} (isso a gente combina à parte)"
         )
-    if situacao.alertar_bloqueio:
+    parcelas = linha.get("parcelas") or []
+    if len(parcelas) > 1:
+        base["mensagem"] = _mensagem_varias_parcelas(
+            base, parcelas, numero, bloco_pix, alertar_bloqueio=situacao.alertar_bloqueio
+        )
+    elif situacao.alertar_bloqueio:
         base.update(
             mensagem=(
                 f"Olá, {base['nome']}! 👋\n\n"
