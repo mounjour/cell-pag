@@ -184,3 +184,4 @@
 .busca-vazio { padding: 0.9rem 0.7rem; color: var(--ink-faint); font-size: 0.9rem; }
 
 .selo--alerta { background: var(--critical); color: #fff; }
+.report-filter .form-row[hidden] { display: none; }
