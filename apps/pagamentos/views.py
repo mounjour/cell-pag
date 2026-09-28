@@ -31,6 +31,7 @@ from .comprovantes import conferir_na_cora
 from .limpeza import encerrar_cobranca_automatica
 from .models import CobrancaCora, ComprovanteRecebido, Pagamento, Vencimento
 from .pix_cora import (
+    parcelas_do_pix,
     CancelamentoRecusado,
     cancelar_cobranca,
     retomar_cobranca,
@@ -65,6 +66,20 @@ class CobrarHojeView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+def _rotulo_parcelas(cobranca, hoje):
+    """"3" para um Pix de uma parcela; "1, 2, 3" para o Pix pelo total.
+
+    Pix em aberto: as parcelas vencidas que ele cobra hoje. Pix já pago: se
+    entrou mais do que a parcela valia, o resto abateu as seguintes.
+    """
+    numero = cobranca.vencimento.numero
+    if cobranca.status == CobrancaCora.Status.PAGO:
+        maior = cobranca.total_pago > cobranca.vencimento.valor_previsto
+        return f"{numero} e seguintes" if maior else str(numero)
+    numeros = [p.numero for p in parcelas_do_pix(cobranca.vencimento, hoje)]
+    return ", ".join(str(n) for n in numeros) if numeros else str(numero)
+
+
 class PixPainelView(LoginRequiredMixin, TemplateView):
     template_name = "pagamentos/pix_painel.html"
 
@@ -85,6 +100,8 @@ class PixPainelView(LoginRequiredMixin, TemplateView):
             .order_by("status", "data_vencimento", "vencimento__contrato__cliente__nome")
         )
         pagina = paginar(self.request, cobrancas, POR_PAGINA_PIX)
+        for c in pagina["page_obj"].object_list:
+            c.rotulo_parcelas = _rotulo_parcelas(c, hoje)
         ctx.update(pagina)
         ctx.update(
             hoje=hoje,

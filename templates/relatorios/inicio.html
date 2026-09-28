@@ -65,7 +65,7 @@
             <td><a href="{% url 'clientes:detalhe' item.contrato.cliente.pk %}">{{ item.contrato.cliente.nome }}</a></td>
             <td data-label="Contrato"><a href="{% url 'contratos:detalhe' item.contrato.pk %}">{{ item.contrato.apelido }}</a></td>
             <td class="num" data-label="Atraso">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize }}</td>
-            <td class="num" data-label="Em aberto">R$ {{ item.em_aberto|floatformat:2 }}</td>
+            <td class="num" data-label="Em aberto">R$ {{ item.em_aberto|floatformat:2 }}{% if item.n_parcelas > 1 %}<span class="helptext"> · {{ item.n_parcelas }} parcelas</span>{% endif %}</td>
             <td class="num" data-label=""><a href="{% url 'pagamentos:novo' item.contrato.pk %}">registrar</a></td>
           </tr>
         {% endfor %}
