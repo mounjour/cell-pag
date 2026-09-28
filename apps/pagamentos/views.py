@@ -21,6 +21,7 @@ from django.views.generic import CreateView, ListView, TemplateView
 from django.utils import timezone
 
 from apps.arquivos import servir_anexo
+from apps.paginacao import paginar
 from apps.contratos.models import Contrato
 
 from . import cora_api
@@ -39,13 +40,26 @@ from .pix_cora import (
 
 logger = logging.getLogger("pagamentos.views")
 
+POR_PAGINA_COBRAR_HOJE = 20
+POR_PAGINA_PIX = 25
+
+
+def _agenda_paginada(request, estrutura):
+    """Agenda do dia com só uma página de ``linhas``; os totais são do dia todo."""
+    agenda = montar_agenda_do_dia(estrutura=estrutura or None)
+    pagina = paginar(request, agenda["linhas"], POR_PAGINA_COBRAR_HOJE)
+    agenda["linhas"] = list(pagina["page_obj"].object_list)
+    agenda["total_linhas"] = pagina["paginator"].count
+    return {**agenda, **pagina}
+
+
 class CobrarHojeView(LoginRequiredMixin, TemplateView):
     template_name = "pagamentos/cobrar_hoje.html"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         estrutura = self.request.GET.get("estrutura", "").strip()
-        ctx.update(montar_agenda_do_dia(estrutura=estrutura or None))
+        ctx.update(_agenda_paginada(self.request, estrutura))
         ctx["estrutura_atual"] = estrutura
         ctx["estrutura_opcoes"] = Contrato.Estrutura.choices
         return ctx
@@ -70,9 +84,11 @@ class PixPainelView(LoginRequiredMixin, TemplateView):
             )
             .order_by("status", "data_vencimento", "vencimento__contrato__cliente__nome")
         )
+        pagina = paginar(self.request, cobrancas, POR_PAGINA_PIX)
+        ctx.update(pagina)
         ctx.update(
             hoje=hoje,
-            cobrancas_cora=cobrancas,
+            cobrancas_cora=list(pagina["page_obj"].object_list),
             total=len(cobrancas),
             pagas=sum(c.status == CobrancaCora.Status.PAGO for c in cobrancas),
             nao_pagas=sum(c.status == CobrancaCora.Status.VENCIDO for c in cobrancas),
@@ -344,7 +360,7 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         painel_html = render_to_string(
             "pagamentos/_cobrar_hoje_painel.html",
             {
-                **montar_agenda_do_dia(estrutura=estrutura or None),
+                **_agenda_paginada(self.request, estrutura),
                 "oob": True,
                 "estrutura_atual": estrutura,
             },

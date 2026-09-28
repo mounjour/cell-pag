@@ -1,11 +1,12 @@
 {% if is_paginated %}
+  {# Mantém todos os filtros da URL (busca, status, tipo, arquivados...) e troca só a página. #}
   <div class="pagination">
     {% if page_obj.has_previous %}
-      <a class="btn secondary" href="?{% if busca %}q={{ busca|urlencode }}&{% endif %}{% if status_atual %}status={{ status_atual }}&{% endif %}{% if estrutura_atual %}estrutura={{ estrutura_atual }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+      <a class="btn secondary" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Anterior</a>
     {% endif %}
     <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-      <a class="btn secondary" href="?{% if busca %}q={{ busca|urlencode }}&{% endif %}{% if status_atual %}status={{ status_atual }}&{% endif %}{% if estrutura_atual %}estrutura={{ estrutura_atual }}&{% endif %}page={{ page_obj.next_page_number }}">Próxima</a>
+      <a class="btn secondary" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Próxima</a>
     {% endif %}
   </div>
 {% endif %}
