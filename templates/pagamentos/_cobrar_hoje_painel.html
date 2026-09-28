@@ -1,7 +1,7 @@
 <div id="painel-cobrar-hoje"{% if oob %} hx-swap-oob="true"{% endif %}>
 {% if linhas %}
   <dl class="meta meta--4col">
-    <div><dt>Para cobrar</dt><dd class="num">{{ linhas|length }}</dd></div>
+    <div><dt>Para cobrar</dt><dd class="num">{{ total_linhas }}</dd></div>
     <div><dt>Atrasados</dt><dd class="num">{{ n_atraso }}</dd></div>
     <div><dt>Alerta de bloqueio</dt><dd class="num">{{ n_bloqueio }}</dd></div>
     <div><dt>Total previsto (parcela + juros)</dt><dd class="num kpi-dinheiro">R$ {{ total_previsto }}</dd></div>
@@ -111,6 +111,7 @@
       </tbody>
     </table>
   </div>
+  {% include "_pagination.html" %}
 {% else %}
   <div class="empty">
     <p>Nada para cobrar hoje.</p>
