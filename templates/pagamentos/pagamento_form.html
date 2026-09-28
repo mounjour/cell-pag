@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Registrar pagamento — {{ contrato }}{% endblock %}
 
 {% block content %}
@@ -7,3 +8,4 @@
   {% include "pagamentos/_pagamento_form_conteudo.html" %}
 </div>
 {% endblock %}
+{% block scripts %}<script src="{% static 'js/previsao_form.js' %}" defer></script>{% endblock %}

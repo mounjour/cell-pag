@@ -119,11 +119,14 @@ class ClienteExcluirView(LoginRequiredMixin, View):
 def _painel_do_contrato(contrato) -> dict:
     """Tudo que a tela do cliente mostra de um contrato: situação, quanto cobrar,
     estado da cobrança automática da parcela em aberto e os avisos que isso gera."""
+    from apps.pagamentos.agenda import resumo_cobranca
+
+    resumo = resumo_cobranca(contrato)
     parcela = contrato.parcela_em_aberto()
     situacao = contrato.situacao_atraso()
     pix = getattr(parcela, "cobranca_cora", None) if parcela else None
-    saldo = (parcela.saldo if parcela else contrato.valor_parcela) or Decimal("0.00")
-    juros = situacao.juros if situacao else Decimal("0.00")
+    saldo = resumo["principal"]
+    juros = resumo["juros"]
 
     # Cobrança automática: "suspensa" quando o Pix da parcela foi cancelado.
     if contrato.quitado or parcela is None:
@@ -142,7 +145,7 @@ def _painel_do_contrato(contrato) -> dict:
         )
     elif situacao and situacao.dias_atraso:
         avisos.append(
-            ("atencao", f"{contrato.apelido}: {situacao.dias_atraso} dia(s) de atraso, juros de R$ {situacao.juros}.")
+            ("atencao", f"{contrato.apelido}: {situacao.dias_atraso} dia(s) de atraso; confira abaixo o total das parcelas e dos juros.")
         )
     if pix and pix.status == CobrancaCora.Status.ERRO:
         avisos.append(("critico", f"{contrato.apelido}: o Pix da parcela {parcela.numero} deu erro ao ser gerado."))
@@ -158,6 +161,7 @@ def _painel_do_contrato(contrato) -> dict:
         "saldo": saldo,
         "juros": juros,
         "a_cobrar": saldo + juros,
+        "resumo": resumo,
         "ultima_mensagem": contrato.cobrancas.first(),
         "avisos": avisos,
     }

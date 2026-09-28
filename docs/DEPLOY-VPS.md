@@ -105,6 +105,27 @@ horários abaixo já estão convertidos de Brasília (UTC−3):
 
 O retry é seguro: `processar_cobrancas` pula quem já foi enviado.
 
+### Alerta da rotina diária
+
+Crie um check no Healthchecks.io com cron `30 8 * * *`, fuso
+`America/Sao_Paulo` e tolerância inicial de 30 minutos. Configure o destinatário
+na integração de e-mail do check. Copie a Ping URL privada para a variável
+`ROTINA_HEALTHCHECK_URL` no Coolify (Runtime only) e faça deploy/restart.
+Não publique essa URL no repositório.
+
+O comando `rotina_diaria` confirma sucesso somente após todas as etapas;
+falhas de envio ou conciliação também fazem o comando terminar com erro.
+Se alguma etapa falhar, envia `/fail`; se o processo nem rodar ou for
+interrompido, a ausência do ping dispara o alerta após a tolerância.
+Uma falha de comunicação com o monitor não desfaz as etapas executadas e
+retorna erro no Coolify, sem expor a URL nos logs.
+
+Execuções com `--hoje` ou `--sem-cobrancas` não enviam sinais. Os retries das
+12:30 e 16:30 não confirmam esse check; ele monitora a rotina das 08:30.
+Sem a variável, o monitor fica desativado. Após ativar, confira o primeiro
+sucesso no check e teste a entrega do alerta pela interface do Healthchecks.
+Referência: [API de ping](https://healthchecks.io/docs/http_api/).
+
 Deploy automático a cada push na `main` já configurado: GitHub → Settings →
 Webhooks aponta para o "Manual Git webhook" do Coolify (aba Webhooks da
 aplicação).

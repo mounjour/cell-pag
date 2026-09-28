@@ -14,6 +14,13 @@
   <a class="btn" href="{% url 'pagamentos:cobrar_hoje' %}">Ir para Cobrar hoje</a>
 </div>
 
+{% if pix_alertas_n %}
+<aside class="alerta-comprovante" aria-label="Pendências no Pix">
+  <h2>{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix</h2>
+  <p>Há comprovantes para conferir ou pagamentos que precisam de revisão manual.</p>
+  <a class="btn" href="{% url 'pagamentos:pix_painel' %}">Conferir pendências</a>
+</aside>
+{% endif %}
 <dl class="meta painel-kpis">
   <div class="kpi--dinheiro">
     <dt>A receber em aberto</dt>

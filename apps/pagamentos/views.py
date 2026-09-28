@@ -11,6 +11,7 @@ import logging
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -253,6 +254,20 @@ def _voltar_para_origem(request):
     return redirect(destino)
 
 
+class PagamentoPrevisaoView(LoginRequiredMixin, View):
+    def post(self, request, contrato_pk):
+        from .previsao import prever_pagamento
+
+        contrato = get_object_or_404(Contrato, pk=contrato_pk)
+        form = PagamentoForm(request.POST, contrato=contrato)
+        if contrato.quitado or not form.is_valid() or not form.cleaned_data.get("vencimento"):
+            return JsonResponse({"texto": "Confira a parcela, a data e os valores para visualizar o resultado da baixa."})
+        dados = form.cleaned_data
+        return JsonResponse({"texto": prever_pagamento(
+            contrato, dados["vencimento"], dados["valor_pago"], dados["juros_pago"],
+        )})
+
+
 class PagamentoCreateView(LoginRequiredMixin, CreateView):
     """Baixa de um pagamento numa parcela de um contrato.
 
@@ -280,6 +295,8 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["contrato"] = self.contrato
+        from .agenda import resumo_cobranca
+        ctx["resumo_cobranca"] = resumo_cobranca(self.contrato)
         ctx["parcelas_abertas"] = self.contrato.vencimentos.exclude(
             status=Vencimento.Status.PAGO
         ).order_by("numero")
@@ -288,8 +305,7 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         # repassado pra próxima (ver Contrato.parcela_em_aberto). Distingue
         # esse caso de "não há mais nada a cobrar" no template.
         ctx["pode_registrar"] = ctx["form"].fields["vencimento"].queryset.exists()
-        situacao = self.contrato.situacao_atraso()
-        ctx["juros_ate_hoje"] = situacao.juros if situacao else None
+        ctx["juros_ate_hoje"] = ctx["resumo_cobranca"]["juros"]
         return ctx
 
     def form_valid(self, form):

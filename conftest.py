@@ -6,6 +6,7 @@ def _sem_provedores_externos_reais(settings):
     """Testes nunca devem chamar Evolution/Cora de verdade, seja qual for o .env."""
     settings.WHATSAPP_PROVIDER = "log"
     settings.CORA_PROVIDER = "log"
+    settings.ROTINA_HEALTHCHECK_URL = ""
 
 
 @pytest.fixture

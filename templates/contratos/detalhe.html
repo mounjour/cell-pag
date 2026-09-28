@@ -51,12 +51,15 @@
   {% if s %}
     <div class="card">
       <h2>Situação hoje</h2>
+      <p><strong>A cobrar: R$ {{ resumo_cobranca.total|floatformat:2 }}</strong>
+        {% include "pagamentos/_composicao.html" with resumo=resumo_cobranca %}
+      </p>
       {% if s.dias_atraso %}
         <p>
           <span class="pill {{ s.status }}">{{ contrato.status_efetivo_label }}</span>
           {{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }} de atraso
           {% if p %}(parcela nº {{ p.numero }}){% endif %} ·
-          juros acumulados <strong class="num">R$ {{ s.juros }}</strong>
+          juros da parcela mais antiga <strong class="num">R$ {{ s.juros }}</strong>
         </p>
         {% if s.alertar_bloqueio %}
           <p class="pill inadimplente">⚠ {{ s.dias_atraso }} dias — hora de bloquear o aparelho (ação manual do vendedor).</p>

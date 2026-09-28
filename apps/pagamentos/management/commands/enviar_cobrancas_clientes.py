@@ -39,3 +39,5 @@ class Command(BaseCommand):
                 f"{conciliacao['pagas']} paga(s), {conciliacao['erros']} erro(s)."
             )
         )
+        if resultado["erros"] or conciliacao["erros"]:
+            raise CommandError("Falha no envio de cobranças ou na conciliação Cora; consulte o painel.")

@@ -15,6 +15,40 @@ date = datetime.date
 HOJE = date(2026, 9, 28)
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize("pago_por_fora", ["5.00", "10.00"])
+def test_pix_antigo_apos_baixa_manual_exige_revisao(settings, monkeypatch, pago_por_fora):
+    settings.CORA_PROVIDER = "cora"
+    monkeypatch.setattr("apps.pagamentos.pix_cora.timezone.localdate", lambda: HOJE)
+    contrato = _contrato_com_parcelas(3)
+    futura = Vencimento.objects.create(
+        contrato=contrato, numero=4, data_vencimento=date(2026, 9, 29),
+        valor_previsto=Decimal("10.00"),
+    )
+    monkeypatch.setattr("apps.pagamentos.cora_api.criar_fatura", lambda p, k: _fatura("inv_1"))
+    cobranca = obter_ou_criar_cobranca(contrato.vencimentos.get(numero=1), hoje=HOJE)
+    Pagamento(
+        contrato=contrato, vencimento=contrato.vencimentos.get(numero=2),
+        data_pagamento=HOJE, valor_pago=Decimal(pago_por_fora), forma=Pagamento.Forma.PIX,
+        observacao="Baixa manual",
+    ).registrar()
+    antes = list(contrato.vencimentos.values_list("pk", "valor_previsto", "valor_pago", "status"))
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.consultar_fatura", lambda cid: _fatura(cid, "PAID", 3000),
+    )
+    monkeypatch.setattr(
+        "apps.pagamentos.pix_cora.ao_confirmar_pix", lambda *a: pytest.fail("Não confirmar baixa retida"),
+    )
+    sincronizar_cobranca(cobranca)
+    sincronizar_cobranca(cobranca)
+    cobranca.refresh_from_db()
+    assert cobranca.duplicada and cobranca.status == CobrancaCora.Status.PAGO
+    assert Pagamento.objects.count() == 1
+    assert list(contrato.vencimentos.values_list("pk", "valor_previsto", "valor_pago", "status")) == antes
+    futura.refresh_from_db()
+    assert futura.valor_previsto == Decimal("10.00")
+
+
 def _contrato_com_parcelas(dias_vencidos):
     """Parcelas de R$ 10 vencendo 26, 27 e 28/09 (só as ``dias_vencidos`` primeiras existem)."""
     cliente = Cliente.objects.create(

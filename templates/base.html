@@ -12,7 +12,7 @@
   <link rel="preload" href="{% static 'fonts/dm-sans-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
   <script src="{% static 'js/tema.js' %}"></script>{# no <head>, antes da pintura: evita o flash do tema errado #}
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
-  <link rel="stylesheet" href="{% static 'css/workspace.css' %}">
+  <link rel="stylesheet" href="{% static 'css/workspace.css' %}?v=20260928-ux">
   <link rel="stylesheet" href="{% static 'css/shell.css' %}">
   {% block extra_styles %}{% endblock %}
 </head>
@@ -85,7 +85,7 @@
     <a href="{% url 'clientes:lista' %}"{% if secao == 'clientes' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="clientes" %}<span>Clientes</span></a>
     <a href="{% url 'contratos:lista' %}"{% if secao == 'contratos' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="contratos" %}<span>Contratos</span></a>
     <details class="menu-pop menu-mais">
-      <summary{% if pagina == 'pix_painel' or pagina == 'historico' or secao == 'relatorios' and pagina != 'inicio' %} class="active"{% endif %}>{% include "_icone.html" with nome="mais" %}<span>Mais</span></summary>
+      <summary{% if pagina == 'pix_painel' or pagina == 'historico' or secao == 'relatorios' and pagina != 'inicio' %} class="active"{% endif %}>{% include "_icone.html" with nome="mais" %}<span>Mais</span>{% if pix_alertas_n %}<span class="selo selo--tab selo--alerta"><span class="sr-only">{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix</span><span aria-hidden="true">{{ pix_alertas_n }}</span></span>{% endif %}</summary>
       <div class="menu-painel">
         <a class="menu-item" href="{% url 'pagamentos:pix_painel' %}">{% include "_icone.html" with nome="pix" %}<span>Pix</span>{% if pix_alertas_n %}<span class="selo selo--alerta"><span class="sr-only">{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span><span aria-hidden="true">{{ pix_alertas_n }}</span></span>{% endif %}</a>
         <a class="menu-item" href="{% url 'pagamentos:historico' %}">{% include "_icone.html" with nome="historico" %}<span>Histórico de pagamentos</span></a>
