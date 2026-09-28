@@ -4,8 +4,11 @@
 {% block content %}
 <h1>Relatórios</h1>
 
+{% if form.non_field_errors %}
+  <div class="msg error" role="alert">{% for erro in form.non_field_errors %}{{ erro }}{% if not forloop.last %} {% endif %}{% endfor %}</div>
+{% endif %}
+
 <form method="get" class="report-filter">
-  {{ form.non_field_errors }}
   <div class="form-row"><label for="{{ form.periodo.id_for_label }}">Período</label>{{ form.periodo }}</div>
   <div class="form-row"><label for="{{ form.referencia.id_for_label }}">Data de referência</label>{{ form.referencia }}</div>
   <div class="form-row"><label for="{{ form.inicio.id_for_label }}">Início</label>{{ form.inicio }}</div>
