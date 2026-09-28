@@ -249,7 +249,7 @@
 }
 .periodo-dia::before {
   content: ""; position: absolute; z-index: -1; inset: 0 calc(50% - 18px);
-  border-radius: 50%; transition: background .1s;
+  border-radius: 8px; transition: background .1s;
 }
 .periodo-dia.fds { color: var(--ink-soft); }
 .periodo-dia:hover::before { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
@@ -260,11 +260,11 @@
 /* faixa contínua do intervalo: mesma altura do círculo, pontas de pílula
    no começo/fim de cada linha da semana */
 .periodo-dia.no-periodo, .periodo-dia.previa { background: var(--accent-wash); }
-.periodo-dia.ini-semana.no-periodo, .periodo-dia.ini-semana.previa { border-radius: 18px 0 0 18px; }
-.periodo-dia.fim-semana.no-periodo, .periodo-dia.fim-semana.previa { border-radius: 0 18px 18px 0; }
-.periodo-dia.ini-semana.fim-semana.no-periodo { border-radius: 18px; }
+.periodo-dia.ini-semana.no-periodo, .periodo-dia.ini-semana.previa { border-radius: 8px 0 0 8px; }
+.periodo-dia.fim-semana.no-periodo, .periodo-dia.fim-semana.previa { border-radius: 0 8px 8px 0; }
+.periodo-dia.ini-semana.fim-semana.no-periodo { border-radius: 8px; }
 .periodo-dia.no-periodo:hover::before, .periodo-dia.previa:hover::before { background: var(--accent-wash); box-shadow: inset 0 0 0 1px var(--accent); }
-/* pontas: círculo cheio + meia faixa do lado do intervalo */
+/* pontas: quadrado arredondado cheio + meia faixa do lado do intervalo */
 .periodo-dia.ponta { color: var(--on-accent); font-weight: 600; }
 .periodo-dia.ponta::before, .periodo-dia.ponta:hover::before { background: var(--accent); box-shadow: none; }
 .periodo-dia.ponta.hoje::after { background: var(--on-accent); }
