@@ -80,8 +80,8 @@ class ContratoForm(forms.ModelForm):
         self.fields["num_parcelas"].required = False
         self.fields["num_parcelas"].help_text = (
             "Deixe em branco para calcular sozinho (valor total ÷ valor da "
-            "parcela, arredondado para cima — a última parcela pode ficar "
-            "menor). Preencha só para um número diferente do calculado."
+            "parcela, arredondado para cima). Confira o total do plano na prévia; "
+            "o valor da última parcela não é reduzido automaticamente."
         )
         # Ao editar, mostra os valores de dinheiro já formatados com vírgula.
         if self.instance and self.instance.pk:
@@ -114,3 +114,22 @@ class DocumentoContratoForm(forms.ModelForm):
         widgets = {
             "descricao": forms.TextInput(attrs={"placeholder": "Opcional"}),
         }
+
+
+class PrevisaoContratoForm(forms.Form):
+    valor_total = forms.CharField()
+    valor_parcela = forms.CharField()
+    num_parcelas = forms.IntegerField(required=False, min_value=1, max_value=10000)
+    estrutura = forms.ChoiceField(choices=Contrato.Estrutura.choices)
+    data_inicio = forms.DateField(input_formats=["%Y-%m-%d"])
+
+    def clean(self):
+        dados = super().clean()
+        for nome in ("valor_total", "valor_parcela"):
+            if nome not in dados:
+                continue
+            valor = moeda_para_decimal(dados[nome])
+            if valor is None or not valor.is_finite() or valor <= 0 or valor.as_tuple().exponent < -2:
+                raise forms.ValidationError("Informe valores positivos com até duas casas decimais.")
+            dados[nome] = valor
+        return dados

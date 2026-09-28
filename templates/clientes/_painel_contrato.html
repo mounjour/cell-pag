@@ -33,7 +33,7 @@
         <dt>A cobrar</dt>
         <dd class="num">
           {% if p.a_cobrar %}R$ {{ p.a_cobrar }}
-            <span class="helptext">parcela R$ {{ p.saldo }}{% if p.juros %} + juros R$ {{ p.juros }}{% endif %}</span>
+            {% include "pagamentos/_composicao.html" with resumo=p.resumo %}
           {% else %}—{% endif %}
         </dd>
       </div>

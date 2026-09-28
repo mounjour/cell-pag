@@ -27,7 +27,7 @@ from decimal import Decimal
 import uuid
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 from apps.validadores import validar_extensao_upload, validar_tamanho_upload
@@ -191,6 +191,7 @@ class Pagamento(models.Model):
         alvo = f"parcela {self.vencimento.numero}" if self.vencimento_id else "sem parcela"
         return f"{self.contrato} — {alvo} — R$ {self.valor_pago}"
 
+    @transaction.atomic
     def registrar(self) -> None:
         """Salva a baixa e reflete na parcela: ``valor_pago``, ``status`` e o
         transporte do saldo do parcial (ou do troco) para a próxima parcela.
@@ -198,6 +199,11 @@ class Pagamento(models.Model):
         Idempotente por construção — a ``UniqueConstraint(contrato, vencimento)``
         impede uma segunda baixa na mesma parcela.
         """
+        from apps.contratos.models import Contrato
+
+        self.contrato = Contrato.objects.select_for_update().get(pk=self.contrato_id)
+        if self.vencimento_id:
+            self.vencimento.refresh_from_db()
         self.save()
         venc = self.vencimento
         if venc is None:

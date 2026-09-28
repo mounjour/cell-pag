@@ -23,6 +23,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 # ── Núcleo ────────────────────────────────────────────────────────────────────
 SECRET_KEY = env("SECRET_KEY", default=SECRET_KEY_INSEGURA)
 DEBUG = env("DEBUG")
+ROTINA_HEALTHCHECK_URL = env("ROTINA_HEALTHCHECK_URL", default="")
 
 # Em produção a SECRET_KEY tem de vir do ambiente — sem ela, sessões, tokens de
 # reset e assinatura de cookies ficam previsíveis.

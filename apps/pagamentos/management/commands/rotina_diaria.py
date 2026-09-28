@@ -21,7 +21,10 @@ e 3 só montam a fila e registram no log — nada sai do sistema.
 """
 
 import datetime
+from urllib.error import URLError
+from urllib.request import urlopen
 
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
@@ -64,6 +67,8 @@ class Command(BaseCommand):
                 ("enviar_cobrancas_clientes", {**({"hoje": hoje} if hoje else {})})
             )
 
+        # Execuções parciais ou retroativas não confirmam a rotina de produção.
+        monitorar = not hoje and not options["sem_cobrancas"]
         falhas = []
         for nome, kwargs in etapas:
             self.stdout.write(self.style.MIGRATE_HEADING(f"\n>> {nome}"))
@@ -74,7 +79,25 @@ class Command(BaseCommand):
                 self.stderr.write(self.style.ERROR(f"[FALHOU] {nome}: {exc}"))
 
         if falhas:
+            if monitorar:
+                self._ping_monitor(falhou=True)
             raise CommandError(
                 "Rotina diária terminou com falha em: " + ", ".join(falhas)
             )
+        if monitorar and not self._ping_monitor():
+            raise CommandError("Rotina concluída, mas falhou o envio ao monitor.")
         self.stdout.write(self.style.SUCCESS("\n[OK] Rotina diária concluída."))
+
+    def _ping_monitor(self, *, falhou=False):
+        url = settings.ROTINA_HEALTHCHECK_URL.strip().rstrip("/")
+        if not url:
+            return True
+        try:
+            with urlopen(url + ("/fail" if falhou else ""), timeout=10) as resposta:
+                if resposta.status != 200 or resposta.read(64).strip() != b"OK":
+                    raise ValueError("Resposta inválida do monitor")
+        except (URLError, OSError, ValueError):
+            # A URL é uma credencial: não imprimir URL nem exceção de rede.
+            self.stderr.write("[FALHOU] Não foi possível avisar o monitor da rotina.")
+            return False
+        return True

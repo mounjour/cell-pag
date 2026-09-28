@@ -69,6 +69,24 @@ def parcelas_a_cobrar(contrato, hoje: datetime.date) -> list[ParcelaACobrar]:
     return itens
 
 
+def resumo_cobranca(contrato, hoje=None):
+    """Composição única dos valores apresentados ao financeiro."""
+    hoje = hoje or timezone.localdate()
+    parcelas = parcelas_a_cobrar(contrato, hoje)
+    vencimento = contrato.parcela_em_aberto()
+    situacao = contrato.situacao_atraso(hoje=hoje)
+    principal = sum((p.saldo for p in parcelas), Decimal("0.00")) if parcelas else (
+        (vencimento.saldo if vencimento else contrato.valor_parcela) or Decimal("0.00")
+    )
+    juros = sum((p.juros for p in parcelas), Decimal("0.00")) if parcelas else (
+        situacao.juros if situacao else Decimal("0.00")
+    )
+    return {
+        "principal": principal, "juros": juros, "total": principal + juros,
+        "quantidade": len(parcelas) or (1 if principal else 0), "parcelas": parcelas,
+    }
+
+
 def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | None = None) -> dict:
     """Contratos a cobrar hoje + totais.
 
@@ -111,11 +129,10 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
         # com o que a Cora realmente gera. Sem vencimento gerado ainda,
         # preserva `None` quando falta `valor_parcela` (o painel mostra "—").
         parcela = vencimento_aberto.saldo if vencimento_aberto else ct.valor_parcela
-        a_cobrar = (parcela or Decimal("0.00")) + situacao.juros
+        resumo = resumo_cobranca(ct, hoje)
+        a_cobrar = resumo["total"]
         # Várias parcelas em aberto: cobra o conjunto, cada uma com o seu atraso.
-        parcelas = parcelas_a_cobrar(ct, hoje)
-        if len(parcelas) > 1:
-            a_cobrar = sum((p.total for p in parcelas), Decimal("0.00"))
+        parcelas = resumo["parcelas"]
         total_previsto += a_cobrar
         if situacao.dias_atraso:
             n_atraso += 1
@@ -130,6 +147,7 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
                 "parcela": parcela,
                 "parcelas": parcelas,
                 "a_cobrar": a_cobrar,
+                "resumo": resumo,
             }
         )
 

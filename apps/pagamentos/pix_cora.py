@@ -254,6 +254,12 @@ def retomar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
 
 @transaction.atomic
 def _aplicar_resposta(cobranca: CobrancaCora, resposta: dict) -> None:
+    from apps.contratos.models import Contrato
+
+    # Mesma trava usada pelas baixas manuais: conferir e distribuir são uma
+    # única operação, mesmo quando o webhook chega durante uma baixa em dinheiro.
+    Contrato.objects.select_for_update().get(pk=cobranca.vencimento.contrato_id)
+    cobranca.refresh_from_db()
     status = STATUS_CORA.get(str(resposta.get("status", "")).upper())
     if not status:
         raise cora_api.CoraErro(f"Status de fatura desconhecido: {resposta.get('status')!r}")
@@ -296,6 +302,8 @@ PREFIXO_BAIXA_AUTOMATICA = "Baixa automática pela Cora"
 
 
 def _dar_baixa(cobranca: CobrancaCora) -> None:
+    if cobranca.duplicada:
+        return  # revisão manual permanece pendente mesmo em notificações repetidas
     existente = Pagamento.objects.filter(vencimento=cobranca.vencimento).first()
     if existente is not None:
         # A parcela já tem baixa. Se foi este mesmo Pix (repetição do aviso da
@@ -310,6 +318,22 @@ def _dar_baixa(cobranca: CobrancaCora) -> None:
                 cobranca.cora_id,
                 cobranca.vencimento_id,
             )
+        return
+    vencimento = cobranca.vencimento
+    vencimento.refresh_from_db()
+    if (
+        vencimento.status == Vencimento.Status.PAGO
+        or (
+            max(cobranca.valor, cobranca.total_pago) > vencimento.saldo
+            and cobranca.total_pago != valor_do_pix(vencimento, timezone.localdate())
+        )
+    ):
+        cobranca.duplicada = True
+        cobranca.save(update_fields=["duplicada", "atualizado_em"])
+        logger.warning(
+            "Pix %s exige revisão manual: valor recebido diverge do saldo atual.",
+            cobranca.cora_id,
+        )
         return
     pagamento = Pagamento(
         contrato=cobranca.vencimento.contrato,

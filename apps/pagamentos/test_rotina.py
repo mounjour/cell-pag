@@ -20,6 +20,71 @@ from apps.contratos.models import Contrato
 date = datetime.date
 
 
+@pytest.mark.parametrize("falha", [False, True])
+def test_monitor_recebe_resultado_sem_interromper_etapas(settings, monkeypatch, falha):
+    from unittest.mock import MagicMock
+
+    settings.ROTINA_HEALTHCHECK_URL = "https://hc-ping.com/check-privado"
+    etapas, urls = [], []
+
+    def executar(nome, **kwargs):
+        etapas.append(nome)
+        if falha and nome == "gerar_vencimentos":
+            raise RuntimeError("falha simulada")
+
+    def ping(url, **kwargs):
+        urls.append(url)
+        resposta = MagicMock()
+        resposta.__enter__.return_value.status = 200
+        resposta.__enter__.return_value.read.return_value = b"OK"
+        return resposta
+
+    monkeypatch.setattr("apps.pagamentos.management.commands.rotina_diaria.call_command", executar)
+    monkeypatch.setattr("apps.pagamentos.management.commands.rotina_diaria.urlopen", ping)
+    if falha:
+        with pytest.raises(CommandError, match="gerar_vencimentos"):
+            call_command("rotina_diaria", stdout=StringIO(), stderr=StringIO())
+    else:
+        call_command("rotina_diaria", stdout=StringIO(), stderr=StringIO())
+    assert len(etapas) == 3
+    assert urls == [settings.ROTINA_HEALTHCHECK_URL + ("/fail" if falha else "")]
+
+
+@pytest.mark.parametrize("argumentos", [[], ["--sem-cobrancas"], ["--hoje", "2026-09-28"]])
+def test_monitor_nao_mascara_falha_nem_expoe_url(settings, monkeypatch, argumentos):
+    settings.ROTINA_HEALTHCHECK_URL = "https://hc-ping.com/segredo"
+    monkeypatch.setattr(
+        "apps.pagamentos.management.commands.rotina_diaria.call_command", lambda *a, **k: None,
+    )
+
+    def falhar(*args, **kwargs):
+        if argumentos:
+            pytest.fail("Execução parcial ou retroativa não deve sinalizar sucesso")
+        raise OSError(settings.ROTINA_HEALTHCHECK_URL)
+
+    monkeypatch.setattr("apps.pagamentos.management.commands.rotina_diaria.urlopen", falhar)
+    err = StringIO()
+    if argumentos:
+        call_command("rotina_diaria", *argumentos, stdout=StringIO(), stderr=err)
+    else:
+        with pytest.raises(CommandError, match="monitor"):
+            call_command("rotina_diaria", stdout=StringIO(), stderr=err)
+    assert "segredo" not in err.getvalue()
+
+
+@pytest.mark.parametrize("erros_envio,erros_cora", [(1, 0), (0, 1)])
+def test_erros_contabilizados_fazem_comando_falhar(monkeypatch, erros_envio, erros_cora):
+    modulo = "apps.pagamentos.management.commands.enviar_cobrancas_clientes"
+    monkeypatch.setattr(modulo + ".reconciliar_abertas", lambda: {
+        "consultadas": 1, "pagas": 0, "erros": erros_cora,
+    })
+    monkeypatch.setattr(modulo + ".processar_cobrancas", lambda **k: {
+        "preparadas": 1, "enviadas": 0, "simuladas": 0, "ignoradas": 0, "erros": erros_envio,
+    })
+    with pytest.raises(CommandError):
+        call_command("enviar_cobrancas_clientes", stdout=StringIO())
+
+
 @pytest.fixture
 def cliente(db):
     c = Cliente(nome="Fulano de Tal", cpf=CPFGen().generate(), telefone_whatsapp="+5583999990000")

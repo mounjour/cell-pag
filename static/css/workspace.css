@@ -197,3 +197,31 @@ tbody tr:hover td { background: var(--accent-wash); }
 .alerta-comprovante .duplicidade-lista li { border-top-color: color-mix(in srgb, var(--amber) 25%, transparent); }
 .comprovante-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .comprovante-acoes form { margin: 0; }
+.cobrar-hoje .contato-actions { display: flex; flex-direction: column; align-items: stretch; gap: .45rem; }
+.cobrar-hoje .contato-actions .btn { white-space: normal; text-align: center; }
+.cobrar-hoje .envio-vias { display: flex; flex-direction: column; align-items: flex-start; }
+.cobrar-hoje .envio-vias .pill { white-space: normal; text-align: left; }
+@media (min-width: 640px) {
+  .cobrar-hoje table { table-layout: fixed; width: 100%; }
+  .cobrar-hoje th, .cobrar-hoje td { min-width: 0; white-space: normal; overflow-wrap: anywhere; padding-inline: .65rem; }
+  .cobrar-hoje th:nth-child(1) { width: 16%; }
+  .cobrar-hoje th:nth-child(2) { width: 13%; }
+  .cobrar-hoje th:nth-child(3) { width: 15%; }
+  .cobrar-hoje th:nth-child(4) { width: 20%; }
+  .cobrar-hoje th:nth-child(5) { width: 18%; }
+  .cobrar-hoje th:nth-child(6) { width: 18%; }
+  .cobrar-hoje .atraso-dias { white-space: normal; }
+  .cobrar-hoje .contato-actions .btn { padding-inline: .5rem; }
+}
+.cobrar-ajuda { margin-block: .75rem; }
+.previsao-form { grid-column: 1 / -1; overflow-wrap: anywhere; }
+.previsao-form p { margin: .5rem 0; white-space: pre-line; }
+.tabbar .menu-mais > summary { position: relative; }
+@media (max-width: 700px) {
+  .cobrar-resumo { gap: .5rem; margin-block: .6rem; }
+  .cobrar-resumo > div { padding: .6rem .75rem; min-height: 0; }
+  .cobrar-resumo dt { font-size: .75rem; }
+  .cobrar-resumo dd { font-size: 1.1rem; }
+  .tbl-wrap.cards.cobrar-hoje td.contato-cell .contato-actions { display: flex; flex-direction: column; width: 100%; }
+  .tbl-wrap.cards.cobrar-hoje td.envio-cell .pill { font-size: .8rem; white-space: normal; }
+}

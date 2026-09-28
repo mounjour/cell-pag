@@ -4,7 +4,7 @@
 
 {% block content %}
 <h1>Acompanhamento Pix · {{ hoje|date:"d/m/Y" }}</h1>
-<p class="note">Cada parcela recebe uma cobrança Pix da Cora. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
+<p class="note">Uma cobrança Pix pode reunir várias parcelas vencidas e a de hoje, sem juros. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
 
 {% if comprovantes %}
 <section class="alerta-comprovante" role="alert">
@@ -39,8 +39,8 @@
 
 {% if duplicadas %}
 <section class="alerta-duplicidade" role="alert">
-  <h2>Pago em duplicidade · devolver ao cliente</h2>
-  <p>O cliente pagou o Pix de uma parcela que já tinha sido paga por outro meio (por exemplo, em dinheiro). O valor entrou na Cora e <strong>não foi lançado no sistema</strong>: devolva-o ao cliente e depois marque como devolvido.</p>
+  <h2>Pix recebido · revisão manual</h2>
+  <p>Há pagamento em duplicidade ou divergência entre o Pix recebido e as parcelas em aberto. O valor entrou na Cora e <strong>não foi lançado no sistema</strong>. Confira as baixas do contrato e providencie o lançamento correto ou a devolução antes de marcar como resolvido. Este botão apenas encerra o aviso.</p>
   <ul class="duplicidade-lista">
     {% for c in duplicadas %}
       <li>
@@ -48,7 +48,7 @@
         <form method="post" action="{% url 'pagamentos:pix_duplicidade_resolvida' c.pk %}">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit" class="btn secondary">Marcar como devolvido</button>
+          <button type="submit" class="btn secondary">Marcar como resolvido</button>
         </form>
       </li>
     {% endfor %}

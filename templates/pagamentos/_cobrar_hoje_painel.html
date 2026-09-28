@@ -1,12 +1,12 @@
 <div id="painel-cobrar-hoje">
 {% if linhas %}
-  <dl class="meta meta--4col">
+  <dl class="meta meta--4col cobrar-resumo">
     <div><dt>Para cobrar</dt><dd class="num">{{ total_linhas }}</dd></div>
     <div><dt>Atrasados</dt><dd class="num">{{ n_atraso }}</dd></div>
     <div><dt>Alerta de bloqueio</dt><dd class="num">{{ n_bloqueio }}</dd></div>
     <div><dt>Total previsto (parcela + juros)</dt><dd class="num kpi-dinheiro">R$ {{ total_previsto }}</dd></div>
   </dl>
-  <p class="note">Esta tela mostra só os <strong>avisos e o status</strong> de cada cobrança, seguindo a parcela em aberto mais antiga de cada contrato. Abra o cliente para registrar pagamento, suspender a cobrança automática ou ver o histórico.</p>
+  <details class="note cobrar-ajuda"><summary>Como funciona</summary><p>Confira as parcelas e os juros antes de cobrar. O Pix reúne as parcelas vencidas e a de hoje, sem juros. Registre pagamentos por fora em “Registrar pagamento”; em “Abrir cliente” você vê o histórico e pode suspender a cobrança.</p></details>
 
   <div class="tbl-wrap cards cobrar-hoje">
     <table>
@@ -36,7 +36,7 @@
               {% if l.a_cobrar %}
                 <span class="valor-cobrar num">R$ {{ l.a_cobrar }}</span>
                 {% if l.parcela %}
-                  <span class="helptext">parcela R$ {{ l.parcela }}{% if l.situacao.juros %} + juros R$ {{ l.situacao.juros }}{% endif %}</span>
+                  {% include "pagamentos/_composicao.html" with resumo=l.resumo %}
                 {% elif l.situacao.juros %}
                   <span class="helptext">só juros R$ {{ l.situacao.juros }} · defina o valor da parcela no contrato</span>
                 {% endif %}
@@ -45,37 +45,11 @@
               {% endif %}
             </td>
             <td class="envio-cell" data-label="Envio">
-              {% comment %}
-                O texto "Pix"/"Msg" é fixo — sem o glifo abaixo, o status real
-                (enviado/entregue/erro...) só existia na cor do chip, o que
-                falha para quem não distingue cores (WCAG 1.4.1) e não
-                aparece de jeito nenhum no toque (o title não abre no
-                celular). O glifo faz esse status ficar visível pra todo mundo.
-              {% endcomment %}
               <span class="envio-vias">
-                {% if l.pix %}
-                  <span class="pill pill-pix {{ l.pix.status }}" title="Pix · {{ l.pix.get_status_display }}">Pix
-                    <span class="envio-glifo" aria-hidden="true">{% if l.pix.status == 'pago' %}✓{% elif l.pix.status == 'aberto' %}⏳{% elif l.pix.status == 'vencido' %}✕{% elif l.pix.status == 'cancelado' %}–{% elif l.pix.status == 'erro' %}⚠{% elif l.pix.status == 'pendente' %}–{% else %}⋯{% endif %}</span>
-                    <span class="sr-only">· {{ l.pix.get_status_display }}</span>
-                  </span>
-                {% else %}
-                  <span class="pill pill-pix" title="Pix · não gerado">Pix
-                    <span class="envio-glifo" aria-hidden="true">–</span>
-                    <span class="sr-only">· não gerado</span>
-                  </span>
-                {% endif %}
-                {% if l.cobranca %}
-                  <span class="pill pill-msg {{ l.cobranca.status }}" title="Mensagem · {{ l.cobranca.get_status_display }}{% if l.cobranca.erro %} — {{ l.cobranca.erro }}{% endif %}">Msg
-                    <span class="envio-glifo" aria-hidden="true">{% if l.cobranca.status == 'lido' %}✓✓{% elif l.cobranca.status == 'entregue' %}✓{% elif l.cobranca.status == 'enviado' %}↗{% elif l.cobranca.status == 'erro' %}⚠{% elif l.cobranca.status == 'pendente' %}–{% else %}⋯{% endif %}</span>
-                    <span class="sr-only">· {{ l.cobranca.get_status_display }}</span>
-                  </span>
-                {% else %}
-                  <span class="pill pill-msg" title="Mensagem · não preparada">Msg
-                    <span class="envio-glifo" aria-hidden="true">–</span>
-                    <span class="sr-only">· não preparada</span>
-                  </span>
-                {% endif %}
+                <span class="pill pill-pix {{ l.pix.status }}">Pix: {% if l.pix %}{{ l.pix.get_status_display }}{% else %}Não gerado{% endif %}</span>
+                <span class="pill pill-msg {{ l.cobranca.status }}">Mensagem: {% if l.cobranca %}{{ l.cobranca.get_status_display }}{% else %}Não enviada{% endif %}</span>
               </span>
+              {% if l.cobranca.erro %}<span class="helptext">Falha no envio. Abra o cliente para conferir.</span>{% endif %}
               {% if l.pix.status == 'cancelado' %}<span class="pill atrasado" title="A rotina diária não cobra esta parcela até você retomar no cliente.">Suspensa</span>{% endif %}
             </td>
             <td data-label="Contato" class="contato-cell">
@@ -96,8 +70,8 @@
                     </svg>
                   </a>
                 </span>
-                {% comment %}Ação principal da linha: abrir o cliente (baixa, suspender cobrança, histórico). A classe btn-registrar é o estilo de "botão principal da linha".{% endcomment %}
-                <a class="btn btn-registrar" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}"
+                <a class="btn btn-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}" aria-label="Registrar pagamento de {{ l.contrato.cliente.nome }} — {{ l.contrato.apelido }}">Registrar pagamento</a>
+                <a class="btn secondary" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}"
                    aria-label="Abrir {{ l.contrato.cliente.nome }}">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}{% endblock %}
 
 {% block content %}
@@ -9,16 +10,15 @@
 <details class="note">
   <summary>Como os campos de parcela e datas funcionam</summary>
   <p>
-    <strong>Valor da parcela</strong> e <strong>nº de parcelas</strong> são digitados à mão
-    (o cálculo é feito fora do sistema). Se estiverem preenchidos, o sistema gera os
-    <strong>vencimentos</strong> a partir da <strong>data de início</strong> + estrutura e
-    calcula a <strong>data prevista de quitação</strong> — se <code>parcela × nº</code> não
-    bater com o valor total, aparece um aviso. O <strong>próximo vencimento</strong> segue
-    manual e é o que liga o contrato ao cálculo de atraso e juros.
+    Informe o valor da parcela. Deixe o nº de parcelas vazio para calcular pela divisão
+    do total pelo valor da parcela, arredondada para cima. Confira a soma na prévia.
+    A primeira parcela vence um período após a data de início. Com parcelas geradas,
+    o atraso segue a mais antiga em aberto; “Próximo vencimento” só é usado enquanto
+    não há parcelas. A previsão de quitação é calculada a partir da última parcela.
   </p>
 </details>
 
-<form method="post" class="form-grid form-page">
+<form method="post" class="form-grid form-page" data-previsao-url="{% url 'contratos:previsao' %}" data-previsao-campos="valor_total,valor_parcela,num_parcelas,estrutura,data_inicio">
   {% csrf_token %}
   {% if form.non_field_errors %}
     <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
@@ -54,6 +54,12 @@
     {% include "_field.html" with field=form.observacoes %}
   </div>
 
+  <section class="note previsao-form" aria-labelledby="previsao-titulo">
+    <h2 id="previsao-titulo">Confira o plano</h2>
+    <p data-previsao-texto role="status" aria-live="polite">Informe os valores e as datas para visualizar as parcelas antes de salvar.</p>
+    {% if form.instance.pk %}<p>Esta prévia descreve o plano informado. Parcelas já geradas mantêm seus valores e datas; confira-as no contrato após a edição.</p>{% endif %}
+    <noscript>Ative JavaScript para visualizar o resumo antes de salvar.</noscript>
+  </section>
   <div class="form-actions">
     <button type="submit" class="btn">Salvar</button>
     <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">Cancelar</a>
@@ -61,3 +67,4 @@
 </form>
 </div>
 {% endblock %}
+{% block scripts %}<script src="{% static 'js/previsao_form.js' %}" defer></script>{% endblock %}

@@ -4,20 +4,26 @@
   <div><dt>Cliente</dt><dd>{{ contrato.cliente.nome }}</dd></div>
   <div><dt>Contrato</dt><dd>{{ contrato.apelido }} · {{ contrato.get_estrutura_display }}</dd></div>
   <div><dt>Valor da parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
+  <div><dt>A cobrar hoje</dt><dd class="num">R$ {{ resumo_cobranca.total|floatformat:2 }}{% include "pagamentos/_composicao.html" with resumo=resumo_cobranca %}</dd></div>
 </dl>
 
 {% if pode_registrar %}
   {% if juros_ate_hoje %}
     <p class="note">
-      <strong>Juros calculados até hoje: R$ {{ juros_ate_hoje }}.</strong>
+      <strong>Juros das parcelas a cobrar: R$ {{ juros_ate_hoje }}.</strong>
       É um valor à parte (R$ 5/dia de atraso) — só entra no pagamento se o
       cliente realmente pagou o juros também. Preencha "Juros recebidos"
       abaixo só nesse caso; não é obrigatório.
     </p>
   {% endif %}
-  <form method="post" class="form-grid form-page" enctype="multipart/form-data">
+  <form method="post" class="form-grid form-page" enctype="multipart/form-data" data-previsao-url="{% url 'pagamentos:previsao' contrato.pk %}">
     {% csrf_token %}
     {% include "_form.html" %}
+    <section class="note previsao-form" aria-labelledby="previsao-titulo">
+      <h2 id="previsao-titulo">Como ficará este pagamento</h2>
+      <p data-previsao-texto role="status" aria-live="polite">Preencha a parcela e os valores para conferir a baixa antes de registrar.</p>
+      <noscript>A prévia precisa de JavaScript. Pagamentos menores levam a diferença à próxima parcela; pagamentos maiores abatem as seguintes.</noscript>
+    </section>
     <div class="form-actions">
       <button type="submit" class="btn">Registrar pagamento</button>
       <a class="btn secondary" href="{% url 'contratos:detalhe' contrato.pk %}">Cancelar</a>

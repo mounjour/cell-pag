@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -9,7 +10,7 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from apps.arquivos import servir_anexo
 from apps.clientes.models import Cliente
 
-from .forms import ContratoForm, DocumentoContratoForm
+from .forms import ContratoForm, DocumentoContratoForm, PrevisaoContratoForm
 from .models import Contrato, DocumentoContrato
 
 
@@ -80,6 +81,31 @@ def _parcelas_relevantes(vencimentos, *, todas=False):
     return vencimentos[inicio : inicio + LIMITE_PARCELAS_NO_CONTRATO]
 
 
+class ContratoPrevisaoView(LoginRequiredMixin, View):
+    def post(self, request):
+        from apps.pagamentos.previsao import moeda
+        from apps.pagamentos.recorrencia import data_da_parcela
+
+        form = PrevisaoContratoForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse({"texto": "Informe valores positivos, a frequência e a data de início para visualizar o plano."})
+        contrato = Contrato(**form.cleaned_data)
+        contrato.calcular_num_parcelas(salvar=False)
+        try:
+            primeira = data_da_parcela(contrato.data_inicio, contrato.estrutura, 1)
+            ultima = data_da_parcela(contrato.data_inicio, contrato.estrutura, contrato.num_parcelas)
+        except (ValueError, OverflowError):
+            return JsonResponse({"texto": "Confira a data e a quantidade de parcelas: o período informado é muito longo."})
+        texto = (
+            f"{contrato.num_parcelas} parcelas de {moeda(contrato.valor_parcela)} · {contrato.get_estrutura_display()}.\n"
+            f"Primeiro vencimento: {primeira:%d/%m/%Y}. Último: {ultima:%d/%m/%Y}.\n"
+            f"Total das parcelas: {moeda(contrato.total_das_parcelas)}. Valor do contrato: {moeda(contrato.valor_total)}."
+        )
+        if not contrato.parcelas_conferem:
+            texto += "\nAtenção: os totais são diferentes. Ajuste os valores ou a quantidade; a última parcela não é reduzida automaticamente."
+        return JsonResponse({"texto": texto})
+
+
 class ContratoListView(LoginRequiredMixin, ListView):
     model = Contrato
     template_name = "contratos/lista.html"
@@ -131,6 +157,8 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
         ctx = super().get_context_data(**kwargs)
         ctx["form_documento"] = DocumentoContratoForm()
         contrato = self.object
+        from apps.pagamentos.agenda import resumo_cobranca
+        ctx["resumo_cobranca"] = resumo_cobranca(contrato)
         vencimentos = list(contrato.vencimentos.all())
         pagas = sum(1 for v in vencimentos if v.status == v.Status.PAGO)
         ctx["pode_quitar"] = (

@@ -39,9 +39,8 @@ def _linha_da_parcela(p) -> str:
 def _mensagem_varias_parcelas(base, parcelas, numero_pix, bloco_pix, *, alertar_bloqueio) -> str:
     """Cobrança de um contrato com mais de uma parcela em aberto.
 
-    Lista cada parcela com o atraso próprio. O Pix desta mensagem cobra só a
-    mais antiga (a Cora gera uma fatura por parcela) — o texto diz isso, para o
-    cliente não achar que o QR quita tudo.
+    Lista cada parcela com o atraso próprio. O Pix fica vinculado à mais
+    antiga e cobra a soma dos saldos das parcelas vencidas, sem os juros.
     """
     soma = sum((p.saldo for p in parcelas), Decimal("0.00"))
     juros = sum((p.juros for p in parcelas), Decimal("0.00"))
