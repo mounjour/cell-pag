@@ -65,6 +65,13 @@
     <div><dt>Novos clientes</dt><dd class="num">{{ relatorio.novos_clientes }}</dd></div>
     <div><dt>Contratos quitados</dt><dd class="num">{{ relatorio.contratos_quitados }}</dd></div>
   </dl>
+  <p class="count">
+    Recebido: <strong>R$ {{ relatorio.recebido_do_periodo|floatformat:2 }}</strong> de parcelas do período
+    · <strong>R$ {{ relatorio.recebido_de_atrasadas|floatformat:2 }}</strong> de parcelas atrasadas
+    · <strong>R$ {{ relatorio.recebido_adiantado|floatformat:2 }}</strong> adiantado{% if relatorio.recebido_sem_parcela %}
+    · <strong>R$ {{ relatorio.recebido_sem_parcela|floatformat:2 }}</strong> sem parcela{% endif %}.
+    Falta receber do período: <strong>R$ {{ relatorio.falta_do_periodo|floatformat:2 }}</strong>.
+  </p>
 
   <h2>Recebimentos por forma</h2>
   {% if relatorio.por_forma %}

@@ -558,3 +558,31 @@ def test_seed_demo_idempotente_e_reset():
     call_command("seed_demo", "--reset")
     assert Cliente.objects.count() == 10
     assert Contrato.objects.count() == 10
+
+
+@pytest.mark.django_db
+def test_tela_do_contrato_longo_mostra_as_parcelas_atuais_e_nao_as_24_primeiras(auth_client):
+    from apps.pagamentos.models import Vencimento
+    from apps.contratos.views import LIMITE_PARCELAS_NO_CONTRATO, _parcelas_relevantes
+
+    cliente = Cliente.objects.create(
+        nome="Cliente Longo", cpf=CPFGen().generate(), telefone_whatsapp="+5583999996666"
+    )
+    ct = Contrato.objects.create(
+        cliente=cliente, apelido="Longo", aparelho_modelo="X",
+        valor_total=Decimal("600.00"), estrutura=Contrato.Estrutura.DIARIA,
+        valor_parcela=Decimal("10.00"), num_parcelas=60, data_inicio=datetime.date(2026, 1, 1),
+    )
+    for n in range(1, 61):
+        Vencimento.objects.create(
+            contrato=ct, numero=n, valor_previsto=Decimal("10.00"),
+            data_vencimento=datetime.date(2026, 1, 1) + datetime.timedelta(days=n),
+            status=Vencimento.Status.PAGO if n <= 40 else Vencimento.Status.ABERTO,
+            valor_pago=Decimal("10.00") if n <= 40 else Decimal("0.00"),
+        )
+    numeros = [v.numero for v in _parcelas_relevantes(list(ct.vencimentos.all()))]
+    assert len(numeros) == LIMITE_PARCELAS_NO_CONTRATO
+    assert 41 in numeros and 38 in numeros  # a 1ª em aberto e um pouco de contexto antes
+    assert 1 not in numeros
+    todas = auth_client.get(reverse("contratos:detalhe", args=[ct.pk]), {"todas": "1"})
+    assert len(todas.context["vencimentos_exibidos"]) == 60
