@@ -476,8 +476,7 @@ tbody tr:hover td { background: var(--accent-wash); }
   margin: 0 0 1.35rem;
   padding: 0.9rem 1.05rem;
   background: var(--accent-wash);
-  border: 1px solid transparent;
-  border-left: 4px solid var(--accent);
+  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   color: var(--ink);
   font-size: 0.9rem;

@@ -185,3 +185,4 @@
 
 .selo--alerta { background: var(--critical); color: #fff; }
 .report-filter .form-row[hidden] { display: none; }
+.report-filter-erro { border-left-width: 1px; margin: 0.75rem 0 1.25rem; }
