@@ -1,7 +1,7 @@
 import datetime
 from decimal import Decimal
 
-from django.db.models import Count, DecimalField, F, Sum, Value
+from django.db.models import Case, Count, DecimalField, Exists, F, OuterRef, Sum, Value, When
 from django.db.models.functions import Coalesce, TruncMonth
 from django.utils import timezone
 
@@ -19,12 +19,34 @@ MESES_PT = [
 ZERO = Value(Decimal("0.00"), output_field=DecimalField(max_digits=12, decimal_places=2))
 
 
+def _com_valor_devido(queryset):
+    """Anota ``valor_devido``: o que a parcela de fato representa no total.
+
+    Uma baixa parcial (ou a maior) **transporta** a diferença para o
+    ``valor_previsto`` da próxima parcela, mas deixa o ``valor_previsto`` da
+    parcela paga como estava. Somar os dois contaria o saldo duas vezes (ou
+    esqueceria o troco). Por isso, parcela que já recebeu baixa vale o que foi
+    pago; sem baixa, vale o ``valor_previsto``.
+    """
+    return queryset.annotate(
+        _tem_baixa=Exists(Pagamento.objects.filter(vencimento=OuterRef("pk"))),
+        valor_devido=Case(
+            When(_tem_baixa=True, then=F("valor_pago")),
+            default=F("valor_previsto"),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        ),
+    )
+
+
 def montar_relatorio(inicio, fim):
-    vencimentos = Vencimento.objects.filter(data_vencimento__range=(inicio, fim))
+    vencimentos = _com_valor_devido(
+        Vencimento.objects.filter(data_vencimento__range=(inicio, fim))
+    )
     pagamentos = Pagamento.objects.filter(data_pagamento__range=(inicio, fim))
 
-    total_previsto = vencimentos.aggregate(v=Coalesce(Sum("valor_previsto"), ZERO))["v"]
+    total_previsto = vencimentos.aggregate(v=Coalesce(Sum("valor_devido"), ZERO))["v"]
     total_recebido = pagamentos.aggregate(v=Coalesce(Sum("valor_pago"), ZERO))["v"]
+    total_juros = pagamentos.aggregate(v=Coalesce(Sum("juros_pago"), ZERO))["v"]
 
     # Calcula o retrato no fim do período, respeitando a janela especial da
     # semanal. Uma parcela paga depois desse dia ainda aparece como atrasada no
@@ -43,15 +65,15 @@ def montar_relatorio(inicio, fim):
             fim,
             vencimento.contrato.estrutura,
         )
-        pago_ate_o_fim = sum(
-            (
-                pagamento.valor_pago
-                for pagamento in vencimento.pagamentos.all()
-                if pagamento.data_pagamento <= fim
-            ),
-            Decimal("0.00"),
+        # Parcela com baixa até o fim do período está encerrada: a sobra (ou o
+        # troco) já foi transportada para a próxima parcela — contar o resto
+        # aqui de novo duplicaria o atraso.
+        baixada_ate_o_fim = any(
+            pagamento.data_pagamento <= fim for pagamento in vencimento.pagamentos.all()
         )
-        valor_em_aberto = max(vencimento.valor_previsto - pago_ate_o_fim, Decimal("0.00"))
+        valor_em_aberto = (
+            Decimal("0.00") if baixada_ate_o_fim else vencimento.valor_previsto
+        )
         if dias > 0 and valor_em_aberto > 0:
             vencimento.valor_em_aberto = valor_em_aberto
             vencimento.dias_atraso_relatorio = dias
@@ -76,6 +98,7 @@ def montar_relatorio(inicio, fim):
         "fim": fim,
         "total_previsto": total_previsto,
         "total_recebido": total_recebido,
+        "total_juros": total_juros,
         "diferenca": total_recebido - total_previsto,
         "total_atrasado": total_atrasado,
         "quantidade_atrasados": len(atrasados),
@@ -136,9 +159,13 @@ def montar_painel_inicial(hoje: datetime.date | None = None, meses: int = 6) -> 
     ).count()
     atencao.sort(key=lambda item: item["dias_atraso"], reverse=True)
 
-    a_receber = Vencimento.objects.exclude(
-        status=Vencimento.Status.PAGO
-    ).aggregate(v=Coalesce(Sum(F("valor_previsto") - F("valor_pago")), ZERO))["v"]
+    # Só parcelas sem baixa: numa parcial, o que faltou já está no previsto da
+    # próxima parcela (contar as duas dobraria o saldo).
+    a_receber = (
+        Vencimento.objects.exclude(status=Vencimento.Status.PAGO)
+        .exclude(pagamentos__isnull=False)
+        .aggregate(v=Coalesce(Sum("valor_previsto"), ZERO))["v"]
+    )
 
     n_ativos = len(ativos)
     valor_ativos = sum((c.valor_total for c in ativos), Decimal("0.00"))
@@ -154,12 +181,14 @@ def montar_painel_inicial(hoje: datetime.date | None = None, meses: int = 6) -> 
         .values_list("m", "t")
     )
     previsto_mes = dict(
-        Vencimento.objects.filter(
-            data_vencimento__gte=primeiro, data_vencimento__lt=limite
+        _com_valor_devido(
+            Vencimento.objects.filter(
+                data_vencimento__gte=primeiro, data_vencimento__lt=limite
+            )
         )
         .annotate(m=TruncMonth("data_vencimento"))
         .values("m")
-        .annotate(t=Coalesce(Sum("valor_previsto"), ZERO))
+        .annotate(t=Coalesce(Sum("valor_devido"), ZERO))
         .values_list("m", "t")
     )
     serie = []
