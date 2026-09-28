@@ -57,3 +57,8 @@
   {% else %}<p class="empty">Nenhuma parcela em atraso.</p>{% endif %}
 {% endif %}
 {% endblock %}
+
+{% block scripts %}
+  {% load static %}
+  <script src="{% static 'js/relatorio_periodo.js' %}" defer></script>
+{% endblock %}
