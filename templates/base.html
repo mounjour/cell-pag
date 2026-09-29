@@ -44,6 +44,24 @@
       <a href="{% url 'relatorios:juros' %}"{% if pagina == 'juros' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="juros" %}<span>Juros</span></a>
       {% endif %}
     </nav>
+
+    <div class="sidebar-rodape">
+      <details class="menu-pop menu-usuario menu-usuario--lateral">
+        <summary aria-label="Conta de {{ user.nome_completo }}">
+          <span class="user-avatar" aria-hidden="true">{{ user.nome_curto|slice:":1"|upper }}</span>
+          <span class="user-name">{{ user.nome_curto }}</span>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="menu-painel">
+          <div class="menu-quem"><strong>{{ user.nome_completo }}</strong><span>{{ user.email }}</span></div>
+          {% if user.is_staff %}<a class="menu-item" href="/admin/">{% include "_icone.html" with nome="admin" %}<span>Administração</span></a>{% endif %}
+          <form method="post" action="{% url 'usuarios:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="menu-item">{% include "_icone.html" with nome="sair" %}<span>Sair</span></button>
+          </form>
+        </div>
+      </details>
+    </div>
   </aside>
 
   {# Barra superior: busca, tema e usuário #}
@@ -62,7 +80,7 @@
     <a class="topo-busca" href="{% url 'buscar' %}" aria-label="Buscar">{% include "_icone.html" with nome="busca" %}</a>
     <div class="topo-acoes">
       {% include "_tema.html" %}
-      <details class="menu-pop menu-usuario">
+      <details class="menu-pop menu-usuario menu-usuario--topo">
         <summary aria-label="Conta de {{ user.nome_completo }}">
           <span class="user-avatar" aria-hidden="true">{{ user.nome_curto|slice:":1"|upper }}</span>
           <span class="user-name">{{ user.nome_curto }}</span>
