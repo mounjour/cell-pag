@@ -39,7 +39,8 @@
       <a href="{% url 'contratos:lista' %}"{% if secao == 'contratos' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="contratos" %}<span>Contratos</span></a>
       {% if user.is_dono %}
       <p class="nav-grupo">Análise</p>
-      <a href="{% url 'relatorios:painel' %}"{% if secao == 'relatorios' and pagina != 'inicio' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="relatorios" %}<span>Relatórios</span></a>
+      <a href="{% url 'relatorios:painel' %}"{% if secao == 'relatorios' and pagina != 'inicio' and pagina != 'juros' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="relatorios" %}<span>Relatórios</span></a>
+      <a href="{% url 'relatorios:juros' %}"{% if pagina == 'juros' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="juros" %}<span>Juros</span></a>
       {% endif %}
     </nav>
   </aside>
@@ -89,7 +90,8 @@
       <div class="menu-painel">
         <a class="menu-item" href="{% url 'pagamentos:pix_painel' %}">{% include "_icone.html" with nome="pix" %}<span>Pix</span>{% if pix_alertas_n %}<span class="selo selo--alerta"><span class="sr-only">{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span><span aria-hidden="true">{{ pix_alertas_n }}</span></span>{% endif %}</a>
         <a class="menu-item" href="{% url 'pagamentos:historico' %}">{% include "_icone.html" with nome="historico" %}<span>Histórico de pagamentos</span></a>
-        {% if user.is_dono %}<a class="menu-item" href="{% url 'relatorios:painel' %}">{% include "_icone.html" with nome="relatorios" %}<span>Relatórios</span></a>{% endif %}
+        {% if user.is_dono %}<a class="menu-item" href="{% url 'relatorios:painel' %}">{% include "_icone.html" with nome="relatorios" %}<span>Relatórios</span></a>
+        <a class="menu-item" href="{% url 'relatorios:juros' %}">{% include "_icone.html" with nome="juros" %}<span>Juros</span></a>{% endif %}
       </div>
     </details>
   </nav>

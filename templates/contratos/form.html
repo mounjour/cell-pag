@@ -15,6 +15,10 @@
     A primeira parcela vence um período após a data de início. Com parcelas geradas,
     o atraso segue a mais antiga em aberto; “Próximo vencimento” só é usado enquanto
     não há parcelas. A previsão de quitação é calculada a partir da última parcela.
+    Contrato que já estava em andamento antes de entrar no sistema: informe a
+    <strong>data de início real</strong> e quantas parcelas já foram pagas — elas
+    saem da cobrança automática. As demais, vencidas ou não, entram na cobrança
+    normalmente.
   </p>
 </details>
 
@@ -47,6 +51,13 @@
     {% include "_field.html" with field=form.proximo_vencimento %}
     {% include "_field.html" with field=form.data_prevista_quitacao %}
   </div>
+
+  {% if not form.instance.pk %}
+  <div class="form-section">
+    <p class="form-section-title">Contrato já em andamento?</p>
+    {% include "_field.html" with field=form.parcelas_ja_pagas %}
+  </div>
+  {% endif %}
 
   <div class="form-section">
     <p class="form-section-title">Outros</p>

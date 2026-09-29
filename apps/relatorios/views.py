@@ -16,10 +16,13 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from apps.paginacao import paginar
 from apps.usuarios.mixins import DonoRequeridoMixin
 
 from .forms import PeriodoForm
-from .servicos import montar_painel_inicial, montar_relatorio
+from .servicos import montar_juros_em_aberto, montar_painel_inicial, montar_relatorio
+
+POR_PAGINA_JUROS = 20
 
 # Excel/Sheets interpretam célula que começa com um destes como fórmula.
 _GATILHOS_FORMULA = ("=", "+", "-", "@", "\t", "\r")
@@ -95,6 +98,26 @@ class RelatorioView(DonoRequeridoMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         return {**super().get_context_data(**kwargs), **_contexto(self.request)}
+
+
+class JurosView(DonoRequeridoMixin, TemplateView):
+    """Juros: em aberto hoje (por contrato atrasado) e recebidos no período."""
+
+    template_name = "relatorios/juros.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = {**super().get_context_data(**kwargs), **_contexto(self.request)}
+        juros_em_aberto = montar_juros_em_aberto()
+        pagina = paginar(self.request, juros_em_aberto["linhas"], POR_PAGINA_JUROS)
+        juros_em_aberto["total_linhas"] = len(juros_em_aberto["linhas"])
+        juros_em_aberto["linhas"] = list(pagina["page_obj"].object_list)
+        ctx["juros_em_aberto"] = juros_em_aberto
+        ctx.update(pagina)
+        relatorio = ctx["relatorio"]
+        ctx["juros_recebimentos"] = (
+            [p for p in relatorio["recebimentos"] if p.juros_pago] if relatorio else []
+        )
+        return ctx
 
 
 class RelatorioExcelView(DonoRequeridoMixin, View):

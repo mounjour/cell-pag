@@ -586,3 +586,83 @@ def test_tela_do_contrato_longo_mostra_as_parcelas_atuais_e_nao_as_24_primeiras(
     assert 1 not in numeros
     todas = auth_client.get(reverse("contratos:detalhe", args=[ct.pk]), {"todas": "1"})
     assert len(todas.context["vencimentos_exibidos"]) == 60
+
+
+# ---------- Contrato já em andamento: marcar parcelas já pagas ----------
+
+@pytest.mark.django_db
+def test_parcelas_ja_pagas_marca_as_primeiras_parcelas_como_pagas(auth_client, cliente):
+    from apps.pagamentos.models import Pagamento, Vencimento
+
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(
+            cliente,
+            estrutura=Contrato.Estrutura.DIARIA,
+            valor_parcela="40,00",
+            num_parcelas="10",
+            data_inicio="2026-09-20",
+            parcelas_ja_pagas="3",
+        ),
+        follow=True,
+    )
+    assert resp.status_code == 200
+    ct = Contrato.objects.get(cliente=cliente)
+    assert ct.vencimentos.count() == 10
+
+    pagas = ct.vencimentos.filter(numero__lte=3).order_by("numero")
+    assert all(v.status == Vencimento.Status.PAGO for v in pagas)
+    for v in pagas:
+        pagamento = Pagamento.objects.get(vencimento=v)
+        assert pagamento.valor_pago == v.valor_previsto
+        assert pagamento.data_pagamento == v.data_vencimento
+        assert pagamento.forma == Pagamento.Forma.OUTRO
+
+    seguinte = ct.vencimentos.get(numero=4)
+    assert seguinte.status == Vencimento.Status.ABERTO
+    assert "3 parcela(s) anterior(es)" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_parcelas_ja_pagas_sem_parcelas_geradas_avisa(auth_client, cliente):
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(
+            cliente,
+            estrutura=Contrato.Estrutura.DIARIA,
+            valor_parcela="",  # sem valor de parcela: nada é gerado
+            num_parcelas="",
+            data_inicio="2026-09-20",
+            parcelas_ja_pagas="2",
+        ),
+        follow=True,
+    )
+    assert resp.status_code == 200
+    ct = Contrato.objects.get(cliente=cliente)
+    assert ct.vencimentos.count() == 0
+    assert "não foram marcadas" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_parcelas_ja_pagas_nao_pode_passar_do_num_parcelas(auth_client, cliente):
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(
+            cliente,
+            estrutura=Contrato.Estrutura.DIARIA,
+            valor_parcela="40,00",
+            num_parcelas="5",
+            data_inicio="2026-09-20",
+            parcelas_ja_pagas="10",
+        ),
+    )
+    assert resp.status_code == 200  # form volta com erro, não redireciona
+    assert not Contrato.objects.filter(cliente=cliente).exists()
+    assert "Não pode ser maior que o nº de parcelas" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_parcelas_ja_pagas_nao_aparece_na_edicao(auth_client, cliente):
+    ct = novo_contrato(cliente)
+    resp = auth_client.get(reverse("contratos:editar", args=[ct.pk]))
+    assert "parcelas_ja_pagas" not in resp.context["form"].fields

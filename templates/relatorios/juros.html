@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Juros{% endblock %}
+
+{% block content %}
+<h1>Juros</h1>
+
+<h2>Em aberto hoje</h2>
+<p class="count">
+  Total em juros de parcelas atrasadas hoje ({{ juros_em_aberto.hoje|date:"d/m/Y" }}):
+  <strong>R$ {{ juros_em_aberto.total|floatformat:2 }}</strong>
+  em {{ juros_em_aberto.total_linhas }} contrato{{ juros_em_aberto.total_linhas|pluralize }}.
+</p>
+{% if juros_em_aberto.linhas %}
+  <div class="tbl-wrap cards">
+    <table>
+      <thead><tr><th>Cliente</th><th>Contrato</th><th class="num">Parcelas</th><th class="num">Dias de atraso</th><th class="num">Juros hoje</th></tr></thead>
+      <tbody>
+      {% for item in juros_em_aberto.linhas %}
+        <tr>
+          <td data-label="Cliente"><a href="{% url 'clientes:detalhe' item.contrato.cliente.pk %}">{{ item.contrato.cliente.nome }}</a></td>
+          <td data-label="Contrato"><a href="{% url 'contratos:detalhe' item.contrato.pk %}">{{ item.contrato.apelido }}</a></td>
+          <td data-label="Parcelas" class="num">{% if item.quantidade_parcelas %}{{ item.quantidade_parcelas }}{% else %}—{% endif %}</td>
+          <td data-label="Dias de atraso" class="num">{{ item.dias_atraso }}</td>
+          <td data-label="Juros hoje" class="num critical-text">R$ {{ item.juros|floatformat:2 }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "_pagination.html" %}
+{% else %}
+  <p class="empty">Nenhum contrato com juros em aberto hoje.</p>
+{% endif %}
+
+<h2>Recebidos no período</h2>
+{% include "relatorios/_seletor_periodo.html" %}
+
+{% if form.non_field_errors %}
+  <div class="msg error report-filter-erro" role="alert">{% for erro in form.non_field_errors %}{{ erro }}{% if not forloop.last %} {% endif %}{% endfor %}</div>
+{% endif %}
+
+{% if relatorio %}
+  <p class="count">
+    Período de {{ relatorio.inicio|date:"d/m/Y" }} a {{ relatorio.fim|date:"d/m/Y" }}:
+    juros recebidos <strong>R$ {{ relatorio.total_juros|floatformat:2 }}</strong>.
+  </p>
+  {% if juros_recebimentos %}
+    <div class="tbl-wrap cards">
+      <table>
+        <thead><tr><th>Data</th><th>Cliente</th><th>Contrato</th><th>Parcela</th><th class="num">Juros</th></tr></thead>
+        <tbody>
+        {% for p in juros_recebimentos %}
+          <tr>
+            <td data-label="Data" class="num">{{ p.data_pagamento|date:"d/m/Y" }}</td>
+            <td data-label="Cliente">{{ p.contrato.cliente.nome }}</td>
+            <td data-label="Contrato">{{ p.contrato.apelido }}</td>
+            <td data-label="Parcela">{% if p.vencimento %}nº {{ p.vencimento.numero }}{% else %}—{% endif %}</td>
+            <td data-label="Juros" class="num">R$ {{ p.juros_pago|floatformat:2 }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">Nenhum juros recebido nesse período.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% load static %}
+  <script src="{% static 'js/relatorio_calendario.js' %}" defer></script>
+{% endblock %}

@@ -73,11 +73,31 @@ class ContratoForm(forms.ModelForm):
             "observacoes": forms.Textarea(attrs={"rows": 3}),
         }
 
+    # Só usado no cadastro (contrato em andamento antes de entrar no sistema)
+    # — não é campo do modelo, o ModelForm ignora ele no save().
+    parcelas_ja_pagas = forms.IntegerField(
+        label="Parcelas já pagas antes do cadastro",
+        required=False,
+        min_value=0,
+        max_value=10000,
+        widget=forms.NumberInput(attrs={"inputmode": "numeric", "min": "0", "step": "1"}),
+        help_text=(
+            "Se o contrato já estava em andamento antes de entrar no sistema, "
+            "informe quantas das primeiras parcelas já foram pagas. Elas são "
+            "registradas como pagas na própria data de vencimento e saem da "
+            "cobrança automática. Deixe em branco ou 0 se é um contrato novo."
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for campo in ("data_inicio", "proximo_vencimento", "data_prevista_quitacao"):
             self.fields[campo].input_formats = ["%Y-%m-%d"]
         self.fields["num_parcelas"].required = False
+        if self.instance and self.instance.pk:
+            # Só faz sentido ao cadastrar — parcelas de um contrato já
+            # existente se registram pela tela de pagamento, uma a uma.
+            del self.fields["parcelas_ja_pagas"]
         self.fields["num_parcelas"].help_text = (
             "Deixe em branco para calcular sozinho (valor total ÷ valor da "
             "parcela, arredondado para cima). Confira o total do plano na prévia; "
@@ -101,6 +121,17 @@ class ContratoForm(forms.ModelForm):
 
     def clean_imei(self):
         return re.sub(r"\D", "", self.cleaned_data.get("imei", ""))
+
+    def clean(self):
+        dados = super().clean()
+        quantidade = dados.get("parcelas_ja_pagas")
+        num_parcelas = dados.get("num_parcelas")
+        if quantidade and num_parcelas and quantidade > num_parcelas:
+            self.add_error(
+                "parcelas_ja_pagas",
+                f"Não pode ser maior que o nº de parcelas ({num_parcelas}).",
+            )
+        return dados
 
 
 def _formata_moeda(valor: Decimal) -> str:

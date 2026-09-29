@@ -163,12 +163,10 @@
     desenhar();
   }
 
-  function doisMeses() { return window.matchMedia("(min-width: 720px)").matches; }
-
   function abrir() {
     ini = aplicado.ini; fim = aplicado.fim; aguardandoFim = false;
-    // Largo: [mês anterior | mês do fim]. Estreito: só o mês do fim.
-    mesEsq = new Date(fim.getFullYear(), fim.getMonth() - (doisMeses() ? 1 : 0), 1);
+    // Um mês só, sempre — o do fim do período atual (as setas navegam pros outros).
+    mesEsq = new Date(fim.getFullYear(), fim.getMonth(), 1);
     desenhar();
     pop.hidden = false;
     botao.setAttribute("aria-expanded", "true");

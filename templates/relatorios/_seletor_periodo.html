@@ -1,0 +1,35 @@
+<form method="get" class="report-filter" id="filtro-periodo" data-inicio="{{ inicio_iso }}" data-fim="{{ fim_iso }}">
+  <input type="hidden" name="periodo" value="personalizado">
+  <input type="hidden" name="inicio" id="id_inicio" value="{{ inicio_iso }}">
+  <input type="hidden" name="fim" id="id_fim" value="{{ fim_iso }}">
+  <div class="periodo">
+    <button type="button" class="periodo-botao" id="periodo-botao" aria-haspopup="dialog" aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+      <span class="periodo-rotulo" id="periodo-rotulo">Escolher período</span>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="periodo-pop" id="periodo-pop" role="dialog" aria-label="Escolher período" hidden>
+      <div class="periodo-corpo">
+        <div class="periodo-atalhos" id="periodo-atalhos" role="radiogroup" aria-label="Períodos prontos"></div>
+        <div class="periodo-cal">
+          <div class="periodo-nav">
+            <button type="button" class="periodo-seta" id="periodo-ant" aria-label="Mês anterior">&#8249;</button>
+            <div class="periodo-meses" id="periodo-meses"></div>
+            <button type="button" class="periodo-seta" id="periodo-prox" aria-label="Próximo mês">&#8250;</button>
+          </div>
+        </div>
+      </div>
+      <div class="periodo-rodape">
+        <div class="periodo-resumo" id="periodo-resumo" aria-live="polite"></div>
+        <div class="periodo-campos">
+          <label>De <input type="date" id="periodo-de"></label>
+          <label>Até <input type="date" id="periodo-ate"></label>
+        </div>
+        <div class="periodo-acoes">
+          <button type="button" class="btn secondary" id="periodo-cancelar">Cancelar</button>
+          <button type="submit" class="btn" id="periodo-aplicar">Atualizar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>

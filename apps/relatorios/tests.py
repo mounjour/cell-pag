@@ -258,3 +258,54 @@ def test_recebido_separa_periodo_atrasadas_e_adiantado(dados_relatorio, dono):
     assert rel["recebido_de_atrasadas"] == Decimal("100.00")   # parcela de 01/09
     assert rel["recebido_adiantado"] == Decimal("0.00")
     assert rel["falta_do_periodo"] == Decimal("0.00")
+
+
+@pytest.mark.django_db
+def test_juros_em_aberto_lista_contratos_atrasados(dados_relatorio):
+    from .servicos import montar_juros_em_aberto
+
+    contrato, vencido, pago = dados_relatorio  # vencido: parcela 1 (01/09), sem baixa
+    resultado = montar_juros_em_aberto(hoje=date(2026, 9, 4))
+    assert len(resultado["linhas"]) == 1
+    item = resultado["linhas"][0]
+    assert item["contrato"] == contrato
+    assert item["dias_atraso"] == 3
+    assert item["juros"] == Decimal("15.00")  # R$5/dia x 3 dias
+    assert resultado["total"] == Decimal("15.00")
+
+
+@pytest.mark.django_db
+def test_juros_em_aberto_ignora_contrato_em_dia(dados_relatorio):
+    from .servicos import montar_juros_em_aberto
+
+    # No próprio dia do vencimento ainda não há atraso.
+    resultado = montar_juros_em_aberto(hoje=date(2026, 9, 1))
+    assert resultado["linhas"] == []
+    assert resultado["total"] == Decimal("0.00")
+
+
+@pytest.mark.django_db
+def test_pagina_de_juros_mostra_em_aberto_e_recebidos(dono_client, dados_relatorio, dono, monkeypatch):
+    contrato, vencido, pago = dados_relatorio
+    monkeypatch.setattr("apps.relatorios.servicos.timezone.localdate", lambda: date(2026, 9, 4))
+    Pagamento(
+        contrato=contrato, vencimento=vencido, data_pagamento=date(2026, 9, 4),
+        valor_pago=Decimal("100.00"), juros_pago=Decimal("15.00"), usuario_baixa=dono,
+    ).registrar()
+
+    resposta = dono_client.get(
+        reverse("relatorios:juros"),
+        {"periodo": "personalizado", "inicio": "2026-09-01", "fim": "2026-09-04"},
+    )
+    assert resposta.status_code == 200
+    corpo = resposta.content.decode()
+    assert "Cliente Relatório" in corpo
+    assert resposta.context["juros_em_aberto"]["total"] == Decimal("0.00")  # já foi pago
+    assert len(resposta.context["juros_recebimentos"]) == 1
+    assert resposta.context["juros_recebimentos"][0].juros_pago == Decimal("15.00")
+
+
+@pytest.mark.django_db
+def test_juros_exige_perfil_dono(auth_client):
+    resposta = auth_client.get(reverse("relatorios:juros"))
+    assert resposta.status_code == 403

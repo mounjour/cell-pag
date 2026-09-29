@@ -4,7 +4,7 @@
 {% block content %}
 {% url 'clientes:detalhe' contrato.cliente.pk as cliente_url %}{% include "_voltar.html" with url=cliente_url %}
 <div class="toolbar">
-  <h1>{{ contrato.numero_interno }} · {{ contrato.cliente.nome }} — {{ contrato.apelido }}</h1>
+  <h1>{{ contrato.numero_interno }} · <a href="{% url 'clientes:detalhe' contrato.cliente.pk %}">{{ contrato.cliente.nome }}</a> — {{ contrato.apelido }}</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Ver cliente</a>
   <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>

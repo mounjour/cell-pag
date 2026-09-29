@@ -1,26 +1,18 @@
 {% extends "base.html" %}
-{% load static %}
 {% block title %}Cobrar hoje{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
 
 {% block content %}
 <div class="toolbar">
   <h1>Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
-  <span class="spacer"></span>
-  <form method="get">
-    <select name="estrutura" data-auto-submit>
-      <option value="">Todos os tipos</option>
-      {% for valor, rotulo in estrutura_opcoes %}
-        <option value="{{ valor }}" {% if valor == estrutura_atual %}selected{% endif %}>{{ rotulo }}</option>
-      {% endfor %}
-    </select>
-    <button class="btn secondary" type="submit">{% include "_icone.html" with nome="filtro" %}Filtrar</button>
-  </form>
+</div>
+
+<div class="filtro-pills">
+  <a class="filtro-pill{% if not estrutura_atual %} ativo{% endif %}" href="?">Todos os tipos</a>
+  {% for valor, rotulo in estrutura_opcoes %}
+    <a class="filtro-pill{% if valor == estrutura_atual %} ativo{% endif %}" href="?estrutura={{ valor }}">{{ rotulo }}</a>
+  {% endfor %}
 </div>
 
 {% include "pagamentos/_cobrar_hoje_painel.html" %}
-{% endblock %}
-
-{% block scripts %}
-  <script src="{% static 'js/filtros.js' %}"></script>
 {% endblock %}

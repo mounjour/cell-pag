@@ -339,6 +339,43 @@ textarea {
 }
 textarea { height: auto; min-height: 4.5rem; padding: 0.65rem 0.85rem; line-height: 1.5; }
 input[type=file] { padding: 0.45rem 0.6rem; }
+
+/* Select: troca a seta nativa (grossa, inconsistente entre navegadores) por uma
+   fina, no estilo dos outros ícones do site. */
+select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  padding-right: 2.25rem;
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  cursor: pointer;
+  text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
+}
+select:hover { border-color: var(--line-strong); }
+select:disabled { cursor: not-allowed; opacity: 0.6; }
+
+/* Filtro de pílulas (estrutura, status): clique direto, sem abrir select nem
+   precisar de um botão "Filtrar" à parte. Mesmo preenchido sólido do .btn
+   quando ativo, pra parecer parte do mesmo sistema visual. */
+.filtro-pills { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.7rem; }
+.filtro-pill {
+  display: inline-flex; align-items: center; min-height: 2rem; padding: 0 0.75rem;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--ink-soft);
+  font-size: 0.82rem; font-weight: 500; white-space: nowrap; text-decoration: none;
+  transition: background .12s, border-color .12s, color .12s, box-shadow .12s;
+}
+.filtro-pill:hover { border-color: var(--line-strong); background: var(--surface-2); color: var(--ink); text-decoration: none; }
+.filtro-pill.ativo {
+  background: var(--accent); border-color: var(--accent); color: var(--on-accent);
+  box-shadow: var(--raise);
+}
+.filtro-pill.ativo:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--on-accent); }
+select::-ms-expand { display: none; }
+:root[data-tema="escuro"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b93a1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
 ::placeholder { color: var(--ink-faint); opacity: 1; }
 
 input:focus,
