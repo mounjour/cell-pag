@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
       # lugar mesmo em CI, onde nao existe .env.
       DEBUG: "True"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
@@ -34,7 +34,7 @@ jobs:
     name: Procurar segredos commitados (gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # historico completo, gitleaks varre todos os commits
 
