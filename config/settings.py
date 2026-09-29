@@ -64,6 +64,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.usuarios",
     "apps.clientes",
+    "apps.aparelhos",
     "apps.contratos",
     "apps.pagamentos",
     "apps.relatorios",

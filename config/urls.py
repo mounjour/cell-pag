@@ -11,6 +11,7 @@ urlpatterns = [
     path("buscar/", BuscaGlobalView.as_view(), name="buscar"),
     path("buscar/sugestoes/", BuscaSugestoesView.as_view(), name="buscar_sugestoes"),
     path("clientes/", include("apps.clientes.urls")),
+    path("aparelhos/", include("apps.aparelhos.urls")),
     path("contratos/", include("apps.contratos.urls")),
     path("pagamentos/", include("apps.pagamentos.urls")),
     path("relatorios/", include("apps.relatorios.urls")),

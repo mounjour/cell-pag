@@ -269,6 +269,48 @@ def test_editar_contrato(auth_client, cliente):
     assert ct.estrutura == Contrato.Estrutura.SEMANAL
 
 
+# ---------- Aparelho do estoque (apps.aparelhos) ----------
+
+@pytest.mark.django_db
+def test_escolher_aparelho_do_estoque_vincula_e_marca_como_vendido(auth_client, cliente):
+    from apps.aparelhos.models import Aparelho
+
+    ap = Aparelho.objects.create(modelo="iPhone 11 64GB", imei="123456789012345")
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(cliente, aparelho=ap.pk),
+        follow=True,
+    )
+    assert resp.status_code == 200
+    ct = Contrato.objects.get(cliente=cliente)
+    assert ct.aparelho_id == ap.pk
+    ap.refresh_from_db()
+    assert ap.vendido is True
+
+
+@pytest.mark.django_db
+def test_aparelho_ja_vendido_nao_aparece_pra_escolher_de_novo(auth_client, cliente):
+    from apps.aparelhos.models import Aparelho
+
+    ap = Aparelho.objects.create(modelo="iPhone 11")
+    novo_contrato(cliente, aparelho=ap)
+    outro_cliente = Cliente.objects.create(
+        nome="Outro Cliente", cpf=CPFGen().generate(), telefone_whatsapp="+5583999992222"
+    )
+    resp = auth_client.get(reverse("contratos:novo"))
+    queryset = resp.context["form"].fields["aparelho"].queryset
+    assert ap not in queryset
+
+
+@pytest.mark.django_db
+def test_sem_escolher_aparelho_continua_funcionando_como_antes(auth_client, cliente):
+    resp = auth_client.post(reverse("contratos:novo"), dados_form(cliente), follow=True)
+    assert resp.status_code == 200
+    ct = Contrato.objects.get(cliente=cliente)
+    assert ct.aparelho_id is None
+    assert ct.aparelho_modelo == "iPhone 11 64GB"  # texto livre continua igual
+
+
 # ---------- Gerar parcelas pela web (sem terminal) ----------
 
 @pytest.mark.django_db

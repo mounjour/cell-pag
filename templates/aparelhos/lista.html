@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Aparelhos{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <h1>Aparelhos</h1>
+  <span class="spacer"></span>
+  <a class="btn" href="{% url 'aparelhos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo aparelho</a>
+</div>
+
+<form method="get" class="toolbar">
+  {% if status_atual %}<input type="hidden" name="status" value="{{ status_atual }}">{% endif %}
+  <input type="search" name="q" value="{{ busca }}" placeholder="Buscar por modelo ou IMEI">
+  <button class="btn secondary" type="submit">{% include "_icone.html" with nome="busca" %}Buscar</button>
+</form>
+
+<div class="filtro-pills">
+  <a class="filtro-pill{% if not status_atual %} ativo{% endif %}" href="?{% if busca %}q={{ busca|urlencode }}{% endif %}">Todos</a>
+  {% for valor, rotulo in status_opcoes %}
+    <a class="filtro-pill{% if valor == status_atual %} ativo{% endif %}" href="?status={{ valor }}{% if busca %}&q={{ busca|urlencode }}{% endif %}">{{ rotulo }}</a>
+  {% endfor %}
+</div>
+
+<p class="count">{{ total_disponiveis }} dispon{{ total_disponiveis|pluralize:"ível,íveis" }} no estoque agora.</p>
+
+{% if aparelhos %}
+  <p class="count">{{ page_obj.paginator.count }} aparelho{{ page_obj.paginator.count|pluralize }}{% if busca %} para “{{ busca }}”{% endif %}</p>
+  <div class="tbl-wrap cards">
+    <table>
+      <thead>
+        <tr><th>Modelo</th><th>IMEI</th><th>Status</th><th>Cliente</th><th class="num">Custo</th></tr>
+      </thead>
+      <tbody>
+        {% for a in aparelhos %}
+          <tr class="linha-link">
+            <td><a class="link-linha" href="{% url 'aparelhos:detalhe' a.pk %}">{{ a.modelo }}</a></td>
+            <td data-label="IMEI" class="num">{{ a.imei|default:"—" }}</td>
+            <td data-label="Status"><span class="pill {{ a.status }}">{{ a.status_label }}</span></td>
+            <td data-label="Cliente">{% if a.vendido %}<a href="{% url 'clientes:detalhe' a.contrato.cliente.pk %}">{{ a.contrato.cliente.nome }}</a>{% else %}—{% endif %}</td>
+            <td data-label="Custo" class="num">{% if a.custo %}R$ {{ a.custo }}{% else %}—{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "_pagination.html" %}
+{% else %}
+  <div class="empty">
+    <p>Nenhum aparelho {% if busca %}encontrado para “{{ busca }}”{% else %}cadastrado ainda{% endif %}.</p>
+    {% if not busca and not status_atual %}<a class="btn" href="{% url 'aparelhos:novo' %}">Cadastrar o primeiro aparelho</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

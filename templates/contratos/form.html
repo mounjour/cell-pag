@@ -33,6 +33,8 @@
     <p class="form-section-title">Cliente e aparelho</p>
     {% include "_field.html" with field=form.cliente %}
     {% include "_field.html" with field=form.apelido %}
+    {% include "_field.html" with field=form.aparelho %}
+    <p class="helptext"><a href="{% url 'aparelhos:novo' %}" target="_blank" rel="noopener">+ Cadastrar aparelho novo no estoque</a> (abre em outra aba)</p>
     {% include "_field.html" with field=form.aparelho_modelo %}
     {% include "_field.html" with field=form.imei %}
   </div>
@@ -83,4 +85,7 @@
 </form>
 </div>
 {% endblock %}
-{% block scripts %}<script src="{% static 'js/previsao_form.js' %}" defer></script>{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/previsao_form.js' %}" defer></script>
+  <script src="{% static 'js/aparelho_estoque.js' %}" defer></script>
+{% endblock %}

@@ -53,6 +53,19 @@ class Contrato(models.Model):
     )
     aparelho_modelo = models.CharField("aparelho (modelo)", max_length=120)
     imei = models.CharField("IMEI", max_length=20, blank=True)
+    aparelho = models.OneToOneField(
+        "aparelhos.Aparelho",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="contrato",
+        verbose_name="aparelho do estoque",
+        help_text=(
+            "Opcional — vincula a um aparelho já cadastrado no estoque, que "
+            "passa a aparecer como vendido. Sem isso, modelo e IMEI acima "
+            "ficam só como texto, sem controle de estoque."
+        ),
+    )
 
     valor_total = models.DecimalField("valor total do contrato", max_digits=10, decimal_places=2)
     estrutura = models.CharField("estrutura de pagamento", max_length=12, choices=Estrutura.choices)

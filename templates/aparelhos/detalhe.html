@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ aparelho.modelo }}{% endblock %}
+
+{% block content %}
+{% url 'aparelhos:lista' as lista_url %}{% include "_voltar.html" with url=lista_url %}
+<div class="toolbar">
+  <div>
+    <span class="eyebrow">Aparelho</span>
+    <h1>{{ aparelho.modelo }}</h1>
+  </div>
+  <span class="spacer"></span>
+  <a class="btn secondary" href="{% url 'aparelhos:editar' aparelho.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
+</div>
+
+<dl class="meta">
+  <div><dt>Status</dt><dd><span class="pill {{ aparelho.status }}">{{ aparelho.status_label }}</span></dd></div>
+  <div><dt>IMEI</dt><dd class="num">{{ aparelho.imei|default:"—" }}</dd></div>
+  <div><dt>Custo de compra</dt><dd class="num">{% if aparelho.custo %}R$ {{ aparelho.custo }}{% else %}—{% endif %}</dd></div>
+  <div><dt>Fornecedor</dt><dd>{{ aparelho.fornecedor|default:"—" }}</dd></div>
+  <div><dt>Data da compra</dt><dd class="num">{{ aparelho.data_compra|date:"d/m/Y"|default:"—" }}</dd></div>
+</dl>
+
+{% if aparelho.observacoes %}
+  <p class="note">{{ aparelho.observacoes|linebreaksbr }}</p>
+{% endif %}
+
+{% if aparelho.vendido %}
+  <div class="card">
+    <h2>Vendido</h2>
+    <p>
+      Vinculado ao contrato de <a href="{% url 'clientes:detalhe' aparelho.contrato.cliente.pk %}">{{ aparelho.contrato.cliente.nome }}</a>
+      — <a href="{% url 'contratos:detalhe' aparelho.contrato.pk %}">{{ aparelho.contrato.apelido }}</a>.
+    </p>
+  </div>
+{% else %}
+  <div class="note">
+    <strong>Ainda disponível no estoque.</strong> Some daqui sozinho quando for escolhido
+    num contrato novo (campo "Aparelho do estoque").
+    <div class="form-actions" style="margin-top:0.6rem">
+      <form method="post" action="{% url 'aparelhos:excluir' aparelho.pk %}"
+            onsubmit="return confirm('Excluir {{ aparelho.modelo|escapejs }} do estoque? Essa ação não pode ser desfeita.')">
+        {% csrf_token %}
+        <button type="submit" class="btn-cancelar-pix">{% include "_icone.html" with nome="excluir" %}Excluir do estoque</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
