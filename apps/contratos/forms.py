@@ -2,6 +2,9 @@ import re
 from decimal import Decimal, InvalidOperation
 
 from django import forms
+from django.db import models
+
+from apps.aparelhos.models import Aparelho
 
 from .models import Contrato, DocumentoContrato
 
@@ -42,6 +45,7 @@ class ContratoForm(forms.ModelForm):
         fields = [
             "cliente",
             "apelido",
+            "aparelho",
             "aparelho_modelo",
             "imei",
             "valor_total",
@@ -94,6 +98,22 @@ class ContratoForm(forms.ModelForm):
         for campo in ("data_inicio", "proximo_vencimento", "data_prevista_quitacao"):
             self.fields[campo].input_formats = ["%Y-%m-%d"]
         self.fields["num_parcelas"].required = False
+        # Estoque: só aparelhos ainda não vendidos — mais o já vinculado a este
+        # contrato (senão ele some da lista ao editar). Escolher um aqui não
+        # dispensa preencher modelo/IMEI abaixo (o JS só sugere/preenche).
+        atual = self.instance.aparelho_id if self.instance and self.instance.pk else None
+        self.fields["aparelho"].queryset = Aparelho.objects.filter(
+            models.Q(contrato__isnull=True) | models.Q(pk=atual)
+        )
+        self.fields["aparelho"].label = "Aparelho do estoque (opcional)"
+        self.fields["aparelho"].required = False
+        self.fields["aparelho"].help_text = (
+            "Vincula a um aparelho já cadastrado no estoque — ele passa a "
+            "aparecer como vendido. Ao escolher, modelo e IMEI abaixo são "
+            "preenchidos sozinhos (confira antes de salvar)."
+        )
+        self.fields["aparelho"].widget.attrs["data-preenche-aparelho"] = "1"
+        self.fields["aparelho"].empty_label = "Nenhum — digitar modelo/IMEI abaixo"
         if self.instance and self.instance.pk:
             # Só faz sentido ao cadastrar — parcelas de um contrato já
             # existente se registram pela tela de pagamento, uma a uma.

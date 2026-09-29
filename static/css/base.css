@@ -637,6 +637,9 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .status-cell .pill { min-width: 7.25rem; justify-content: center; }
 
 .pill.aberto { background: var(--surface-2); color: var(--ink-faint); }
+.pill.disponivel { background: var(--accent-wash); color: var(--accent-ink); }
+.pill.vendido { background: var(--ok-wash); color: var(--ok-ink); }
+.pill.vendido::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 .pill.parcial { background: var(--amber-wash); color: var(--amber-ink); }
 .pill.pago { background: var(--ok-wash); color: var(--ok-ink); }
 .pill.pago::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
