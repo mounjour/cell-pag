@@ -1,4 +1,9 @@
-# Deploy no Render + rotina diária automática
+> ⚠️ **OBSOLETO desde 29/09/2026.** A produção rodou no Render por um tempo, mas
+> hoje está na VPS da KingHost com Coolify — ver
+> **[`DEPLOY-VPS.md`](DEPLOY-VPS.md)**, que é o guia em uso. Este arquivo fica
+> só de referência histórica caso um dia se volte a hospedar no Render.
+
+# Deploy no Render + rotina diária automática (histórico)
 
 Este guia coloca o sistema no ar no [Render](https://render.com) com:
 
