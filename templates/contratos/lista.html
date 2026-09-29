@@ -1,28 +1,24 @@
 {% extends "base.html" %}
-{% load static %}
 {% block title %}Contratos{% endblock %}
 
 {% block content %}
-<h1>Contratos</h1>
-
 <div class="toolbar">
-  <form method="get">
-    <select name="estrutura" data-auto-submit>
-      <option value="">Todos os tipos</option>
-      {% for valor, rotulo in estrutura_opcoes %}
-        <option value="{{ valor }}" {% if valor == estrutura_atual %}selected{% endif %}>{{ rotulo }}</option>
-      {% endfor %}
-    </select>
-    <select name="status" data-auto-submit>
-      <option value="">Todos os status</option>
-      {% for valor, rotulo in status_opcoes %}
-        <option value="{{ valor }}" {% if valor == status_atual %}selected{% endif %}>{{ rotulo }}</option>
-      {% endfor %}
-    </select>
-    <button class="btn secondary" type="submit">Filtrar</button>
-  </form>
+  <h1>Contratos</h1>
   <span class="spacer"></span>
-  <a class="btn" href="{% url 'contratos:novo' %}">Novo contrato</a>
+  <a class="btn" href="{% url 'contratos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo contrato</a>
+</div>
+
+<div class="filtro-pills">
+  <a class="filtro-pill{% if not estrutura_atual %} ativo{% endif %}" href="?{% if status_atual %}status={{ status_atual }}{% endif %}">Todos os tipos</a>
+  {% for valor, rotulo in estrutura_opcoes %}
+    <a class="filtro-pill{% if valor == estrutura_atual %} ativo{% endif %}" href="?estrutura={{ valor }}{% if status_atual %}&status={{ status_atual }}{% endif %}">{{ rotulo }}</a>
+  {% endfor %}
+</div>
+<div class="filtro-pills">
+  <a class="filtro-pill{% if not status_atual %} ativo{% endif %}" href="?{% if estrutura_atual %}estrutura={{ estrutura_atual }}{% endif %}">Todos os status</a>
+  {% for valor, rotulo in status_opcoes %}
+    <a class="filtro-pill{% if valor == status_atual %} ativo{% endif %}" href="?status={{ valor }}{% if estrutura_atual %}&estrutura={{ estrutura_atual }}{% endif %}">{{ rotulo }}</a>
+  {% endfor %}
 </div>
 
 {% if contratos %}
@@ -54,8 +50,4 @@
     {% if not status_atual and not estrutura_atual %}<a class="btn" href="{% url 'contratos:novo' %}">Cadastrar o primeiro contrato</a>{% endif %}
   </div>
 {% endif %}
-{% endblock %}
-
-{% block scripts %}
-  <script src="{% static 'js/filtros.js' %}"></script>
 {% endblock %}

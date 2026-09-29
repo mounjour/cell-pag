@@ -8,7 +8,7 @@ from django.utils import timezone
 from apps.clientes.models import Cliente
 from apps.contratos.models import Contrato
 from apps.pagamentos.models import Pagamento, Vencimento
-from apps.pagamentos.agenda import parcelas_a_cobrar
+from apps.pagamentos.agenda import parcelas_a_cobrar, resumo_cobranca
 from apps.pagamentos.atraso import dias_de_atraso
 
 MESES_PT = [
@@ -246,3 +246,34 @@ def montar_painel_inicial(hoje: datetime.date | None = None, meses: int = 6) -> 
         "serie_meses": serie,
         "atencao": atencao[:5],
     }
+
+
+def montar_juros_em_aberto(hoje: datetime.date | None = None) -> dict:
+    """Juros acumulados hoje em cada contrato atrasado (página `/relatorios/juros/`).
+
+    Reaproveita ``resumo_cobranca`` — mesma conta usada na cobrança e nas
+    mensagens, então o valor aqui bate com o que o cliente vê no WhatsApp.
+    """
+    if hoje is None:
+        hoje = timezone.localdate()
+    ativos = Contrato.objects.exclude(status=Contrato.Status.QUITADO).select_related("cliente")
+    linhas = []
+    total = Decimal("0.00")
+    for contrato in ativos:
+        situacao = contrato.situacao_atraso(hoje=hoje)
+        if not situacao or not situacao.dias_atraso:
+            continue
+        resumo = resumo_cobranca(contrato, hoje)
+        if not resumo["juros"]:
+            continue
+        linhas.append(
+            {
+                "contrato": contrato,
+                "dias_atraso": situacao.dias_atraso,
+                "quantidade_parcelas": resumo["quantidade"],
+                "juros": resumo["juros"],
+            }
+        )
+        total += resumo["juros"]
+    linhas.sort(key=lambda item: item["juros"], reverse=True)
+    return {"hoje": hoje, "linhas": linhas, "total": total}

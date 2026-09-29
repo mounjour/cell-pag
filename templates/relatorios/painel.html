@@ -4,41 +4,7 @@
 {% block content %}
 <h1>Relatórios</h1>
 
-<form method="get" class="report-filter" id="filtro-periodo" data-inicio="{{ inicio_iso }}" data-fim="{{ fim_iso }}">
-  <input type="hidden" name="periodo" value="personalizado">
-  <input type="hidden" name="inicio" id="id_inicio" value="{{ inicio_iso }}">
-  <input type="hidden" name="fim" id="id_fim" value="{{ fim_iso }}">
-  <div class="periodo">
-    <button type="button" class="periodo-botao" id="periodo-botao" aria-haspopup="dialog" aria-expanded="false">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
-      <span class="periodo-rotulo" id="periodo-rotulo">Escolher período</span>
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-    </button>
-    <div class="periodo-pop" id="periodo-pop" role="dialog" aria-label="Escolher período" hidden>
-      <div class="periodo-corpo">
-        <div class="periodo-atalhos" id="periodo-atalhos" role="radiogroup" aria-label="Períodos prontos"></div>
-        <div class="periodo-cal">
-          <div class="periodo-nav">
-            <button type="button" class="periodo-seta" id="periodo-ant" aria-label="Mês anterior">&#8249;</button>
-            <div class="periodo-meses" id="periodo-meses"></div>
-            <button type="button" class="periodo-seta" id="periodo-prox" aria-label="Próximo mês">&#8250;</button>
-          </div>
-        </div>
-      </div>
-      <div class="periodo-rodape">
-        <div class="periodo-resumo" id="periodo-resumo" aria-live="polite"></div>
-        <div class="periodo-campos">
-          <label>De <input type="date" id="periodo-de"></label>
-          <label>Até <input type="date" id="periodo-ate"></label>
-        </div>
-        <div class="periodo-acoes">
-          <button type="button" class="btn secondary" id="periodo-cancelar">Cancelar</button>
-          <button type="submit" class="btn" id="periodo-aplicar">Atualizar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</form>
+{% include "relatorios/_seletor_periodo.html" %}
 
 {% if form.non_field_errors %}
   <div class="msg error report-filter-erro" role="alert">{% for erro in form.non_field_errors %}{{ erro }}{% if not forloop.last %} {% endif %}{% endfor %}</div>
@@ -51,8 +17,8 @@
       <h2>{{ relatorio.inicio|date:"d/m/Y" }} a {{ relatorio.fim|date:"d/m/Y" }}</h2>
     </div>
     <div class="report-actions">
-      <a class="btn secondary" href="{% url 'relatorios:excel' %}?{{ querystring }}">Baixar Excel</a>
-      <a class="btn secondary" href="{% url 'relatorios:pdf' %}?{{ querystring }}">Baixar PDF</a>
+      <a class="btn secondary" href="{% url 'relatorios:excel' %}?{{ querystring }}">{% include "_icone.html" with nome="baixar" %}Baixar Excel</a>
+      <a class="btn secondary" href="{% url 'relatorios:pdf' %}?{{ querystring }}">{% include "_icone.html" with nome="baixar" %}Baixar PDF</a>
     </div>
   </div>
 
@@ -83,14 +49,14 @@
   <h2>Recebimentos</h2>
   {% if relatorio.recebimentos %}
     <div class="tbl-wrap cards"><table><thead><tr><th>Data</th><th>Cliente</th><th>Contrato</th><th>Forma</th><th class="num">Valor</th></tr></thead><tbody>
-    {% for p in relatorio.recebimentos %}<tr><td data-label="Data" class="num">{{ p.data_pagamento|date:"d/m/Y" }}</td><td data-label="Cliente">{{ p.contrato.cliente.nome }}</td><td data-label="Contrato">{{ p.contrato.apelido }}</td><td data-label="Forma">{{ p.get_forma_display }}</td><td data-label="Valor" class="num">R$ {{ p.valor_pago|floatformat:2 }}</td></tr>{% endfor %}
+    {% for p in relatorio.recebimentos %}<tr><td data-label="Data" class="num">{{ p.data_pagamento|date:"d/m/Y" }}</td><td data-label="Cliente"><a href="{% url 'clientes:detalhe' p.contrato.cliente.pk %}">{{ p.contrato.cliente.nome }}</a></td><td data-label="Contrato"><a href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.apelido }}</a></td><td data-label="Forma">{{ p.get_forma_display }}</td><td data-label="Valor" class="num">R$ {{ p.valor_pago|floatformat:2 }}</td></tr>{% endfor %}
     </tbody></table></div>
   {% else %}<p class="empty">Nenhum recebimento no período.</p>{% endif %}
 
   <h2>Parcelas em atraso até o fim do período</h2>
   {% if relatorio.atrasados %}
     <div class="tbl-wrap cards"><table><thead><tr><th>Cliente</th><th>Contrato</th><th>Vencimento</th><th>Parcela</th><th class="num">Em aberto</th></tr></thead><tbody>
-    {% for v in relatorio.atrasados %}<tr><td data-label="Cliente">{{ v.contrato.cliente.nome }}</td><td data-label="Contrato">{{ v.contrato.apelido }}</td><td data-label="Vencimento" class="num">{{ v.data_vencimento|date:"d/m/Y" }}</td><td data-label="Parcela" class="num">{{ v.numero }}</td><td data-label="Em aberto" class="num critical-text">R$ {{ v.valor_em_aberto|floatformat:2 }}</td></tr>{% endfor %}
+    {% for v in relatorio.atrasados %}<tr><td data-label="Cliente"><a href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a></td><td data-label="Contrato"><a href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }}</a></td><td data-label="Vencimento" class="num">{{ v.data_vencimento|date:"d/m/Y" }}</td><td data-label="Parcela" class="num">{{ v.numero }}</td><td data-label="Em aberto" class="num critical-text">R$ {{ v.valor_em_aberto|floatformat:2 }}</td></tr>{% endfor %}
     </tbody></table></div>
   {% else %}<p class="empty">Nenhuma parcela em atraso.</p>{% endif %}
 {% endif %}

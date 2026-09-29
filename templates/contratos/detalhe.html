@@ -4,12 +4,12 @@
 {% block content %}
 {% url 'clientes:detalhe' contrato.cliente.pk as cliente_url %}{% include "_voltar.html" with url=cliente_url %}
 <div class="toolbar">
-  <h1>{{ contrato.numero_interno }} · {{ contrato.cliente.nome }} — {{ contrato.apelido }}</h1>
+  <h1>{{ contrato.numero_interno }} · <a href="{% url 'clientes:detalhe' contrato.cliente.pk %}">{{ contrato.cliente.nome }}</a> — {{ contrato.apelido }}</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Ver cliente</a>
-  <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">Editar</a>
+  <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
   {% if not contrato.quitado %}
-    <a class="btn" href="{% url 'pagamentos:novo' contrato.pk %}">Registrar pagamento</a>
+    <a class="btn" href="{% url 'pagamentos:novo' contrato.pk %}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>
   {% endif %}
 </div>
 
@@ -18,7 +18,7 @@
     <strong>Todas as {{ contrato.num_parcelas }} parcelas estão pagas.</strong>
     <form method="post" action="{% url 'contratos:quitar' contrato.pk %}" style="margin-top:0.6rem">
       {% csrf_token %}
-      <button type="submit" class="btn">Marcar como quitado</button>
+      <button type="submit" class="btn">{% include "_icone.html" with nome="quitar" %}Marcar como quitado</button>
     </form>
   </div>
 {% endif %}
@@ -85,7 +85,7 @@
     {% if not contrato.quitado and contrato.valor_parcela %}
       <form method="post" action="{% url 'contratos:gerar_vencimentos' contrato.pk %}" style="margin:-0.35rem 0 1rem">
         {% csrf_token %}
-        <button type="submit" class="btn secondary">Gerar parcelas seguintes</button>
+        <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}Gerar parcelas seguintes</button>
       </form>
     {% endif %}
     <div class="tbl-wrap cards">
@@ -115,11 +115,11 @@
       <p>Nenhuma parcela gerada ainda.</p>
       {% if not contrato.valor_parcela %}
         <p class="helptext">Informe o <strong>valor da parcela</strong> no contrato para poder gerar.</p>
-        <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">Editar contrato</a>
+        <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">{% include "_icone.html" with nome="editar" %}Editar contrato</a>
       {% elif not contrato.quitado %}
         <form method="post" action="{% url 'contratos:gerar_vencimentos' contrato.pk %}">
           {% csrf_token %}
-          <button type="submit" class="btn">Gerar parcelas</button>
+          <button type="submit" class="btn">{% include "_icone.html" with nome="gerar" %}Gerar parcelas</button>
         </form>
         <p class="helptext">Cria as parcelas com vencimento até 60 dias à frente, a partir da data de início e da estrutura ({{ contrato.get_estrutura_display|lower }}). Pode gerar de novo mais tarde para as parcelas seguintes.</p>
       {% endif %}
@@ -197,6 +197,6 @@
       action="{% url 'contratos:documento_novo' contrato.pk %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% include "_form.html" with form=form_documento %}
-  <div class="form-actions"><button type="submit" class="btn">Anexar documento</button></div>
+  <div class="form-actions"><button type="submit" class="btn">{% include "_icone.html" with nome="anexo" %}Anexar documento</button></div>
 </form>
 {% endblock %}

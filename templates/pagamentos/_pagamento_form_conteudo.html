@@ -25,8 +25,8 @@
       <noscript>A prévia precisa de JavaScript. Pagamentos menores levam a diferença à próxima parcela; pagamentos maiores abatem as seguintes.</noscript>
     </section>
     <div class="form-actions">
-      <button type="submit" class="btn">Registrar pagamento</button>
-      <a class="btn secondary" href="{% url 'contratos:detalhe' contrato.pk %}">Cancelar</a>
+      <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Registrar pagamento</button>
+      <a class="btn secondary" href="{% url 'contratos:detalhe' contrato.pk %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
     </div>
   </form>
 {% elif parcelas_abertas %}

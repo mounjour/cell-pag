@@ -15,6 +15,10 @@
     A primeira parcela vence um período após a data de início. Com parcelas geradas,
     o atraso segue a mais antiga em aberto; “Próximo vencimento” só é usado enquanto
     não há parcelas. A previsão de quitação é calculada a partir da última parcela.
+    Contrato que já estava em andamento antes de entrar no sistema: informe a
+    <strong>data de início real</strong> e quantas parcelas já foram pagas — elas
+    saem da cobrança automática. As demais, vencidas ou não, entram na cobrança
+    normalmente.
   </p>
 </details>
 
@@ -48,6 +52,13 @@
     {% include "_field.html" with field=form.data_prevista_quitacao %}
   </div>
 
+  {% if not form.instance.pk %}
+  <div class="form-section">
+    <p class="form-section-title">Contrato já em andamento?</p>
+    {% include "_field.html" with field=form.parcelas_ja_pagas %}
+  </div>
+  {% endif %}
+
   <div class="form-section">
     <p class="form-section-title">Outros</p>
     {% include "_field.html" with field=form.status %}
@@ -61,8 +72,8 @@
     <noscript>Ative JavaScript para visualizar o resumo antes de salvar.</noscript>
   </section>
   <div class="form-actions">
-    <button type="submit" class="btn">Salvar</button>
-    <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">Cancelar</a>
+    <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Salvar</button>
+    <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
   </div>
 </form>
 </div>

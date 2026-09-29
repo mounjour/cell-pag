@@ -178,6 +178,51 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
         return ctx
 
 
+def _registrar_parcelas_ja_pagas(request, contrato, quantidade):
+    """Marca como pagas as primeiras ``quantidade`` parcelas, para um contrato
+    que já estava em andamento antes de entrar no sistema.
+
+    Usa a própria data de vencimento como data do pagamento (não temos a data
+    real) e o valor previsto como valor pago — se algum desses detalhes
+    estiver errado, dá para estornar e refazer pela tela do contrato depois.
+    Parcela que já tem baixa (não deveria acontecer num contrato recém-criado)
+    é pulada, não duplicada.
+    """
+    if not quantidade:
+        return
+    from apps.pagamentos.models import Pagamento, Vencimento
+
+    pendentes = (
+        contrato.vencimentos.filter(numero__lte=quantidade)
+        .exclude(status=Vencimento.Status.PAGO)
+        .order_by("numero")
+    )
+    registradas = 0
+    for venc in pendentes:
+        Pagamento(
+            contrato=contrato,
+            vencimento=venc,
+            data_pagamento=venc.data_vencimento,
+            valor_pago=venc.valor_previsto,
+            forma=Pagamento.Forma.OUTRO,
+            usuario_baixa=request.user if request.user.is_authenticated else None,
+            observacao="Pagamento anterior ao cadastro no sistema (registrado na migração).",
+        ).registrar()
+        registradas += 1
+    if registradas:
+        messages.success(
+            request, f"{registradas} parcela(s) anterior(es) marcada(s) como paga(s)."
+        )
+    faltam = quantidade - registradas
+    if faltam > 0:
+        messages.warning(
+            request,
+            f"Só {registradas} parcela(s) estavam geradas até agora — as outras "
+            f"{faltam} não foram marcadas. Gere mais parcelas e registre-as pela "
+            "tela do contrato, se for o caso.",
+        )
+
+
 class ContratoCreateView(LoginRequiredMixin, CreateView):
     model = Contrato
     form_class = ContratoForm
@@ -196,6 +241,9 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
         self.object.calcular_num_parcelas()
         _avisar_se_parcela_nao_bate(self.request, self.object)
         _gerar_parcelas_ao_salvar(self.request, self.object)
+        quantidade = form.cleaned_data.get("parcelas_ja_pagas") or 0
+        if quantidade:
+            _registrar_parcelas_ja_pagas(self.request, self.object, quantidade)
         return response
 
     def get_success_url(self):
