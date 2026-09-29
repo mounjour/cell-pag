@@ -413,6 +413,10 @@ table { border-collapse: collapse; width: 100%; background: var(--surface); font
 th, td { text-align: left; padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
 tbody tr td { transition: background-color 0.1s ease; }
 td.wrap-cell { white-space: normal; min-width: 12rem; }
+/* Colunas de nome (Cliente/Contrato) variam pouco de tamanho; sem limite,
+   a tabela joga nelas todo o espaço sobrante das colunas curtas ao lado
+   (data, valor, forma...), abrindo um vão enorme antes da próxima coluna. */
+td[data-label="Contrato"], td[data-label="Cliente"] { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
 th {
   background: var(--surface);
   font-size: 0.75rem; letter-spacing: 0;
