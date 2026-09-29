@@ -70,7 +70,7 @@
                     </svg>
                   </a>
                 </span>
-                <a class="btn btn-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}" aria-label="Registrar pagamento de {{ l.contrato.cliente.nome }} — {{ l.contrato.apelido }}">Registrar pagamento</a>
+                <a class="btn btn-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}" aria-label="Registrar pagamento de {{ l.contrato.cliente.nome }} — {{ l.contrato.apelido }}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>
                 <a class="btn secondary" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}"
                    aria-label="Abrir {{ l.contrato.cliente.nome }}">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">

@@ -51,8 +51,8 @@
       <h2>{{ relatorio.inicio|date:"d/m/Y" }} a {{ relatorio.fim|date:"d/m/Y" }}</h2>
     </div>
     <div class="report-actions">
-      <a class="btn secondary" href="{% url 'relatorios:excel' %}?{{ querystring }}">Baixar Excel</a>
-      <a class="btn secondary" href="{% url 'relatorios:pdf' %}?{{ querystring }}">Baixar PDF</a>
+      <a class="btn secondary" href="{% url 'relatorios:excel' %}?{{ querystring }}">{% include "_icone.html" with nome="baixar" %}Baixar Excel</a>
+      <a class="btn secondary" href="{% url 'relatorios:pdf' %}?{{ querystring }}">{% include "_icone.html" with nome="baixar" %}Baixar PDF</a>
     </div>
   </div>
 

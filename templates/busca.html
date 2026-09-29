@@ -6,7 +6,7 @@
 
 <form class="busca-pagina" role="search" action="{% url 'buscar' %}" method="get">
   <input type="search" name="q" value="{{ q }}" placeholder="Cliente, CPF ou contrato" aria-label="Buscar cliente, CPF ou contrato" autocomplete="off"{% if not q %} autofocus{% endif %}>
-  <button class="btn" type="submit">Buscar</button>
+  <button class="btn" type="submit">{% include "_icone.html" with nome="busca" %}Buscar</button>
 </form>
 
 {% if not q %}

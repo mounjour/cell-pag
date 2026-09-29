@@ -61,8 +61,8 @@
     <noscript>Ative JavaScript para visualizar o resumo antes de salvar.</noscript>
   </section>
   <div class="form-actions">
-    <button type="submit" class="btn">Salvar</button>
-    <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">Cancelar</a>
+    <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Salvar</button>
+    <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
   </div>
 </form>
 </div>

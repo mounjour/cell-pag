@@ -268,7 +268,7 @@ h2 {
 
 /* ---------- Botões ---------- */
 .btn {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
   min-height: var(--tap);
   padding: 0.5rem 1.5rem;
   border: 1px solid transparent;
@@ -285,6 +285,7 @@ h2 {
 .btn:active { transform: translateY(0); box-shadow: var(--raise); }
 .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .btn[disabled], .btn:disabled { opacity: 0.5; pointer-events: none; box-shadow: none; }
+.btn .icone { width: 16px; height: 16px; }
 .btn-block { width: 100%; font-size: 0.9375rem; }
 
 .btn.secondary {

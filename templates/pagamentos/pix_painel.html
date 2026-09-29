@@ -21,14 +21,14 @@
           {% if c.legenda %}<span class="helptext">“{{ c.legenda }}”</span>{% endif %}
         </span>
         <span class="comprovante-acoes">
-          <a class="btn secondary" href="{{ c.cliente.whatsapp_url }}" target="_blank" rel="noopener">Abrir WhatsApp</a>
+          <a class="btn secondary" href="{{ c.cliente.whatsapp_url }}" target="_blank" rel="noopener">{% include "_icone.html" with nome="whatsapp" %}Abrir WhatsApp</a>
           <form method="post" action="{% url 'pagamentos:comprovante_conferir' c.pk %}">
             {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="submit" class="btn">Conferir na Cora</button>
+            <button type="submit" class="btn">{% include "_icone.html" with nome="quitar" %}Conferir na Cora</button>
           </form>
           <form method="post" action="{% url 'pagamentos:comprovante_descartar' c.pk %}">
             {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="submit" class="btn secondary">Descartar</button>
+            <button type="submit" class="btn secondary">{% include "_icone.html" with nome="cancelar" %}Descartar</button>
           </form>
         </span>
       </li>
@@ -48,7 +48,7 @@
         <form method="post" action="{% url 'pagamentos:pix_duplicidade_resolvida' c.pk %}">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit" class="btn secondary">Marcar como resolvido</button>
+          <button type="submit" class="btn secondary">{% include "_icone.html" with nome="quitar" %}Marcar como resolvido</button>
         </form>
       </li>
     {% endfor %}
@@ -82,7 +82,7 @@
         </td>
         <td data-label="Pix">
           {% if c.pix_copia_e_cola %}
-            <button type="button" class="btn-copiar-pix" data-pix="{{ c.pix_copia_e_cola }}">Copiar código</button>
+            <button type="button" class="btn-copiar-pix" data-pix="{{ c.pix_copia_e_cola }}">{% include "_icone.html" with nome="copiar" %}<span>Copiar código</span></button>
           {% else %}—{% endif %}
           {% include "pagamentos/_pix_cancelar.html" with pix=c %}
         </td>

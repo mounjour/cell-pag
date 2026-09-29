@@ -15,7 +15,7 @@
     <a class="btn secondary" href="{% url 'clientes:lista' %}">Ver ativos</a>
   {% else %}
     <a class="btn secondary" href="?arquivados=1">Ver arquivados</a>
-    <a class="btn" href="{% url 'clientes:novo' %}">Novo cliente</a>
+    <a class="btn" href="{% url 'clientes:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo cliente</a>
   {% endif %}
 </div>
 

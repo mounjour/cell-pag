@@ -22,7 +22,7 @@
     <button class="btn secondary" type="submit">Filtrar</button>
   </form>
   <span class="spacer"></span>
-  <a class="btn" href="{% url 'contratos:novo' %}">Novo contrato</a>
+  <a class="btn" href="{% url 'contratos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo contrato</a>
 </div>
 
 {% if contratos %}

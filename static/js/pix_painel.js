@@ -21,19 +21,21 @@
   }
 
   document.querySelectorAll(".btn-copiar-pix").forEach(function (botao) {
-    var textoOriginal = botao.textContent;
+    // O rótulo fica num <span> à parte para o ícone não ser apagado ao trocar o texto.
+    var rotulo = botao.querySelector("span") || botao;
+    var textoOriginal = rotulo.textContent;
     botao.addEventListener("click", function () {
       copiar(botao.dataset.pix)
         .then(function () {
-          botao.textContent = "Copiado!";
+          rotulo.textContent = "Copiado!";
           botao.classList.add("copiado");
         })
         .catch(function () {
-          botao.textContent = "Não foi possível copiar";
+          rotulo.textContent = "Não foi possível copiar";
         })
         .finally(function () {
           setTimeout(function () {
-            botao.textContent = textoOriginal;
+            rotulo.textContent = textoOriginal;
             botao.classList.remove("copiado");
           }, 1800);
         });

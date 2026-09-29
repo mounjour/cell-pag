@@ -40,7 +40,7 @@
     </dl>
 
     <div class="painel-contrato__acoes">
-      <a class="btn" href="{% url 'pagamentos:novo' ct.pk %}">Registrar pagamento</a>
+      <a class="btn" href="{% url 'pagamentos:novo' ct.pk %}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>
       <a class="btn secondary" href="{% url 'contratos:detalhe' ct.pk %}">Ver contrato</a>
     </div>
 
@@ -62,13 +62,13 @@
                 onsubmit="return confirm('Suspender a cobrança automática da parcela {{ p.parcela.numero }} de {{ ct.cliente.nome|escapejs }}? Nenhuma mensagem nem Pix será enviado até você retomar. Se já existe um Pix em aberto, ele é cancelado na Cora.')">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="submit" class="btn-cancelar-pix">Suspender cobrança automática</button>
+            <button type="submit" class="btn-cancelar-pix">{% include "_icone.html" with nome="suspender" %}Suspender cobrança automática</button>
           </form>
         {% elif p.automatica == 'suspensa' %}
           <form method="post" action="{% url 'pagamentos:cobranca_retomar' p.pix.pk %}">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="submit" class="btn secondary">Retomar cobrança automática</button>
+            <button type="submit" class="btn secondary">{% include "_icone.html" with nome="retomar" %}Retomar cobrança automática</button>
           </form>
         {% endif %}
       </div>

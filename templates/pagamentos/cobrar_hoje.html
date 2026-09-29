@@ -14,7 +14,7 @@
         <option value="{{ valor }}" {% if valor == estrutura_atual %}selected{% endif %}>{{ rotulo }}</option>
       {% endfor %}
     </select>
-    <button class="btn secondary" type="submit">Filtrar</button>
+    <button class="btn secondary" type="submit">{% include "_icone.html" with nome="filtro" %}Filtrar</button>
   </form>
 </div>
 
