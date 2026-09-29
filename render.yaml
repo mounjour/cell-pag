@@ -1,6 +1,6 @@
 # Blueprint do Render — cria de uma vez o site e os crons diários. O banco
 # PostgreSQL NÃO fica no Render: é o do Supabase, via DATABASE_URL (preenchida
-# à mão no grupo cell-pag-config). Passo a passo: docs/DEPLOY.md.
+# à mão no grupo cell-pag-config). Passo a passo: docs/deploy/DEPLOY.md.
 #
 # Depois de subir para o GitHub: Render → New → Blueprint → aponta para este repo.
 
@@ -27,7 +27,7 @@ envVarGroups:
       - key: YSLANE_WHATSAPP_NUMERO
         sync: false
       # WhatsApp via Evolution API — mantém "log" até ter uma instância da
-      # Evolution conectada (docs/WHATSAPP.md). Depois troca para "evolution".
+      # Evolution conectada (docs/integracoes/WHATSAPP.md). Depois troca para "evolution".
       - key: WHATSAPP_PROVIDER
         value: log
       - key: WHATSAPP_PIX_CHAVE
@@ -40,7 +40,7 @@ envVarGroups:
         sync: false
       - key: EVOLUTION_WEBHOOK_TOKEN
         sync: false
-      # Pix Cora — mantém "log" até ter CoraPro + certificado mTLS (docs/CORA.md).
+      # Pix Cora — mantém "log" até ter CoraPro + certificado mTLS (docs/integracoes/CORA.md).
       - key: CORA_PROVIDER
         value: log
       - key: CORA_CLIENT_ID

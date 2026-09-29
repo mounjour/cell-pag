@@ -38,7 +38,7 @@ ALLOWED_HOSTS = [host.strip() for host in env("ALLOWED_HOSTS") if host.strip()]
 
 # O Render publica o host real do serviço nesta variável. É a fonte da verdade
 # em produção — não use curinga (".onrender.com" aceitaria o Host de qualquer
-# app do Render). Ver docs/DEPLOY.md.
+# app do Render). Ver docs/deploy/DEPLOY.md.
 RENDER_EXTERNAL_HOSTNAME = env("RENDER_EXTERNAL_HOSTNAME", default="")
 if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -171,7 +171,7 @@ SESSION_MANTER_CONECTADO_DIAS = env.int("SESSION_MANTER_CONECTADO_DIAS", default
 # ── E-mail (recuperação de senha) ─────────────────────────────────────────────
 # Sem EMAIL_HOST o e-mail só vai para o log do servidor (nada é enviado de
 # verdade) — o padrão seguro, como WHATSAPP_PROVIDER=log. Para enviar de
-# verdade, preencha EMAIL_HOST (+ usuário/senha) — ver docs/DEPLOY-VPS.md.
+# verdade, preencha EMAIL_HOST (+ usuário/senha) — ver docs/deploy/DEPLOY-VPS.md.
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_BACKEND = (
     "django.core.mail.backends.smtp.EmailBackend"

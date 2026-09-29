@@ -5,7 +5,7 @@
 > como registro de como foi feito e referência para recriar um webhook ou
 > emitir um certificado novo — não é mais um passo a passo pendente. A
 > hospedagem é a VPS da KingHost com Coolify (ver
-> [`DEPLOY-VPS.md`](DEPLOY-VPS.md)), não mais o Render — os itens abaixo que
+> [`DEPLOY-VPS.md`](../deploy/DEPLOY-VPS.md)), não mais o Render — os itens abaixo que
 > citam Render/`cell-pag.onrender.com` são daquela época; o domínio atual é
 > `celulares-pag.duckdns.org` e os *Secret Files* de certificado ficam nas
 > variáveis de ambiente do Coolify, não em "Secret Files" do Render.

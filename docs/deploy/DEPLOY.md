@@ -12,7 +12,7 @@ Este guia coloca o sistema no ar no [Render](https://render.com) com:
 - **cron diário** que roda `manage.py rotina_diaria` às 08:30 (horário de Brasília):
   gera as parcelas, monta o lembrete da Yslane e prepara/dispara as cobranças.
 
-O [`render.yaml`](../render.yaml) na raiz descreve o site e os crons de uma vez (Blueprint).
+O [`render.yaml`](../../render.yaml) na raiz descreve o site e os crons de uma vez (Blueprint).
 
 ---
 
@@ -22,8 +22,8 @@ O [`render.yaml`](../render.yaml) na raiz descreve o site e os crons de uma vez 
 |---|---|---|
 | Criar conta no Render e conectar este repositório do GitHub | render.com | tudo |
 | Criar o projeto no **Supabase** e copiar a connection string **Session pooler** (porta 5432) | supabase.com | banco de produção |
-| Subir uma instância da **Evolution API** (Docker) e conectar um número por QR Code | servidor próprio | envio real de lembrete/cobrança — ver [`WHATSAPP.md`](WHATSAPP.md) |
-| Contratar **CoraPro** + gerar certificado mTLS | app/Web da Cora | geração real de Pix — ver [`CORA.md`](CORA.md) |
+| Subir uma instância da **Evolution API** (Docker) e conectar um número por QR Code | servidor próprio | envio real de lembrete/cobrança — ver [`WHATSAPP.md`](../integracoes/WHATSAPP.md) |
+| Contratar **CoraPro** + gerar certificado mTLS | app/Web da Cora | geração real de Pix — ver [`CORA.md`](../integracoes/CORA.md) |
 
 Enquanto (2) e (3) não estiverem prontos, o sistema fica com
 `WHATSAPP_PROVIDER=log` e `CORA_PROVIDER=log`: **tudo funciona, mas nada sai
@@ -60,9 +60,9 @@ ainda não tem — o modo `log` não exige):
 | `DATABASE_URL` | connection string do Postgres do Supabase (`postgresql://...`) — **Session pooler**, porta 5432; não use *Direct connection* (IPv6) nem *Transaction pooler* (6543). Senha com caractere especial vai codificada (`@` = `%40`). Vale para o site e para os crons |
 | `YSLANE_WHATSAPP_NUMERO` | número da Yslane em E.164, ex.: `+5583988887777` |
 | `WHATSAPP_PROVIDER` | `log` (troque para `evolution` quando a instância estiver conectada) |
-| `WHATSAPP_PIX_CHAVE`, `EVOLUTION_*` | em branco por enquanto — ver [`WHATSAPP.md`](WHATSAPP.md) |
+| `WHATSAPP_PIX_CHAVE`, `EVOLUTION_*` | em branco por enquanto — ver [`WHATSAPP.md`](../integracoes/WHATSAPP.md) |
 | `CORA_PROVIDER` | `log` (troque para `cora` quando tiver CoraPro) |
-| `CORA_*` (demais) | em branco por enquanto — ver [`CORA.md`](CORA.md) |
+| `CORA_*` (demais) | em branco por enquanto — ver [`CORA.md`](../integracoes/CORA.md) |
 
 `SECRET_KEY` é gerada automaticamente (e o app **recusa** subir com `DEBUG=False`
 sem ela). `ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS` se resolvem
@@ -215,14 +215,14 @@ Para uso diário de verdade, conte com **~US$ 7,25/mês** no Render (mais o Supa
 
 ## 7. Checklist de ativação dos canais (depois)
 
-**WhatsApp** (detalhe em [`WHATSAPP.md`](WHATSAPP.md)):
+**WhatsApp** (detalhe em [`WHATSAPP.md`](../integracoes/WHATSAPP.md)):
 
 - [ ] Instância da Evolution API no ar + número conectado por QR Code
 - [ ] Variáveis `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`, `EVOLUTION_WEBHOOK_TOKEN`, `WHATSAPP_PIX_CHAVE` preenchidas
 - [ ] Webhook `messages.update` → `https://cell-pag.onrender.com/pagamentos/webhooks/whatsapp/` cadastrado na Evolution, autenticado pelo `EVOLUTION_WEBHOOK_TOKEN`
 - [ ] `WHATSAPP_PROVIDER=evolution`
 
-**Cora** (detalhe em [`CORA.md`](CORA.md)):
+**Cora** (detalhe em [`CORA.md`](../integracoes/CORA.md)):
 
 - [ ] CoraPro contratado + Integração Direta liberada
 - [ ] Certificado/chave mTLS como Secret Files no web **e** no cron

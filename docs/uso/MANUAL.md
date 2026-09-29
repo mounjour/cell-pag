@@ -3,8 +3,8 @@
 Guia para quem usa o sistema no dia a dia (financeiro e dono). Explica **cada
 página**, o que fazer em cada uma e as regras por trás dos números.
 
-> Documentação técnica de instalação e deploy fica em `README.md`, `docs/DEPLOY.md`,
-> `docs/WHATSAPP.md` e `docs/CORA.md`. Este manual é só de **operação**.
+> Documentação técnica de instalação e deploy fica em `README.md`, `docs/deploy/DEPLOY.md`,
+> `docs/integracoes/WHATSAPP.md` e `docs/integracoes/CORA.md`. Este manual é só de **operação**.
 
 ---
 
@@ -475,7 +475,7 @@ A tela mostra as cobranças **pendentes, aguardando, não pagas e com erro**, al
 das **pagas hoje**. Cobranças pagas em dias anteriores não poluem a lista.
 
 > Enquanto a integração da Cora estiver em modo seguro (`CORA_PROVIDER=log`),
-> nada é enviado de verdade. Ativação em `docs/CORA.md`.
+> nada é enviado de verdade. Ativação em `docs/integracoes/CORA.md`.
 
 ---
 
@@ -583,8 +583,8 @@ Rodam no servidor uma vez por dia (não precisam de ação sua):
 
 Por padrão os envios ficam em **modo seguro** (`WHATSAPP_PROVIDER=log` /
 `CORA_PROVIDER=log`): as filas são criadas e aparecem nos painéis, mas **nada
-sai do sistema** até a equipe técnica ativar cada integração (`docs/WHATSAPP.md`,
-`docs/CORA.md`).
+sai do sistema** até a equipe técnica ativar cada integração (`docs/integracoes/WHATSAPP.md`,
+`docs/integracoes/CORA.md`).
 
 ---
 

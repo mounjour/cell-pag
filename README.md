@@ -65,11 +65,11 @@ python manage.py enviar_cobrancas_clientes
 
 O endpoint a cadastrar na Evolution é `/pagamentos/webhooks/whatsapp/`, autenticado
 por token compartilhado (`EVOLUTION_WEBHOOK_TOKEN`).
-Veja os passos de ativação em `docs/WHATSAPP.md`.
+Veja os passos de ativação em `docs/integracoes/WHATSAPP.md`.
 
 A Fase 7 integra a cobrança **Pix** automática da Cora, com idempotência,
 conciliação, baixa automática confirmada e painel pago/não pago. O padrão também
-é seguro (`CORA_PROVIDER=log`). Veja a ativação de Stage em `docs/CORA.md`.
+é seguro (`CORA_PROVIDER=log`). Veja a ativação de Stage em `docs/integracoes/CORA.md`.
 
 Ao cadastrar ou editar um contrato com o valor da parcela preenchido, as
 parcelas (`Vencimento`) já são geradas na hora — o botão "Gerar parcelas" e o
@@ -78,7 +78,7 @@ comando continuam disponíveis como reforço.
 Em produção, o comando `rotina_diaria` junta os três jobs do dia (gerar
 vencimentos → lembrete da Yslane → cobrança dos clientes) numa execução só,
 para o cron do provedor chamar uma vez por dia. Deploy no Render (site +
-PostgreSQL + cron) em `docs/DEPLOY.md` e no `render.yaml` da raiz.
+PostgreSQL + cron) em `docs/deploy/DEPLOY.md` e no `render.yaml` da raiz.
 
 Depois de atualizar o projeto, aplique a migração que registra a data real de
 quitação dos contratos:
@@ -96,7 +96,7 @@ python manage.py createsuperuser
 python manage.py runserver
 python manage.py check
 
-# Rotina diária (o cron do Render chama isto 1x/dia — ver docs/DEPLOY.md)
+# Rotina diária (o cron do Render chama isto 1x/dia — ver docs/deploy/DEPLOY.md)
 python manage.py rotina_diaria
 python manage.py rotina_diaria --hoje 2026-10-01 --sem-cobrancas
 ```

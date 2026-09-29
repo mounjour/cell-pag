@@ -137,7 +137,7 @@ Prazo de resposta: **até 15 dias** do pedido (LGPD art. 19, §2º). Registre a 
   deletar.
 - **Pelo shell do container em produção** (Coolify), para casos maiores, com
   um `python manage.py shell` e o ORM — sempre depois de um backup do banco
-  (backup diário automático — ver [DEPLOY-VPS.md](DEPLOY-VPS.md)).
+  (backup diário automático — ver [DEPLOY-VPS.md](../deploy/DEPLOY-VPS.md)).
 
 ---
 
@@ -154,4 +154,4 @@ Prazo de resposta: **até 15 dias** do pedido (LGPD art. 19, §2º). Registre a 
 
 **Resolvido (29/09/2026):** o VPS na KingHost tem disco persistente para os
 anexos, e o Postgres do Coolify tem backup diário automático para o Backblaze
-B2 (fora do VPS — ver [DEPLOY-VPS.md](DEPLOY-VPS.md)).
+B2 (fora do VPS — ver [DEPLOY-VPS.md](../deploy/DEPLOY-VPS.md)).
