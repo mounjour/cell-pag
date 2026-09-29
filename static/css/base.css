@@ -171,15 +171,16 @@ h1 {
   margin: 0 0 1.1rem;
 }
 h2 {
-  font-size: 1.05rem;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-ink);
   margin: 2rem 0 0.85rem;
-  padding-left: 0.7rem;
-  border-left: 4px solid var(--accent);
   line-height: 1.3;
 }
-.card > h2, .report-heading h2 { border-left: 0; padding-left: 0; margin-top: 0; }
-@media (min-width: 640px) { h1 { font-size: 1.8rem; } h2 { font-size: 1.15rem; } }
+.card > h2, .report-heading h2 { margin-top: 0; }
+@media (min-width: 640px) { h1 { font-size: 1.8rem; } }
 
 /* ---------- Mensagens ---------- */
 .messages { list-style: none; padding: 0; margin: 0 0 1.25rem; display: grid; gap: 0.5rem; }
@@ -412,6 +413,10 @@ table { border-collapse: collapse; width: 100%; background: var(--surface); font
 th, td { text-align: left; padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
 tbody tr td { transition: background-color 0.1s ease; }
 td.wrap-cell { white-space: normal; min-width: 12rem; }
+/* Colunas de nome (Cliente/Contrato) variam pouco de tamanho; sem limite,
+   a tabela joga nelas todo o espaço sobrante das colunas curtas ao lado
+   (data, valor, forma...), abrindo um vão enorme antes da próxima coluna. */
+td[data-label="Contrato"], td[data-label="Cliente"] { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
 th {
   background: var(--surface);
   font-size: 0.75rem; letter-spacing: 0;
@@ -443,13 +448,6 @@ tbody tr:hover td { background: var(--accent-wash); }
     margin-bottom: 0.7rem;
     padding: 0.35rem 1rem 0.5rem;
   }
-  /* Acento de cor na borda esquerda do cartão — leitura rápida da situação
-     sem precisar ler o texto (mesmo padrão dos cartões-métrica .meta).
-     Reaproveitado em qualquer lista com status (Cobrar hoje, Contratos...). */
-  .tbl-wrap.cards tr.row-acento--inadimplente { border-left: 4px solid var(--critical-ink); }
-  .tbl-wrap.cards tr.row-acento--atrasado { border-left: 4px solid var(--amber-ink); }
-  .tbl-wrap.cards tr.row-acento--em_dia { border-left: 4px solid var(--ok-ink); }
-  .tbl-wrap.cards tr.row-acento--quitado { border-left: 4px solid var(--ink-faint); }
   .tbl-wrap.cards td {
     border: none;
     padding: 0.3rem 0;
@@ -829,13 +827,9 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .painel-contrato {
   margin: 0 0 1rem; padding: 1rem 1.15rem;
   background: var(--surface); border: 1px solid var(--line);
-  border-left: 4px solid var(--line-strong); border-radius: var(--radius);
+  border-radius: var(--radius);
   box-shadow: var(--raise);
 }
-.painel-contrato.row-acento--inadimplente { border-left-color: var(--critical-ink); }
-.painel-contrato.row-acento--atrasado { border-left-color: var(--amber-ink); }
-.painel-contrato.row-acento--em_dia { border-left-color: var(--ok-ink); }
-.painel-contrato.row-acento--quitado { border-left-color: var(--ink-faint); }
 .painel-contrato__topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
 .painel-contrato__topo h3 { margin: 0; font-size: 1.1rem; font-weight: 600; }
 .painel-contrato__dados {
