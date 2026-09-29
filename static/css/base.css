@@ -372,6 +372,12 @@ select:disabled { cursor: not-allowed; opacity: 0.6; }
   box-shadow: var(--raise);
 }
 .filtro-pill.ativo:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--on-accent); }
+/* Celular: grade de 3 colunas iguais — botões do mesmo tamanho, alinhados nas
+   duas bordas, em vez de quebrar de linha com sobras irregulares. */
+@media (max-width: 639px) {
+  .filtro-pills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; }
+  .filtro-pill { justify-content: center; min-height: 2.4rem; padding: 0 0.3rem; font-size: 0.8rem; text-align: center; }
+}
 select::-ms-expand { display: none; }
 :root[data-tema="escuro"] select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b93a1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
