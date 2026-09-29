@@ -35,7 +35,7 @@
 .sidebar-rodape .menu-usuario > summary { width: 100%; box-sizing: border-box; justify-content: flex-start; }
 .sidebar-rodape .user-name { flex: 1; }
 .sidebar-rodape .chevron { margin-left: auto; }
-.sidebar-rodape .menu-painel { left: 0; right: 0; top: auto; bottom: calc(100% + 8px); }
+.sidebar-rodape .menu-painel { left: 0; right: 0; top: auto; bottom: calc(100% + 8px); min-width: 0; width: 100%; box-sizing: border-box; }
 
 /* Contador (ex.: quantos itens em "Cobrar hoje") */
 .selo {
