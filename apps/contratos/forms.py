@@ -3,6 +3,8 @@ from decimal import Decimal, InvalidOperation
 
 from django import forms
 
+from apps.pagamentos.models import Pagamento
+
 from .models import Contrato, DocumentoContrato
 
 
@@ -89,6 +91,27 @@ class ContratoForm(forms.ModelForm):
         ),
     )
 
+    # Também só no cadastro — vira um Pagamento sem parcela vinculada (ver
+    # Pagamento.vencimento, nullable), o mesmo mecanismo usado pra registro
+    # avulso. Fica fora de valor_total: aparelho R$1.000 financiado + R$200 de
+    # entrada é um negócio de R$1.200, dos quais só R$1.000 são parcelados.
+    entrada = forms.CharField(
+        label="Entrada (opcional)",
+        required=False,
+        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}),
+        help_text=(
+            "Valor recebido à vista no fechamento, somado ao valor total "
+            "financiado (não é uma parcela). Ex.: aparelho de R$ 1.000 "
+            "financiado + R$ 200 de entrada = negócio de R$ 1.200."
+        ),
+    )
+    entrada_forma = forms.ChoiceField(
+        label="Forma da entrada",
+        choices=Pagamento.Forma.choices,
+        required=False,
+        initial=Pagamento.Forma.DINHEIRO,
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for campo in ("data_inicio", "proximo_vencimento", "data_prevista_quitacao"):
@@ -96,8 +119,11 @@ class ContratoForm(forms.ModelForm):
         self.fields["num_parcelas"].required = False
         if self.instance and self.instance.pk:
             # Só faz sentido ao cadastrar — parcelas de um contrato já
-            # existente se registram pela tela de pagamento, uma a uma.
+            # existente se registram pela tela de pagamento, uma a uma, e a
+            # entrada (se esqueceram de lançar) também dá pra registrar à mão.
             del self.fields["parcelas_ja_pagas"]
+            del self.fields["entrada"]
+            del self.fields["entrada_forma"]
         self.fields["num_parcelas"].help_text = (
             "Deixe em branco para calcular sozinho (valor total ÷ valor da "
             "parcela, arredondado para cima). Confira o total do plano na prévia; "
@@ -122,6 +148,15 @@ class ContratoForm(forms.ModelForm):
     def clean_imei(self):
         return re.sub(r"\D", "", self.cleaned_data.get("imei", ""))
 
+    def clean_entrada(self):
+        bruto = self.cleaned_data.get("entrada")
+        if not bruto:
+            return None
+        valor = moeda_para_decimal(bruto)
+        if valor is None or valor <= 0:
+            raise forms.ValidationError("Informe um valor de entrada maior que zero, ou deixe em branco.")
+        return valor
+
     def clean(self):
         dados = super().clean()
         quantidade = dados.get("parcelas_ja_pagas")
@@ -131,6 +166,8 @@ class ContratoForm(forms.ModelForm):
                 "parcelas_ja_pagas",
                 f"Não pode ser maior que o nº de parcelas ({num_parcelas}).",
             )
+        if dados.get("entrada") and not dados.get("entrada_forma"):
+            self.add_error("entrada_forma", "Escolha a forma da entrada.")
         return dados
 
 

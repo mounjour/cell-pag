@@ -159,6 +159,9 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
         contrato = self.object
         from apps.pagamentos.agenda import resumo_cobranca
         ctx["resumo_cobranca"] = resumo_cobranca(contrato)
+        # Entrada: Pagamento sem parcela vinculada (ver _registrar_entrada) —
+        # já veio no prefetch de "pagamentos", sem consulta extra.
+        ctx["entradas"] = [p for p in contrato.pagamentos.all() if p.vencimento_id is None]
         vencimentos = list(contrato.vencimentos.all())
         pagas = sum(1 for v in vencimentos if v.status == v.Status.PAGO)
         ctx["pode_quitar"] = (
@@ -223,6 +226,32 @@ def _registrar_parcelas_ja_pagas(request, contrato, quantidade):
         )
 
 
+def _registrar_entrada(request, contrato, valor, forma):
+    """Registra a entrada como um `Pagamento` sem parcela vinculada.
+
+    ``Pagamento.vencimento`` é opcional — mesmo mecanismo usado pra um
+    registro avulso. A entrada não é uma parcela: não aparece na lista de
+    vencimentos, não pode ser confundida com uma baixa de parcela, mas entra
+    normalmente nos relatórios e no histórico do cliente/contrato (o `—` na
+    coluna "Parcela" é intencional).
+    """
+    if not valor:
+        return
+    from apps.pagamentos.models import Pagamento
+
+    Pagamento(
+        contrato=contrato,
+        vencimento=None,
+        data_pagamento=contrato.data_inicio,
+        valor_pago=valor,
+        forma=forma,
+        usuario_baixa=request.user if request.user.is_authenticated else None,
+        observacao="Entrada do contrato.",
+    ).registrar()
+    valor_fmt = f"{valor:.2f}".replace(".", ",")
+    messages.success(request, f"Entrada de R$ {valor_fmt} registrada.")
+
+
 class ContratoCreateView(LoginRequiredMixin, CreateView):
     model = Contrato
     form_class = ContratoForm
@@ -244,6 +273,11 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
         quantidade = form.cleaned_data.get("parcelas_ja_pagas") or 0
         if quantidade:
             _registrar_parcelas_ja_pagas(self.request, self.object, quantidade)
+        entrada = form.cleaned_data.get("entrada")
+        if entrada:
+            _registrar_entrada(
+                self.request, self.object, entrada, form.cleaned_data.get("entrada_forma")
+            )
         return response
 
     def get_success_url(self):

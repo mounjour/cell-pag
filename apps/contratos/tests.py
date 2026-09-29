@@ -666,3 +666,91 @@ def test_parcelas_ja_pagas_nao_aparece_na_edicao(auth_client, cliente):
     ct = novo_contrato(cliente)
     resp = auth_client.get(reverse("contratos:editar", args=[ct.pk]))
     assert "parcelas_ja_pagas" not in resp.context["form"].fields
+
+
+# ---------- Entrada (valor à vista no fechamento, à parte das parcelas) ----------
+
+@pytest.mark.django_db
+def test_entrada_vira_pagamento_sem_parcela_vinculada(auth_client, cliente):
+    from apps.pagamentos.models import Pagamento
+
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(
+            cliente,
+            valor_total="1000,00",
+            estrutura=Contrato.Estrutura.MENSAL,
+            valor_parcela="100,00",
+            num_parcelas="10",
+            data_inicio="2026-09-01",
+            entrada="200,00",
+            entrada_forma=Pagamento.Forma.DINHEIRO,
+        ),
+        follow=True,
+    )
+    assert resp.status_code == 200
+    ct = Contrato.objects.get(cliente=cliente)
+    pagamento = Pagamento.objects.get(contrato=ct, vencimento__isnull=True)
+    assert pagamento.valor_pago == Decimal("200.00")
+    assert pagamento.forma == Pagamento.Forma.DINHEIRO
+    assert pagamento.data_pagamento == datetime.date(2026, 9, 1)
+    assert "Entrada de R$ 200,00 registrada" in resp.content.decode()
+    # o valor total financiado não muda — a entrada é à parte
+    assert ct.valor_total == Decimal("1000.00")
+    # não conta como parcela: continuam todas em aberto
+    assert not ct.vencimentos.filter(status="pago").exists()
+
+
+@pytest.mark.django_db
+def test_sem_entrada_nao_cria_pagamento_nenhum(auth_client, cliente):
+    from apps.pagamentos.models import Pagamento
+
+    auth_client.post(reverse("contratos:novo"), dados_form(cliente, entrada=""))
+    ct = Contrato.objects.get(cliente=cliente)
+    assert not Pagamento.objects.filter(contrato=ct).exists()
+
+
+@pytest.mark.django_db
+def test_entrada_aparece_na_tela_do_contrato(auth_client, cliente):
+    from apps.pagamentos.models import Pagamento
+
+    auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(
+            cliente,
+            valor_total="1000,00",
+            estrutura=Contrato.Estrutura.MENSAL,
+            valor_parcela="100,00",
+            num_parcelas="10",
+            data_inicio="2026-09-01",
+            entrada="150,50",
+            entrada_forma=Pagamento.Forma.PIX,
+        ),
+    )
+    ct = Contrato.objects.get(cliente=cliente)
+    resp = auth_client.get(reverse("contratos:detalhe", args=[ct.pk]))
+    corpo = resp.content.decode()
+    assert "Entrada" in corpo
+    assert "150,50" in corpo
+    assert "Pix" in corpo
+
+
+@pytest.mark.django_db
+def test_entrada_zero_ou_negativa_e_invalida(auth_client, cliente):
+    from apps.pagamentos.models import Pagamento
+
+    resp = auth_client.post(
+        reverse("contratos:novo"),
+        dados_form(cliente, entrada="0,00", entrada_forma=Pagamento.Forma.DINHEIRO),
+    )
+    assert resp.status_code == 200
+    assert not Contrato.objects.filter(cliente=cliente).exists()
+    assert "maior que zero" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_entrada_nao_aparece_na_edicao(auth_client, cliente):
+    ct = novo_contrato(cliente)
+    resp = auth_client.get(reverse("contratos:editar", args=[ct.pk]))
+    assert "entrada" not in resp.context["form"].fields
+    assert "entrada_forma" not in resp.context["form"].fields

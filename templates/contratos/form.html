@@ -18,7 +18,8 @@
     Contrato que já estava em andamento antes de entrar no sistema: informe a
     <strong>data de início real</strong> e quantas parcelas já foram pagas — elas
     saem da cobrança automática. As demais, vencidas ou não, entram na cobrança
-    normalmente.
+    normalmente. A <strong>entrada</strong> é um valor à parte, recebido no
+    fechamento — não conta como parcela nem entra no valor total financiado.
   </p>
 </details>
 
@@ -42,6 +43,10 @@
     {% include "_field.html" with field=form.estrutura %}
     {% include "_field.html" with field=form.valor_parcela %}
     {% include "_field.html" with field=form.num_parcelas %}
+    {% if not form.instance.pk %}
+      {% include "_field.html" with field=form.entrada %}
+      {% include "_field.html" with field=form.entrada_forma %}
+    {% endif %}
   </div>
 
   <div class="form-section">
