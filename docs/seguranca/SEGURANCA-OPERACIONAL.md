@@ -10,7 +10,7 @@ clicar* e *como conferir que deu certo*.
 Repositório: `github.com/mounjour/cell-pag` · Site: `https://celulares-pag.duckdns.org`
 
 > **Atualizado em 29/09/2026.** A hospedagem migrou do Render para uma VPS da
-> KingHost com Coolify (ver [`DEPLOY-VPS.md`](DEPLOY-VPS.md)) — a seção B
+> KingHost com Coolify (ver [`DEPLOY-VPS.md`](../deploy/DEPLOY-VPS.md)) — a seção B
 > abaixo já reflete isso. As seções A, C e D continuam valendo como estavam.
 
 Legenda: ⬜ a fazer · ✅ feito · ⏸️ adiado de propósito
@@ -30,7 +30,7 @@ Um resumo do estado de tudo fica em
 
 ### A1. ✅ Dependabot — alerts + security updates  *(já ligado — conferido 09/09/2026)*
 
-O arquivo [`.github/dependabot.yml`](../.github/dependabot.yml) já está no repo
+O arquivo [`.github/dependabot.yml`](../../.github/dependabot.yml) já está no repo
 (varredura `pip` + `github-actions` semanal). Na tela **Advanced Security**,
 seção **Dependabot**, já aparecem com `Disable` (ou seja, ligados):
 
@@ -78,7 +78,7 @@ recusado. Um commit direto na `main` sem PR também.
 
 Painel: Coolify no endereço interno da VPS (acesso por SSH + o painel web do
 Coolify). Passo a passo completo de como tudo foi montado:
-[`DEPLOY-VPS.md`](DEPLOY-VPS.md).
+[`DEPLOY-VPS.md`](../deploy/DEPLOY-VPS.md).
 
 > **Domínio:** hoje é `celulares-pag.duckdns.org` (DuckDNS, gratuito). Domínio
 > próprio é melhor a longo prazo — a URL do webhook da Cora e da Evolution
@@ -128,8 +128,8 @@ autorizada entra.
 **Já ligadas de verdade em produção** desde 28/09/2026
 (`CORA_PROVIDER=cora`, `WHATSAPP_PROVIDER=evolution`). Passo a passo de como
 foi feito (para recriar um certificado ou um webhook): 
-[`CHECKLIST-ATIVACAO.md`](CHECKLIST-ATIVACAO.md) (registro histórico),
-[`WHATSAPP.md`](WHATSAPP.md) e [`CORA.md`](CORA.md). No Coolify, os
+[`CHECKLIST-ATIVACAO.md`](../integracoes/CHECKLIST-ATIVACAO.md) (registro histórico),
+[`WHATSAPP.md`](../integracoes/WHATSAPP.md) e [`CORA.md`](../integracoes/CORA.md). No Coolify, os
 certificados da Cora entram como variável de ambiente (não como "Secret
 Files" — isso era coisa do Render), apontadas por `CORA_CERT_PATH`/
 `CORA_KEY_PATH`.
@@ -185,7 +185,7 @@ python manage.py axes_reset_username <usuário>
 ### C4. ⬜ Conferir que as migrações rodaram no deploy
 
 O `deploy/entrypoint.sh` roda `python manage.py migrate` antes de subir o site
-(ver [`DEPLOY-VPS.md`](DEPLOY-VPS.md)). Depois de um deploy, confirme no log
+(ver [`DEPLOY-VPS.md`](../deploy/DEPLOY-VPS.md)). Depois de um deploy, confirme no log
 do container (Coolify → aplicação → **Logs**) que o `migrate` rodou sem erro.
 
 **Conferir:** shell do container em produção → `python manage.py migrate
@@ -215,7 +215,7 @@ ora). Ações que continuam suas:
   aparece se alguém abrir o log do Coolify na hora. ⬜ pendente.
 - **Heartbeat da `rotina_diaria`:** ✅ feito em 29/09/2026 — a rotina avisa um
   check do healthchecks.io em sucesso e falha, via `ROTINA_HEALTHCHECK_URL`
-  (ver [`DEPLOY-VPS.md`](DEPLOY-VPS.md)). Falta só cadastrar a URL do check no
+  (ver [`DEPLOY-VPS.md`](../deploy/DEPLOY-VPS.md)). Falta só cadastrar a URL do check no
   Coolify (variável de ambiente) se ainda não foi feito.
 
 ---

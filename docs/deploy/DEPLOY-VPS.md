@@ -1,7 +1,7 @@
 # Hospedagem na VPS (KingHost + Coolify)
 
 O site roda na mesma VPS da Evolution API, gerenciado pelo Coolify. Substitui o
-Render (`docs/DEPLOY.md` e `render.yaml` ficam como alternativa). O código já vem
+Render (`docs/deploy/DEPLOY.md` e `render.yaml` ficam como alternativa). O código já vem
 pronto: `Dockerfile`, `deploy/entrypoint.sh` e `.dockerignore`.
 
 **Decisões**
@@ -133,9 +133,9 @@ aplicação).
 ## 6. Webhooks
 
 - **Evolution → site:** `https://SEU-DOMINIO/pagamentos/webhooks/whatsapp/`, evento
-  `messages.update` (ver `docs/WHATSAPP.md`).
+  `messages.update` (ver `docs/integracoes/WHATSAPP.md`).
 - **Cora → site:** `https://SEU-DOMINIO/pagamentos/webhooks/cora/` (ver
-  `docs/CORA.md`). Sem o webhook o pagamento só é reconhecido pelo
+  `docs/integracoes/CORA.md`). Sem o webhook o pagamento só é reconhecido pelo
   `reconciliar_cora`.
 
 ## 7. Ligar de verdade

@@ -1,4 +1,4 @@
-# Varredura semanal de dependências (item 12 de docs/SEGURANCA.md).
+# Varredura semanal de dependências (item 12 de docs/seguranca/SEGURANCA.md).
 # O Dependabot abre PRs quando sai correção de segurança ou versão nova.
 version: 2
 updates:

@@ -1,4 +1,4 @@
-# Imagem de produção do site (usada pelo Coolify na VPS — ver docs/DEPLOY-VPS.md).
+# Imagem de produção do site (usada pelo Coolify na VPS — ver docs/deploy/DEPLOY-VPS.md).
 # Segredos NUNCA entram na imagem: chegam por variáveis de ambiente no Coolify.
 FROM python:3.12-slim
 

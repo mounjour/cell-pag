@@ -4,7 +4,7 @@
 > **Base:** "Roteiro de Entrevista com Yslane v2" + "Respostas" + formulário de respostas da Yslane
 > **Status (atualizado 14/09; banco revisado 16/09):** Fases 1–7 têm código implementado
 > (Fases 6 e 7 rodando em modo seguro — `WHATSAPP_PROVIDER=log` / `CORA_PROVIDER=log` — até
-> a ativação externa descrita em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md)).
+> a ativação externa descrita em [`docs/integracoes/CHECKLIST-ATIVACAO.md`](docs/integracoes/CHECKLIST-ATIVACAO.md)).
 > Pendências reais: o texto final da mensagem com a Yslane (seção 10), a ativação externa das
 > Fases 6/7, e a migração do banco de produção de Render para **Supabase** (hospedagem do site
 > continua no Render — seção 13). Fronteira atrasado→inadimplente **confirmada com o Alisson
@@ -360,8 +360,8 @@ Fases em sequência. As datas dependem do tamanho da equipe e serão definidas a
 | **Fase 3 — Pagamentos** | Registro e baixa | **Implementada (03/09).** Model `Pagamento` (uma linha por parcela, `UniqueConstraint(contrato, vencimento)` + `CheckConstraint`), baixa manual (`/pagamentos/contrato/<pk>/novo/`), **pagamento parcial com transporte de saldo** para a próxima parcela (ou `Contrato.saldo_transportado`), estorno, histórico por cliente + `/pagamentos/historico/`, trilha via `django-auditlog`. **Quitação é manual** (`/contratos/<pk>/quitar/` — a baixa nunca quita). `Cobranca` movido para a Fase 6. |
 | **Fase 4 — Atraso** | Juros e status | **Implementada (04/09).** Lógica pura pronta e testada (`apps/pagamentos/atraso.py`): dias de atraso com a janela da semanal, **juros de R$ 5,00/dia**, os 4 status, cor da UI e **alerta de bloqueio aos 7 dias**. Ligada ao `Contrato` (`situacao_atraso` / `status_efetivo` / `sincronizar_status`), com bloco "Situação hoje" no detalhe e coluna no admin. O cálculo usa a **parcela (`Vencimento`) em aberto mais antiga** (`parcela_em_aberto()` / `data_referencia_atraso()`) quando o contrato já tem vencimentos gerados; `proximo_vencimento` manual só entra como *fallback* antes disso. Atualização em massa do `status` salvo roda no job diário `gerar_vencimentos` (Fase 2). Lista/filtro de contratos e o painel "Cobrar hoje" usam o status calculado. Ver seção 4.6. |
 | **Fase 5 — Relatórios** | Visão gerencial | Visão diária consolidada, relatórios semanais e mensais, exportação em Excel e PDF. |
-| **Fase 6 — Cobrança ao cliente** | WhatsApp automático (Modalidade B) | **Código implementado (ver [`docs/WHATSAPP.md`](docs/WHATSAPP.md)).** Integração com a Evolution API (auto-hospedada, `apps/pagamentos/whatsapp.py`, `cobranca.py`, `webhooks.py`), mensagens de vencimento/atraso, `manage.py enviar_cobrancas_clientes`. Roda em modo seguro (`WHATSAPP_PROVIDER=log`) até a ativação — passos externos (VPS, chip dedicado, credenciais) em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md). |
-| **Fase 7 — Futuro** | Expansões | **Cobrança Pix via Cora: código implementado** (ver [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md) e [`docs/CORA.md`](docs/CORA.md)) — `apps/pagamentos/cora_api.py`, `pix_cora.py`, `cora_webhooks.py`, `reconciliar_cora`. Roda em modo seguro (`CORA_PROVIDER=log`) até a ativação (conta PJ CoraPro + certificado mTLS — checklist em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md)). Módulo de motos **descartado**; portal do cliente segue sem iniciar. |
+| **Fase 6 — Cobrança ao cliente** | WhatsApp automático (Modalidade B) | **Código implementado (ver [`docs/integracoes/WHATSAPP.md`](docs/integracoes/WHATSAPP.md)).** Integração com a Evolution API (auto-hospedada, `apps/pagamentos/whatsapp.py`, `cobranca.py`, `webhooks.py`), mensagens de vencimento/atraso, `manage.py enviar_cobrancas_clientes`. Roda em modo seguro (`WHATSAPP_PROVIDER=log`) até a ativação — passos externos (VPS, chip dedicado, credenciais) em [`docs/integracoes/CHECKLIST-ATIVACAO.md`](docs/integracoes/CHECKLIST-ATIVACAO.md). |
+| **Fase 7 — Futuro** | Expansões | **Cobrança Pix via Cora: código implementado** (ver [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md) e [`docs/integracoes/CORA.md`](docs/integracoes/CORA.md)) — `apps/pagamentos/cora_api.py`, `pix_cora.py`, `cora_webhooks.py`, `reconciliar_cora`. Roda em modo seguro (`CORA_PROVIDER=log`) até a ativação (conta PJ CoraPro + certificado mTLS — checklist em [`docs/integracoes/CHECKLIST-ATIVACAO.md`](docs/integracoes/CHECKLIST-ATIVACAO.md)). Módulo de motos **descartado**; portal do cliente segue sem iniciar. |
 
 ---
 
@@ -659,7 +659,7 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
   [seção 8](#8-cobrança-automática--decisão-de-canal) (fechados 21/09)
 - [ ] **Ativação externa (não é código):** contratar VPS, hospedar a Evolution
   API, número dedicado, credenciais reais. `WHATSAPP_PROVIDER=log` por padrão
-  (nada é enviado). Passo a passo em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md).
+  (nada é enviado). Passo a passo em [`docs/integracoes/CHECKLIST-ATIVACAO.md`](docs/integracoes/CHECKLIST-ATIVACAO.md).
 
 ### Fase 7 — Futuro
 
@@ -674,7 +674,7 @@ Atualizado em 03/09. Fecha o gap entre o roadmap (seção 9) e o estado do códi
   faseamento **7a–7d** em [`COBRANCA-PIX-CORA.md`](COBRANCA-PIX-CORA.md).
 - [ ] **Ativação externa (não é código):** conta PJ + plano CoraPro, certificado
   mTLS (Stage e depois produção). `CORA_PROVIDER=log` por padrão (nenhum Pix é
-  criado). Passo a passo em [`docs/CHECKLIST-ATIVACAO.md`](docs/CHECKLIST-ATIVACAO.md).
+  criado). Passo a passo em [`docs/integracoes/CHECKLIST-ATIVACAO.md`](docs/integracoes/CHECKLIST-ATIVACAO.md).
 
 ### Técnico / infra (transversal)
 
