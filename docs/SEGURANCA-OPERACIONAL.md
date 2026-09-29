@@ -7,7 +7,11 @@ O que sobra são **cliques em painel e decisões suas** — nada disso o Claude 
 consegue fazer. Este guia é o passo a passo, em ordem de prioridade, com *onde
 clicar* e *como conferir que deu certo*.
 
-Repositório: `github.com/mounjour/cell-pag` · Site: `https://cell-pag.onrender.com`
+Repositório: `github.com/mounjour/cell-pag` · Site: `https://celulares-pag.duckdns.org`
+
+> **Atualizado em 29/09/2026.** A hospedagem migrou do Render para uma VPS da
+> KingHost com Coolify (ver [`DEPLOY-VPS.md`](DEPLOY-VPS.md)) — a seção B
+> abaixo já reflete isso. As seções A, C e D continuam valendo como estavam.
 
 Legenda: ⬜ a fazer · ✅ feito · ⏸️ adiado de propósito
 
@@ -70,137 +74,101 @@ recusado. Um commit direto na `main` sem PR também.
 
 ---
 
-## B. Render — infraestrutura
+## B. VPS KingHost + Coolify — infraestrutura
 
-Painel: **dashboard.render.com** → serviço `cell-pag`.
+Painel: Coolify no endereço interno da VPS (acesso por SSH + o painel web do
+Coolify). Passo a passo completo de como tudo foi montado:
+[`DEPLOY-VPS.md`](DEPLOY-VPS.md).
 
-> **Domínio:** usar só o `https://cell-pag.onrender.com` do Render (decisão
-> 10/09/2026). Sem domínio próprio ⇒ **nada a mexer** em `ALLOWED_HOSTS` /
-> `CSRF_TRUSTED_ORIGINS` (o `settings.py` se vira com o `RENDER_EXTERNAL_HOSTNAME`)
-> e o **HSTS fica em 1 dia** — não subir para 1 ano / preload (item 10 do
-> `SEGURANCA.md`).
+> **Domínio:** hoje é `celulares-pag.duckdns.org` (DuckDNS, gratuito). Domínio
+> próprio é melhor a longo prazo — a URL do webhook da Cora e da Evolution
+> ficam gravadas nesses serviços, e trocar de domínio exige recadastrar as
+> duas. Enquanto for o DuckDNS, o **HSTS fica em 1 dia**, sem preload (item 10
+> do `SEGURANCA.md`) — subir para 1 ano/preload só quando o domínio for
+> definitivo.
 
-> **Custo da Seção B no Render: ~US$ 7,25/mês** — web `starter` (7) + disco (0,25);
-> o Postgres é do Supabase, fora do Render. O `render.yaml` já foi ajustado para esses planos
-> (commit "infra: planos pagos + disco"); falta aplicar (abaixo).
+### B1. ✅ Disco persistente para os anexos
 
-### B1. ⬜ Disco persistente montado em `MEDIA_ROOT`
+A VPS não é efêmera como o Render free: os anexos (`MEDIA_ROOT`) ficam num
+volume do próprio container, persistente entre deploys. Sem ação pendente.
 
-Sem isso, **todo comprovante e documento some a cada deploy** (o container é
-efêmero). A validação e a entrega autenticada dos anexos já estão no código —
-falta só o disco.
+**Conferir:** suba um comprovante por uma tela de pagamento, force um novo
+deploy (push na `main`) e confirme que o arquivo ainda abre depois.
 
-**No Render, disco exige instância paga** — o plano `free` do web não monta
-disco. Por isso o `render.yaml` já traz o web em `plan: starter` **e** o bloco
-`disk:` (`media`, `/opt/render/project/src/media`, 1 GB — o caminho bate com o
-`MEDIA_ROOT` do `settings.py`).
+### B2. ✅ Backup do PostgreSQL  *(configurado e testado — 28/09/2026)*
 
-**Como aplicar** (uma das duas):
+O Postgres é gerenciado pelo próprio Coolify (`celulares-db`). Configurado:
 
-- **Blueprint sync (recomendado):** Render → serviço/Blueprint `cell-pag` →
-  **Manual Sync** (ou só dar push na branch que o Blueprint acompanha). O Render
-  lê o `render.yaml`, sobe o plano e cria o disco.
-- **Na mão:** web `cell-pag` → **Settings → Instance Type → Starter**; depois
-  aba **Disks → Add Disk** com **exatamente** `media` /
-  `/opt/render/project/src/media` / 1 GB (tem de bater com o `render.yaml`, senão
-  o próximo sync briga).
+- **Storage:** Backblaze B2 (bucket `celulares-pag-backup-db`), cadastrado em
+  Coolify como S3 Storage, com uma chave de aplicação restrita a esse bucket
+  (não a master key da conta).
+- **Agendamento:** backup diário (`@daily`), retenção de 14 cópias no
+  Backblaze e 3 localmente na VPS.
+- **Testado:** rodei um backup manual em 28/09/2026 e terminou com
+  `status: success` — o arquivo `.dmp` chegou ao bucket.
 
-O **cron `cell-pag-rotina-diaria`** não precisa de disco (não grava anexo).
+Isso também resolve o antigo "backup off-site": o Backblaze já é fora da VPS,
+então uma falha do servidor não leva o backup junto.
 
-> Um disco persistente **fixa o serviço em uma instância só** (sem escala
-> horizontal) — perfeito para este porte.
+**Conferir:** Coolify → banco `celulares-db` → aba **Backups** → a lista de
+execuções mostra `success` nos últimos dias. Pelo painel do Backblaze
+(**Buckets → celulares-pag-backup-db → Browse Files**) os arquivos `.dmp`
+aparecem e crescem em número dia a dia.
 
-**Conferir:** suba um comprovante por uma tela de pagamento, force um deploy
-(*Manual Deploy → Clear build cache & deploy*) e confirme que o arquivo ainda
-abre. Na aba **Disks** o `media` aparece montado.
+### B3. ✅ Restringir quem acessa o servidor
 
-### B2. ⬜ Backup do PostgreSQL (Supabase)
+Acesso à VPS é só por **SSH com chave** (sem senha) como root, e o painel do
+Coolify roda só na própria VPS. Não há outro usuário/convidado com acesso.
 
-O banco de produção é o **Postgres do Supabase**, não o do Render (o `render.yaml`
-não cria mais banco). Confira no painel do Supabase se o plano tem **backup
-diário** (o plano free não tem — Pro sim) e se o projeto não está sujeito a
-pausa por inatividade.
+**Conferir:** tentar `ssh` com senha na VPS deve ser recusado; só a chave
+autorizada entra.
 
-**Conferir:** Supabase → **Database → Backups** mostra backups diários.
+### B4. ✅ Variáveis das integrações (Evolution / Cora)
 
-### B3. ⬜ Backup off-site do banco  ⏸️ *(decisão adiada — 09/09/2026)*
+**Já ligadas de verdade em produção** desde 28/09/2026
+(`CORA_PROVIDER=cora`, `WHATSAPP_PROVIDER=evolution`). Passo a passo de como
+foi feito (para recriar um certificado ou um webhook): 
+[`CHECKLIST-ATIVACAO.md`](CHECKLIST-ATIVACAO.md) (registro histórico),
+[`WHATSAPP.md`](WHATSAPP.md) e [`CORA.md`](CORA.md). No Coolify, os
+certificados da Cora entram como variável de ambiente (não como "Secret
+Files" — isso era coisa do Render), apontadas por `CORA_CERT_PATH`/
+`CORA_KEY_PATH`.
 
-O backup do Render mitiga falha do Render, não "conta suspensa / região caiu".
-O ideal é um `pg_dump` cifrado indo para um bucket S3-compatível (Backblaze B2,
-Cloudflare R2). **Adiado por decisão sua** — quando quiser, o caminho é um
-`scripts/backup_db.py` + uma entrada `cron` no `render.yaml`. Deixado registrado
-para não se perder.
-
-Enquanto isso: 1x por mês, pelo **Shell** do serviço web, rode
-`pg_dump "$DATABASE_URL" | gzip > /tmp/cellpag-$(date +%F).sql.gz` e baixe o
-arquivo pela própria aba Shell (ícone de download). Guarde fora do Render.
-
-### B4. ⬜ Restringir quem acessa o painel do Render
-
-Quem entra no painel lê **logs de erro, variáveis de ambiente e o banco**.
-
-1. **Account Settings → Team / Members** (ou o *workspace*): confirme que só você
-   é membro. Remova convidados antigos.
-2. Ligue **2FA** na sua conta Render (**Account Settings → Two-Factor Auth**).
-3. Se um dia adicionar alguém, use o menor papel possível (*Viewer*), não *Admin*.
-
-**Conferir:** a lista de membros tem só você; seu login exige o código 2FA.
-
-### B5. ⏸️ Variáveis das integrações (Evolution / Cora)
-
-Só quando for ligar os canais. Passo a passo completo já está em
-[`DEPLOY.md`](DEPLOY.md) §3 e §7, [`WHATSAPP.md`](WHATSAPP.md) e
-[`CORA.md`](CORA.md). Resumo do que **não** pode passar batido:
-
-- Preencher `EVOLUTION_API_URL/_API_KEY/_INSTANCE` e `CORA_CLIENT_ID/_TOKEN_URL/
-  _API_BASE_URL` no grupo `cell-pag-config`.
-- Confirmar que `EVOLUTION_WEBHOOK_TOKEN` e `CORA_WEBHOOK_TOKEN` **têm valor**
-  (o `render.yaml` gera o da Cora; o da Evolution você define).
-- Cadastrar as URLs de webhook **com `?token=<valor>` no fim** — sem o token o
-  webhook é recusado (menos em `DEBUG=True`).
-- Certificado/chave da Cora como **Secret Files** no web **e** no cron
-  (`/etc/secrets/…`), com `CORA_CERT_PATH`/`CORA_KEY_PATH` apontando para eles.
-- Depois de trocar cada `*_PROVIDER`, rodar `python manage.py rotina_diaria
-  --sem-cobrancas` uma vez antes de deixar automático.
+**Conferir:** `/pagamentos/pix/` mostra cobranças reais da Cora; o painel
+`/pagamentos/cobrar-hoje/` reflete mensagens realmente enviadas pela Evolution.
 
 ---
 
 ## C. Contas e operação
 
-### C1. ⬜ Senha forte para os 2 usuários reais
+### C1. ⬜ Senha forte para os usuários reais
 
 O validador **exige no mínimo 8 caracteres** (mais os checks de senha comum,
 só-números e parecida com o usuário) — o mínimo voltou de 12 para 8 por decisão
 do Alisson (PR #10 / `SEGURANCA.md` item 13). **8 é o piso, não a meta:** use
-uma senha longa (12+) e única, de gerador. Force a troca:
+uma senha longa (12+) e única, de gerador. Usuários hoje em produção: `Yslane`
+(financeiro) e `IsaqueSant` (dono/superusuário — recriado em 29/09/2026 com
+senha temporária; **trocar assim que entrar**, pelo formulário de alterar
+senha ou por `changepassword` no shell da produção).
 
-1. Shell do serviço web → `python manage.py changepassword yslane`
-   (e de novo para o usuário do Alisson).
-2. Use senha longa e única (gerador do navegador / gerenciador de senhas).
+```bash
+python manage.py changepassword <usuario>
+```
 
 **Conferir:** `changepassword` com `12345678` deve ser recusado (senha comum /
 só números); uma senha curta de 7 caracteres também.
 
-### C2. ⬜ Apagar superusuário de teste em produção
-
-Qualquer conta tipo `admin` criada para teste é porta de entrada.
+### C2. ✅ Sem superusuário de teste em produção  *(confirmado — 29/09/2026)*
 
 ```bash
-# Shell do serviço web
 python manage.py shell -c "from django.contrib.auth import get_user_model as g; \
 print(list(g().objects.values_list('username','is_superuser','is_active')))"
 ```
 
-Se aparecer `admin` (ou outra conta que não seja a da Yslane / do Alisson):
-
-```bash
-python manage.py shell -c "from django.contrib.auth import get_user_model as g; \
-g().objects.filter(username='admin').delete()"
-```
-
-**Conferir:** rode o primeiro comando de novo — só devem sobrar as 2 contas
-reais. (O superusuário local de dev `admin` existe **só** no `db.sqlite3` da sua
-máquina — não vai para produção.)
+Hoje só existem `Yslane` (não-superusuário) e `IsaqueSant` (superusuário,
+dono do sistema). Nenhuma conta tipo `admin`/teste. Repita o comando acima
+sempre que criar ou remover um usuário, para confirmar que a lista continua só
+com contas reais.
 
 ### C3. ✅ Saber destravar um login bloqueado
 
@@ -214,27 +182,23 @@ python manage.py axes_reset_username <usuário>
 
 `python manage.py axes_reset` zera tudo; `axes_reset_ip <ip>` zera um IP.
 
-### C4. ⬜ Conferir no log de deploy que as migrações rodaram
+### C4. ⬜ Conferir que as migrações rodaram no deploy
 
-O `preDeployCommand` do `render.yaml` roda `python manage.py migrate` antes de
-trocar a versão no ar. No deploy de segurança, confirme no **log do deploy**
-(aba *Events* / *Logs* do serviço web) as linhas:
+O `deploy/entrypoint.sh` roda `python manage.py migrate` antes de subir o site
+(ver [`DEPLOY-VPS.md`](DEPLOY-VPS.md)). Depois de um deploy, confirme no log
+do container (Coolify → aplicação → **Logs**) que o `migrate` rodou sem erro.
 
-- `Applying axes.0001_initial… OK` (e as demais do `axes`)
-- `Applying pagamentos.0006_alter_pagamento_comprovante… OK`
-- `Applying contratos.0008_alter_documentocontrato_arquivo… OK`
+**Conferir:** shell do container em produção → `python manage.py migrate
+--check` sai sem pendências (código 0).
 
-Se o deploy foi anterior a essas migrações, um **Manual Deploy** as aplica.
+### C5. ✅ LGPD — aviso, retenção e pedido do titular  *(preenchido — 29/09/2026)*
 
-**Conferir:** Shell → `python manage.py migrate --check` sai sem pendências
-(código 0).
+Ver [`LGPD.md`](LGPD.md) — controlador, encarregado e contato preenchidos
+(falta só o CPF do controlador, decisão do Alisson de deixar em branco por
+ora). Ações que continuam suas:
 
-### C5. ⬜ LGPD — aviso, retenção e pedido do titular
-
-Ver [`LGPD.md`](LGPD.md). Ações suas:
-
-- Preencher os `[COLCHETES]` (razão social, encarregado, contato) no aviso de
-  privacidade e passar a entregá-lo aos clientes novos.
+- Passar a entregar o aviso de privacidade aos clientes novos (impresso,
+  WhatsApp ou anexo — como preferir).
 - Ciente da regra de retenção dos anexos (**sem expurgo automático** — revisão
   manual após 5 anos da quitação).
 - Guardar o procedimento de pedido do titular à mão (prazo de resposta: 15 dias).
@@ -243,13 +207,16 @@ Ver [`LGPD.md`](LGPD.md). Ações suas:
 
 ## D. Saúde do projeto (recomendado, não bloqueia)
 
-- **CI:** um workflow que roda `pytest` + `manage.py check --deploy` +
-  `pip-audit` em cada PR. Depois de criado, ligar como *required status check*
-  em A3.
-- **Sentry** (plano free): captura de erro em produção — hoje um 500 só aparece
-  se você abrir o log do Render na hora.
-- **Heartbeat da `rotina_diaria`:** o cron free pode falhar calado. Um ping para
-  healthchecks.io no fim da rotina avisa quando um dia **não** rodou.
+- **CI:** o workflow (`.github/workflows/ci.yml`) já roda `pytest` +
+  `manage.py check` em cada PR. Ainda falta `manage.py check --deploy` (pega
+  regressão de configuração de segurança) e `pip-audit` (dependência com CVE
+  conhecida) — ⬜ pendente.
+- **Sentry** (plano free): captura de erro em produção — hoje um 500 só
+  aparece se alguém abrir o log do Coolify na hora. ⬜ pendente.
+- **Heartbeat da `rotina_diaria`:** ✅ feito em 29/09/2026 — a rotina avisa um
+  check do healthchecks.io em sucesso e falha, via `ROTINA_HEALTHCHECK_URL`
+  (ver [`DEPLOY-VPS.md`](DEPLOY-VPS.md)). Falta só cadastrar a URL do check no
+  Coolify (variável de ambiente) se ainda não foi feito.
 
 ---
 
@@ -260,16 +227,19 @@ GitHub
   [x] A1  Dependabot alerts + security updates ligados
   [x] A2  Secret scanning + push protection ligados
   [x] A3  Branch protection na main (PR + block force push)
-Render
-  [ ] B1  Disco persistente em /opt/render/project/src/media (web em starter)
-  [ ] B2  Postgres no plano Basic (com backup)
-  [ ] B3  Backup off-site  — adiado, registrado
-  [ ] B4  Só você no time do Render + 2FA
-  [ ] B5  Vars/webhooks das integrações — quando ligar os canais
+VPS KingHost + Coolify
+  [x] B1  Disco persistente para os anexos (padrão do Coolify)
+  [x] B2  Backup diário do Postgres para o Backblaze B2 — testado 28/09/2026
+  [x] B3  Só acesso por SSH com chave; painel do Coolify só na própria VPS
+  [x] B4  Evolution + Cora ligados de verdade em produção — 28/09/2026
 Contas
-  [ ] C1  Senha longa e única trocada para os 2 usuários
-  [ ] C2  Superusuário de teste apagado em produção
+  [ ] C1  Senha longa e única para os usuários reais (trocar a temporária do IsaqueSant)
+  [x] C2  Sem superusuário de teste em produção — confirmado 29/09/2026
   [x] C3  Sei rodar axes_reset_username
-  [ ] C4  Migrações axes / pagamentos.0006 / contratos.0008 confirmadas no log
-  [ ] C5  LGPD.md preenchido e aviso em uso
+  [ ] C4  Migrações confirmadas no log do deploy mais recente
+  [x] C5  LGPD.md preenchido e aviso pronto para uso — 29/09/2026
+Saúde do projeto
+  [x] D1  Heartbeat da rotina diária (healthchecks.io) — 29/09/2026
+  [ ] D2  CI com manage.py check --deploy + pip-audit
+  [ ] D3  Sentry (ou equivalente) para erro 500 em produção
 ```

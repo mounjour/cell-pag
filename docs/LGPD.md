@@ -6,8 +6,8 @@ telefone, contratos, parcelas, pagamentos e anexos). Isso o coloca sob a
 conformidade: o aviso de privacidade para entregar ao cliente, a regra de
 retenção dos anexos e o passo a passo para atender um pedido do titular.
 
-> Campos entre `[COLCHETES]` só você pode preencher — dados da empresa e do
-> responsável. Preencha antes de usar o aviso com clientes.
+> Preenchido em 29/09/2026. O CPF do controlador ainda falta — Alisson decidiu
+> deixar em branco por ora; inclua-o aqui assim que definir.
 
 ---
 
@@ -15,9 +15,9 @@ retenção dos anexos e o passo a passo para atender um pedido do titular.
 
 | Papel LGPD | Quem | Responsabilidade |
 |---|---|---|
-| **Controlador** | `[RAZÃO SOCIAL / NOME]` — CNPJ/CPF `[..]` | decide o que é coletado e por quê |
-| **Encarregado (DPO)** | `[NOME]` — `[E-MAIL/telefone de contato]` | canal do titular e da ANPD |
-| **Operadores** | Render (hospedagem), Evolution API (envio de WhatsApp), Cora (Pix) | tratam dados a mando do controlador |
+| **Controlador** | Alisson Erllen dos Santos Silva — CPF `[a preencher]` | decide o que é coletado e por quê |
+| **Encarregado (DPO)** | Alisson Erllen dos Santos Silva — alissonerllen1@gmail.com | canal do titular e da ANPD |
+| **Operadores** | VPS na KingHost com Coolify (hospedagem), Evolution API (envio de WhatsApp), Cora (Pix) | tratam dados a mando do controlador |
 
 O sistema é de uso interno de **duas pessoas** (Yslane — financeiro; Alisson —
 dono). Não há acesso de terceiros nem venda/compartilhamento de dados para fins
@@ -28,11 +28,11 @@ de marketing.
 ## 2. Aviso de privacidade (entregar ao cliente)
 
 > Texto sugerido. Pode ir impresso junto do contrato, por mensagem no primeiro
-> contato, ou como anexo. Ajuste os `[COLCHETES]`.
+> contato, ou como anexo.
 
 ---
 
-**Aviso de Privacidade — `[NOME DA EMPRESA]`**
+**Aviso de Privacidade — Alisson Erllen dos Santos Silva**
 
 Para vender aparelhos a prazo e acompanhar os pagamentos, tratamos alguns dados
 seus:
@@ -56,7 +56,7 @@ seus:
   guardados por esse mesmo período.
 - **Seus direitos:** confirmar o tratamento, acessar, corrigir, pedir
   anonimização, portabilidade ou exclusão dos dados que não precisamos mais
-  manter por lei. Fale com nosso encarregado: **`[E-MAIL / telefone]`**.
+  manter por lei. Fale com nosso encarregado: **alissonerllen1@gmail.com**.
 - **Reclamações:** você também pode procurar a ANPD (gov.br/anpd).
 
 ---
@@ -135,8 +135,9 @@ Prazo de resposta: **até 15 dias** do pedido (LGPD art. 19, §2º). Registre a 
   remove contratos, vencimentos e pagamentos). **Confira antes** que não há
   obrigação de retenção pendente. Alternativa mais segura: anonimizar em vez de
   deletar.
-- **Pelo Shell do Render**, para casos maiores, com um `python manage.py shell`
-  e o ORM — sempre depois de um backup do banco.
+- **Pelo shell do container em produção** (Coolify), para casos maiores, com
+  um `python manage.py shell` e o ORM — sempre depois de um backup do banco
+  (backup diário automático — ver [DEPLOY-VPS.md](DEPLOY-VPS.md)).
 
 ---
 
@@ -151,7 +152,6 @@ Prazo de resposta: **até 15 dias** do pedido (LGPD art. 19, §2º). Registre a 
 - Trilha de auditoria de quem alterou o quê (`django-auditlog`).
 - Segredos fora do Git; `SECRET_KEY` gerada pelo provedor.
 
-**Pendências de infra que afetam LGPD** (ver
-[`SEGURANCA-OPERACIONAL.md`](SEGURANCA-OPERACIONAL.md)): disco persistente para
-os anexos, banco com backup (o plano free do Postgres não tem) e um backup
-off-site cifrado.
+**Resolvido (29/09/2026):** o VPS na KingHost tem disco persistente para os
+anexos, e o Postgres do Coolify tem backup diário automático para o Backblaze
+B2 (fora do VPS — ver [DEPLOY-VPS.md](DEPLOY-VPS.md)).
