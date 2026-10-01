@@ -283,7 +283,7 @@ def test_post_cria_baixa_e_redireciona(auth_client, cliente):
         },
     )
     assert resp.status_code == 302
-    assert resp["Location"] == reverse("contratos:detalhe", args=[ct.pk])
+    assert resp["Location"] == reverse("contratos:detalhe", args=[ct.pk]) + "?pago=1"
     assert Pagamento.objects.count() == 1
     pag = Pagamento.objects.get()
     assert pag.usuario_baixa is not None
