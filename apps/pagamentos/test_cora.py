@@ -496,7 +496,8 @@ def test_reconciliacao_processa_sinal_do_webhook(parcela_cora, monkeypatch):
 
 
 @pytest.mark.django_db
-def test_webhook_cora_so_registra_fatura_conhecida(client, parcela_cora, settings, monkeypatch):
+def test_webhook_cora_confirma_na_hora(client, parcela_cora, settings, monkeypatch):
+    """O webhook não espera a rotina diária: consulta a Cora e dá a baixa na hora."""
     settings.CORA_WEBHOOK_TOKEN = "tok-cora"
     CobrancaCora.objects.create(
         vencimento=parcela_cora,
@@ -507,7 +508,12 @@ def test_webhook_cora_so_registra_fatura_conhecida(client, parcela_cora, setting
     )
     monkeypatch.setattr(
         "apps.pagamentos.cora_api.consultar_fatura",
-        lambda *args: pytest.fail("webhook público não pode consultar API autenticada"),
+        lambda cora_id: {
+            "id": cora_id,
+            "status": "PAID",
+            "total_paid": 10000,
+            "pix": {"emv": "PIX"},
+        },
     )
     url = reverse("pagamentos:cora_webhook") + "?token=tok-cora"
     cabecalhos = {
@@ -515,9 +521,61 @@ def test_webhook_cora_so_registra_fatura_conhecida(client, parcela_cora, setting
         "webhook-resource-id": "inv_conhecida",
     }
     primeira = client.post(url, headers=cabecalhos)
-    segunda = client.post(url, headers=cabecalhos)
+    segunda = client.post(url, headers=cabecalhos)  # replay: não duplica a baixa
     assert primeira.status_code == segunda.status_code == 200
     assert EventoCora.objects.count() == 1
+    evento = EventoCora.objects.get()
+    assert evento.processado is True
+    cobranca = CobrancaCora.objects.get(cora_id="inv_conhecida")
+    assert cobranca.status == CobrancaCora.Status.PAGO
+    assert Pagamento.objects.filter(vencimento=parcela_cora).count() == 1
+
+
+@pytest.mark.django_db
+def test_webhook_cora_ignora_fatura_desconhecida_sem_consultar_api(
+    client, settings, monkeypatch
+):
+    settings.CORA_WEBHOOK_TOKEN = "tok-cora"
+    monkeypatch.setattr(
+        "apps.pagamentos.cora_api.consultar_fatura",
+        lambda *args: pytest.fail("não deve consultar a API para uma fatura que não existe aqui"),
+    )
+    url = reverse("pagamentos:cora_webhook") + "?token=tok-cora"
+    resposta = client.post(
+        url,
+        headers={"webhook-event-type": "invoice.paid", "webhook-resource-id": "inv_desconhecida"},
+    )
+    assert resposta.status_code == 200
+    assert EventoCora.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_webhook_cora_falha_na_cora_nao_quebra_a_resposta(
+    client, parcela_cora, settings, monkeypatch
+):
+    """Instabilidade da Cora não derruba o webhook — a rotina diária cobre depois."""
+    settings.CORA_WEBHOOK_TOKEN = "tok-cora"
+    CobrancaCora.objects.create(
+        vencimento=parcela_cora,
+        cora_id="inv_instavel",
+        status=CobrancaCora.Status.ABERTO,
+        valor=Decimal("100.00"),
+        data_vencimento=parcela_cora.data_vencimento,
+    )
+
+    def _falha(cora_id):
+        raise cora_api.CoraErro("instabilidade")
+
+    monkeypatch.setattr("apps.pagamentos.cora_api.consultar_fatura", _falha)
+    url = reverse("pagamentos:cora_webhook") + "?token=tok-cora"
+    resposta = client.post(
+        url,
+        headers={"webhook-event-type": "invoice.paid", "webhook-resource-id": "inv_instavel"},
+    )
+    assert resposta.status_code == 200
+    evento = EventoCora.objects.get()
+    assert evento.processado is False
+    assert "instabilidade" in evento.erro
 
 
 @pytest.mark.django_db
