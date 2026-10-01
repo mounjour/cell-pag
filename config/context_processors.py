@@ -15,6 +15,7 @@ FAVICON_POR_PAGINA = {
     "pagamentos:cobrar_hoje": "favicon-pagamentos-cobrar-hoje.svg",
     "pagamentos:pix_painel": "favicon-pagamentos-pix.svg",
     "pagamentos:historico": "favicon-pagamentos-historico.svg",
+    "pagamentos:conexoes": "favicon-pagamentos-conexoes.svg",
     "relatorios:inicio": "favicon-relatorios-inicio.svg",
     "relatorios:painel": "favicon-relatorios-painel.svg",
     "usuarios:login": "favicon-usuarios-login.svg",
@@ -41,9 +42,29 @@ def shell(request):
         ).count()
         return duplicadas + comprovantes
 
+    def whatsapp_desconectado():
+        from apps.pagamentos.badge import status_whatsapp
+
+        return status_whatsapp() not in ("open", "simulado")
+
+    def importacoes_pendentes():
+        from apps.contratos.models import ImportacaoContratoPendente
+        return ImportacaoContratoPendente.objects.filter(resolvida_em__isnull=True).count()
+
+    def notificacoes_n():
+        return pix_alertas() + importacoes_pendentes() + (1 if whatsapp_desconectado() else 0)
+
+    def rotulo_importacoes_pendentes():
+        quantidade = importacoes_pendentes()
+        return "pendência" if quantidade == 1 else "pendências"
+
     return {
         "cobrar_hoje_n": SimpleLazyObject(contagem_cobrar_hoje),
         "pix_alertas_n": SimpleLazyObject(pix_alertas),  # duplicidades + comprovantes a conferir
+        "whatsapp_desconectado": SimpleLazyObject(whatsapp_desconectado),
+        "importacoes_pendentes_n": SimpleLazyObject(importacoes_pendentes),
+        "notificacoes_n": SimpleLazyObject(notificacoes_n),
+        "importacoes_pendentes_rotulo": SimpleLazyObject(rotulo_importacoes_pendentes),
     }
 
 

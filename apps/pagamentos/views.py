@@ -10,6 +10,7 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -334,7 +335,10 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
 
         self._avisar_se_tudo_pago()
 
-        return redirect("contratos:detalhe", pk=self.contrato.pk)
+        destino = reverse("contratos:detalhe", args=[self.contrato.pk])
+        if venc is not None:
+            destino += f"?pago={venc.numero}"
+        return redirect(destino)
 
     def _encerrar_cobranca_automatica(self, pagamento):
         """Cancela o Pix em aberto e resolve a mensagem de cobrança já enviada.
@@ -411,6 +415,82 @@ class HistoricoPagamentosView(LoginRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["filtrado"] = bool(self.cliente_id or self.contrato_id)
         return ctx
+
+
+CHAVE_SESSAO_QR_ATIVO = "conexoes_whatsapp_gerar_qr"
+CHAVE_SESSAO_DESCONECTADO = "conexoes_whatsapp_estava_desconectado"
+QR_RENOVA_SEGUNDOS = 25
+
+
+class ConexoesView(LoginRequiredMixin, TemplateView):
+    """Status das integrações (WhatsApp, Cora) e QR code pra reconectar o WhatsApp.
+
+    O QR code só é pedido à Evolution quando a pessoa clica em "Gerar QR Code"
+    (grava um flag na sessão) — nunca sozinho a cada carregamento da página,
+    pra não gastar código à toa enquanto ninguém está de fato tentando
+    escanear (o código expira em segundos de qualquer forma).
+    """
+
+    template_name = "pagamentos/conexoes.html"
+
+    def get_context_data(self, **kwargs):
+        from django.conf import settings
+
+        from .badge import TTL_WHATSAPP_SEGUNDOS
+        from .models import EventoCora
+        from .whatsapp import WhatsAppErro, obter_qrcode, obter_status_conexao
+
+        ctx = super().get_context_data(**kwargs)
+        try:
+            status_whatsapp = obter_status_conexao()
+            erro_whatsapp = ""
+        except WhatsAppErro as exc:
+            status_whatsapp = "erro"
+            erro_whatsapp = str(exc)
+
+        if status_whatsapp == "open":
+            self.request.session.pop(CHAVE_SESSAO_QR_ATIVO, None)
+            if self.request.session.pop(CHAVE_SESSAO_DESCONECTADO, False):
+                messages.success(
+                    self.request,
+                    "WhatsApp reconectado! As cobranças automáticas voltam a sair normalmente.",
+                )
+        elif status_whatsapp == "simulado":
+            self.request.session.pop(CHAVE_SESSAO_QR_ATIVO, None)
+        else:
+            self.request.session[CHAVE_SESSAO_DESCONECTADO] = True
+
+        qr_code = ""
+        quer_qr = status_whatsapp not in ("open", "simulado") and self.request.session.get(
+            CHAVE_SESSAO_QR_ATIVO
+        )
+        if quer_qr:
+            try:
+                qr_code = obter_qrcode()
+            except WhatsAppErro as exc:
+                erro_whatsapp = erro_whatsapp or str(exc)
+
+        ctx.update(
+            status_whatsapp=status_whatsapp,
+            erro_whatsapp=erro_whatsapp,
+            qr_code=qr_code,
+            quer_qr=bool(quer_qr),
+            qr_renova_segundos=QR_RENOVA_SEGUNDOS,
+            ttl_status_whatsapp=TTL_WHATSAPP_SEGUNDOS,
+            cora_provider=settings.CORA_PROVIDER,
+            cora_webhook_configurado=bool(settings.CORA_WEBHOOK_TOKEN),
+            ultimo_evento_cora=EventoCora.objects.order_by("-recebido_em").first(),
+        )
+        return ctx
+
+
+class ConexoesGerarQrView(LoginRequiredMixin, View):
+    """Liga o pedido de QR code (fica ativo, se renovando, até conectar)."""
+
+    def post(self, request):
+        cache.delete("whatsapp_status")  # a página e o menu já refletem na hora
+        request.session[CHAVE_SESSAO_QR_ATIVO] = True
+        return redirect("pagamentos:conexoes")
 
 
 class ComprovanteDownloadView(LoginRequiredMixin, View):

@@ -197,6 +197,48 @@ h2 {
 }
 .msg.success { background: var(--ok-wash); border-color: var(--ok); color: var(--ink); }
 .msg.error { background: var(--critical-wash); border-color: var(--critical); color: var(--ink); }
+.messages.toast-area { position: fixed; z-index: 50; right: 1.25rem; bottom: 1.25rem; width: min(29rem, calc(100vw - 2.5rem)); margin: 0; }
+.toast-area .msg { position: relative; padding: 1rem 3rem 1rem 1.1rem; animation: toast-entra .18s ease-out; font-size: .95rem; }
+.toast-fechar { position: absolute; top: .45rem; right: .55rem; border: 0; background: transparent; color: inherit; font-size: 1.25rem; cursor: pointer; }
+@keyframes toast-entra { from { opacity: 0; transform: translateY(.7rem); } to { opacity: 1; transform: translateY(0); } }
+.toast-area .msg.toast-saindo { animation: toast-sai .24s ease-in both; }
+@keyframes toast-sai { to { opacity: 0; transform: translateX(1rem) scale(.98); } }
+.menu-notificacoes > summary { position: relative; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; cursor: pointer; list-style: none; }
+.menu-notificacoes .selo { position: absolute; top: -.15rem; right: -.15rem; }
+.menu-notificacoes .menu-painel { width: min(390px, calc(100vw - 2rem)); padding: .65rem; }
+.menu-notificacoes[open] .menu-painel { transform-origin: top right; animation: notificacoes-entra .2s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes notificacoes-entra { from { opacity: 0; transform: translateY(-.5rem) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.notificacoes-exemplos { border-top: 1px solid var(--line); margin-top: .35rem; padding: .7rem .8rem 0; }
+.notificacoes-exemplos summary { cursor: pointer; font-size: .82rem; color: var(--ink-soft); }
+.notificacao-exemplo { appearance: none; display: grid; width: 100%; box-sizing: border-box; border: 0; text-align: left; gap: .2rem; margin-top: .6rem; padding: .8rem .9rem; border-radius: var(--radius-sm); font: inherit; font-size: .88rem; line-height: 1.25; color: var(--ink); cursor: pointer; }
+.notificacao-exemplo strong, .notificacao-exemplo span { margin: 0; padding: 0; }
+.notificacao-exemplo span { color: var(--ink-soft); }
+.notificacao-exemplo.sucesso { background: var(--ok-wash); }
+.notificacao-exemplo.exemplo-aviso { background: var(--accent-wash); }
+.notificacao-exemplo.erro { background: var(--critical-wash); }
+.dialog-confirmacao { width: min(28rem, calc(100vw - 2rem)); padding: 0; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--raise-hover); color: var(--ink); background: var(--surface); }
+.dialog-confirmacao::backdrop { background: rgb(17 24 39 / 45%); }
+.dialog-confirmacao__conteudo { padding: 1.35rem; }
+.dialog-confirmacao__conteudo h2 { margin: 0 0 .6rem; }
+.dialog-confirmacao__conteudo p { margin: 0; color: var(--ink-soft); line-height: 1.5; }
+.dialog-confirmacao__conteudo .form-actions { margin-top: 1.25rem; justify-content: flex-end; }
+.atalhos-rapidos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; margin: 0 0 1.25rem; }
+.atalhos-rapidos .card { display: grid; gap: .2rem; padding: 1rem; text-decoration: none; }
+.atalhos-rapidos .card span { color: var(--ink-soft); font-size: .83rem; }
+.importacao-resumo { margin: 0 0 1rem; }
+.linha-pagamento-confirmado td { background: var(--ok-wash); animation: pagamento-confirmado 1.4s ease-out both; }
+@keyframes pagamento-confirmado { from { background: color-mix(in srgb, var(--ok) 32%, var(--surface)); } to { background: var(--ok-wash); } }
+
+/* Movimento sutil: dá retorno visual sem atrasar o trabalho. */
+#conteudo > :not(.messages) { animation: conteudo-entra .28s ease-out both; }
+@keyframes conteudo-entra { from { opacity: 0; transform: translateY(.45rem); } to { opacity: 1; transform: translateY(0); } }
+.card, .note, .empty { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+a.card:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); }
+.btn, .btn-cancelar-pix, .filtro-pill, .menu-item { transition: transform .16s ease, background-color .16s ease, color .16s ease, box-shadow .16s ease; }
+.btn:hover, .btn-cancelar-pix:hover { transform: translateY(-1px); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
 
 /* ---------- Toolbar (busca + ações) ---------- */
 .toolbar { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.85rem; }
@@ -915,6 +957,38 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .card:hover { box-shadow: var(--raise); }
+
+.card--cronometro { position: relative; }
+/* Barra que encolhe até o próximo QR code renovar — avisa visualmente o
+   tempo restante sem precisar de JS (a página toda recarrega nesse momento,
+   via <meta http-equiv="refresh">, o que já reinicia a animação sozinha). */
+.card-cronometro {
+  position: absolute; top: 0; left: 0; height: 3px; width: 100%;
+  background: var(--accent); border-radius: var(--radius) 0 0 0;
+  animation-name: cronometro-regressivo; animation-timing-function: linear; animation-fill-mode: forwards;
+}
+@keyframes cronometro-regressivo { to { width: 0; } }
+@media (prefers-reduced-motion: reduce) { .card-cronometro { animation: none; opacity: 0.4; } }
+
+.qrcode-conexao { display: grid; justify-items: center; gap: 0.5rem; margin: 1rem 0; text-align: center; }
+.qrcode-caixa { position: relative; display: inline-block; }
+.qrcode-caixa img {
+  display: block; border: 1px solid var(--line); border-radius: var(--radius-sm); max-width: 100%; height: auto;
+  animation: qrcode-borra linear forwards; animation-duration: var(--qr-dur);
+}
+/* Só borra pertinho do fim (94%→100%) — o resto do tempo fica nítido pra escanear. */
+@keyframes qrcode-borra { 0%, 94% { filter: none; } 100% { filter: blur(6px) grayscale(60%); } }
+.qrcode-expirou {
+  position: absolute; inset: 0; display: grid; place-items: center; gap: 0.6rem; padding: 1rem;
+  background: var(--surface); border-radius: var(--radius-sm);
+  opacity: 0; visibility: hidden;
+  animation: qrcode-expirou-aparece linear forwards; animation-duration: var(--qr-dur);
+}
+@keyframes qrcode-expirou-aparece { 0%, 94% { opacity: 0; visibility: hidden; } 100% { opacity: 1; visibility: visible; } }
+.qrcode-expirou p { margin: 0; font-weight: 600; color: var(--critical-ink); }
+@media (prefers-reduced-motion: reduce) {
+  .qrcode-caixa img, .qrcode-expirou { animation: none; }
+}
 
 /* ---------- Tela inicial (painel) ---------- */
 /* 6 números-chave: colunas fixas para caírem sempre 3+3 (ou 2+2+2), sem cartão

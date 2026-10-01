@@ -14,6 +14,13 @@
   <a class="btn" href="{% url 'pagamentos:cobrar_hoje' %}">Ir para Cobrar hoje</a>
 </div>
 
+<div class="atalhos-rapidos" aria-label="Atalhos rápidos">
+  <a class="card" href="{% url 'clientes:novo' %}"><strong>Novo cliente</strong><span>Cadastrar cliente</span></a>
+  <a class="card" href="{% url 'contratos:novo' %}"><strong>Novo contrato</strong><span>Criar venda parcelada</span></a>
+  <a class="card" href="{% url 'pagamentos:cobrar_hoje' %}"><strong>Cobrar hoje</strong><span>Ver cobranças do dia</span></a>
+  <a class="card" href="{% url 'contratos:importar_previa' %}"><strong>Importar planilha</strong><span>Revisar contratos</span></a>
+</div>
+
 {% if pix_alertas_n %}
 <aside class="alerta-comprovante" aria-label="Pendências no Pix">
   <h2>{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix</h2>

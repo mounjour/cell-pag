@@ -29,3 +29,26 @@ def contagem_cobrar_hoje() -> int:
 
 def invalidar(**_kwargs) -> None:
     cache.delete(_chave())
+
+
+TTL_WHATSAPP_SEGUNDOS = 60
+
+
+def status_whatsapp() -> str:
+    """Estado da conexão do WhatsApp, em cache por pouco tempo.
+
+    Lido em toda página (menu) — sem cache, cada carregamento faria uma
+    chamada de rede à Evolution. ``"erro"`` cobre tanto desconexão quanto
+    falha de comunicação: nos dois casos, alguém precisa olhar.
+    """
+    from .whatsapp import WhatsAppErro, obter_status_conexao
+
+    chave = "whatsapp_status"
+    estado = cache.get(chave)
+    if estado is None:
+        try:
+            estado = obter_status_conexao()
+        except WhatsAppErro:
+            estado = "erro"
+        cache.set(chave, estado, TTL_WHATSAPP_SEGUNDOS)
+    return estado

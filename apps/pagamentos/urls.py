@@ -25,6 +25,8 @@ urlpatterns = [
         name="pix_duplicidade_resolvida",
     ),
     path("historico/", views.HistoricoPagamentosView.as_view(), name="historico"),
+    path("conexoes/", views.ConexoesView.as_view(), name="conexoes"),
+    path("conexoes/gerar-qr/", views.ConexoesGerarQrView.as_view(), name="conexoes_gerar_qr"),
     path(
         "comprovante/<int:pk>/",
         views.ComprovanteDownloadView.as_view(),

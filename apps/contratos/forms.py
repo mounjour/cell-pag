@@ -41,6 +41,10 @@ class ContratoForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}),
     )
+    juros_diario = forms.CharField(
+        label="Juros diário", required=False, initial="5,00",
+        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "5,00", "class": "money"}),
+    )
 
     class Meta:
         model = Contrato
@@ -53,6 +57,7 @@ class ContratoForm(forms.ModelForm):
             "valor_total",
             "estrutura",
             "valor_parcela",
+            "juros_diario",
             "num_parcelas",
             "data_inicio",
             "dia_referencia",
@@ -155,6 +160,7 @@ class ContratoForm(forms.ModelForm):
                 self.initial["valor_total"] = _formata_moeda(self.instance.valor_total)
             if self.instance.valor_parcela is not None:
                 self.initial["valor_parcela"] = _formata_moeda(self.instance.valor_parcela)
+            self.initial["juros_diario"] = _formata_moeda(self.instance.juros_diario)
 
     def clean_valor_total(self):
         valor = moeda_para_decimal(self.cleaned_data.get("valor_total"))
@@ -164,6 +170,14 @@ class ContratoForm(forms.ModelForm):
 
     def clean_valor_parcela(self):
         return moeda_para_decimal(self.cleaned_data.get("valor_parcela"))
+
+    def clean_juros_diario(self):
+        valor = moeda_para_decimal(self.cleaned_data.get("juros_diario"))
+        if valor is None:
+            return Decimal("5.00")
+        if valor < 0:
+            raise forms.ValidationError("Informe um valor igual ou maior que zero.")
+        return valor
 
     def clean_imei(self):
         return re.sub(r"\D", "", self.cleaned_data.get("imei", ""))
@@ -221,3 +235,25 @@ class PrevisaoContratoForm(forms.Form):
                 raise forms.ValidationError("Informe valores positivos com até duas casas decimais.")
             dados[nome] = valor
         return dados
+
+
+class PlanilhaPreviaForm(forms.Form):
+    arquivo = forms.FileField(
+        label="Planilha de contratos (.xlsx ou .csv)",
+        help_text="A prévia não cadastra nem altera dados.",
+    )
+
+    def clean_arquivo(self):
+        arquivo = self.cleaned_data["arquivo"]
+        if not arquivo.name.lower().endswith((".xlsx", ".csv")):
+            raise forms.ValidationError("Envie um arquivo .xlsx ou .csv.")
+        if arquivo.size > 5 * 1024 * 1024:
+            raise forms.ValidationError("A planilha deve ter no máximo 5 MB.")
+        return arquivo
+
+
+class ResolverImportacaoForm(forms.Form):
+    cpf = forms.CharField(label="CPF")
+    telefone = forms.CharField(label="Telefone / WhatsApp")
+    valor_total = forms.CharField(label="Valor total financiado")
+    parcelas_ja_pagas = forms.IntegerField(label="Parcelas já pagas", min_value=0, required=False, initial=0)

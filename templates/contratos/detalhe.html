@@ -96,7 +96,7 @@
         <thead><tr><th>Nº</th><th class="num">Vencimento</th><th class="num">Previsto</th><th class="num">Pago</th><th class="num">Saldo</th><th>Status</th><th></th></tr></thead>
         <tbody>
           {% for v in vencimentos_exibidos %}
-            <tr>
+            <tr{% if request.GET.pago == v.numero|stringformat:"s" %} class="linha-pagamento-confirmado"{% endif %}>
               <td>{{ v.numero }}</td>
               <td class="num" data-label="Vencimento">{{ v.data_vencimento|date:"d/m/Y" }}</td>
               <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}</td>
