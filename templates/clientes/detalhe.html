@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ cliente.nome }}{% endblock %}
+{% block extra_head %}<script src="{% static 'js/confirmar_exclusao.js' %}?v=1" defer></script>{% endblock %}
 
 {% block content %}
 {% url 'clientes:lista' as lista_url %}{% include "_voltar.html" with url=lista_url %}
@@ -47,14 +49,24 @@
   <div class="note">
     <strong>Este cliente ainda não tem nenhum contrato.</strong>
     <div class="form-actions" style="margin-top:0.6rem">
-      <form method="post" action="{% url 'clientes:excluir' cliente.pk %}"
-            onsubmit="return confirm('Excluir {{ cliente.nome|escapejs }}? Essa ação não pode ser desfeita.')">
+      <form id="form-excluir-cliente" method="post" action="{% url 'clientes:excluir' cliente.pk %}">
         {% csrf_token %}
-        <button type="submit" class="btn-cancelar-pix">{% include "_icone.html" with nome="excluir" %}Excluir cadastro</button>
+        <button type="button" class="btn-cancelar-pix" data-confirmar-exclusao>{% include "_icone.html" with nome="excluir" %}Excluir cadastro</button>
       </form>
     </div>
   </div>
 {% endif %}
+
+<dialog class="dialog-confirmacao" id="dialog-excluir-cliente" aria-labelledby="titulo-excluir-cliente">
+  <div class="dialog-confirmacao__conteudo">
+    <h2 id="titulo-excluir-cliente">Excluir {{ cliente.nome }}?</h2>
+    <p>Este cliente não possui contratos. Ao confirmar, o cadastro será removido permanentemente.</p>
+    <div class="form-actions">
+      <button type="button" class="btn secondary" data-cancelar-exclusao>Cancelar</button>
+      <button type="button" class="btn-cancelar-pix" data-confirmar-exclusao-final>Excluir permanentemente</button>
+    </div>
+  </div>
+</dialog>
 
 {% if avisos %}
   <ul class="avisos" aria-label="Avisos deste cliente">

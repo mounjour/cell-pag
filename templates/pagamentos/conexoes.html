@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Conexões{% endblock %}
+
+{% block content %}
+<h1>Conexões</h1>
+<p class="note">Status das integrações externas. A conexão do WhatsApp cai de vez em quando (o celular ficou sem internet, alguém removeu o aparelho da lista de conectados, ou o WhatsApp exigiu reconexão) — quando isso acontece, as cobranças automáticas param de sair até reconectar aqui.</p>
+
+<section class="card{% if quer_qr %} card--cronometro{% endif %}">
+  {% if quer_qr %}<div class="card-cronometro" style="animation-duration: {{ qr_renova_segundos }}s;" aria-hidden="true"></div>{% endif %}
+  <h2>WhatsApp</h2>
+  {% if status_whatsapp == "open" %}
+    <p><span class="pill pago">Conectado</span></p>
+  {% elif status_whatsapp == "simulado" %}
+    <p><span class="pill aberto">Modo simulação</span> — <code>WHATSAPP_PROVIDER</code> não está como <code>evolution</code>; nenhuma mensagem real é enviada.</p>
+  {% else %}
+    <p><span class="pill inadimplente">Desconectado</span>{% if erro_whatsapp %} — {{ erro_whatsapp }}{% endif %}</p>
+
+    {% if not quer_qr %}
+      <form method="post" action="{% url 'pagamentos:conexoes_gerar_qr' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn">{% include "_icone.html" with nome="conexoes" %}Gerar QR Code</button>
+      </form>
+    {% elif qr_code %}
+      <div class="qrcode-conexao" style="--qr-dur: {{ qr_renova_segundos }}s;">
+        <div class="qrcode-caixa">
+          <img src="{{ qr_code }}" alt="QR code para conectar o WhatsApp" width="260" height="260">
+          <div class="qrcode-expirou">
+            <p>O código expirou.</p>
+            <form method="post" action="{% url 'pagamentos:conexoes_gerar_qr' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn">{% include "_icone.html" with nome="gerar" %}Gerar novo QR Code</button>
+            </form>
+          </div>
+        </div>
+        <p class="helptext">Escaneie agora — o código expira em {{ qr_renova_segundos }} segundos. No celular: WhatsApp → Configurações → Aparelhos conectados → Conectar um aparelho.</p>
+      </div>
+      <form method="post" action="{% url 'pagamentos:conexoes_gerar_qr' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}Gerar outro agora</button>
+      </form>
+    {% else %}
+      <p class="empty">Não foi possível gerar o QR code agora{% if erro_whatsapp %} ({{ erro_whatsapp }}){% endif %}.</p>
+      <form method="post" action="{% url 'pagamentos:conexoes_gerar_qr' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}Tentar de novo</button>
+      </form>
+    {% endif %}
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Cora (Pix)</h2>
+  <dl class="meta meta--4col">
+    <div><dt>Modo</dt><dd>{{ cora_provider }}</dd></div>
+    <div><dt>Webhook</dt><dd>{% if cora_webhook_configurado %}<span class="pill pago">configurado</span>{% else %}<span class="pill inadimplente">sem token</span>{% endif %}</dd></div>
+    <div><dt>Último evento recebido</dt><dd>{% if ultimo_evento_cora %}{{ ultimo_evento_cora.tipo }} · {{ ultimo_evento_cora.recebido_em|date:"d/m/Y H:i" }}{% else %}—{% endif %}</dd></div>
+  </dl>
+  <p class="helptext">A confirmação de pagamento chega na hora pelo webhook; se ele falhar por qualquer motivo, a rotina diária das 8h30 reconcilia sozinha mais tarde.</p>
+</section>
+{% endblock %}

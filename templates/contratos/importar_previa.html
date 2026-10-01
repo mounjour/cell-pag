@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Prévia de importação{% endblock %}
+{% block content %}
+{% url 'contratos:lista' as contratos_url %}{% include "_voltar.html" with url=contratos_url %}
+<div class="toolbar"><h1>Prévia de importação</h1></div>
+<p class="note">Esta tela apenas lê e valida a planilha. Nenhum cliente, contrato, pagamento ou cobrança é criado.</p>
+<form method="post" enctype="multipart/form-data" class="form-grid form-grid--full">
+  {% csrf_token %}{% include "_form.html" with form=form %}
+  <div class="form-actions"><button class="btn" type="submit">Analisar planilha</button></div>
+</form>
+{% if avisos %}{% for aviso in avisos %}<p class="note">{{ aviso }}</p>{% endfor %}{% endif %}
+{% if linhas is not None %}
+  <h2>Resultado</h2>
+  <dl class="meta importacao-resumo"><div><dt>Linhas lidas</dt><dd>{{ resumo.total }}</dd></div><div><dt>Com erro</dt><dd>{{ resumo.com_erro }}</dd></div><div><dt>Para revisão</dt><dd>{{ resumo.revisao }}</dd></div></dl>
+  <div class="tbl-wrap cards"><table><thead><tr><th>Linha</th><th>Cliente / aparelho</th><th>Plano</th><th>Próximo vencimento</th><th>Revisão necessária</th></tr></thead><tbody>
+  {% for linha in linhas %}<tr><td>{{ linha.linha }}</td><td>{% if linha.erros %}—{% else %}{{ linha.cliente }} · {{ linha.modelo }}{% endif %}</td><td>{% if linha.erros %}—{% else %}{{ linha.parcelas }} × R$ {{ linha.valor }} · {{ linha.estrutura }}{% endif %}</td><td>{% if linha.vencimento %}{{ linha.vencimento|date:"d/m/Y" }}{% else %}—{% endif %}</td><td>{% if linha.erros %}{{ linha.erros|join:", " }}{% else %}{% for alerta in linha.alertas %}{{ alerta }}{% if not forloop.last %}<br>{% endif %}{% endfor %}{% endif %}</td></tr>{% empty %}<tr><td colspan="5">Nenhuma linha de contrato encontrada.</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% if linhas %}<form method="post" action="{% url 'contratos:importar_pendencias' %}" style="margin-top:1rem">{% csrf_token %}<button class="btn" type="submit">Enviar linhas para revisão</button></form>{% endif %}
+{% endif %}
+{% endblock %}

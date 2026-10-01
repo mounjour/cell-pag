@@ -1,7 +1,11 @@
+import datetime
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views import View
@@ -10,8 +14,8 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from apps.arquivos import servir_anexo
 from apps.clientes.models import Cliente
 
-from .forms import ContratoForm, DocumentoContratoForm, PrevisaoContratoForm
-from .models import Contrato, DocumentoContrato
+from .forms import ContratoForm, DocumentoContratoForm, PlanilhaPreviaForm, PrevisaoContratoForm, ResolverImportacaoForm, moeda_para_decimal
+from .models import Contrato, DocumentoContrato, ImportacaoContratoPendente
 
 
 def _avisar_se_parcela_nao_bate(request, contrato):
@@ -104,6 +108,110 @@ class ContratoPrevisaoView(LoginRequiredMixin, View):
         if not contrato.parcelas_conferem:
             texto += "\nAtenção: os totais são diferentes. Ajuste os valores ou a quantidade; a última parcela não é reduzida automaticamente."
         return JsonResponse({"texto": texto})
+
+
+class PlanilhaPreviaView(LoginRequiredMixin, View):
+    template_name = "contratos/importar_previa.html"
+
+    def get(self, request):
+        return self._resposta(request, PlanilhaPreviaForm())
+
+    def post(self, request):
+        form = PlanilhaPreviaForm(request.POST, request.FILES)
+        linhas = avisos = None
+        if form.is_valid():
+            from .importacao import analisar
+            try:
+                linhas, avisos = analisar(form.cleaned_data["arquivo"])
+            except Exception:
+                form.add_error("arquivo", "Não foi possível ler a planilha. Confira o arquivo e o cabeçalho.")
+            else:
+                request.session["previsao_importacao"] = [
+                    {**linha, "inicio": linha.get("inicio").isoformat() if linha.get("inicio") else None,
+                     "vencimento": linha.get("vencimento").isoformat() if linha.get("vencimento") else None,
+                     "valor": str(linha["valor"]) if linha.get("valor") is not None else None,
+                     "juros": str(linha["juros"]) if linha.get("juros") is not None else None}
+                    for linha in linhas
+                ]
+        return self._resposta(request, form, linhas, avisos)
+
+    def _resposta(self, request, form, linhas=None, avisos=None):
+        resumo = None
+        if linhas is not None:
+            resumo = {
+                "total": len(linhas),
+                "com_erro": sum(bool(linha.get("erros")) for linha in linhas),
+                "revisao": sum(not linha.get("erros") and bool(linha.get("alertas")) for linha in linhas),
+            }
+        return render(request, self.template_name, {"form": form, "linhas": linhas, "avisos": avisos, "resumo": resumo})
+
+
+class ImportarPendenciasView(LoginRequiredMixin, View):
+    def post(self, request):
+        linhas = request.session.pop("previsao_importacao", [])
+        criadas = 0
+        for linha in linhas:
+            if linha.get("erros"):
+                continue
+            problemas = linha.get("alertas", [])
+            ImportacaoContratoPendente.objects.create(
+                dados=linha, problemas=problemas, linha_origem=linha["linha"]
+            )
+            criadas += 1
+        messages.success(request, f"{criadas} linha(s) enviada(s) para revisão. Nenhum contrato foi criado ainda.")
+        return redirect("contratos:importacao_pendencias")
+
+
+class ImportacaoPendenciasView(LoginRequiredMixin, ListView):
+    model = ImportacaoContratoPendente
+    template_name = "contratos/importacao_pendencias.html"
+    context_object_name = "pendencias"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(resolvida_em__isnull=True)
+
+
+class ResolverImportacaoView(LoginRequiredMixin, View):
+    template_name = "contratos/resolver_importacao.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.pendencia = get_object_or_404(ImportacaoContratoPendente, pk=kwargs["pk"], resolvida_em__isnull=True)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, pk):
+        dados = self.pendencia.dados
+        return render(request, self.template_name, {"pendencia": self.pendencia, "form": ResolverImportacaoForm(initial={"cpf": dados.get("cpf", ""), "telefone": dados.get("telefone", ""), "parcelas_ja_pagas": 0})})
+
+    def post(self, request, pk):
+        form = ResolverImportacaoForm(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {"pendencia": self.pendencia, "form": form})
+        dados = self.pendencia.dados
+        try:
+            with transaction.atomic():
+                cliente = Cliente.objects.filter(cpf=form.cleaned_data["cpf"]).first()
+                if cliente and cliente.nome != dados["cliente"]:
+                    raise ValueError("Já existe outro cliente com este CPF.")
+                if cliente is None:
+                    cliente = Cliente(nome=dados["cliente"], cpf=form.cleaned_data["cpf"], telefone_whatsapp=form.cleaned_data["telefone"])
+                    cliente.full_clean()
+                    cliente.save()
+                total = moeda_para_decimal(form.cleaned_data["valor_total"])
+                if total is None or total <= 0:
+                    raise ValueError("Informe o valor total financiado.")
+                pagas = form.cleaned_data.get("parcelas_ja_pagas") or 0
+                if pagas > int(dados["parcelas"]):
+                    raise ValueError("Parcelas já pagas não pode ser maior que o total.")
+                contrato = Contrato.objects.create(cliente=cliente, apelido=dados["modelo"], aparelho_modelo=dados["modelo"], valor_total=total, valor_parcela=moeda_para_decimal(dados["valor"]), juros_diario=moeda_para_decimal(dados["juros"]), num_parcelas=int(dados["parcelas"]), estrutura=dados["estrutura"], data_inicio=datetime.date.fromisoformat(dados["inicio"]), proximo_vencimento=datetime.date.fromisoformat(dados["vencimento"]), observacoes=dados.get("observacoes", ""))
+                _gerar_parcelas_ao_salvar(request, contrato)
+                _registrar_parcelas_ja_pagas(request, contrato, pagas)
+                self.pendencia.resolvida_em = timezone.now()
+                self.pendencia.save(update_fields=["resolvida_em"])
+        except (ValueError, ValidationError) as exc:
+            form.add_error(None, str(exc))
+            return render(request, self.template_name, {"pendencia": self.pendencia, "form": form})
+        messages.success(request, f"Contrato de {cliente.nome} criado e liberado para cobrança automática.")
+        return redirect("contratos:detalhe", pk=contrato.pk)
 
 
 class ContratoListView(LoginRequiredMixin, ListView):

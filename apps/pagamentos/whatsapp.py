@@ -82,6 +82,49 @@ def _extrair_id_mensagem(dados: dict) -> str:
     return identificador
 
 
+def _chamar_evolution_get(caminho: str) -> dict:
+    base_url, api_key, instancia = _config_evolution()
+    url = f"{base_url}{caminho}/{urllib.parse.quote(instancia)}"
+    requisicao = urllib.request.Request(url, headers={"apikey": api_key})
+    try:
+        with urllib.request.urlopen(requisicao, timeout=15) as resposta:
+            return json.loads(resposta.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detalhe = exc.read().decode("utf-8", errors="replace")[:500]
+        logger.warning("Evolution respondeu HTTP %s: %s", exc.code, detalhe)
+        raise WhatsAppErro(f"A Evolution recusou a operação (HTTP {exc.code}).") from exc
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.warning("Falha ao chamar a Evolution API: %s", exc)
+        raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
+
+
+def obter_status_conexao() -> str:
+    """``"open"`` (conectado), ``"close"`` (desconectado) ou outro estado da Evolution.
+
+    ``log`` (modo simulação, sem Evolution configurada) devolve ``"simulado"``.
+    """
+    if settings.WHATSAPP_PROVIDER.lower().strip() != "evolution":
+        return "simulado"
+    dados = _chamar_evolution_get("/instance/connectionState")
+    return (dados.get("instance") or {}).get("state", "")
+
+
+def obter_qrcode() -> str:
+    """Pede um QR code novo pra conectar (ou reconectar) o WhatsApp.
+
+    Devolve a imagem já como data URI (``data:image/png;base64,...``), pronta
+    pro atributo ``src`` de uma ``<img>``. O QR expira rápido (segundos) — quem
+    chama deve mostrar na hora, sem guardar pra depois.
+    """
+    if settings.WHATSAPP_PROVIDER.lower().strip() != "evolution":
+        raise WhatsAppErro("Modo simulação (WHATSAPP_PROVIDER != evolution): não há QR code.")
+    dados = _chamar_evolution_get("/instance/connect")
+    qr = dados.get("base64", "")
+    if not qr:
+        raise WhatsAppErro("A Evolution não devolveu um QR code (talvez já esteja conectado).")
+    return qr
+
+
 def enviar_mensagem(*, destinatario: str, texto: str) -> dict:
     """Envia uma mensagem de texto, ou apenas simula conforme ``WHATSAPP_PROVIDER``.
 

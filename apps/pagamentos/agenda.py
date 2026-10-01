@@ -63,7 +63,7 @@ def parcelas_a_cobrar(contrato, hoje: datetime.date) -> list[ParcelaACobrar]:
                 data_vencimento=venc.data_vencimento,
                 dias_atraso=dias,
                 saldo=venc.saldo,
-                juros=atraso.juros_acumulados(dias),
+                juros=atraso.juros_acumulados(dias, contrato.juros_diario),
             )
         )
     return itens

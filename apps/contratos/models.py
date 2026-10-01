@@ -72,6 +72,10 @@ class Contrato(models.Model):
     valor_parcela = models.DecimalField(
         "valor da parcela", max_digits=10, decimal_places=2, null=True, blank=True
     )
+    juros_diario = models.DecimalField(
+        "juros diário", max_digits=8, decimal_places=2, default=Decimal("5.00"),
+        help_text="Cobrado por dia de atraso neste contrato.",
+    )
     num_parcelas = models.PositiveIntegerField("nº de parcelas", null=True, blank=True)
     data_inicio = models.DateField("data de início")
     dia_referencia = models.CharField(
@@ -339,6 +343,7 @@ class Contrato(models.Model):
             self.estrutura,
             hoje=hoje,
             quitado=self.quitado,
+            valor_juros_diario=self.juros_diario,
         )
 
     @property
@@ -362,6 +367,21 @@ class Contrato(models.Model):
         self.status = situacao.status
         self.save(update_fields=["status", "atualizado_em"])
         return True
+
+
+class ImportacaoContratoPendente(models.Model):
+    """Linha importada que exige revisão humana antes de virar contrato."""
+
+    dados = models.JSONField()
+    problemas = models.JSONField(default=list)
+    linha_origem = models.PositiveIntegerField()
+    resolvida_em = models.DateTimeField(null=True, blank=True)
+    criada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["criada_em", "linha_origem"]
+        verbose_name = "pendência de importação"
+        verbose_name_plural = "pendências de importação"
 
 
 def caminho_documento(instance: "DocumentoContrato", filename: str) -> str:

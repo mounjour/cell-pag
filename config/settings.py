@@ -201,6 +201,19 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Por padrão o WhiteNoise serve a partir de STATIC_ROOT (a pasta coletada por
+# collectstatic) e carrega tudo na memória uma vez, na subida do processo —
+# nunca relê do disco. Em desenvolvimento isso faz o servidor continuar
+# servindo uma versão velha do CSS/JS mesmo depois de editar o arquivo fonte
+# (e mesmo depois de reiniciar, se ninguém rodou collectstatic de novo).
+# WHITENOISE_USE_FINDERS manda servir direto de STATICFILES_DIRS (a pasta
+# static/ de verdade) e AUTOREFRESH relê o arquivo a cada request — os dois
+# juntos fazem uma edição aparecer com um F5, sem collectstatic nem restart.
+# Em produção (DEBUG=False) isso seria perda de desempenho à toa, então só
+# liga em dev.
+WHITENOISE_USE_FINDERS = DEBUG
+WHITENOISE_AUTOREFRESH = DEBUG
+
 # WhiteNoise serve os estáticos em produção a partir de STATIC_ROOT (após
 # collectstatic). O storage com manifesto põe um hash no nome de cada arquivo
 # (base.<hash>.css) — assim uma mudança de CSS/JS invalida o cache do navegador

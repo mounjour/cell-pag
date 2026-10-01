@@ -99,11 +99,11 @@ def dias_de_atraso(
     return max(0, (hoje - referencia).days)
 
 
-def juros_acumulados(dias_atraso: int) -> Decimal:
+def juros_acumulados(dias_atraso: int, valor_diario: Decimal = VALOR_JUROS_DIA) -> Decimal:
     """Juros totais para ``dias_atraso`` dias (R$ 5,00 por dia)."""
     if dias_atraso < 0:
         raise ValueError("dias_atraso não pode ser negativo")
-    return (VALOR_JUROS_DIA * dias_atraso).quantize(_CENTAVOS)
+    return (valor_diario * dias_atraso).quantize(_CENTAVOS)
 
 
 def classificar_status(dias_atraso: int, *, quitado: bool = False) -> str:
@@ -137,6 +137,7 @@ def avaliar(
     hoje: datetime.date | None = None,
     *,
     quitado: bool = False,
+    valor_juros_diario: Decimal = VALOR_JUROS_DIA,
 ) -> SituacaoAtraso:
     """Situação completa da parcela: dias de atraso, juros, status, cor e alerta."""
     if hoje is None:
@@ -153,7 +154,7 @@ def avaliar(
     status = classificar_status(dias)
     return SituacaoAtraso(
         dias_atraso=dias,
-        juros=juros_acumulados(dias),
+        juros=juros_acumulados(dias, valor_juros_diario),
         status=status,
         cor=cor_do_status(status),
         alertar_bloqueio=precisa_alertar_bloqueio(dias),
