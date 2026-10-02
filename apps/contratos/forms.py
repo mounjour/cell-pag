@@ -5,6 +5,7 @@ from django import forms
 from django.db import models
 
 from apps.aparelhos.models import Aparelho
+from apps.aparelhos.catalogo import opcoes_modelos
 
 from apps.pagamentos.models import Pagamento
 
@@ -31,6 +32,7 @@ def moeda_para_decimal(valor):
 
 
 class ContratoForm(forms.ModelForm):
+    aparelho_modelo = forms.ChoiceField(label="Modelo do iPhone", choices=opcoes_modelos())
     # Dinheiro entra como texto para aceitar vírgula decimal; convertido em clean_*.
     valor_total = forms.CharField(
         label="Valor total do contrato",
@@ -69,9 +71,6 @@ class ContratoForm(forms.ModelForm):
         widgets = {
             "apelido": forms.TextInput(
                 attrs={"autofocus": True, "placeholder": "Ex.: iPhone 11", "autocapitalize": "sentences"}
-            ),
-            "aparelho_modelo": forms.TextInput(
-                attrs={"placeholder": "Ex.: iPhone 11 64GB", "autocapitalize": "sentences"}
             ),
             "imei": forms.TextInput(
                 attrs={"inputmode": "numeric", "maxlength": "20", "placeholder": "15 dígitos (opcional)"}
@@ -132,6 +131,11 @@ class ContratoForm(forms.ModelForm):
         atual = self.instance.aparelho_id if self.instance and self.instance.pk else None
         self.fields["aparelho"].queryset = Aparelho.objects.filter(
             models.Q(contrato__isnull=True) | models.Q(pk=atual)
+        )
+        modelo_atual = self.instance.aparelho_modelo if self.instance and self.instance.pk else ""
+        self.fields["aparelho_modelo"].choices = opcoes_modelos(
+            atual=modelo_atual,
+            estoque=self.fields["aparelho"].queryset.values_list("modelo", flat=True).distinct(),
         )
         self.fields["aparelho"].label = "Aparelho do estoque (opcional)"
         self.fields["aparelho"].required = False

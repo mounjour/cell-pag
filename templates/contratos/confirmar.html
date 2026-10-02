@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Confirmar cadastro e cobrança{% endblock %}
+{% block content %}
+<div class="form-centered resumo-confirmacao">
+  <h1>Confira antes de iniciar a cobrança</h1>
+  <p class="note">O contrato ainda não foi salvo. Nenhuma parcela, Pix ou mensagem de cobrança será criada até você confirmar.</p>
+
+  <section class="card">
+    <h2>Cliente e aparelho</h2>
+    <dl class="meta">
+      <div><dt>Cliente</dt><dd>{{ contrato.cliente.nome }}</dd></div>
+      <div><dt>CPF</dt><dd>{{ contrato.cliente.cpf_formatado }}</dd></div>
+      <div><dt>WhatsApp da cobrança</dt><dd>{{ contrato.cliente.telefone_exibicao }}</dd></div>
+      <div><dt>Endereço</dt><dd>{{ contrato.cliente.endereco|default:"Não informado" }}</dd></div>
+      <div><dt>Contrato</dt><dd>{{ contrato.apelido }}</dd></div>
+      <div><dt>Modelo</dt><dd>{{ contrato.aparelho_modelo }}</dd></div>
+      <div><dt>IMEI</dt><dd>{{ contrato.imei|default:"Não informado" }}</dd></div>
+      <div><dt>Aparelho do estoque</dt><dd>{{ contrato.aparelho|default:"Sem vínculo com o estoque" }}</dd></div>
+    </dl>
+    <a href="{% url 'clientes:editar' contrato.cliente.pk %}" target="_blank" rel="noopener">Corrigir dados do cliente (abre em outra aba)</a>
+  </section>
+
+  <section class="card">
+    <h2>Valores e datas</h2>
+    <dl class="meta">
+      <div><dt>Total financiado</dt><dd>R$ {{ contrato.valor_total|floatformat:2 }}</dd></div>
+      <div><dt>Parcelas</dt><dd>{{ contrato.num_parcelas|default:"Não informado" }} × {% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela|floatformat:2 }}{% else %}valor não informado{% endif %}</dd></div>
+      <div><dt>Total das parcelas</dt><dd>{% if contrato.total_das_parcelas != None %}R$ {{ contrato.total_das_parcelas|floatformat:2 }}{% else %}Não calculado{% endif %}</dd></div>
+      <div><dt>Frequência</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
+      <div><dt>Início do contrato</dt><dd>{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
+      <div><dt>Primeira parcela a cobrar</dt><dd>{% if todas_pagas %}Todas as parcelas já estão pagas{% else %}Parcela {{ parcelas_ja_pagas|add:1 }} em {{ primeira|date:"d/m/Y" }}{% endif %}</dd></div>
+      <div><dt>Último vencimento previsto</dt><dd>{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"Não calculado" }}</dd></div>
+      <div><dt>Parcelas já pagas</dt><dd>{{ parcelas_ja_pagas }} (ficam fora da cobrança)</dd></div>
+      <div><dt>Entrada recebida</dt><dd>{% if entrada %}R$ {{ entrada|floatformat:2 }} · {{ entrada_forma }}{% else %}Sem entrada{% endif %}</dd></div>
+      <div><dt>Juros diário</dt><dd>R$ {{ contrato.juros_diario|floatformat:2 }} por dia de atraso</dd></div>
+      <div><dt>Status informado</dt><dd>{{ contrato.get_status_display }}</dd></div>
+      <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"Não informado" }}</dd></div>
+      <div><dt>Próximo vencimento manual</dt><dd>{{ contrato.proximo_vencimento|date:"d/m/Y"|default:"Não informado" }}</dd></div>
+      <div><dt>Observações</dt><dd>{{ contrato.observacoes|default:"Nenhuma"|linebreaksbr }}</dd></div>
+    </dl>
+  </section>
+
+  {% if contrato.parcelas_conferem is False %}
+    <p class="note"><strong>Confira os números:</strong> o total das parcelas é diferente do valor total financiado. A última parcela não é reduzida automaticamente.</p>
+  {% endif %}
+  {% if not contrato.valor_parcela %}
+    <p class="note"><strong>Falta o valor da parcela.</strong> O cadastro poderá ser confirmado, mas não serão geradas parcelas automáticas até você preencher esse valor.</p>
+  {% elif primeira <= hoje and not todas_pagas and not contrato.quitado %}
+    <p class="note"><strong>Há uma parcela vencida ou com vencimento hoje.</strong> Ela poderá entrar na próxima rotina de cobrança. Confira a data de início e as parcelas já pagas.</p>
+  {% endif %}
+  {% if contrato.quitado %}<p class="note">Contrato informado como quitado: não haverá cobrança automática.</p>{% endif %}
+  <p>A confirmação libera a rotina automática nas datas do contrato. Ela não envia uma mensagem agora.</p>
+  <form method="post" class="form-page">
+    {% csrf_token %}
+    <input type="hidden" name="revisao" value="{{ revisao }}">
+    <label><input type="checkbox" name="conferido" value="1" required> Conferi o cliente, o WhatsApp, os valores e as datas.</label>
+    <div class="form-actions">
+      <button type="submit" name="acao" value="confirmar" class="btn">{% if contrato.quitado or not contrato.valor_parcela %}Confirmar cadastro{% else %}Confirmar e iniciar cobrança{% endif %}</button>
+      <button type="submit" name="acao" value="corrigir" class="btn secondary" formnovalidate>Corrigir dados do contrato</button>
+      <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

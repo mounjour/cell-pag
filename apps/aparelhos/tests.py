@@ -97,7 +97,7 @@ def test_cadastra_aparelho(auth_client):
     resp = auth_client.post(
         reverse("aparelhos:novo"),
         {
-            "modelo": "iPhone 11 64GB",
+            "modelo": "iPhone 11",
             "imei": "123456789012345",
             "custo": "1.500,00",
             "fornecedor": "Distribuidora X",
@@ -107,7 +107,7 @@ def test_cadastra_aparelho(auth_client):
         follow=True,
     )
     assert resp.status_code == 200
-    ap = Aparelho.objects.get(modelo="iPhone 11 64GB")
+    ap = Aparelho.objects.get(modelo="iPhone 11")
     assert ap.imei == "123456789012345"
     assert ap.custo == Decimal("1500.00")
     assert ap.status == Aparelho.Status.DISPONIVEL

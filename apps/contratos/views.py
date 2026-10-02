@@ -1,10 +1,12 @@
 import datetime
+import uuid
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
+from django.core import signing
 from django.http import JsonResponse
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -370,6 +372,63 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
     form_class = ContratoForm
     template_name = "contratos/form.html"
 
+    def post(self, request, *args, **kwargs):
+        self.revisao = None
+        token = request.POST.get("revisao")
+        if token:
+            try:
+                self.revisao = signing.loads(token, salt="revisao-contrato", max_age=3600)
+                if self.revisao["usuario"] != request.user.pk:
+                    raise signing.BadSignature
+            except (signing.BadSignature, KeyError, TypeError):
+                messages.error(request, "O resumo expirou ou foi alterado. Preencha o cadastro novamente.")
+                return redirect("contratos:novo")
+            confirmado = Contrato.objects.filter(cadastro_confirmacao=self.revisao["id"]).values_list("pk", flat=True).first()
+            if confirmado:
+                return redirect("contratos:detalhe", pk=confirmado)
+        return super().post(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if getattr(self, "revisao", None):
+            kwargs["data"] = self.revisao["dados"]
+        return kwargs
+
+    @staticmethod
+    def _dados_cliente(cliente):
+        return [cliente.nome, cliente.cpf, str(cliente.telefone_whatsapp), cliente.endereco]
+
+    def _resumo(self, form):
+        from apps.pagamentos.recorrencia import data_da_parcela
+
+        contrato = form.instance
+        contrato.calcular_num_parcelas(salvar=False)
+        try:
+            contrato.atualizar_data_prevista_quitacao(salvar=False)
+            primeira = data_da_parcela(contrato.data_inicio, contrato.estrutura, (form.cleaned_data.get("parcelas_ja_pagas") or 0) + 1)
+        except (ValueError, OverflowError):
+            form.add_error("num_parcelas", "Confira a quantidade e as datas: o período informado é muito longo.")
+            return self.form_invalid(form)
+        quantidade = form.cleaned_data.get("parcelas_ja_pagas") or 0
+        if contrato.num_parcelas and quantidade > contrato.num_parcelas:
+            form.add_error("parcelas_ja_pagas", "A quantidade paga não pode exceder o total de parcelas.")
+            return self.form_invalid(form)
+        dados = self.revisao["dados"] if self.revisao else {
+            nome: self.request.POST.get(nome, "") for nome in form.fields
+        }
+        token = signing.dumps({
+            "id": uuid.uuid4().hex, "usuario": self.request.user.pk,
+            "dados": dados, "cliente": self._dados_cliente(contrato.cliente),
+        }, salt="revisao-contrato", compress=True)
+        return render(self.request, "contratos/confirmar.html", {
+            "contrato": contrato, "revisao": token, "primeira": primeira,
+            "parcelas_ja_pagas": quantidade,
+            "todas_pagas": bool(contrato.num_parcelas and quantidade >= contrato.num_parcelas),
+            "entrada": form.cleaned_data.get("entrada"),
+            "entrada_forma": dict(form.fields["entrada_forma"].choices).get(form.cleaned_data.get("entrada_forma")),
+            "hoje": timezone.localdate(),
+        })
+
     def get_initial(self):
         initial = super().get_initial()
         cliente_id = self.request.GET.get("cliente")
@@ -378,19 +437,47 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
         return initial
 
     def form_valid(self, form):
-        response = super().form_valid(form)
-        messages.success(self.request, "Contrato cadastrado.")
-        self.object.calcular_num_parcelas()
-        _avisar_se_parcela_nao_bate(self.request, self.object)
-        _gerar_parcelas_ao_salvar(self.request, self.object)
-        quantidade = form.cleaned_data.get("parcelas_ja_pagas") or 0
-        if quantidade:
-            _registrar_parcelas_ja_pagas(self.request, self.object, quantidade)
-        entrada = form.cleaned_data.get("entrada")
-        if entrada:
-            _registrar_entrada(
-                self.request, self.object, entrada, form.cleaned_data.get("entrada_forma")
-            )
+        if self.request.POST.get("acao") == "corrigir":
+            return self.render_to_response(self.get_context_data(form=form))
+        if not self.revisao or self.request.POST.get("acao") != "confirmar":
+            return self._resumo(form)
+        if self.revisao["cliente"] != self._dados_cliente(form.instance.cliente):
+            messages.warning(self.request, "Os dados do cliente mudaram. Confira o novo resumo antes de confirmar.")
+            return self._resumo(form)
+        if self.request.POST.get("conferido") != "1":
+            messages.error(self.request, "Marque que conferiu os dados antes de iniciar a cobrança.")
+            return self._resumo(form)
+        # O contrato só fica visível para o job após todas as parcelas e baixas
+        # anteriores estarem gravadas. Uma falha desfaz o cadastro inteiro.
+        try:
+            return self._confirmar(form)
+        except IntegrityError:
+            confirmado = Contrato.objects.filter(cadastro_confirmacao=self.revisao["id"]).first()
+            if confirmado:
+                return redirect("contratos:detalhe", pk=confirmado.pk)
+            form.add_error(None, "O cadastro mudou durante a confirmação. Confira o aparelho e tente novamente.")
+            return self.form_invalid(form)
+
+    def _confirmar(self, form):
+        with transaction.atomic():
+            form.instance.cadastro_confirmacao = self.revisao["id"]
+            form.instance.calcular_num_parcelas(salvar=False)
+            quantidade = form.cleaned_data.get("parcelas_ja_pagas") or 0
+            if form.instance.num_parcelas and quantidade > form.instance.num_parcelas:
+                form.add_error("parcelas_ja_pagas", "A quantidade paga não pode exceder o total de parcelas.")
+                return self.form_invalid(form)
+            response = super().form_valid(form)
+            _avisar_se_parcela_nao_bate(self.request, self.object)
+            _gerar_parcelas_ao_salvar(self.request, self.object)
+            if quantidade:
+                from apps.pagamentos.recorrencia import data_da_parcela
+                ultima_paga = data_da_parcela(self.object.data_inicio, self.object.estrutura, quantidade)
+                self.object.gerar_vencimentos(dias_a_frente=max(60, (ultima_paga - timezone.localdate()).days))
+                _registrar_parcelas_ja_pagas(self.request, self.object, quantidade)
+            entrada = form.cleaned_data.get("entrada")
+            if entrada:
+                _registrar_entrada(self.request, self.object, entrada, form.cleaned_data.get("entrada_forma"))
+        messages.success(self.request, "Cadastro confirmado. A cobrança seguirá as datas do contrato na rotina automática.")
         return response
 
     def get_success_url(self):

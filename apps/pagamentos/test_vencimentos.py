@@ -15,6 +15,7 @@ from django.urls import reverse
 from validate_docbr import CPF as CPFGen
 
 from apps.clientes.models import Cliente
+from apps.contratos.test_helpers import cadastrar_contrato
 from apps.contratos.models import Contrato
 from apps.pagamentos import recorrencia
 from apps.pagamentos.models import Vencimento
@@ -357,9 +358,7 @@ def test_parcelas_conferem(cliente):
 def test_form_avisa_quando_parcela_nao_bate(auth_client, cliente):
     from apps.contratos.tests import dados_form
 
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(cliente, valor_total="1.800,00", valor_parcela="150,00", num_parcelas="10"),
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, valor_total="1.800,00", valor_parcela="150,00", num_parcelas="10"),
         follow=True,
     )
     corpo = resp.content.decode()

@@ -48,6 +48,7 @@
 {% elif cliente.pode_ser_excluido %}
   <div class="note">
     <strong>Este cliente ainda não tem nenhum contrato.</strong>
+    <p>O cadastro do cliente não inicia cobranças. Adicione um contrato, confira o resumo e confirme para liberar a cobrança automática.</p>
     <div class="form-actions" style="margin-top:0.6rem">
       <form id="form-excluir-cliente" method="post" action="{% url 'clientes:excluir' cliente.pk %}">
         {% csrf_token %}
