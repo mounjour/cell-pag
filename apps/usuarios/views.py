@@ -1,8 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
@@ -41,14 +39,6 @@ def salvar_tema(request):
     request.user.tema = tema
     request.user.save(update_fields=["tema"])
     return HttpResponse(status=204)
-
-
-class SenhaAlterarView(LoginRequiredMixin, SuccessMessageMixin, auth_views.PasswordChangeView):
-    """Troca de senha da própria pessoa: pede a senha atual e mantém a sessão aberta."""
-
-    template_name = "usuarios/senha_alterar.html"
-    success_url = reverse_lazy("relatorios:inicio")
-    success_message = "Senha alterada."
 
 
 def _destino_seguro(request, padrao="relatorios:inicio"):

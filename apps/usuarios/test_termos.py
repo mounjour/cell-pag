@@ -2,7 +2,6 @@ import pytest
 from django.urls import reverse
 
 SENHA = "s3nha-forte-123"
-NOVA = "outra-senha-longa-987"
 
 
 @pytest.fixture
@@ -16,58 +15,6 @@ def pessoa(django_user_model):
 def logada(client, pessoa):
     client.force_login(pessoa)
     return client
-
-
-# ---------- alterar senha ----------
-
-
-@pytest.mark.django_db
-def test_alterar_senha_exige_login(client):
-    resposta = client.get(reverse("usuarios:senha_alterar"))
-    assert resposta.status_code == 302
-    assert reverse("usuarios:login") in resposta["Location"]
-
-
-@pytest.mark.django_db
-def test_alterar_senha_com_a_senha_atual_certa(logada, pessoa):
-    resposta = logada.post(
-        reverse("usuarios:senha_alterar"),
-        {"old_password": SENHA, "new_password1": NOVA, "new_password2": NOVA},
-        follow=True,
-    )
-    pessoa.refresh_from_db()
-    assert pessoa.check_password(NOVA)
-    assert "Senha alterada." in resposta.content.decode()
-    # continua logada: a sessão sobrevive à troca
-    assert resposta.context["user"].is_authenticated
-
-
-@pytest.mark.django_db
-def test_alterar_senha_recusa_senha_atual_errada(logada, pessoa):
-    resposta = logada.post(
-        reverse("usuarios:senha_alterar"),
-        {"old_password": "errada", "new_password1": NOVA, "new_password2": NOVA},
-    )
-    pessoa.refresh_from_db()
-    assert resposta.status_code == 200
-    assert pessoa.check_password(SENHA)
-
-
-@pytest.mark.django_db
-def test_alterar_senha_recusa_senha_fraca(logada, pessoa):
-    resposta = logada.post(
-        reverse("usuarios:senha_alterar"),
-        {"old_password": SENHA, "new_password1": "12345678", "new_password2": "12345678"},
-    )
-    pessoa.refresh_from_db()
-    assert resposta.status_code == 200
-    assert pessoa.check_password(SENHA)
-
-
-@pytest.mark.django_db
-def test_menu_tem_o_link_de_alterar_senha(logada):
-    html = logada.get(reverse("relatorios:inicio")).content.decode()
-    assert reverse("usuarios:senha_alterar") in html
 
 
 # ---------- termos ----------
