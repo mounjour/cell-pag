@@ -2,7 +2,7 @@
 {% block title %}Histórico de pagamentos{% endblock %}
 
 {% block content %}
-<h1>Histórico de pagamentos</h1>
+<h1>{% include "_icone.html" with nome="historico" %}Histórico de pagamentos</h1>
 
 {% if filtrado %}
   <p class="count">Filtrado · <a href="{% url 'pagamentos:historico' %}">ver todos</a></p>

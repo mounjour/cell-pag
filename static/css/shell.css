@@ -300,25 +300,42 @@
   .periodo-resumo { grid-column: 1 / -1; }
 }
 
-/* ---------- Ícones do menu em cores (uma por grupo) ----------
-   Só no menu lateral, na barra de baixo e no "Mais": botões e o resto do
-   sistema continuam com a cor do texto. Vermelho fica reservado a alertas. */
+/* ---------- Ícones em cores, uma cor por seção ----------
+   Dia a dia = azul · Cadastros = roxo · Conexões = verde · Análise = laranja.
+   Todos os ícones de uma seção têm a mesma cor, na mesma intensidade (nível
+   600 no tema claro, 400 no escuro). Vale no menu (lateral, barra de baixo e
+   "Mais") e no título das páginas; botões e o resto do sistema seguem com a
+   cor do texto. Vermelho fica reservado a alertas. */
 .app-shell {
-  --ic-azul: #2f6fe0; --ic-verde: #1f9d57; --ic-roxo: #7c4ddb;
-  --ic-ambar: #d9822b; --ic-ciano: #0f8fa8; --ic-rosa: #d6428a;
+  --ic-inicio: #2563eb; --ic-cobrar: #2563eb; --ic-pix: #2563eb; --ic-historico: #2563eb;
+  --ic-clientes: #7c3aed; --ic-contratos: #7c3aed; --ic-aparelhos: #7c3aed;
+  --ic-conexoes: #059669;
+  --ic-relatorios: #ea580c; --ic-juros: #ea580c;
 }
 :root[data-tema="escuro"] .app-shell {
-  --ic-azul: #7fadf5; --ic-verde: #58cf8e; --ic-roxo: #b79cf5;
-  --ic-ambar: #f0b062; --ic-ciano: #5fd0e6; --ic-rosa: #f092c0;
+  --ic-inicio: #60a5fa; --ic-cobrar: #60a5fa; --ic-pix: #60a5fa; --ic-historico: #60a5fa;
+  --ic-clientes: #a78bfa; --ic-contratos: #a78bfa; --ic-aparelhos: #a78bfa;
+  --ic-conexoes: #34d399;
+  --ic-relatorios: #fb923c; --ic-juros: #fb923c;
 }
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="inicio"],
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="pix"] { color: var(--ic-azul); }
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="cobrar"],
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="historico"] { color: var(--ic-verde); }
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="clientes"],
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="aparelhos"] { color: var(--ic-roxo); }
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="contratos"] { color: var(--ic-ambar); }
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="conexoes"] { color: var(--ic-ciano); }
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="relatorios"],
-:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="juros"] { color: var(--ic-rosa); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="inicio"] { color: var(--ic-inicio); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="cobrar"] { color: var(--ic-cobrar); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="pix"] { color: var(--ic-pix); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="historico"] { color: var(--ic-historico); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="clientes"] { color: var(--ic-clientes); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="contratos"] { color: var(--ic-contratos); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="aparelhos"] { color: var(--ic-aparelhos); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="conexoes"] { color: var(--ic-conexoes); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="relatorios"] { color: var(--ic-relatorios); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="juros"] { color: var(--ic-juros); }
 .sidebar .nav a.active .icone, .tabbar a.active .icone { stroke-width: 2.2; }
+
+/* Ícone antes do título da página */
+h1 > .icone { width: 1.05em; height: 1.05em; margin-right: 0.45rem; vertical-align: -0.1em; stroke-width: 2; }
+
+/* "Sair": no hover, fundo vermelho suave (translúcido) e texto/ícone em vermelho. */
+.menu-item--sair:hover, .menu-item--sair:focus-visible {
+  background: color-mix(in srgb, var(--critical) 14%, transparent);
+  color: var(--critical-ink);
+}
+.menu-item--sair:hover .icone, .menu-item--sair:focus-visible .icone { color: var(--critical-ink); }

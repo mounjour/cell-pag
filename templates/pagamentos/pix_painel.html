@@ -3,7 +3,7 @@
 {% block title %}Acompanhamento Pix{% endblock %}
 
 {% block content %}
-<h1>Acompanhamento Pix · {{ hoje|date:"d/m/Y" }}</h1>
+<h1>{% include "_icone.html" with nome="pix" %}Acompanhamento Pix · {{ hoje|date:"d/m/Y" }}</h1>
 <p class="note">Uma cobrança Pix pode reunir várias parcelas vencidas e a de hoje, sem juros. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
 
 {% if comprovantes %}
