@@ -61,6 +61,8 @@
         <div class="menu-painel">
           <div class="menu-quem"><strong>{{ user.nome_completo }}</strong><span>{{ user.email }}</span></div>
           {% if user.is_staff %}<a class="menu-item" href="/admin/">{% include "_icone.html" with nome="admin" %}<span>Administração</span></a>{% endif %}
+          <a class="menu-item" href="{% url 'usuarios:senha_alterar' %}">{% include "_icone.html" with nome="chave" %}<span>Alterar senha</span></a>
+          <a class="menu-item" href="{% url 'usuarios:termos' %}">{% include "_icone.html" with nome="termos" %}<span>Termos e privacidade</span></a>
           <form method="post" action="{% url 'usuarios:logout' %}">
             {% csrf_token %}
             <button type="submit" class="menu-item">{% include "_icone.html" with nome="sair" %}<span>Sair</span></button>
@@ -111,6 +113,8 @@
         <div class="menu-painel">
           <div class="menu-quem"><strong>{{ user.nome_completo }}</strong><span>{{ user.email }}</span></div>
           {% if user.is_staff %}<a class="menu-item" href="/admin/">{% include "_icone.html" with nome="admin" %}<span>Administração</span></a>{% endif %}
+          <a class="menu-item" href="{% url 'usuarios:senha_alterar' %}">{% include "_icone.html" with nome="chave" %}<span>Alterar senha</span></a>
+          <a class="menu-item" href="{% url 'usuarios:termos' %}">{% include "_icone.html" with nome="termos" %}<span>Termos e privacidade</span></a>
           <form method="post" action="{% url 'usuarios:logout' %}">
             {% csrf_token %}
             <button type="submit" class="menu-item">{% include "_icone.html" with nome="sair" %}<span>Sair</span></button>

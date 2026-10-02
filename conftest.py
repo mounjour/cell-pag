@@ -7,6 +7,7 @@ def _sem_provedores_externos_reais(settings):
     settings.WHATSAPP_PROVIDER = "log"
     settings.CORA_PROVIDER = "log"
     settings.ROTINA_HEALTHCHECK_URL = ""
+    settings.TERMOS_EXIGIR_ACEITE = False  # o aceite só é exigido nos testes de termos
 
 
 @pytest.fixture

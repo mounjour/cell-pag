@@ -32,6 +32,11 @@ class Usuario(AbstractUser):
         "tema", max_length=10, choices=Tema.choices, default=Tema.CLARO
     )
 
+    # Aceite dos Termos de uso e privacidade: guarda qual versão do texto a
+    # pessoa aceitou e quando. Mudou a versão (settings.TERMOS_VERSAO) → pede de novo.
+    termos_aceitos_versao = models.CharField("versão dos termos aceita", max_length=20, blank=True)
+    termos_aceitos_em = models.DateTimeField("termos aceitos em", null=True, blank=True)
+
     perfil = models.CharField(
         "perfil",
         max_length=20,
