@@ -277,3 +277,33 @@ def montar_juros_em_aberto(hoje: datetime.date | None = None) -> dict:
         total += resumo["juros"]
     linhas.sort(key=lambda item: item["juros"], reverse=True)
     return {"hoje": hoje, "linhas": linhas, "total": total}
+
+
+FILA_DE_ACAO_TAMANHO = 4
+
+
+def montar_hoje(hoje: datetime.date | None = None, limite_fila: int = FILA_DE_ACAO_TAMANHO) -> dict:
+    """O que pede ação agora, para a tela inicial.
+
+    ``a_cobrar_n``/``a_cobrar_valor`` vêm da mesma agenda do "Cobrar hoje"; a
+    ``fila`` são as primeiras linhas dela (já ordenadas pelo maior atraso).
+    ``recebido_hoje`` soma as baixas com data de hoje.
+    """
+    from apps.pagamentos.agenda import montar_agenda_do_dia
+
+    if hoje is None:
+        hoje = timezone.localdate()
+    agenda = montar_agenda_do_dia(hoje=hoje)
+    recebido = Pagamento.objects.filter(data_pagamento=hoje).aggregate(
+        total=Coalesce(Sum("valor_pago"), ZERO), n=Count("pk")
+    )
+    return {
+        "a_cobrar_n": len(agenda["linhas"]),
+        "a_cobrar_valor": agenda["total_previsto"],
+        "n_atraso": agenda["n_atraso"],
+        "n_bloqueio": agenda["n_bloqueio"],
+        "recebido_hoje": recebido["total"],
+        "recebido_hoje_n": recebido["n"],
+        "fila": agenda["linhas"][:limite_fila],
+        "fila_restante": max(len(agenda["linhas"]) - limite_fila, 0),
+    }

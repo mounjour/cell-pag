@@ -32,6 +32,7 @@ def invalidar(**_kwargs) -> None:
 
 
 TTL_WHATSAPP_SEGUNDOS = 60
+TTL_WHATSAPP_AO_VIVO_SEGUNDOS = 3
 
 
 def status_whatsapp() -> str:
@@ -51,4 +52,24 @@ def status_whatsapp() -> str:
         except WhatsAppErro:
             estado = "erro"
         cache.set(chave, estado, TTL_WHATSAPP_SEGUNDOS)
+    return estado
+
+
+def status_whatsapp_ao_vivo() -> str:
+    """Estado do WhatsApp com cache de poucos segundos, pra tela consultar em loop.
+
+    Várias abas (e pessoas) perguntando ao mesmo tempo dividem a mesma consulta
+    à Evolution. Já atualiza o cache mais longo do menu, pra tudo concordar.
+    """
+    from .whatsapp import WhatsAppErro, obter_status_conexao
+
+    chave = "whatsapp_status_ao_vivo"
+    estado = cache.get(chave)
+    if estado is None:
+        try:
+            estado = obter_status_conexao()
+        except WhatsAppErro:
+            estado = "erro"
+        cache.set(chave, estado, TTL_WHATSAPP_AO_VIVO_SEGUNDOS)
+        cache.set("whatsapp_status", estado, TTL_WHATSAPP_SEGUNDOS)
     return estado

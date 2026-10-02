@@ -203,6 +203,13 @@ h2 {
 @keyframes toast-entra { from { opacity: 0; transform: translateY(.7rem); } to { opacity: 1; transform: translateY(0); } }
 .toast-area .msg.toast-saindo { animation: toast-sai .24s ease-in both; }
 @keyframes toast-sai { to { opacity: 0; transform: translateX(1rem) scale(.98); } }
+.toast-link { font-weight: 600; color: var(--accent-ink); white-space: nowrap; }
+/* Celular: sobe o aviso pra não ficar escondido atrás da barra inferior. */
+@media (max-width: 1023px) {
+  .messages.toast-area { bottom: calc(var(--tabbar-h, 62px) + 0.75rem + env(safe-area-inset-bottom, 0px)); right: 0.75rem; width: calc(100vw - 1.5rem); }
+}
+/* `hidden` perde pra display:flex/grid dessas classes — aqui ele volta a valer. */
+.selo[hidden], .menu-item[hidden], .menu-quem[hidden] { display: none; }
 .menu-notificacoes > summary { position: relative; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; cursor: pointer; list-style: none; }
 .menu-notificacoes .selo { position: absolute; top: -.15rem; right: -.15rem; }
 .menu-notificacoes .menu-painel { width: min(390px, calc(100vw - 2rem)); padding: .65rem; }
@@ -1069,4 +1076,82 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+/* ---------- Tela inicial: o que pede ação ---------- */
+.atalhos-topo { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.hoje-faixa { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin: 0 0 1.5rem; }
+@media (min-width: 920px) { .hoje-faixa { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.hoje-tile {
+  display: grid; gap: 0.25rem; align-content: start; padding: 1rem 1.1rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--raise); color: var(--ink); text-decoration: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.hoje-tile:hover { box-shadow: var(--raise-hover); border-color: var(--line-strong); text-decoration: none; }
+.hoje-tile-rotulo { color: var(--ink-faint); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.hoje-tile-valor { font-size: 1.2rem; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; }
+.hoje-tile-valor.kpi-dinheiro { color: var(--money); }
+.hoje-tile-sub { color: var(--ink-soft); font-size: 0.83rem; }
+.hoje-tile--acao { background: var(--accent-wash); border-color: var(--accent); }
+.hoje-tile--alerta { background: var(--critical-wash); border-color: var(--critical); }
+.hoje-tile--alerta .hoje-tile-valor { color: var(--critical-ink); }
+
+.fila-acao { margin: 0 0 1.5rem; }
+.fila-cabecalho { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.6rem; }
+.fila-cabecalho h2 { margin: 0; }
+.fila-lista {
+  list-style: none; margin: 0; padding: 0; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--raise);
+}
+.fila-item {
+  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) auto auto;
+  align-items: center; gap: 0.75rem 1rem; padding: 0.8rem 1rem; border-bottom: 1px solid var(--line);
+}
+.fila-item:last-child { border-bottom: 0; }
+.fila-item:hover { background: var(--surface-2); }
+.fila-quem { display: grid; min-width: 0; }
+.fila-cliente { font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fila-contrato { color: var(--ink-faint); font-size: 0.85rem; }
+.fila-situacao { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.fila-valor { font-size: 1.05rem; text-align: right; white-space: nowrap; }
+.fila-acoes { display: flex; align-items: center; gap: 0.6rem; justify-content: flex-end; }
+.fila-acoes .contato-vias { display: flex; gap: 0.4rem; }
+.fila-mais { margin: 0.6rem 0 0; text-align: right; }
+@media (max-width: 719px) {
+  .fila-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .fila-valor { grid-column: 2; grid-row: 1; }
+  .fila-situacao, .fila-acoes { grid-column: 1 / -1; }
+  .fila-acoes { justify-content: space-between; }
+  .fila-acoes .btn-registrar { flex: 1; }
+}
+
+.kpi-faixa {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0 0 1.25rem; overflow: hidden;
+  background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--raise);
+}
+.kpi-faixa > div { padding: 0.8rem 1rem; background: var(--surface); min-width: 0; }
+@media (max-width: 919px) { .kpi-faixa > div:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+@media (min-width: 920px) { .kpi-faixa { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.kpi-faixa dt { color: var(--ink-faint); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.kpi-faixa dd { display: grid; margin: 0.25rem 0 0; font-size: 1.15rem; font-weight: 600; line-height: 1.25; }
+.kpi-faixa dd.kpi-dinheiro { color: var(--money); }
+.kpi-faixa dd.critical-text { color: var(--critical-ink); }
+.kpi-faixa .kpi-sub { margin-top: 0.15rem; color: var(--ink-faint); font-size: 0.78rem; font-weight: 400; }
+
+.graficos-recolhiveis { margin: 0 0 1rem; }
+.graficos-recolhiveis > summary {
+  display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.9rem; cursor: pointer; list-style: none;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-pill);
+  color: var(--ink-soft); font-size: 0.9rem; font-weight: 500;
+}
+.graficos-recolhiveis > summary::-webkit-details-marker { display: none; }
+.graficos-recolhiveis > summary::before { content: "▸"; }
+.graficos-recolhiveis[open] > summary { margin-bottom: 1rem; }
+.graficos-recolhiveis[open] > summary::before { content: "▾"; }
+@media (max-width: 719px) {
+  .painel-entrada .dashboard-heading { align-items: stretch; gap: 0.75rem; margin-bottom: 1rem; }
+  .painel-entrada .atalhos-topo { flex-wrap: nowrap; overflow-x: auto; margin: 0 -1rem; padding: 0 1rem 0.25rem; scrollbar-width: none; }
+  .painel-entrada .atalhos-topo::-webkit-scrollbar { display: none; }
+  .painel-entrada .atalhos-topo .btn { flex: none; width: auto; min-height: 40px; padding-inline: 0.9rem; white-space: nowrap; }
 }
