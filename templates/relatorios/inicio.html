@@ -6,89 +6,121 @@
 <div class="painel-entrada">
 <div class="toolbar dashboard-heading">
   <div>
-    <span class="eyebrow">Visão geral · {{ painel.hoje|date:"d/m/Y" }}</span>
-    <h1>Seu financeiro, em dia.</h1>
-    <p class="page-description">Acompanhe os recebimentos e organize as próximas cobranças.</p>
+    <span class="eyebrow">{{ painel.hoje|date:"l, d/m/Y" }}</span>
+    <h1>Hoje</h1>
+    <p class="page-description">O que precisa de você agora.</p>
   </div>
   <span class="spacer"></span>
-  <a class="btn" href="{% url 'pagamentos:cobrar_hoje' %}">Ir para Cobrar hoje</a>
+  <div class="atalhos-topo" aria-label="Atalhos rápidos">
+    <a class="btn secondary" href="{% url 'clientes:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo cliente</a>
+    <a class="btn secondary" href="{% url 'contratos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo contrato</a>
+    <a class="btn secondary" href="{% url 'contratos:importar_previa' %}">{% include "_icone.html" with nome="baixar" %}Importar planilha</a>
+  </div>
 </div>
 
-<div class="atalhos-rapidos" aria-label="Atalhos rápidos">
-  <a class="card" href="{% url 'clientes:novo' %}"><strong>Novo cliente</strong><span>Cadastrar cliente</span></a>
-  <a class="card" href="{% url 'contratos:novo' %}"><strong>Novo contrato</strong><span>Criar venda parcelada</span></a>
-  <a class="card" href="{% url 'pagamentos:cobrar_hoje' %}"><strong>Cobrar hoje</strong><span>Ver cobranças do dia</span></a>
-  <a class="card" href="{% url 'contratos:importar_previa' %}"><strong>Importar planilha</strong><span>Revisar contratos</span></a>
-</div>
+<section class="hoje-faixa" aria-label="Hoje">
+  <a class="hoje-tile{% if hoje.a_cobrar_n %} hoje-tile--acao{% endif %}" href="{% url 'pagamentos:cobrar_hoje' %}">
+    <span class="hoje-tile-rotulo">A cobrar hoje</span>
+    <strong class="hoje-tile-valor">{{ hoje.a_cobrar_n }} cobrança{{ hoje.a_cobrar_n|pluralize }}</strong>
+    <span class="hoje-tile-sub">{% if hoje.a_cobrar_n %}R$ {{ hoje.a_cobrar_valor|floatformat:2 }}{% if hoje.n_bloqueio %} · {{ hoje.n_bloqueio }} para bloquear{% endif %}{% else %}Nada para cobrar agora{% endif %}</span>
+  </a>
+  <a class="hoje-tile" href="{% url 'pagamentos:historico' %}">
+    <span class="hoje-tile-rotulo">Recebido hoje</span>
+    <strong class="hoje-tile-valor kpi-dinheiro">R$ {{ hoje.recebido_hoje|floatformat:2 }}</strong>
+    <span class="hoje-tile-sub">{{ hoje.recebido_hoje_n }} pagamento{{ hoje.recebido_hoje_n|pluralize }}</span>
+  </a>
+  <a class="hoje-tile{% if pix_alertas_n %} hoje-tile--alerta{% endif %}" href="{% url 'pagamentos:pix_painel' %}">
+    <span class="hoje-tile-rotulo">Pix</span>
+    {% if pix_alertas_n %}
+      <strong class="hoje-tile-valor">{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix</strong>
+      <span class="hoje-tile-sub">Conferir pendências</span>
+    {% else %}
+      <strong class="hoje-tile-valor">Em dia</strong>
+      <span class="hoje-tile-sub">Nenhuma pendência</span>
+    {% endif %}
+  </a>
+  <a class="hoje-tile{% if whatsapp_estado != 'open' and whatsapp_estado != 'simulado' %} hoje-tile--alerta{% endif %}" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-tile>
+    <span class="hoje-tile-rotulo">WhatsApp</span>
+    {% if whatsapp_estado == 'open' %}
+      <strong class="hoje-tile-valor" data-whatsapp-tile-valor>Conectado</strong>
+      <span class="hoje-tile-sub" data-whatsapp-tile-sub>Cobranças saindo normalmente</span>
+    {% elif whatsapp_estado == 'simulado' %}
+      <strong class="hoje-tile-valor" data-whatsapp-tile-valor>Simulação</strong>
+      <span class="hoje-tile-sub" data-whatsapp-tile-sub>Nenhuma mensagem real é enviada</span>
+    {% else %}
+      <strong class="hoje-tile-valor" data-whatsapp-tile-valor>Desconectado</strong>
+      <span class="hoje-tile-sub" data-whatsapp-tile-sub>Reconectar para voltar a cobrar</span>
+    {% endif %}
+  </a>
+</section>
 
-{% if pix_alertas_n %}
-<aside class="alerta-comprovante" aria-label="Pendências no Pix">
-  <h2>{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix</h2>
-  <p>Há comprovantes para conferir ou pagamentos que precisam de revisão manual.</p>
-  <a class="btn" href="{% url 'pagamentos:pix_painel' %}">Conferir pendências</a>
-</aside>
-{% endif %}
-<dl class="meta painel-kpis">
-  <div class="kpi--dinheiro">
+<section class="fila-acao" aria-labelledby="fila-titulo">
+  <div class="fila-cabecalho">
+    <h2 id="fila-titulo">Quem cobrar agora</h2>
+    {% if hoje.a_cobrar_n %}<a href="{% url 'pagamentos:cobrar_hoje' %}">Ver as {{ hoje.a_cobrar_n }} cobrança{{ hoje.a_cobrar_n|pluralize }}</a>{% endif %}
+  </div>
+  {% if hoje.fila %}
+    <ul class="fila-lista">
+      {% for l in hoje.fila %}
+        <li class="fila-item">
+          <div class="fila-quem">
+            <a class="fila-cliente" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a>
+            <a class="fila-contrato" href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a>
+          </div>
+          <div class="fila-situacao">
+            {% if l.situacao.dias_atraso %}<span class="pill {{ l.situacao.status }}">{{ l.situacao.dias_atraso }} dia{{ l.situacao.dias_atraso|pluralize }} de atraso</span>{% else %}<span class="pill em_dia">Vence hoje</span>{% endif %}
+            {% if l.situacao.alertar_bloqueio %}<span class="pill alerta-bloqueio">⚠ bloquear aparelho</span>{% endif %}
+          </div>
+          <strong class="fila-valor num">{% if l.a_cobrar is not None %}R$ {{ l.a_cobrar|floatformat:2 }}{% else %}—{% endif %}</strong>
+          <div class="fila-acoes">
+            {% include "_contato_icones.html" with cliente=l.contrato.cliente %}
+            <a class="btn btn-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}" aria-label="Registrar pagamento de {{ l.contrato.cliente.nome }} — {{ l.contrato.apelido }}">{% include "_icone.html" with nome="dinheiro" %}Registrar</a>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if hoje.fila_restante %}<p class="fila-mais"><a href="{% url 'pagamentos:cobrar_hoje' %}">+ {{ hoje.fila_restante }} outra{{ hoje.fila_restante|pluralize }} em Cobrar hoje</a></p>{% endif %}
+  {% else %}
+    <div class="empty"><p>Nada para cobrar agora. Bom trabalho!</p></div>
+  {% endif %}
+</section>
+
+<dl class="kpi-faixa" aria-label="Números do financeiro">
+  <div>
     <dt>A receber em aberto</dt>
     <dd class="num kpi-dinheiro">R$ {{ painel.a_receber|floatformat:2 }}</dd>
   </div>
   <div>
-    <dt>Em atraso (hoje)</dt>
+    <dt>Em atraso</dt>
     <dd class="num{% if painel.total_atrasado %} critical-text{% endif %}">R$ {{ painel.total_atrasado|floatformat:2 }}<span class="kpi-sub">{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }}</span></dd>
   </div>
   <div>
     <dt>Recebido no mês</dt>
-    <dd class="num kpi-dinheiro">R$ {{ painel.recebido_mes|floatformat:2 }}<span class="kpi-sub">de R$ {{ painel.previsto_mes|floatformat:2 }} previstos</span></dd>
+    <dd class="num kpi-dinheiro">R$ {{ painel.recebido_mes|floatformat:2 }}<span class="kpi-sub">de R$ {{ painel.previsto_mes|floatformat:2 }}</span></dd>
   </div>
   <div>
     <dt>Contratos ativos</dt>
-    <dd class="num">{{ painel.contratos_ativos }}</dd>
+    <dd class="num">{{ painel.contratos_ativos }}<span class="kpi-sub">média R$ {{ painel.ticket_medio|floatformat:2 }}</span></dd>
   </div>
   <div>
     <dt>Inadimplentes</dt>
     <dd class="num{% if painel.inadimplentes %} critical-text{% endif %}">{{ painel.inadimplentes }}<span class="kpi-sub">{{ painel.atrasados_contratos }} atrasado{{ painel.atrasados_contratos|pluralize }}</span></dd>
   </div>
-  <div>
-    <dt>Valor médio por contrato</dt>
-    <dd class="num">R$ {{ painel.ticket_medio|floatformat:2 }}<span class="kpi-sub">média entre {{ painel.contratos_ativos }} contrato{{ painel.contratos_ativos|pluralize }} ativo{{ painel.contratos_ativos|pluralize }}</span></dd>
-  </div>
 </dl>
 
-<div class="painel-graficos">
-  <div class="card">
-    <h2>Recebido × previsto por mês</h2>
-    <div class="chart-box"><canvas id="grafico-meses" aria-label="Recebido e previsto por mês nos últimos seis meses"></canvas></div>
+<details class="graficos-recolhiveis">
+  <summary>Gráficos</summary>
+  <div class="painel-graficos">
+    <div class="card">
+      <h2>Recebido × previsto por mês</h2>
+      <div class="chart-box"><canvas id="grafico-meses" aria-label="Recebido e previsto por mês nos últimos seis meses"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Contratos por status</h2>
+      <div class="chart-box"><canvas id="grafico-status" aria-label="Distribuição dos contratos por status"></canvas></div>
+    </div>
   </div>
-  <div class="card">
-    <h2>Contratos por status</h2>
-    <div class="chart-box"><canvas id="grafico-status" aria-label="Distribuição dos contratos por status"></canvas></div>
-  </div>
-</div>
-
-<h2>Precisa de atenção</h2>
-{% if painel.atencao %}
-  <div class="tbl-wrap cards">
-    <table>
-      <thead>
-        <tr><th>Cliente</th><th>Contrato</th><th class="num">Atraso</th><th class="num">Em aberto</th><th></th></tr>
-      </thead>
-      <tbody>
-        {% for item in painel.atencao %}
-          <tr>
-            <td><a href="{% url 'clientes:detalhe' item.contrato.cliente.pk %}">{{ item.contrato.cliente.nome }}</a></td>
-            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' item.contrato.pk %}">{{ item.contrato.apelido }}</a></td>
-            <td class="num" data-label="Atraso">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize }}</td>
-            <td class="num" data-label="Em aberto">R$ {{ item.em_aberto|floatformat:2 }}{% if item.n_parcelas > 1 %}<span class="helptext"> · {{ item.n_parcelas }} parcelas</span>{% endif %}</td>
-            <td class="num" data-label=""><a href="{% url 'pagamentos:novo' item.contrato.pk %}">registrar</a></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-{% else %}
-  <div class="empty"><p>Nenhum contrato em atraso agora.</p></div>
-{% endif %}
+</details>
 </div>
 {% endblock %}
 

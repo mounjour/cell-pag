@@ -36,6 +36,15 @@
     if (vazio) vazio.hidden = total > 0;
   };
 
+  const aplicarTile = (estado) => {
+    const tile = document.querySelector("[data-whatsapp-tile]");
+    if (!tile) return;
+    const ok = estado === "open";
+    tile.classList.toggle("hoje-tile--alerta", !ok);
+    tile.querySelector("[data-whatsapp-tile-valor]").textContent = ok ? "Conectado" : "Desconectado";
+    tile.querySelector("[data-whatsapp-tile-sub]").textContent = ok ? "Cobranças saindo normalmente" : "Reconectar para voltar a cobrar";
+  };
+
   const atualizarCartao = async () => {
     const atual = cartao();
     if (!atual) return;
@@ -72,6 +81,7 @@
     if (estado === "simulado") return;
     const anterior = lerAnterior();
     aplicarSelos(estado !== "open");
+    aplicarTile(estado);
     if (anterior !== estado) {
       avisar(anterior, estado);
       if ((anterior === "open") !== (estado === "open")) atualizarCartao();

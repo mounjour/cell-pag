@@ -15,7 +15,7 @@ from apps.usuarios.mixins import DonoRequeridoMixin
 
 from .forms import PeriodoForm
 from .pdf import montar_pdf
-from .servicos import montar_juros_em_aberto, montar_painel_inicial, montar_relatorio
+from .servicos import montar_hoje, montar_juros_em_aberto, montar_painel_inicial, montar_relatorio
 
 POR_PAGINA_JUROS = 20
 
@@ -57,7 +57,7 @@ def _contexto(request):
 
 
 class InicioView(LoginRequiredMixin, TemplateView):
-    """Tela inicial: números-chave, dois gráficos e a lista de atenção.
+    """Tela inicial: o que pede ação hoje, a fila de cobrança, números-chave e gráficos.
 
     Aberta a qualquer usuário autenticado (a Yslane também usa). Os dados vêm
     de ``montar_painel_inicial``; os gráficos recebem listas já convertidas
@@ -68,8 +68,12 @@ class InicioView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        from apps.pagamentos.badge import status_whatsapp
+
         painel = montar_painel_inicial()
         ctx["painel"] = painel
+        ctx["hoje"] = montar_hoje(painel["hoje"])
+        ctx["whatsapp_estado"] = status_whatsapp()
         ctx["serie_json"] = {
             "labels": [m["rotulo"] for m in painel["serie_meses"]],
             "recebido": [float(m["recebido"]) for m in painel["serie_meses"]],
