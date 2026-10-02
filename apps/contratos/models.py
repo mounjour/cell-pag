@@ -123,6 +123,9 @@ class Contrato(models.Model):
     )
     observacoes = models.TextField("observações", blank=True)
 
+    # Identifica o envio da confirmação: um duplo clique não cria dois contratos.
+    cadastro_confirmacao = models.UUIDField(null=True, blank=True, unique=True, editable=False)
+
     criado_em = models.DateTimeField("criado em", auto_now_add=True)
     atualizado_em = models.DateTimeField("atualizado em", auto_now=True)
 

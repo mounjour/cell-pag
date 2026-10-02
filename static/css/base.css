@@ -631,6 +631,12 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 
 .form-centered { max-width: 920px; margin-inline: auto; }
 .form-centered h1 { margin-bottom: 1rem; }
+.resumo-confirmacao .meta dd { overflow-wrap: anywhere; }
+.resumo-confirmacao .meta > div { min-width: 0; }
+.resumo-confirmacao .form-page .form-actions { margin-inline: 0; }
+@media (min-width: 640px) {
+  .resumo-confirmacao .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .form-centered .form-grid { max-width: none; }
 @media (min-width: 640px) {
   .form-centered .form-actions { gap: 1rem; }

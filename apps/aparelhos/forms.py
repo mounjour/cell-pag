@@ -5,6 +5,7 @@ from django import forms
 from apps.contratos.forms import moeda_para_decimal
 
 from .models import Aparelho
+from .catalogo import opcoes_modelos
 
 
 def _formata_moeda(valor) -> str:
@@ -12,6 +13,7 @@ def _formata_moeda(valor) -> str:
 
 
 class AparelhoForm(forms.ModelForm):
+    modelo = forms.ChoiceField(label="Modelo do iPhone", choices=opcoes_modelos())
     # Mesmo padrão de dinheiro-como-texto do ContratoForm (aceita vírgula).
     custo = forms.CharField(
         label="Custo de compra (opcional)",
@@ -23,9 +25,6 @@ class AparelhoForm(forms.ModelForm):
         model = Aparelho
         fields = ["modelo", "imei", "custo", "fornecedor", "data_compra", "observacoes"]
         widgets = {
-            "modelo": forms.TextInput(
-                attrs={"autofocus": True, "placeholder": "Ex.: iPhone 11 64GB", "autocapitalize": "sentences"}
-            ),
             "imei": forms.TextInput(attrs={"inputmode": "numeric", "maxlength": "20", "placeholder": "15 dígitos (opcional)"}),
             "fornecedor": forms.TextInput(attrs={"placeholder": "Opcional"}),
             "data_compra": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -34,6 +33,9 @@ class AparelhoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        atual = self.instance.modelo if self.instance and self.instance.pk else ""
+        self.fields["modelo"].choices = opcoes_modelos(atual=atual)
+        self.fields["modelo"].widget.attrs["autofocus"] = True
         self.fields["data_compra"].input_formats = ["%Y-%m-%d"]
         if self.instance and self.instance.pk and self.instance.custo is not None:
             self.initial["custo"] = _formata_moeda(self.instance.custo)

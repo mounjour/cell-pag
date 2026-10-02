@@ -45,6 +45,7 @@
     {% include "_field.html" with field=form.estrutura %}
     {% include "_field.html" with field=form.valor_parcela %}
     {% include "_field.html" with field=form.num_parcelas %}
+    {% include "_field.html" with field=form.juros_diario %}
     {% if not form.instance.pk %}
       {% include "_field.html" with field=form.entrada %}
       {% include "_field.html" with field=form.entrada_forma %}
@@ -79,7 +80,7 @@
     <noscript>Ative JavaScript para visualizar o resumo antes de salvar.</noscript>
   </section>
   <div class="form-actions">
-    <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Salvar</button>
+    <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}{% if form.instance.pk %}Salvar{% else %}Revisar cadastro{% endif %}</button>
     <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
   </div>
 </form>

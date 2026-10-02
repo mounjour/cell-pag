@@ -9,6 +9,7 @@ from validate_docbr import CPF as CPFGen
 
 from apps.clientes.models import Cliente
 from apps.contratos.forms import moeda_para_decimal
+from apps.contratos.test_helpers import cadastrar_contrato
 from apps.contratos.models import Contrato
 
 
@@ -16,7 +17,7 @@ def dados_form(cliente, **over):
     dados = {
         "cliente": cliente.pk,
         "apelido": "iPhone 11",
-        "aparelho_modelo": "iPhone 11 64GB",
+        "aparelho_modelo": "iPhone 11",
         "imei": "",
         "valor_total": "2400,00",
         "estrutura": Contrato.Estrutura.DIARIA,
@@ -276,9 +277,7 @@ def test_escolher_aparelho_do_estoque_vincula_e_marca_como_vendido(auth_client, 
     from apps.aparelhos.models import Aparelho
 
     ap = Aparelho.objects.create(modelo="iPhone 11 64GB", imei="123456789012345")
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(cliente, aparelho=ap.pk),
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, aparelho=ap.pk),
         follow=True,
     )
     assert resp.status_code == 200
@@ -304,20 +303,18 @@ def test_aparelho_ja_vendido_nao_aparece_pra_escolher_de_novo(auth_client, clien
 
 @pytest.mark.django_db
 def test_sem_escolher_aparelho_continua_funcionando_como_antes(auth_client, cliente):
-    resp = auth_client.post(reverse("contratos:novo"), dados_form(cliente), follow=True)
+    resp = cadastrar_contrato(auth_client, dados_form(cliente), follow=True)
     assert resp.status_code == 200
     ct = Contrato.objects.get(cliente=cliente)
     assert ct.aparelho_id is None
-    assert ct.aparelho_modelo == "iPhone 11 64GB"  # texto livre continua igual
+    assert ct.aparelho_modelo == "iPhone 11"
 
 
 # ---------- Gerar parcelas pela web (sem terminal) ----------
 
 @pytest.mark.django_db
 def test_cadastro_com_valor_parcela_ja_gera_vencimentos(auth_client, cliente):
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(
+    resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             estrutura=Contrato.Estrutura.MENSAL,
             valor_parcela="200,00",
@@ -335,9 +332,7 @@ def test_cadastro_com_valor_parcela_ja_gera_vencimentos(auth_client, cliente):
 
 @pytest.mark.django_db
 def test_cadastro_sem_num_parcelas_calcula_sozinho(auth_client, cliente):
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(
+    resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             valor_total="2400,00",
             estrutura=Contrato.Estrutura.MENSAL,
@@ -355,9 +350,7 @@ def test_cadastro_sem_num_parcelas_calcula_sozinho(auth_client, cliente):
 
 @pytest.mark.django_db
 def test_cadastro_com_num_parcelas_informado_nao_e_sobrescrito(auth_client, cliente):
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(
+    resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             valor_total="2400,00",
             estrutura=Contrato.Estrutura.MENSAL,
@@ -374,9 +367,7 @@ def test_cadastro_com_num_parcelas_informado_nao_e_sobrescrito(auth_client, clie
 
 @pytest.mark.django_db
 def test_cadastro_sem_valor_parcela_nao_gera_nada(auth_client, cliente):
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(cliente, valor_parcela="", num_parcelas=""),
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, valor_parcela="", num_parcelas=""),
         follow=True,
     )
     assert resp.status_code == 200
@@ -484,9 +475,7 @@ def test_moeda_para_decimal(entrada, esperado):
 
 @pytest.mark.django_db
 def test_form_aceita_valor_com_virgula(auth_client, cliente):
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(cliente, valor_total="1.899,90", valor_parcela="63,33"),
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, valor_total="1.899,90", valor_parcela="63,33"),
     )
     assert resp.status_code == 302
     ct = Contrato.objects.get()
@@ -496,7 +485,7 @@ def test_form_aceita_valor_com_virgula(auth_client, cliente):
 
 @pytest.mark.django_db
 def test_form_valor_invalido_mostra_erro(auth_client, cliente):
-    resp = auth_client.post(reverse("contratos:novo"), dados_form(cliente, valor_total="abc"))
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, valor_total="abc"))
     assert resp.status_code == 200
     assert "valor_total" in resp.context["form"].errors
     assert not Contrato.objects.exists()
@@ -504,9 +493,7 @@ def test_form_valor_invalido_mostra_erro(auth_client, cliente):
 
 @pytest.mark.django_db
 def test_form_normaliza_imei(auth_client, cliente):
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(cliente, imei="35 999905 337250 1"),
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, imei="35 999905 337250 1"),
     )
     assert resp.status_code == 302
     assert Contrato.objects.get().imei == "359999053372501"
@@ -636,9 +623,7 @@ def test_tela_do_contrato_longo_mostra_as_parcelas_atuais_e_nao_as_24_primeiras(
 def test_parcelas_ja_pagas_marca_as_primeiras_parcelas_como_pagas(auth_client, cliente):
     from apps.pagamentos.models import Pagamento, Vencimento
 
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(
+    resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             estrutura=Contrato.Estrutura.DIARIA,
             valor_parcela="40,00",
@@ -667,9 +652,7 @@ def test_parcelas_ja_pagas_marca_as_primeiras_parcelas_como_pagas(auth_client, c
 
 @pytest.mark.django_db
 def test_parcelas_ja_pagas_sem_parcelas_geradas_avisa(auth_client, cliente):
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(
+    resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             estrutura=Contrato.Estrutura.DIARIA,
             valor_parcela="",  # sem valor de parcela: nada é gerado
@@ -687,9 +670,7 @@ def test_parcelas_ja_pagas_sem_parcelas_geradas_avisa(auth_client, cliente):
 
 @pytest.mark.django_db
 def test_parcelas_ja_pagas_nao_pode_passar_do_num_parcelas(auth_client, cliente):
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(
+    resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             estrutura=Contrato.Estrutura.DIARIA,
             valor_parcela="40,00",
@@ -716,9 +697,7 @@ def test_parcelas_ja_pagas_nao_aparece_na_edicao(auth_client, cliente):
 def test_entrada_vira_pagamento_sem_parcela_vinculada(auth_client, cliente):
     from apps.pagamentos.models import Pagamento
 
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(
+    resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             valor_total="1000,00",
             estrutura=Contrato.Estrutura.MENSAL,
@@ -747,7 +726,7 @@ def test_entrada_vira_pagamento_sem_parcela_vinculada(auth_client, cliente):
 def test_sem_entrada_nao_cria_pagamento_nenhum(auth_client, cliente):
     from apps.pagamentos.models import Pagamento
 
-    auth_client.post(reverse("contratos:novo"), dados_form(cliente, entrada=""))
+    cadastrar_contrato(auth_client, dados_form(cliente, entrada=""))
     ct = Contrato.objects.get(cliente=cliente)
     assert not Pagamento.objects.filter(contrato=ct).exists()
 
@@ -756,9 +735,7 @@ def test_sem_entrada_nao_cria_pagamento_nenhum(auth_client, cliente):
 def test_entrada_aparece_na_tela_do_contrato(auth_client, cliente):
     from apps.pagamentos.models import Pagamento
 
-    auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(
+    cadastrar_contrato(auth_client, dados_form(
             cliente,
             valor_total="1000,00",
             estrutura=Contrato.Estrutura.MENSAL,
@@ -781,9 +758,7 @@ def test_entrada_aparece_na_tela_do_contrato(auth_client, cliente):
 def test_entrada_zero_ou_negativa_e_invalida(auth_client, cliente):
     from apps.pagamentos.models import Pagamento
 
-    resp = auth_client.post(
-        reverse("contratos:novo"),
-        dados_form(cliente, entrada="0,00", entrada_forma=Pagamento.Forma.DINHEIRO),
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, entrada="0,00", entrada_forma=Pagamento.Forma.DINHEIRO),
     )
     assert resp.status_code == 200
     assert not Contrato.objects.filter(cliente=cliente).exists()
