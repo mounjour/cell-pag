@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="toolbar">
-  <h1>Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
+  <h1>{% include "_icone.html" with nome="cobrar" %}Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
 </div>
 
 <div class="filtro-pills">

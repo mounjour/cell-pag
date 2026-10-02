@@ -16,7 +16,7 @@
   {% if user.is_authenticated %}<script src="{% static 'js/conexoes_vivo.js' %}?v=3" defer></script>{% endif %}
   <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261002-hoje3">
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}?v=20260928-ux">
-  <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261001-conexoes">
+  <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261002-icones7">
   {% block extra_styles %}{% endblock %}
   {% block extra_head %}{% endblock %}
 </head>
@@ -64,7 +64,7 @@
           <a class="menu-item" href="{% url 'usuarios:termos' %}">{% include "_icone.html" with nome="termos" %}<span>Termos e privacidade</span></a>
           <form method="post" action="{% url 'usuarios:logout' %}">
             {% csrf_token %}
-            <button type="submit" class="menu-item">{% include "_icone.html" with nome="sair" %}<span>Sair</span></button>
+            <button type="submit" class="menu-item menu-item--sair">{% include "_icone.html" with nome="sair" %}<span>Sair</span></button>
           </form>
         </div>
       </details>
@@ -115,7 +115,7 @@
           <a class="menu-item" href="{% url 'usuarios:termos' %}">{% include "_icone.html" with nome="termos" %}<span>Termos e privacidade</span></a>
           <form method="post" action="{% url 'usuarios:logout' %}">
             {% csrf_token %}
-            <button type="submit" class="menu-item">{% include "_icone.html" with nome="sair" %}<span>Sair</span></button>
+            <button type="submit" class="menu-item menu-item--sair">{% include "_icone.html" with nome="sair" %}<span>Sair</span></button>
           </form>
         </div>
       </details>

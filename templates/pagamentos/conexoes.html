@@ -2,7 +2,7 @@
 {% block title %}Conexões{% endblock %}
 
 {% block content %}
-<h1>Conexões</h1>
+<h1>{% include "_icone.html" with nome="conexoes" %}Conexões</h1>
 <p class="note">Status das integrações externas. A conexão do WhatsApp cai de vez em quando (o celular ficou sem internet, alguém removeu o aparelho da lista de conectados, ou o WhatsApp exigiu reconexão) — quando isso acontece, as cobranças automáticas param de sair até reconectar aqui.</p>
 
 <section class="card{% if quer_qr %} card--cronometro{% endif %}" data-conexoes-card>

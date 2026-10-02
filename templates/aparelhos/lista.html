@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="toolbar">
-  <h1>Aparelhos</h1>
+  <h1>{% include "_icone.html" with nome="aparelhos" %}Aparelhos</h1>
   <span class="spacer"></span>
   <a class="btn" href="{% url 'aparelhos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo aparelho</a>
 </div>
