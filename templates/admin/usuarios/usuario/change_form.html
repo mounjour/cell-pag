@@ -1,0 +1,9 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block object-tools-items %}
+  {% if trocar_senha_url %}
+    <li><a href="{{ trocar_senha_url }}">Trocar senha</a></li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
