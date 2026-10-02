@@ -1,0 +1,65 @@
+{% extends "usuarios/conta_base.html" %}
+{% block title %}Termos de uso e privacidade · Acompanhamento de Pagamentos{% endblock %}
+{% block titulo %}Termos de uso e privacidade{% endblock %}
+{% block card_classe %}login-card--termos{% endblock %}
+{% block corpo %}
+<p class="login-description">Versão {{ versao }}. Leia com atenção; no fim da página você confirma que leu.</p>
+
+<div class="termos-texto">
+  <h2>Parte 1: Termos de uso do sistema</h2>
+  <p>Para as pessoas autorizadas a usar o sistema. O controlador dos dados é Alisson Erllen dos Santos Silva.</p>
+
+  <h3>1. Acesso</h3>
+  <p>O acesso é restrito a quem foi autorizado pelo controlador. Cada pessoa usa a própria conta e a própria senha, e responde pelo que é feito com elas.</p>
+
+  <h3>2. Seus cuidados</h3>
+  <ul>
+    <li>Não compartilhe sua senha. Se suspeitar que alguém a conhece, peça ao administrador do sistema para trocá-la.</li>
+    <li>Em computador ou celular compartilhado, saia do sistema ao terminar.</li>
+    <li>Use os dados dos clientes só para cadastrar vendas, cobrar, registrar pagamentos e atender o cliente. Não copie, envie nem divulgue esses dados fora do trabalho.</li>
+    <li>Registre apenas informações corretas e necessárias. Anexe somente os comprovantes e documentos que o contrato exige.</li>
+    <li>Cobre com respeito: sem ameaças, sem expor a dívida a terceiros.</li>
+  </ul>
+
+  <h3>3. Registro das ações</h3>
+  <p>O sistema guarda quem lançou, alterou ou estornou cada informação e quando, para conferência e segurança. Esse registro pode ser consultado pelo controlador.</p>
+
+  <h3>4. Cobranças automáticas</h3>
+  <p>O sistema gera Pix e envia mensagens de cobrança e de confirmação por WhatsApp. Confira se o telefone do cliente está correto antes de salvar o cadastro, e use <strong>Suspender cobrança automática</strong> quando o cliente combinar outra data ou outra forma de pagamento.</p>
+
+  <h2 id="privacidade">Parte 2: Aviso de privacidade (para os clientes)</h2>
+  <p>Este aviso pode ser lido por qualquer pessoa e enviado ao cliente pelo link desta página.</p>
+
+  <h3>Quais dados tratamos</h3>
+  <p>Nome, CPF, telefone/WhatsApp e endereço; e os dados do contrato (valores, parcelas, vencimentos, pagamentos, comprovantes e documentos que você nos enviar).</p>
+
+  <h3>Para quê</h3>
+  <p>Cadastrar e executar o contrato de venda a prazo; emitir e conferir cobranças, inclusive Pix; lembrar vencimentos e cobrar parcelas em atraso; cumprir obrigações legais e fiscais; e defender nossos direitos em caso de inadimplência.</p>
+
+  <h3>Base legal</h3>
+  <p>Execução de contrato (art. 7º, V, da LGPD), cumprimento de obrigação legal ou regulatória (art. 7º, II) e legítimo interesse na cobrança de valores devidos (art. 7º, IX).</p>
+
+  <h3>Com quem compartilhamos</h3>
+  <p>Com a empresa de hospedagem do sistema, com o provedor de envio de mensagens de WhatsApp e com a instituição de pagamento responsável pelo Pix. Não vendemos nem cedemos seus dados para publicidade de terceiros.</p>
+
+  <h3>Por quanto tempo</h3>
+  <p>Enquanto o contrato estiver ativo e pelo prazo em que a cobrança e a defesa de direitos ainda forem possíveis, em regra até 5 anos após a quitação ou o encerramento. Comprovantes e documentos podem ser guardados pelo mesmo período.</p>
+
+  <h3>Seus direitos</h3>
+  <p>Você pode confirmar o tratamento, acessar, corrigir, pedir anonimização, portabilidade ou exclusão dos dados que não precisamos manter por lei. Fale com o encarregado pelos dados: <a href="mailto:alissonerllen1@gmail.com">alissonerllen1@gmail.com</a>. Você também pode procurar a ANPD (gov.br/anpd).</p>
+</div>
+
+{% if precisa_aceitar %}
+  <form method="post" action="{% url 'usuarios:termos_aceitar' %}" class="login-form termos-aceite">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ proximo }}">
+    <label class="login-check"><input type="checkbox" name="aceito" value="1" required> <span>Li e aceito os termos de uso e o aviso de privacidade (versão {{ versao }}).</span></label>
+    <button type="submit" class="login-submit">Aceitar e continuar <span aria-hidden="true">→</span></button>
+  </form>
+  <form method="post" action="{% url 'usuarios:logout' %}" class="login-voltar">{% csrf_token %}<button type="submit" class="login-link-botao">Sair sem aceitar</button></form>
+{% else %}
+  <p class="login-voltar">
+    {% if user.is_authenticated %}<a href="{% url 'relatorios:inicio' %}">Voltar ao sistema</a>{% else %}<a href="{% url 'usuarios:login' %}">Voltar ao login</a>{% endif %}
+  </p>
+{% endif %}
+{% endblock %}

@@ -84,6 +84,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Registra o usuário logado em cada alteração auditada (Fase 3).
     "auditlog.middleware.AuditlogMiddleware",
+    # Termos de uso: quem ainda não aceitou a versão atual vai para a tela de aceite.
+    "apps.usuarios.middleware.TermosAceitosMiddleware",
     # django-axes: precisa vir por último (depois do AuthenticationMiddleware).
     "axes.middleware.AxesMiddleware",
 ]
@@ -168,6 +170,11 @@ SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=60 * 60 * 12)
 SESSION_SAVE_EVERY_REQUEST = True  # renova a validade a cada request ativo
 # "Manter conectado" no login: a sessão dura mais (dias) em vez das 12 h acima.
 SESSION_MANTER_CONECTADO_DIAS = env.int("SESSION_MANTER_CONECTADO_DIAS", default=30)
+
+# Termos de uso e privacidade (templates/usuarios/termos.html). Ao mudar o texto,
+# troque a versão: todo mundo vê a tela de aceite de novo no próximo acesso.
+TERMOS_VERSAO = "2026-10-02"
+TERMOS_EXIGIR_ACEITE = env.bool("TERMOS_EXIGIR_ACEITE", default=True)
 
 # ── E-mail (recuperação de senha) ─────────────────────────────────────────────
 # Sem EMAIL_HOST o e-mail só vai para o log do servidor (nada é enviado de

@@ -88,3 +88,16 @@
 .login-card--simples { grid-template-columns: minmax(0, 1fr); max-width: 460px; gap: 0; padding: 40px; }
 @media (max-width: 760px) { .login-card--simples { padding: 28px 24px; } }
 a.login-submit, a.login-submit:hover { text-decoration: none; color: var(--on-accent); }
+
+/* Termos de uso e privacidade */
+.login-card--termos { max-width: 760px; }
+.termos-texto { margin: 1.25rem 0; text-align: left; font-size: 0.95rem; line-height: 1.55; color: var(--ink-soft); }
+.termos-texto h2 { margin: 1.75rem 0 0.4rem; padding: 0; font-size: 1.1rem; letter-spacing: 0; text-transform: none; color: var(--ink); }
+.termos-texto h2:first-child { margin-top: 0; }
+.termos-texto h3 { margin: 1.1rem 0 0.25rem; font-size: 0.98rem; color: var(--ink); }
+.termos-texto p, .termos-texto ul { margin: 0 0 0.6rem; }
+.termos-texto ul { padding-left: 1.2rem; }
+.termos-aceite { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+.login-link-botao { background: none; border: 0; padding: 0; color: var(--accent-ink); font: inherit; cursor: pointer; text-decoration: underline; }
+.login-termos { margin: 0.75rem 0 0; font-size: 0.82rem; color: var(--ink-faint); text-align: center; }
+.login-termos a { color: var(--accent-ink); }
