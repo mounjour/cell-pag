@@ -299,3 +299,26 @@
   .periodo-rodape { grid-template-columns: 1fr auto; align-items: center; }
   .periodo-resumo { grid-column: 1 / -1; }
 }
+
+/* ---------- Ícones do menu em cores (uma por grupo) ----------
+   Só no menu lateral, na barra de baixo e no "Mais": botões e o resto do
+   sistema continuam com a cor do texto. Vermelho fica reservado a alertas. */
+.app-shell {
+  --ic-azul: #2f6fe0; --ic-verde: #1f9d57; --ic-roxo: #7c4ddb;
+  --ic-ambar: #d9822b; --ic-ciano: #0f8fa8; --ic-rosa: #d6428a;
+}
+:root[data-tema="escuro"] .app-shell {
+  --ic-azul: #7fadf5; --ic-verde: #58cf8e; --ic-roxo: #b79cf5;
+  --ic-ambar: #f0b062; --ic-ciano: #5fd0e6; --ic-rosa: #f092c0;
+}
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="inicio"],
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="pix"] { color: var(--ic-azul); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="cobrar"],
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="historico"] { color: var(--ic-verde); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="clientes"],
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="aparelhos"] { color: var(--ic-roxo); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="contratos"] { color: var(--ic-ambar); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="conexoes"] { color: var(--ic-ciano); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="relatorios"],
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel) .icone[data-icone="juros"] { color: var(--ic-rosa); }
+.sidebar .nav a.active .icone, .tabbar a.active .icone { stroke-width: 2.2; }
