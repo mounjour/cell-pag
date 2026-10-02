@@ -203,6 +203,13 @@ h2 {
 @keyframes toast-entra { from { opacity: 0; transform: translateY(.7rem); } to { opacity: 1; transform: translateY(0); } }
 .toast-area .msg.toast-saindo { animation: toast-sai .24s ease-in both; }
 @keyframes toast-sai { to { opacity: 0; transform: translateX(1rem) scale(.98); } }
+.toast-link { font-weight: 600; color: var(--accent-ink); white-space: nowrap; }
+/* Celular: sobe o aviso pra não ficar escondido atrás da barra inferior. */
+@media (max-width: 1023px) {
+  .messages.toast-area { bottom: calc(var(--tabbar-h, 62px) + 0.75rem + env(safe-area-inset-bottom, 0px)); right: 0.75rem; width: calc(100vw - 1.5rem); }
+}
+/* `hidden` perde pra display:flex/grid dessas classes — aqui ele volta a valer. */
+.selo[hidden], .menu-item[hidden], .menu-quem[hidden] { display: none; }
 .menu-notificacoes > summary { position: relative; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; cursor: pointer; list-style: none; }
 .menu-notificacoes .selo { position: absolute; top: -.15rem; right: -.15rem; }
 .menu-notificacoes .menu-painel { width: min(390px, calc(100vw - 2rem)); padding: .65rem; }

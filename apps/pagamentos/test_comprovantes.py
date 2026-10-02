@@ -279,7 +279,7 @@ def test_painel_pix_lista_o_aviso_e_o_menu_mostra_o_selo(auth_client, aviso):
     html = auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
     assert "Comprovantes recebidos" in html and "joana d&#x27;arc silva" in html
     assert "não prova o pagamento" in html and "Abrir WhatsApp" in html
-    assert 'class="selo selo--alerta"' in html
+    assert 'class="selo selo--alerta"><span' in html
 
 
 @pytest.mark.django_db
@@ -319,7 +319,7 @@ def test_descartar_tira_o_aviso_e_o_selo(auth_client, aviso, operador):
     aviso.refresh_from_db()
     assert aviso.status == ComprovanteRecebido.Status.DESCARTADO and aviso.resolvido_por == operador
     html = auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
-    assert "Comprovantes recebidos" not in html and 'selo--alerta"' not in html
+    assert "Comprovantes recebidos" not in html and 'class="selo selo--alerta"><span' not in html
 
 
 @pytest.mark.django_db

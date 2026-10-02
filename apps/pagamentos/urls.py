@@ -26,6 +26,7 @@ urlpatterns = [
     ),
     path("historico/", views.HistoricoPagamentosView.as_view(), name="historico"),
     path("conexoes/", views.ConexoesView.as_view(), name="conexoes"),
+    path("conexoes/status/", views.ConexoesStatusView.as_view(), name="conexoes_status"),
     path("conexoes/gerar-qr/", views.ConexoesGerarQrView.as_view(), name="conexoes_gerar_qr"),
     path(
         "comprovante/<int:pk>/",

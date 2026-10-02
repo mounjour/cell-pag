@@ -418,7 +418,6 @@ class HistoricoPagamentosView(LoginRequiredMixin, ListView):
 
 
 CHAVE_SESSAO_QR_ATIVO = "conexoes_whatsapp_gerar_qr"
-CHAVE_SESSAO_DESCONECTADO = "conexoes_whatsapp_estava_desconectado"
 QR_RENOVA_SEGUNDOS = 25
 
 
@@ -448,17 +447,8 @@ class ConexoesView(LoginRequiredMixin, TemplateView):
             status_whatsapp = "erro"
             erro_whatsapp = str(exc)
 
-        if status_whatsapp == "open":
+        if status_whatsapp in ("open", "simulado"):
             self.request.session.pop(CHAVE_SESSAO_QR_ATIVO, None)
-            if self.request.session.pop(CHAVE_SESSAO_DESCONECTADO, False):
-                messages.success(
-                    self.request,
-                    "WhatsApp reconectado! As cobranças automáticas voltam a sair normalmente.",
-                )
-        elif status_whatsapp == "simulado":
-            self.request.session.pop(CHAVE_SESSAO_QR_ATIVO, None)
-        else:
-            self.request.session[CHAVE_SESSAO_DESCONECTADO] = True
 
         qr_code = ""
         quer_qr = status_whatsapp not in ("open", "simulado") and self.request.session.get(
@@ -482,6 +472,17 @@ class ConexoesView(LoginRequiredMixin, TemplateView):
             ultimo_evento_cora=EventoCora.objects.order_by("-recebido_em").first(),
         )
         return ctx
+
+
+class ConexoesStatusView(LoginRequiredMixin, View):
+    """Estado atual do WhatsApp em JSON, pra tela se atualizar sozinha (polling)."""
+
+    def get(self, request):
+        from .badge import status_whatsapp_ao_vivo
+
+        response = JsonResponse({"estado": status_whatsapp_ao_vivo()})
+        response["Cache-Control"] = "no-store"
+        return response
 
 
 class ConexoesGerarQrView(LoginRequiredMixin, View):
