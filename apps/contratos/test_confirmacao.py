@@ -173,7 +173,10 @@ def test_catalogo_nos_dois_formularios_so_permite_escolher(auth_client):
         assert "<datalist" not in texto
         assert 'value="iPhone 13 Pro Max"' in texto
         assert 'value="iPhone 18 Pro"' in texto
-        assert 'value="iPhone 3G"' in texto
+        assert 'value="iPhone 11"' in texto
+        assert 'value="iPhone X"' not in texto
+        assert 'value="iPhone 8"' not in texto
+        assert 'value="iPhone SE (3ª geração)"' not in texto
 
 
 @pytest.mark.django_db
