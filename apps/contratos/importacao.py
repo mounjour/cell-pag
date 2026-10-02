@@ -111,3 +111,30 @@ def analisar(arquivo):
             erros.append("Revise data, frequência, quantidade de parcelas e valores.")
             resultado.append({"linha": numero, "erros": erros})
     return resultado, []
+
+
+def chave_cliente(linha):
+    """Identifica o cliente de uma linha: CPF, senão telefone, senão o nome.
+
+    A planilha tem uma linha por contrato, então o mesmo cliente aparece mais de
+    uma vez (vários aparelhos). Nome sozinho é o último recurso: dois "Gabriel"
+    com telefones diferentes continuam sendo duas pessoas.
+    """
+    cpf = linha.get("cpf") or ""
+    telefone = linha.get("telefone") or ""
+    nome = re.sub(r"\s+", " ", unicodedata.normalize("NFKD", linha.get("cliente") or "").encode("ascii", "ignore").decode().lower()).strip()
+    return cpf or telefone or nome
+
+
+def contar_por_cliente(linhas):
+    """Marca cada linha válida com quantos contratos o mesmo cliente tem na planilha.
+
+    Devolve ``(clientes_distintos, linhas_validas)``.
+    """
+    validas = [linha for linha in linhas if not linha.get("erros")]
+    contagem = {}
+    for linha in validas:
+        contagem[chave_cliente(linha)] = contagem.get(chave_cliente(linha), 0) + 1
+    for linha in validas:
+        linha["contratos_do_cliente"] = contagem[chave_cliente(linha)]
+    return len(contagem), len(validas)

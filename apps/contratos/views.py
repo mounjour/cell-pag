@@ -138,8 +138,13 @@ class PlanilhaPreviaView(LoginRequiredMixin, View):
     def _resposta(self, request, form, linhas=None, avisos=None):
         resumo = None
         if linhas is not None:
+            from .importacao import contar_por_cliente
+
+            clientes, validas = contar_por_cliente(linhas)
             resumo = {
                 "total": len(linhas),
+                "clientes": clientes,
+                "contratos_extras": validas - clientes,
                 "com_erro": sum(bool(linha.get("erros")) for linha in linhas),
                 "revisao": sum(not linha.get("erros") and bool(linha.get("alertas")) for linha in linhas),
             }
