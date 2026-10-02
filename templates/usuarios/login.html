@@ -40,12 +40,12 @@
       {% endfor %}
       <div class="login-opcoes">
         <label class="login-check">{{ form.manter_conectado }} <span>{{ form.manter_conectado.label }}</span></label>
-        <a href="{% url 'usuarios:senha_esqueci' %}">Esqueci minha senha</a>
       </div>
       <button type="submit" class="login-submit">Entrar <span aria-hidden="true">→</span></button>
       <input type="hidden" name="next" value="{{ next }}">
     </form>
     <p class="login-footer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></svg>Acesso restrito · Yslane e Alisson</p>
+    <p class="login-termos">Esqueceu a senha? Peça a quem administra o sistema para redefini-la.</p>
     <p class="login-termos">Ao entrar, você concorda com os <a href="{% url 'usuarios:termos' %}">Termos de uso e privacidade</a>.</p>
   </div>
   </div>

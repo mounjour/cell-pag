@@ -219,58 +219,11 @@ def test_login_manter_conectado_estende_a_sessao(client, django_user_model, sett
 
 
 @pytest.mark.django_db
-def test_login_mostra_manter_conectado_e_link_de_senha(client):
+def test_login_mostra_manter_conectado_e_nao_oferece_recuperar_senha(client):
     html = client.get(_LOGIN_URL).content.decode()
     assert 'name="manter_conectado"' in html
-    assert reverse("usuarios:senha_esqueci") in html
+    assert "senha/esqueci" not in html
     assert 'autocomplete="current-password"' in html
-
-
-# ---------- Esqueci minha senha ----------
-
-@pytest.mark.django_db
-def test_esqueci_senha_envia_email_para_conta_existente(client, django_user_model, mailoutbox):
-    django_user_model.objects.create_user("rs1", password=_SENHA, email="rs1@exemplo.com")
-    resp = client.post(reverse("usuarios:senha_esqueci"), {"email": "rs1@exemplo.com"})
-    assert resp.status_code == 302
-    assert resp.url == reverse("usuarios:senha_esqueci_enviado")
-    assert len(mailoutbox) == 1
-    assert mailoutbox[0].to == ["rs1@exemplo.com"]
-    assert "/senha/redefinir/" in mailoutbox[0].body
-
-
-@pytest.mark.django_db
-def test_esqueci_senha_nao_revela_se_o_email_existe(client, mailoutbox):
-    resp = client.post(reverse("usuarios:senha_esqueci"), {"email": "ninguem@exemplo.com"})
-    assert resp.status_code == 302
-    assert resp.url == reverse("usuarios:senha_esqueci_enviado")
-    assert mailoutbox == []
-
-
-@pytest.mark.django_db
-def test_redefinir_senha_pelo_link_do_email(client, django_user_model, mailoutbox):
-    django_user_model.objects.create_user("rs2", password=_SENHA, email="rs2@exemplo.com")
-    client.post(reverse("usuarios:senha_esqueci"), {"email": "rs2@exemplo.com"})
-    link = next(l for l in mailoutbox[0].body.splitlines() if "/senha/redefinir/" in l)
-    caminho = "/" + link.split("://", 1)[1].split("/", 1)[1]
-
-    # o Django troca o token da URL por um marcador na sessão antes do POST
-    resp = client.get(caminho, follow=True)
-    assert resp.status_code == 200
-    nova = "Outra-senha-forte-91"
-    resp = client.post(resp.request["PATH_INFO"], {"new_password1": nova, "new_password2": nova})
-    assert resp.status_code == 302
-    assert resp.url == reverse("usuarios:senha_redefinida")
-
-    client.logout()
-    assert client.post(_LOGIN_URL, {"username": "rs2", "password": nova}).status_code == 302
-
-
-@pytest.mark.django_db
-def test_link_de_redefinicao_invalido_mostra_aviso(client):
-    resp = client.get(reverse("usuarios:senha_redefinir", args=["xx", "token-falso"]))
-    assert resp.status_code == 200
-    assert "Link inválido" in resp.content.decode()
 
 
 # ---------- Nome e e-mail obrigatórios ----------
