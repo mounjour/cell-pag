@@ -279,7 +279,7 @@ def montar_juros_em_aberto(hoje: datetime.date | None = None) -> dict:
     return {"hoje": hoje, "linhas": linhas, "total": total}
 
 
-FILA_DE_ACAO_TAMANHO = 8
+FILA_DE_ACAO_TAMANHO = 4
 
 
 def montar_hoje(hoje: datetime.date | None = None, limite_fila: int = FILA_DE_ACAO_TAMANHO) -> dict:
