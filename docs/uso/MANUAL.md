@@ -113,11 +113,13 @@ Qualquer endereço do sistema sem login manda para esta tela.
 2. Clique em **Entrar**.
 
 - Usuário/senha errados → mensagem "Usuário ou senha inválidos."
-- Depois de entrar, você cai na tela **Início** (resumo do dia). Se tinha
+- No primeiro acesso após a atualização dos termos, leia a tela **Termos de uso e privacidade**, marque o aceite e confirme para continuar. Isso também vale para usuários que já tinham conta. O aceite fica salvo; só será solicitado novamente se houver uma nova versão dos termos.
+- Depois de aceitar, você cai na tela **Início** (resumo do dia). Se tinha
   tentado abrir outra página antes do login, o sistema te leva direto para ela.
 - **Sair:** botão **Sair** no canto superior direito (ao lado do seu nome).
-- Não há "criar conta" nem "esqueci a senha" na tela. Novos usuários e troca de
-  senha são feitos pela equipe técnica no Admin.
+- **Esqueceu a senha ou precisa trocá-la?** Peça ao administrador. Ele faz a troca em **Admin → Usuários → seu usuário → alterar senha**. Não há recuperação de senha por e-mail nem troca de senha pelo menu da conta.
+- Novos usuários são criados pelo administrador no Admin.
+- Os **Termos de uso e privacidade** (`/termos/`) podem ser consultados sem login, pelo link na tela de entrada, e também pelo menu da conta.
 - **Muitas tentativas erradas seguidas bloqueiam o acesso por segurança** (tela
   "Acesso bloqueado — Muitas tentativas"). O bloqueio se libera sozinho depois
   de cerca de **1 hora**; para liberar antes, é preciso pedir à equipe técnica
