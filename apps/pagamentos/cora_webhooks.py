@@ -1,7 +1,6 @@
 """Webhook da Cora: confirma a fatura na hora, sem esperar a rotina diária."""
 
 import hashlib
-import hmac
 import logging
 
 from django.conf import settings
@@ -14,20 +13,13 @@ from django.utils.decorators import method_decorator
 from . import cora_api
 from .models import CobrancaCora, EventoCora
 from .pix_cora import sincronizar_cobranca
+from .webhook_auth import token_valido
 
 logger = logging.getLogger("pagamentos.cora")
 
 
 def _token_valido(request) -> bool:
-    esperado = settings.CORA_WEBHOOK_TOKEN
-    if not esperado:
-        return False
-    recebido = (
-        request.headers.get("apikey")
-        or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
-        or request.GET.get("token", "")
-    )
-    return bool(recebido) and hmac.compare_digest(recebido, esperado)
+    return token_valido(request, settings.CORA_WEBHOOK_TOKEN)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -41,7 +33,8 @@ class CoraWebhookView(View):
     máximo um sinal por fatura/tipo. O evento em si não é a fonte da verdade —
     só dispara ``sincronizar_cobranca``, que busca o status real na API
     autenticada antes de dar a baixa (mesmo caminho usado pela rotina diária e
-    pelo botão manual). Se a consulta à Cora falhar, o evento fica registrado
+    pelo botão manual). Como roda dentro da requisição (e o gunicorn tem poucos workers), a consulta
+    faz uma única tentativa, sem espera. Se a consulta à Cora falhar, o evento fica registrado
     sem erro fatal: a rotina diária (``reconciliar_abertas``) cobre de
     qualquer forma, mais tarde.
     """
@@ -68,7 +61,7 @@ class CoraWebhookView(View):
         )
 
         try:
-            sincronizar_cobranca(cobranca)
+            sincronizar_cobranca(cobranca, tentativas=1)
             EventoCora.objects.filter(evento_id=evento_id).update(
                 processado=True, erro="", processado_em=timezone.now()
             )

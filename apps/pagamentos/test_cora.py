@@ -506,9 +506,10 @@ def test_webhook_cora_confirma_na_hora(client, parcela_cora, settings, monkeypat
         valor=Decimal("100.00"),
         data_vencimento=parcela_cora.data_vencimento,
     )
+    tentativas_usadas = []  # o webhook consulta a Cora uma única vez, sem espera
     monkeypatch.setattr(
         "apps.pagamentos.cora_api.consultar_fatura",
-        lambda cora_id: {
+        lambda cora_id, *, tentativas=None: tentativas_usadas.append(tentativas) or {
             "id": cora_id,
             "status": "PAID",
             "total_paid": 10000,
@@ -529,6 +530,7 @@ def test_webhook_cora_confirma_na_hora(client, parcela_cora, settings, monkeypat
     cobranca = CobrancaCora.objects.get(cora_id="inv_conhecida")
     assert cobranca.status == CobrancaCora.Status.PAGO
     assert Pagamento.objects.filter(vencimento=parcela_cora).count() == 1
+    assert tentativas_usadas and set(tentativas_usadas) == {1}
 
 
 @pytest.mark.django_db
@@ -563,7 +565,7 @@ def test_webhook_cora_falha_na_cora_nao_quebra_a_resposta(
         data_vencimento=parcela_cora.data_vencimento,
     )
 
-    def _falha(cora_id):
+    def _falha(cora_id, *, tentativas=None):
         raise cora_api.CoraErro("instabilidade")
 
     monkeypatch.setattr("apps.pagamentos.cora_api.consultar_fatura", _falha)

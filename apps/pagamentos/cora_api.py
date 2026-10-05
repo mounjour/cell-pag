@@ -87,8 +87,10 @@ def criar_fatura(payload: dict, idempotency_key) -> dict:
     )
 
 
-def consultar_fatura(cora_id: str) -> dict:
-    return _requisicao_api(f"/v2/invoices/{urllib.parse.quote(cora_id)}", metodo="GET")
+def consultar_fatura(cora_id: str, *, tentativas: int | None = None) -> dict:
+    return _requisicao_api(
+        f"/v2/invoices/{urllib.parse.quote(cora_id)}", metodo="GET", tentativas=tentativas
+    )
 
 
 def cancelar_fatura(cora_id: str) -> dict:
@@ -96,7 +98,7 @@ def cancelar_fatura(cora_id: str) -> dict:
     return _requisicao_api(f"/v2/invoices/{urllib.parse.quote(cora_id)}", metodo="DELETE")
 
 
-def _requisicao_api(caminho, *, metodo, payload=None, cabecalhos=None, repetir_401=True):
+def _requisicao_api(caminho, *, metodo, payload=None, cabecalhos=None, repetir_401=True, tentativas=None):
     config = _configuracao()
     url = config["CORA_API_BASE_URL"].rstrip("/") + caminho
     headers = {
@@ -112,7 +114,7 @@ def _requisicao_api(caminho, *, metodo, payload=None, cabecalhos=None, repetir_4
         method=metodo,
     )
     try:
-        return _abrir(requisicao, contexto=_contexto_ssl(config), autenticada=True)
+        return _abrir(requisicao, contexto=_contexto_ssl(config), autenticada=True, tentativas=tentativas)
     except CoraErroNaoAutorizado:
         if not repetir_401:
             raise
@@ -123,6 +125,7 @@ def _requisicao_api(caminho, *, metodo, payload=None, cabecalhos=None, repetir_4
             payload=payload,
             cabecalhos=cabecalhos,
             repetir_401=False,
+            tentativas=tentativas,
         )
 
 
@@ -134,8 +137,8 @@ class CoraErroNaoAutorizado(CoraErro):
 _HTTP_TRANSITORIO = {429, 500, 502, 503, 504}
 
 
-def _abrir(requisicao, *, contexto, autenticada):
-    tentativas = max(1, settings.CORA_RETRY_TENTATIVAS)
+def _abrir(requisicao, *, contexto, autenticada, tentativas=None):
+    tentativas = max(1, tentativas or settings.CORA_RETRY_TENTATIVAS)
     espera_base = settings.CORA_RETRY_ESPERA_BASE_SEGUNDOS
     for tentativa in range(1, tentativas + 1):
         ultima = tentativa == tentativas

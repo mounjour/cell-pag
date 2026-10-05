@@ -6,7 +6,6 @@ cabeçalho ``apikey``/``Authorization`` ou em ``?token=``. Sem token configurado
 o endpoint rejeita toda requisição (falha fechado, mesmo em desenvolvimento).
 """
 
-import hmac
 import json
 import logging
 
@@ -19,6 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .comprovantes import processar_mensagem_recebida
 from .models import Cobranca
+from .webhook_auth import token_valido
 
 logger = logging.getLogger("pagamentos.whatsapp")
 
@@ -65,15 +65,7 @@ class WhatsAppWebhookView(View):
 
 
 def _token_valido(request) -> bool:
-    esperado = settings.EVOLUTION_WEBHOOK_TOKEN
-    if not esperado:
-        return False
-    recebido = (
-        request.headers.get("apikey")
-        or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
-        or request.GET.get("token", "")
-    )
-    return bool(recebido) and hmac.compare_digest(recebido, esperado)
+    return token_valido(request, settings.EVOLUTION_WEBHOOK_TOKEN)
 
 
 def _eventos(payload):

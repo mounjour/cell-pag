@@ -10,6 +10,12 @@ def _sem_provedores_externos_reais(settings):
     settings.TERMOS_EXIGIR_ACEITE = False  # o aceite só é exigido nos testes de termos
 
 
+@pytest.fixture(autouse=True)
+def _hash_de_senha_rapido(settings):
+    """PBKDF2 custa ~0,5 s por usuário criado; nos testes o hash não importa."""
+    settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+
 @pytest.fixture
 def operador(django_user_model):
     return django_user_model.objects.create_user("op", password="s3nha-forte-123")

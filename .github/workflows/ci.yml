@@ -27,8 +27,17 @@ jobs:
       - name: Checagem do Django (config/imports)
         run: python manage.py check
 
+      - name: Migracoes pendentes (modelo alterado sem migration)
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Checagem de producao (check --deploy)
+        env:
+          DEBUG: "False"
+          SECRET_KEY: ci-somente-para-checagem-0123456789-0123456789-0123456789
+        run: python manage.py check --deploy
+
       - name: Rodar a suite de testes
-        run: python -m pytest
+        run: python -m pytest -n auto
 
   segredos:
     name: Procurar segredos commitados (gitleaks)

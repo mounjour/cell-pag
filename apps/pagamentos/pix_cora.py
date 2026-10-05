@@ -159,10 +159,11 @@ def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
     return cobranca
 
 
-def sincronizar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
+def sincronizar_cobranca(cobranca: CobrancaCora, *, tentativas: int | None = None) -> CobrancaCora:
     if not cobranca.cora_id:
         return cobranca
-    resposta = cora_api.consultar_fatura(cobranca.cora_id)
+    extra = {} if tentativas is None else {"tentativas": tentativas}
+    resposta = cora_api.consultar_fatura(cobranca.cora_id, **extra)
     _aplicar_resposta(cobranca, resposta)
     return cobranca
 
