@@ -311,7 +311,7 @@ def test_editar_contrato_pela_web_poda_parcelas_reduzidas(auth_client, cliente):
         "cliente": cliente.pk,
         "apelido": ct.apelido,
         "aparelho_modelo": ct.aparelho_modelo,
-        "imei": "",
+        "imei": "359999053372501",
         "valor_total": "280,00",
         "estrutura": Contrato.Estrutura.MENSAL,
         "valor_parcela": "40,00",

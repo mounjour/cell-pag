@@ -18,7 +18,7 @@ def dados_form(cliente, **over):
         "cliente": cliente.pk,
         "apelido": "iPhone 11",
         "aparelho_modelo": "iPhone 11",
-        "imei": "",
+        "imei": "359999053372501",
         "valor_total": "2400,00",
         "estrutura": Contrato.Estrutura.DIARIA,
         "valor_parcela": "",
@@ -771,3 +771,11 @@ def test_entrada_nao_aparece_na_edicao(auth_client, cliente):
     resp = auth_client.get(reverse("contratos:editar", args=[ct.pk]))
     assert "entrada" not in resp.context["form"].fields
     assert "entrada_forma" not in resp.context["form"].fields
+
+
+@pytest.mark.django_db
+def test_contrato_exige_imei(auth_client, cliente):
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, imei=""), follow=False)
+    assert resp.status_code == 200
+    assert not Contrato.objects.exists()
+    assert "imei" in resp.context["form"].errors
