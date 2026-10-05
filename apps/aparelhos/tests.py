@@ -172,3 +172,14 @@ def test_excluir_vendido_e_recusado(auth_client, cliente):
     assert resp.status_code == 200
     assert Aparelho.objects.filter(pk=ap.pk).exists()  # não apagou
     assert "não pode ser excluído" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_cadastro_de_aparelho_exige_imei(auth_client):
+    resp = auth_client.post(
+        reverse("aparelhos:novo"),
+        {"modelo": "iPhone 11", "imei": "", "custo": "", "fornecedor": "", "data_compra": "", "observacoes": ""},
+    )
+    assert resp.status_code == 200
+    assert not Aparelho.objects.exists()
+    assert "imei" in resp.context["form"].errors

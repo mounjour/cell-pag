@@ -25,7 +25,7 @@ class AparelhoForm(forms.ModelForm):
         model = Aparelho
         fields = ["modelo", "imei", "custo", "fornecedor", "data_compra", "observacoes"]
         widgets = {
-            "imei": forms.TextInput(attrs={"inputmode": "numeric", "maxlength": "20", "placeholder": "15 dígitos (opcional)"}),
+            "imei": forms.TextInput(attrs={"inputmode": "numeric", "maxlength": "20", "placeholder": "15 dígitos"}),
             "fornecedor": forms.TextInput(attrs={"placeholder": "Opcional"}),
             "data_compra": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "observacoes": forms.Textarea(attrs={"rows": 3, "placeholder": "Opcional"}),
@@ -37,6 +37,8 @@ class AparelhoForm(forms.ModelForm):
         self.fields["modelo"].choices = opcoes_modelos(atual=atual)
         self.fields["modelo"].widget.attrs["autofocus"] = True
         self.fields["data_compra"].input_formats = ["%Y-%m-%d"]
+        self.fields["imei"].required = True
+        self.fields["imei"].help_text = "15 dígitos. Obrigatório — também evita cadastrar o mesmo aparelho duas vezes."
         if self.instance and self.instance.pk and self.instance.custo is not None:
             self.initial["custo"] = _formata_moeda(self.instance.custo)
 
@@ -45,4 +47,6 @@ class AparelhoForm(forms.ModelForm):
 
     def clean_imei(self):
         imei = re.sub(r"\D", "", self.cleaned_data.get("imei") or "")
-        return imei or None
+        if not imei:
+            raise forms.ValidationError("Informe o IMEI do aparelho.")
+        return imei

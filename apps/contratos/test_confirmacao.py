@@ -21,7 +21,7 @@ def cadastro(db):
     aparelho = Aparelho.objects.create(modelo="iPhone 13 128GB")
     return {
         "cliente": cliente.pk, "aparelho": aparelho.pk, "apelido": "iPhone da Maria",
-        "aparelho_modelo": "iPhone 13 128GB", "valor_total": "1000,00",
+        "aparelho_modelo": "iPhone 13 128GB", "imei": "359999053372501", "valor_total": "1000,00",
         "valor_parcela": "100,00", "num_parcelas": "10", "estrutura": "diaria",
         "juros_diario": "5,00", "data_inicio": "2026-09-01", "status": "em_dia",
         "entrada": "200,00", "entrada_forma": "dinheiro", "parcelas_ja_pagas": "2",

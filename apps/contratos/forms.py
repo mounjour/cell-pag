@@ -73,7 +73,7 @@ class ContratoForm(forms.ModelForm):
                 attrs={"autofocus": True, "placeholder": "Ex.: iPhone 11", "autocapitalize": "sentences"}
             ),
             "imei": forms.TextInput(
-                attrs={"inputmode": "numeric", "maxlength": "20", "placeholder": "15 dígitos (opcional)"}
+                attrs={"inputmode": "numeric", "maxlength": "20", "placeholder": "15 dígitos"}
             ),
             "num_parcelas": forms.NumberInput(attrs={"inputmode": "numeric", "min": "1", "step": "1"}),
             "data_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -125,6 +125,7 @@ class ContratoForm(forms.ModelForm):
         for campo in ("data_inicio", "proximo_vencimento", "data_prevista_quitacao"):
             self.fields[campo].input_formats = ["%Y-%m-%d"]
         self.fields["num_parcelas"].required = False
+        self.fields["imei"].required = True
         # Estoque: só aparelhos ainda não vendidos — mais o já vinculado a este
         # contrato (senão ele some da lista ao editar). Escolher um aqui não
         # dispensa preencher modelo/IMEI abaixo (o JS só sugere/preenche).
@@ -184,7 +185,10 @@ class ContratoForm(forms.ModelForm):
         return valor
 
     def clean_imei(self):
-        return re.sub(r"\D", "", self.cleaned_data.get("imei", ""))
+        imei = re.sub(r"\D", "", self.cleaned_data.get("imei") or "")
+        if not imei:
+            raise forms.ValidationError("Informe o IMEI do aparelho.")
+        return imei
 
     def clean_entrada(self):
         bruto = self.cleaned_data.get("entrada")
