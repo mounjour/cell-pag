@@ -1285,3 +1285,26 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .resumo-alerta { margin: 0 0 1rem; padding: .6rem .8rem; background: var(--amber-wash); border: 1px solid var(--amber); border-radius: var(--radius-sm); font-size: .9rem; }
 
 input[type="checkbox"], input[type="radio"] { accent-color: var(--ink); }
+
+/* ---------- Lista de clientes ---------- */
+.clientes-toolbar { flex-direction: row; flex-wrap: wrap; align-items: center; }
+.clientes-busca { flex: 1 1 320px; max-width: 520px; position: relative; display: flex; align-items: center; }
+.clientes-busca .icone { position: absolute; left: .85rem; width: 18px; height: 18px; color: var(--ink-faint); pointer-events: none; }
+.clientes-busca input[type=search] { width: 100%; padding-left: 2.5rem; }
+.tabela-clientes .cliente-celula { display: flex; align-items: center; gap: .8rem; }
+.avatar-ini {
+  flex: none; width: 2.3rem; height: 2.3rem; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-2); color: var(--ink); font-weight: 700; font-size: .95rem; border: 1px solid var(--line);
+}
+.cliente-textos { display: grid; gap: .1rem; min-width: 0; }
+.cliente-textos small { color: var(--ink-faint); font-size: .78rem; }
+.tabela-clientes .link-linha { color: var(--ink); font-weight: 600; }
+.tabela-clientes .link-linha:hover { text-decoration: underline; }
+.a-receber strong { display: block; font-variant-numeric: tabular-nums; }
+.a-receber small { display: block; color: var(--ink-faint); font-size: .78rem; }
+.a-receber .valor-atraso { color: var(--critical-ink); }
+.a-receber .nada { color: var(--ink-faint); }
+.tabela-clientes td.num.zero { color: var(--ink-faint); opacity: .6; }
+.tabela-clientes td.num { color: var(--ink); }
+.filtro-n { margin-left: .3rem; padding: 0 .4rem; border-radius: 999px; background: var(--surface-2); color: var(--ink-faint); font-size: .75rem; font-weight: 600; }
+.filtro-pill.ativo .filtro-n { background: color-mix(in srgb, currentColor 18%, transparent); color: inherit; }

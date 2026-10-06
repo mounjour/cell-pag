@@ -1,4 +1,5 @@
 import re
+from collections import Counter
 from decimal import Decimal
 
 from django.contrib import messages
@@ -16,6 +17,7 @@ from apps.contratos.models import Contrato
 
 from .forms import ClienteForm
 from .models import Cliente
+from .situacao import EM_ATRASO, EM_DIA, QUITADO, SEM_CONTRATO, situacoes_dos_clientes
 
 
 class ClienteListView(LoginRequiredMixin, ListView):
@@ -31,12 +33,29 @@ class ClienteListView(LoginRequiredMixin, ListView):
         self.busca = self.request.GET.get("q", "").strip()
         if self.busca:
             qs = qs.filter(Q(nome__icontains=self.busca) | Q(cpf__icontains=self.busca))
-        return qs.order_by("nome")
+        clientes = list(qs.order_by("nome"))
+        # Situação de cobrança de cada um (poucas consultas, todos de uma vez): dá para
+        # filtrar por ela e ver quem está devendo sem abrir cliente por cliente.
+        situacoes = situacoes_dos_clientes([c.pk for c in clientes])
+        for cliente in clientes:
+            cliente.situacao = situacoes[cliente.pk]
+        self.contagens = Counter(c.situacao.filtro for c in clientes)
+        self.contagens["todos"] = len(clientes)
+        self.filtro = self.request.GET.get("situacao", "")
+        if self.filtro in (EM_ATRASO, EM_DIA, SEM_CONTRATO, QUITADO):
+            clientes = [c for c in clientes if c.situacao.filtro == self.filtro]
+            if self.filtro == EM_ATRASO:  # quem está mais atrasado primeiro
+                clientes.sort(key=lambda c: (-c.situacao.dias_atraso, c.nome))
+        else:
+            self.filtro = ""
+        return clientes
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["arquivados"] = self.arquivados
         ctx["busca"] = self.busca
+        ctx["filtro_atual"] = self.filtro
+        ctx["contagens"] = self.contagens
         return ctx
 
 
