@@ -14,7 +14,9 @@ para a Yslane tentar de novo manualmente.
 
 import json
 import logging
+import os
 import ssl
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -30,6 +32,11 @@ class CoraErro(RuntimeError):
 
 
 _token_cache = {"valor": "", "expira_em": 0.0}
+# O gunicorn roda com threads: sem a trava, várias requisições simultâneas com o
+# token vencido pediriam um token cada uma. O mesmo vale para o contexto SSL.
+_trava_token = threading.Lock()
+_trava_ssl = threading.Lock()
+_contextos_ssl = {}
 
 
 def _configuracao():
@@ -47,15 +54,35 @@ def _configuracao():
 
 
 def _contexto_ssl(config):
-    contexto = ssl.create_default_context()
+    """Contexto mTLS, reaproveitado enquanto o certificado/chave não mudam no disco.
+
+    Ler e interpretar o certificado a cada chamada era trabalho à toa; a data de
+    modificação entra na chave para uma renovação do certificado valer na hora.
+    """
+    cert, chave = config["CORA_CERT_PATH"], config["CORA_KEY_PATH"]
     try:
-        contexto.load_cert_chain(config["CORA_CERT_PATH"], config["CORA_KEY_PATH"])
-    except (OSError, ssl.SSLError) as exc:
+        assinatura = (cert, chave, os.stat(cert).st_mtime_ns, os.stat(chave).st_mtime_ns)
+    except OSError as exc:
         raise CoraErro(f"Não foi possível carregar o certificado/chave da Cora: {exc}") from exc
-    return contexto
+    with _trava_ssl:
+        contexto = _contextos_ssl.get(assinatura)
+        if contexto is None:
+            contexto = ssl.create_default_context()
+            try:
+                contexto.load_cert_chain(cert, chave)
+            except (OSError, ssl.SSLError) as exc:
+                raise CoraErro(f"Não foi possível carregar o certificado/chave da Cora: {exc}") from exc
+            _contextos_ssl.clear()  # só a versão atual do certificado interessa
+            _contextos_ssl[assinatura] = contexto
+        return contexto
 
 
 def obter_token(*, renovar=False) -> str:
+    with _trava_token:
+        return _obter_token_travado(renovar=renovar)
+
+
+def _obter_token_travado(*, renovar):
     agora = time.time()
     if not renovar and _token_cache["valor"] and agora < _token_cache["expira_em"]:
         return _token_cache["valor"]
