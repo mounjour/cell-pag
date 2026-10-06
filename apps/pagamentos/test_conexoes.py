@@ -134,7 +134,7 @@ def test_qr_continua_contando_em_outra_sessao(auth_client, qr_pedido, django_use
     auth_client.get(url)  # primeira sessão pede o QR
 
     outro = Client()  # outro navegador/aparelho, já com o QR ativo na sessão
-    outro.force_login(django_user_model.objects.create_user("outro", password="s3nha-forte-123"))
+    outro.force_login(django_user_model.objects.create_user("outro"))
     outro.post(reverse("pagamentos:conexoes_gerar_qr"))
     # "gerar" descarta o guardado: precisa de código novo
     assert outro.get(url).context["qr_code"].endswith("QR2")
