@@ -692,6 +692,36 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .passos-ativos .passo .lista-dados { grid-template-columns: 1fr; }
 @media (min-width: 900px) { .passos-ativos .passo .lista-dados { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; } }
 .passo[hidden], .btn[hidden], .passos-trilha[hidden] { display: none !important; }
+/* Animações da conferência em passos (desligadas com prefers-reduced-motion). */
+@keyframes passo-frente { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes passo-tras { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+@keyframes passo-pulso { 0% { transform: scale(.6); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes passo-destaque {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--amber) 60%, transparent); }
+  100% { box-shadow: 0 0 0 16px color-mix(in srgb, var(--amber) 0%, transparent); }
+}
+.passo.anima-frente { animation: passo-frente .3s cubic-bezier(.2, .7, .3, 1) both; }
+.passo.anima-tras { animation: passo-tras .3s cubic-bezier(.2, .7, .3, 1) both; }
+.confirmacao-responsabilidade.anima-destaque { animation: passo-destaque .9s ease-out .25s 2; }
+.passos-trilha button { transition: color .25s ease, border-color .25s ease, background-color .25s ease; }
+.passos-trilha .n { transition: background-color .25s ease, border-color .25s ease, color .25s ease; }
+.passos-trilha .feito .n, .passos-trilha .atual .n { animation: passo-pulso .35s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .passo.anima-frente, .passo.anima-tras, .confirmacao-responsabilidade.anima-destaque,
+  .passos-trilha .feito .n, .passos-trilha .atual .n { animation: none; }
+}
+
+/* Rodapé da conferência: só os botões principais em destaque; o resto vira link. */
+.passos-rodape { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; margin-top: 1rem; }
+.passos-rodape-extras { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.25rem; font-size: .9rem; }
+.passos-rodape-extras .linkish { padding: .4rem 0; }
+.linkish--cancelar { color: var(--critical-ink); }
+.passos-rodape-principal { display: flex; gap: .6rem; margin-left: auto; }
+.passos-rodape-principal .btn { white-space: nowrap; }
+@media (max-width: 639px) {
+  .passos-rodape-principal { width: 100%; }
+  .passos-rodape-principal .btn { flex: 1; white-space: normal; }
+}
 .confirmacao-responsabilidade {
   margin: 1.25rem 0; padding: 1.1rem 1.25rem; border-radius: var(--radius-sm);
   background: var(--amber-wash); border: 2px solid var(--amber);

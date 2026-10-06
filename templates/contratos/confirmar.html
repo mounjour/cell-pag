@@ -119,14 +119,18 @@
     </div>
     </div>
 
-    <div class="form-actions passos-rodape">
-      <button type="button" class="btn secondary" data-passos-voltar hidden>Voltar</button>
-      <button type="button" class="btn" data-passos-proximo hidden>Próximo</button>
-      <button type="submit" name="acao" value="confirmar" class="btn" data-passos-confirmar>{% if contrato.quitado or not contrato.valor_parcela %}Confirmar cadastro{% else %}Confirmar e iniciar cobrança{% endif %}</button>
-      <button type="submit" name="acao" value="corrigir" class="btn secondary" formnovalidate>Corrigir dados do contrato</button>
-      <a class="btn cancelar" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Cancelar</a>
+    <div class="passos-rodape">
+      <div class="passos-rodape-extras">
+        <button type="submit" name="acao" value="corrigir" class="linkish" formnovalidate>Corrigir dados do contrato</button>
+        <a class="linkish linkish--cancelar" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Cancelar</a>
+      </div>
+      <div class="passos-rodape-principal">
+        <button type="button" class="btn secondary" data-passos-voltar hidden>Voltar</button>
+        <button type="button" class="btn" data-passos-proximo hidden>Próximo</button>
+        <button type="submit" name="acao" value="confirmar" class="btn" data-passos-confirmar>{% if contrato.quitado or not contrato.valor_parcela %}Confirmar cadastro{% else %}Confirmar e iniciar cobrança{% endif %}</button>
+      </div>
     </div>
   </form>
 </div>
 {% endblock %}
-{% block scripts %}<script src="{% static 'js/conferencia_passos.js' %}?v=2" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/conferencia_passos.js' %}?v=3" defer></script>{% endblock %}

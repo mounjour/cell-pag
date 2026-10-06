@@ -34,7 +34,15 @@
     return botao;
   });
 
+  // Reinicia a animação CSS do elemento (tirar a classe, forçar o layout, pôr de novo).
+  function animar(el, classe) {
+    el.classList.remove("anima-frente", "anima-tras", "anima-destaque");
+    void el.offsetWidth;
+    el.classList.add(classe);
+  }
+
   function mostrar(i, mover) {
+    const anterior = atual;
     atual = i;
     maior = Math.max(maior, i);
     paineis.forEach((painel, n) => { painel.hidden = n !== i; });
@@ -48,6 +56,11 @@
     btnProximo.hidden = i === total - 1;
     if (btnConfirmar) btnConfirmar.hidden = i !== total - 1;
     aviso.textContent = `Passo ${i + 1} de ${total}: ${paineis[i].dataset.passoTitulo}`;
+    if (mover && i !== anterior) {
+      animar(paineis[i], i > anterior ? "anima-frente" : "anima-tras");
+      const caixa = paineis[i].querySelector(".confirmacao-responsabilidade");
+      if (caixa) animar(caixa, "anima-destaque"); // chama a atenção ao chegar no aceite
+    }
     if (mover) {
       const titulo = paineis[i].querySelector("h2");
       if (titulo) { titulo.tabIndex = -1; titulo.focus({ preventScroll: true }); }
