@@ -78,7 +78,6 @@
       <div><dt>Juros diário</dt><dd>R$ {{ contrato.juros_diario|floatformat:2 }} por dia de atraso</dd></div>
       <div><dt>Status informado</dt><dd>{{ contrato.get_status_display }}</dd></div>
       <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"Não informado" }}</dd></div>
-      <div><dt>Próximo vencimento manual</dt><dd>{{ contrato.proximo_vencimento|date:"d/m/Y"|default:"Não informado" }}</dd></div>
       <div><dt>Observações</dt><dd>{{ contrato.observacoes|default:"Nenhuma"|linebreaksbr }}</dd></div>
     </dl>
   </section>
