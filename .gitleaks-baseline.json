@@ -130,9 +130,9 @@
  "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
  "StartLine": 137,
  "EndLine": 137,
- "StartColumn": 0,
- "EndColumn": 0,
- "Match": "password=\"REDACTED\"",
+ "StartColumn": 70,
+ "EndColumn": 95,
+ "Match": "password=\"s3nha-forte-123\"",
  "Secret": "REDACTED",
  "File": "apps/pagamentos/test_conexoes.py",
  "SymlinkFile": "",
@@ -142,7 +142,7 @@
  "Author": "nayara-moreira",
  "Email": "nayaramoreira0101@gmail.com",
  "Date": "2026-10-06T00:14:53Z",
- "Message": "QR do WhatsApp: contagem vale para a instância, não para a sessão",
+ "Message": "QR do WhatsApp: contagem vale para a instância, não para a sessão\n\nO QR expira na Evolution, então o QR e a hora de geração agora ficam num\nregistro único no banco (QrWhatsApp). Fechar a página, sair e entrar de novo\nou abrir em outro aparelho mostra o mesmo código com o cronômetro de onde\nestá. \"Gerar outro\" descarta o guardado; conectar apaga o registro.\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>",
  "Tags": [],
  "Fingerprint": "5dd807aa525b7d1c665d37b0817406cb8c66bd19:apps/pagamentos/test_conexoes.py:generic-api-key:137"
 }
