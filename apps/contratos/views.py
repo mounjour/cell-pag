@@ -425,6 +425,8 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
         return render(self.request, "contratos/confirmar.html", {
             "contrato": contrato, "revisao": token, "primeira": primeira,
             "resumo": resumo_do_cadastro(contrato, quantidade, hoje),
+            # Depois de tentar confirmar (ex.: esqueceu o aceite), volta já no último passo.
+            "passo_inicial": 4 if self.request.POST.get("acao") == "confirmar" else 1,
             "cobrancas_desligadas": ConfiguracaoCobranca.esta_pausada(),
             "parcelas_ja_pagas": quantidade,
             "todas_pagas": bool(contrato.num_parcelas and quantidade >= contrato.num_parcelas),

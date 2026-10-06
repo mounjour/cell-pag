@@ -210,3 +210,20 @@ def test_resumo_avisa_que_cobrancas_automaticas_ainda_estao_desligadas(auth_clie
     settings.COBRANCAS_EXIGEM_INICIO = True
     texto = auth_client.post(reverse("contratos:novo"), cadastro).content.decode()
     assert "ainda estão desligadas" in texto
+
+
+@pytest.mark.django_db
+def test_conferencia_em_quatro_passos_com_resumo_no_ultimo(auth_client, cadastro):
+    texto = auth_client.post(reverse("contratos:novo"), cadastro).content.decode()
+    titulos = ["Cliente", "Aparelho e contrato", "Valores e datas", "Resumo e confirmação"]
+    posicoes = [texto.index(f'data-passo-titulo="{t}"') for t in titulos]
+    assert posicoes == sorted(posicoes)
+    assert texto.index("Resumo da cobrança") > posicoes[3]
+    assert 'data-passo-inicial="1"' in texto and "conferencia_passos.js" in texto
+
+
+@pytest.mark.django_db
+def test_sem_aceite_volta_no_ultimo_passo(auth_client, cadastro):
+    resumo = auth_client.post(reverse("contratos:novo"), cadastro)
+    resposta = confirmar(auth_client, resumo, conferido="")
+    assert 'data-passo-inicial="4"' in resposta.content.decode()
