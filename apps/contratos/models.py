@@ -6,9 +6,10 @@ Fase 2 (Estruturas e agenda): a geração de `Vencimento` e a `data_prevista_qui
 já são automáticas — ver `gerar_vencimentos()` / `atualizar_data_prevista_quitacao()`
 aqui e a recorrência de datas em `apps.pagamentos.recorrencia`. O job diário
 `manage.py gerar_vencimentos` roda os dois em massa + `sincronizar_status()`.
-`valor_parcela` e `num_parcelas` continuam **manuais** por decisão (o cálculo é
-feito fora do sistema — PLANO-DO-PROJETO.md, seção 5); sem `valor_parcela` não há
-como gerar vencimentos, e sem `num_parcelas` não há data de quitação.
+`num_parcelas` é informado no cadastro; `valor_parcela` não é digitado: sai de
+`valor_total ÷ num_parcelas`, arredondado para o múltiplo de R$ 0,10 mais próximo
+(`valor_da_parcela()`). Sem `valor_parcela` não há como gerar vencimentos, e sem
+`num_parcelas` não há data de quitação (contratos importados antigos podem não ter).
 
 Fase 4 (Atraso): `situacao_atraso()` mede o atraso pela parcela (`Vencimento`)
 em aberto mais antiga (`parcela_em_aberto()` / `data_referencia_atraso()`) —
@@ -18,7 +19,7 @@ não tem vencimentos gerados.
 
 import datetime
 import math
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.conf import settings
 from django.db import models
@@ -159,18 +160,27 @@ class Contrato(models.Model):
             return None
         return self.valor_parcela * self.num_parcelas
 
+    @staticmethod
+    def valor_da_parcela(valor_total, num_parcelas):
+        """``valor_total ÷ num_parcelas`` no múltiplo de R$ 0,10 mais próximo
+        (duas casas, terminando em 0; meio centavo sobe). Ex.: 103,33 → 103,30."""
+        bruto = Decimal(valor_total) / int(num_parcelas)
+        dezenas = (bruto / Decimal("0.10")).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+        return max(dezenas, Decimal("1")) * Decimal("0.10")
+
     @property
     def parcelas_conferem(self):
         """``True``/``False`` se ``valor_parcela × num_parcelas`` bate com
         ``valor_total``; ``None`` quando faltam dados para comparar.
 
-        O sistema não calcula a parcela (é feita fora — seção 5 do plano), só
-        confere: divergência vira um aviso, não um erro de validação.
+        A parcela é arredondada para R$ 0,10, então o total pode diferir até
+        R$ 0,05 por parcela sem ser erro. Mais que isso (contrato importado ou
+        editado no admin) vira um aviso, não um erro de validação.
         """
         total = self.total_das_parcelas
         if total is None:
             return None
-        return total == self.valor_total
+        return abs(total - self.valor_total) <= Decimal("0.05") * self.num_parcelas
 
     # ── Fase 2: geração de vencimentos ──────────────────────────────────────
 

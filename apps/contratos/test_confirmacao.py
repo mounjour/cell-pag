@@ -22,7 +22,7 @@ def cadastro(db):
     return {
         "cliente": cliente.pk, "aparelho": aparelho.pk, "apelido": "iPhone da Maria",
         "aparelho_modelo": "iPhone 13 128GB", "imei": "359999053372501", "valor_total": "1000,00",
-        "valor_parcela": "100,00", "num_parcelas": "10", "estrutura": "diaria",
+        "num_parcelas": "10", "estrutura": "diaria",
         "juros_diario": "5,00", "data_inicio": "2026-09-01", "status": "em_dia",
         "entrada": "200,00", "entrada_forma": "dinheiro", "parcelas_ja_pagas": "2",
     }
@@ -80,7 +80,7 @@ def test_corrigir_preserva_formulario_sem_salvar(auth_client, cadastro):
     assert not Contrato.objects.exists()
     cadastro["valor_total"] = "900,00"
     novo = auth_client.post(reverse("contratos:novo"), cadastro)
-    assert "diferente do valor total" in novo.content.decode()
+    assert "90,00" in novo.content.decode()  # 900 ÷ 10 parcelas, calculado sozinho
 
 
 @pytest.mark.django_db
@@ -158,7 +158,7 @@ def test_revalida_estoque_na_confirmacao(auth_client, cadastro):
 @pytest.mark.django_db
 def test_pagas_nao_podem_exceder_quantidade_calculada(auth_client, cadastro):
     resposta = auth_client.post(reverse("contratos:novo"), {
-        **cadastro, "num_parcelas": "", "parcelas_ja_pagas": "11",
+        **cadastro, "parcelas_ja_pagas": "11",
     })
     assert "parcelas_ja_pagas" in resposta.context["form"].errors
     assert not Contrato.objects.exists()

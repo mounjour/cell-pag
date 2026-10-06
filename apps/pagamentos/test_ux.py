@@ -85,13 +85,13 @@ def test_previa_sem_parcela_pede_correcao(plano, auth_client):
     ("mensal", "28/02/2026", "31/03/2026"),
 ])
 @pytest.mark.django_db
-def test_previa_contrato_datas_e_divergencia(auth_client, estrutura, primeira, ultima):
+def test_previa_contrato_calcula_parcela_e_datas(auth_client, estrutura, primeira, ultima):
     texto = auth_client.post(reverse("contratos:previsao"), {
-        "valor_total": "75,00", "valor_parcela": "40,00", "num_parcelas": "",
+        "valor_total": "75,00", "num_parcelas": "2",
         "estrutura": estrutura, "data_inicio": "2026-01-31",
     }).json()["texto"]
-    assert "2 parcelas de R$ 40,00" in texto and primeira in texto and ultima in texto
-    assert "totais são diferentes" in texto
+    assert "2 parcelas de R$ 37,50" in texto and primeira in texto and ultima in texto
+    assert "totais são diferentes" not in texto  # a parcela sai do total ÷ nº de parcelas
     assert not Contrato.objects.exists()
 
 
