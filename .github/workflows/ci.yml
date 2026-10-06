@@ -1,9 +1,16 @@
 name: CI
 
+# Em PR roda uma vez só (antes rodava no push da branch E no pull_request) e o
+# push seguinte cancela a execução anterior. O push no main continua validando
+# o que vai para produção.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   testes:
@@ -12,7 +19,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        # Produção usa 3.12 (Dockerfile): é o que o PR precisa passar. O 3.13 roda
+        # só no main, como aviso antecipado de compatibilidade.
+        python-version: ${{ github.event_name == 'pull_request' && fromJSON('["3.12"]') || fromJSON('["3.12", "3.13"]') }}
     env:
       # DEBUG nao tem valor padrao em config/settings.py — precisa vir de algum
       # lugar mesmo em CI, onde nao existe .env.
