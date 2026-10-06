@@ -195,3 +195,21 @@ def test_edicao_preserva_modelo_antigo_com_capacidade(auth_client):
     aparelho = Aparelho.objects.create(modelo="iPhone 11 64GB")
     resposta = auth_client.get(reverse("aparelhos:editar", args=[aparelho.pk]))
     assert 'value="iPhone 11 64GB" selected' in resposta.content.decode()
+
+
+@pytest.mark.django_db
+def test_resumo_da_cobranca_explica_primeira_cobranca_e_numeros(auth_client, cadastro):
+    cadastro["data_inicio"] = (datetime.date.today() + datetime.timedelta(days=5)).isoformat()
+    cadastro["parcelas_ja_pagas"] = "0"
+    texto = auth_client.post(reverse("contratos:novo"), cadastro).content.decode()
+    assert "Resumo da cobrança" in texto
+    assert "primeira cobrança sai em" in texto
+    assert "Faltam pagar" in texto and "Em atraso" in texto and "Débito em atraso hoje" in texto
+    assert "R$ 100,00" in texto  # 1.000 ÷ 10
+
+
+@pytest.mark.django_db
+def test_resumo_avisa_que_cobrancas_automaticas_ainda_estao_desligadas(auth_client, cadastro, settings):
+    settings.COBRANCAS_EXIGEM_INICIO = True
+    texto = auth_client.post(reverse("contratos:novo"), cadastro).content.decode()
+    assert "ainda estão desligadas" in texto
