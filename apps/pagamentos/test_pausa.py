@@ -10,7 +10,7 @@ from apps.pagamentos.cobranca import processar_cobrancas
 from apps.pagamentos.models import Cobranca, ConfiguracaoCobranca
 
 URL = "pagamentos:cobrancas_pausa"
-AVISO = "Cobranças automáticas desligadas."
+AVISO = "Cobranças automáticas desligadas"
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def test_tela_mostra_o_botao_certo_em_cada_estado(exige_inicio, auth_client):
 
 
 @pytest.mark.django_db
-def test_aviso_aparece_nas_telas_enquanto_desligadas(exige_inicio, auth_client):
+def test_aviso_aparece_no_card_de_notificacoes_enquanto_desligadas(exige_inicio, auth_client):
     assert AVISO in auth_client.get(reverse("clientes:lista")).content.decode()
     ConfiguracaoCobranca.definir(False)
     assert AVISO not in auth_client.get(reverse("clientes:lista")).content.decode()

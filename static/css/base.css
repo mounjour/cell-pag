@@ -1179,12 +1179,6 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 }
 
 /* ---------- Pausa geral das cobranças automáticas ---------- */
-.aviso-pausa {
-  margin: 0 0 1.25rem; padding: 0.7rem 1rem; font-size: 0.9rem;
-  background: var(--amber-wash); color: var(--ink);
-  border: 1px solid var(--amber); border-left-width: 4px; border-radius: var(--radius-sm);
-}
-.aviso-pausa a { font-weight: 600; margin-left: 0.4rem; }
 .pausa-cobrancas p { margin: 0 0 0.75rem; }
 .pausa-cobrancas--ativa { border-color: var(--amber); background: var(--amber-wash); }
 .check-linha { display: flex; gap: 0.5rem; align-items: flex-start; margin: 0 0 0.9rem; font-size: 0.9rem; }
