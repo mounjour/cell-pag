@@ -32,10 +32,15 @@
     <p class="form-section-title">Cliente e aparelho</p>
     {% include "_field.html" with field=form.cliente %}
     {% include "_field.html" with field=form.apelido %}
+    {% if form.usa_estoque and not form.fields.aparelho.queryset.exists %}
+      <p class="note"><strong>Nenhum aparelho disponível no estoque.</strong> Cadastre o aparelho primeiro, depois volte aqui e atualize a página.</p>
+    {% endif %}
     {% include "_field.html" with field=form.aparelho %}
     <p class="helptext"><a href="{% url 'aparelhos:novo' %}" target="_blank" rel="noopener">+ Cadastrar aparelho novo no estoque</a> (abre em outra aba)</p>
-    {% include "_field.html" with field=form.aparelho_modelo %}
-    {% include "_field.html" with field=form.imei %}
+    {% if not form.usa_estoque %}
+      {% include "_field.html" with field=form.aparelho_modelo %}
+      {% include "_field.html" with field=form.imei %}
+    {% endif %}
   </div>
 
   <div class="form-section">

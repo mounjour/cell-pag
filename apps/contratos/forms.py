@@ -115,28 +115,41 @@ class ContratoForm(forms.ModelForm):
         for campo in ("data_inicio",):
             self.fields[campo].input_formats = ["%Y-%m-%d"]
         self.fields["num_parcelas"].required = True
-        self.fields["imei"].required = True
         # Estoque: só aparelhos ainda não vendidos — mais o já vinculado a este
-        # contrato (senão ele some da lista ao editar). Escolher um aqui não
-        # dispensa preencher modelo/IMEI abaixo (o JS só sugere/preenche).
+        # contrato (senão ele some da lista ao editar).
         atual = self.instance.aparelho_id if self.instance and self.instance.pk else None
         self.fields["aparelho"].queryset = Aparelho.objects.filter(
             models.Q(contrato__isnull=True) | models.Q(pk=atual)
         )
-        modelo_atual = self.instance.aparelho_modelo if self.instance and self.instance.pk else ""
-        self.fields["aparelho_modelo"].choices = opcoes_modelos(
-            atual=modelo_atual,
-            estoque=self.fields["aparelho"].queryset.values_list("modelo", flat=True).distinct(),
-        )
-        self.fields["aparelho"].label = "Aparelho do estoque (opcional)"
-        self.fields["aparelho"].required = False
-        self.fields["aparelho"].help_text = (
-            "Vincula a um aparelho já cadastrado no estoque — ele passa a "
-            "aparecer como alocado. Ao escolher, modelo e IMEI abaixo são "
-            "preenchidos sozinhos (confira antes de salvar)."
-        )
-        self.fields["aparelho"].widget.attrs["data-preenche-aparelho"] = "1"
-        self.fields["aparelho"].empty_label = "Nenhum — digitar modelo/IMEI abaixo"
+        # Todo contrato novo sai de um aparelho do estoque: modelo e IMEI vêm dele.
+        # Só um contrato antigo, criado antes do estoque e sem vínculo, continua
+        # com modelo/IMEI digitados (e o vínculo opcional) ao ser editado.
+        self.usa_estoque = not (self.instance and self.instance.pk and not self.instance.aparelho_id)
+        if self.usa_estoque:
+            del self.fields["aparelho_modelo"]
+            del self.fields["imei"]
+            self.fields["aparelho"].label = "Aparelho do estoque"
+            self.fields["aparelho"].required = True
+            self.fields["aparelho"].empty_label = "Escolha o aparelho…"
+            self.fields["aparelho"].help_text = (
+                "Só aparelhos disponíveis no estoque. Modelo e IMEI vêm do cadastro do aparelho; "
+                "ao confirmar, ele passa a aparecer como alocado."
+            )
+        else:
+            self.fields["imei"].required = True
+            modelo_atual = self.instance.aparelho_modelo
+            self.fields["aparelho_modelo"].choices = opcoes_modelos(
+                atual=modelo_atual,
+                estoque=self.fields["aparelho"].queryset.values_list("modelo", flat=True).distinct(),
+            )
+            self.fields["aparelho"].label = "Aparelho do estoque (opcional)"
+            self.fields["aparelho"].required = False
+            self.fields["aparelho"].help_text = (
+                "Contrato antigo, sem vínculo com o estoque. Se escolher um aparelho, modelo e "
+                "IMEI abaixo são preenchidos sozinhos (confira antes de salvar)."
+            )
+            self.fields["aparelho"].widget.attrs["data-preenche-aparelho"] = "1"
+            self.fields["aparelho"].empty_label = "Nenhum — manter modelo/IMEI abaixo"
         if self.instance and self.instance.pk:
             # Só faz sentido ao cadastrar — parcelas de um contrato já
             # existente se registram pela tela de pagamento, uma a uma, e a
@@ -185,6 +198,13 @@ class ContratoForm(forms.ModelForm):
 
     def clean(self):
         dados = super().clean()
+        aparelho = dados.get("aparelho")
+        if self.usa_estoque and aparelho:
+            if not aparelho.imei:
+                self.add_error("aparelho", "Este aparelho está sem IMEI no estoque. Edite o aparelho e informe o IMEI antes.")
+            else:
+                self.instance.aparelho_modelo = aparelho.modelo
+                self.instance.imei = aparelho.imei
         if dados.get("valor_total") and dados.get("num_parcelas"):
             # Não é campo do formulário: sai do total e do nº de parcelas.
             self.instance.valor_parcela = Contrato.valor_da_parcela(dados["valor_total"], dados["num_parcelas"])

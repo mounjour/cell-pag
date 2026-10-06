@@ -271,8 +271,9 @@ O formulário é dividido em quatro blocos:
 |---|---|---|
 | **Cliente** | Sim | escolha na lista; já vem preenchido se você veio do botão "Novo contrato" da ficha |
 | **Apelido / descrição** | Sim | diferencia contratos do mesmo cliente. Ex.: "iPhone 11" |
-| **Aparelho (modelo)** | Sim | ex.: "iPhone 11 64GB" |
-| **IMEI** | Não | só números; o sistema tira o que não for dígito |
+| **Aparelho do estoque** | Sim | todo contrato novo parte de um aparelho **já cadastrado no estoque** (menu Aparelhos). **Modelo e IMEI vêm do cadastro dele**, não se digitam aqui. Se não houver aparelho disponível, cadastre-o primeiro (o link "+ Cadastrar aparelho novo no estoque" abre em outra aba) |
+
+> Contratos antigos ou vindos da **importação por planilha** não têm vínculo com o estoque: ao editá-los, modelo e IMEI continuam digitados, e o vínculo é opcional. A importação segue funcionando normalmente.
 
 ### Valores e estrutura
 | Campo | Obrigatório | Observação |
