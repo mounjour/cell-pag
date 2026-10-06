@@ -1,14 +1,17 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Clientes{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
 
 {% block content %}
 <h1>{% include "_icone.html" with nome="clientes" %}{% if arquivados %}Clientes arquivados{% else %}Clientes{% endif %}</h1>
 
-<div class="toolbar">
-  <form method="get">
+<div class="toolbar clientes-toolbar">
+  <form method="get" class="clientes-busca" role="search">
     {% if arquivados %}<input type="hidden" name="arquivados" value="1">{% endif %}
-    <input type="search" name="q" value="{{ busca }}" placeholder="Buscar por nome ou CPF">
-    <button class="btn secondary" type="submit">Buscar</button>
+    {% if filtro_atual %}<input type="hidden" name="situacao" value="{{ filtro_atual }}">{% endif %}
+    {% include "_icone.html" with nome="busca" %}
+    <input type="search" name="q" value="{{ busca }}" placeholder="Buscar por nome ou CPF" aria-label="Buscar cliente por nome ou CPF" data-busca-clientes autocomplete="off">
   </form>
   <span class="spacer"></span>
   {% if arquivados %}
@@ -19,21 +22,52 @@
   {% endif %}
 </div>
 
+<div class="filtro-pills" role="group" aria-label="Filtrar por situação">
+  <a class="filtro-pill{% if not filtro_atual %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}{% endif %}">Todos <span class="filtro-n">{{ contagens.todos }}</span></a>
+  <a class="filtro-pill{% if filtro_atual == 'atraso' %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}&{% endif %}situacao=atraso">Em atraso <span class="filtro-n">{{ contagens.atraso|default:0 }}</span></a>
+  <a class="filtro-pill{% if filtro_atual == 'em_dia' %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}&{% endif %}situacao=em_dia">Em dia <span class="filtro-n">{{ contagens.em_dia|default:0 }}</span></a>
+  <a class="filtro-pill{% if filtro_atual == 'sem_contrato' %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}&{% endif %}situacao=sem_contrato">Sem contrato <span class="filtro-n">{{ contagens.sem_contrato|default:0 }}</span></a>
+</div>
+
 {% if clientes %}
   <p class="count">{{ page_obj.paginator.count }} cliente{{ page_obj.paginator.count|pluralize }}{% if busca %} para “{{ busca }}”{% endif %}</p>
   <div class="tbl-wrap cards">
-    <table>
+    <table class="tabela-clientes">
       <thead>
-        <tr><th>Nome</th><th>CPF</th><th>Telefone</th><th class="num">Contratos</th></tr>
+        <tr><th>Cliente</th><th>Situação</th><th>A receber</th><th>Contato</th><th class="num">Contratos</th></tr>
       </thead>
       <tbody>
         {% for c in clientes %}
+          {% with s=c.situacao %}
           <tr class="linha-link">
-            <td><a class="link-linha" href="{% url 'clientes:detalhe' c.pk %}">{{ c.nome }}</a></td>
-            <td data-label="CPF">{{ c.cpf_formatado }}</td>
-            <td data-label="Telefone"><a href="tel:{{ c.telefone_whatsapp.as_e164 }}">{{ c.telefone_exibicao }}</a></td>
-            <td class="num" data-label="Contratos">{{ c.num_contratos }}</td>
+            <td class="cliente-celula">
+              <span class="avatar-ini" aria-hidden="true">{{ c.nome|slice:":1"|upper }}</span>
+              <span class="cliente-textos">
+                <a class="link-linha" href="{% url 'clientes:detalhe' c.pk %}">{{ c.nome }}</a>
+                <small>{{ c.cpf_formatado }}</small>
+              </span>
+            </td>
+            <td data-label="Situação">
+              {% if s.estado == "atraso" %}
+                <span class="pill {% if s.inadimplente %}inadimplente{% else %}atrasado{% endif %}">{% if s.inadimplente %}Inadimplente · {% else %}Atrasado · {% endif %}{{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }}</span>
+              {% elif s.estado == "hoje" %}<span class="pill parcial">Vence hoje</span>
+              {% elif s.estado == "em_dia" %}<span class="pill em_dia">Em dia</span>
+              {% elif s.estado == "quitado" %}<span class="pill quitado">Quitado</span>
+              {% else %}<span class="pill aberto">Sem contrato</span>{% endif %}
+            </td>
+            <td data-label="A receber" class="a-receber">
+              {% if s.estado == "atraso" %}
+                <strong class="valor-atraso">R$ {{ s.devido|floatformat:2 }}</strong>
+                <small>inclui R$ {{ s.juros|floatformat:2 }} de juros</small>
+              {% elif s.proximo_vencimento %}
+                <strong>R$ {{ s.proximo_valor|floatformat:2 }}</strong>
+                <small>{% if s.estado == "hoje" %}vence hoje{% else %}vence {{ s.proximo_vencimento|date:"d/m" }}{% endif %}</small>
+              {% else %}<span class="nada">—</span>{% endif %}
+            </td>
+            <td data-label="Contato">{% include "_contato_icones.html" with cliente=c %}</td>
+            <td class="num{% if not c.num_contratos %} zero{% endif %}" data-label="Contratos">{{ c.num_contratos }}</td>
           </tr>
+          {% endwith %}
         {% endfor %}
       </tbody>
     </table>
@@ -41,8 +75,9 @@
   {% include "_pagination.html" %}
 {% else %}
   <div class="empty">
-    <p>Nenhum cliente {% if busca %}encontrado para “{{ busca }}”{% else %}cadastrado ainda{% endif %}.</p>
-    {% if not busca %}<a class="btn" href="{% url 'clientes:novo' %}">Cadastrar o primeiro cliente</a>{% endif %}
+    <p>Nenhum cliente {% if busca or filtro_atual %}encontrado{% if busca %} para “{{ busca }}”{% endif %}{% if filtro_atual %} neste filtro{% endif %}{% else %}cadastrado ainda{% endif %}.</p>
+    {% if not busca and not filtro_atual %}<a class="btn" href="{% url 'clientes:novo' %}">Cadastrar o primeiro cliente</a>{% endif %}
   </div>
 {% endif %}
 {% endblock %}
+{% block scripts %}<script src="{% static 'js/lista_clientes.js' %}?v=1" defer></script>{% endblock %}
