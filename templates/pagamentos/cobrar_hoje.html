@@ -7,6 +7,26 @@
   <h1>{% include "_icone.html" with nome="cobrar" %}Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
 </div>
 
+<section class="card pausa-cobrancas{% if config_cobranca.pausada %} pausa-cobrancas--ativa{% endif %}">
+  <form method="post" action="{% url 'pagamentos:cobrancas_pausa' %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    {% if config_cobranca.nunca_iniciada %}
+      <p><span class="pill aberto">Ainda não começaram</span> As cobranças automáticas estão paradas: a rotina não manda mensagem nem gera Pix para os clientes. Comece só quando tudo estiver conferido (WhatsApp conectado, clientes e contratos importados, Pix testado).</p>
+      <label class="check-linha"><input type="checkbox" name="conferido" value="1" required> Conferi que está tudo certo para começar a cobrar os clientes.</label>
+      <button type="submit" name="acao" value="comecar" class="btn">{% include "_icone.html" with nome="retomar" %}Começar cobranças</button>
+    {% elif config_cobranca.pausada %}
+      <p><span class="pill inadimplente">Pausadas</span> As cobranças automáticas estão pausadas
+        {% if config_cobranca.pausada_em %}desde {{ config_cobranca.pausada_em|date:"d/m/Y H:i" }}{% endif %}{% if config_cobranca.pausada_por %} por {{ config_cobranca.pausada_por.get_username }}{% endif %}.
+        A rotina não gera Pix nem envia mensagem aos clientes; pagamentos já feitos continuam sendo baixados.</p>
+      <button type="submit" name="acao" value="retomar" class="btn">{% include "_icone.html" with nome="retomar" %}Retomar cobranças automáticas</button>
+    {% else %}
+      <p><span class="pill pago">Ativas</span> A rotina das 8h30 cobra os clientes automaticamente (mensagem e Pix).</p>
+      <button type="submit" name="acao" value="pausar" class="btn secondary">{% include "_icone.html" with nome="suspender" %}Pausar cobranças automáticas</button>
+    {% endif %}
+  </form>
+</section>
+
 <div class="filtro-pills">
   <a class="filtro-pill{% if not estrutura_atual %} ativo{% endif %}" href="?">Todos os tipos</a>
   {% for valor, rotulo in estrutura_opcoes %}

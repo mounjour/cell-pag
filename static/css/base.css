@@ -196,6 +196,7 @@ h2 {
   font-size: 0.9rem;
 }
 .msg.success { background: var(--ok-wash); border-color: var(--ok); color: var(--ink); }
+.msg.warning { background: var(--amber-wash); border-color: var(--amber); color: var(--ink); }
 .msg.error { background: var(--critical-wash); border-color: var(--critical); color: var(--ink); }
 .messages.toast-area { position: fixed; z-index: 50; right: 1.25rem; bottom: 1.25rem; width: min(29rem, calc(100vw - 2.5rem)); margin: 0; }
 .toast-area .msg { position: relative; padding: 1rem 3rem 1rem 1.1rem; animation: toast-entra .18s ease-out; font-size: .95rem; }
@@ -1176,3 +1177,15 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
   .painel-entrada .atalhos-topo::-webkit-scrollbar { display: none; }
   .painel-entrada .atalhos-topo .btn { flex: none; width: auto; min-height: 40px; padding-inline: 0.9rem; white-space: nowrap; }
 }
+
+/* ---------- Pausa geral das cobranças automáticas ---------- */
+.aviso-pausa {
+  margin: 0 0 1.25rem; padding: 0.7rem 1rem; font-size: 0.9rem;
+  background: var(--amber-wash); color: var(--ink);
+  border: 1px solid var(--amber); border-left-width: 4px; border-radius: var(--radius-sm);
+}
+.aviso-pausa a { font-weight: 600; margin-left: 0.4rem; }
+.pausa-cobrancas p { margin: 0 0 0.75rem; }
+.pausa-cobrancas--ativa { border-color: var(--amber); background: var(--amber-wash); }
+.check-linha { display: flex; gap: 0.5rem; align-items: flex-start; margin: 0 0 0.9rem; font-size: 0.9rem; }
+.check-linha input { margin-top: 0.2rem; }
