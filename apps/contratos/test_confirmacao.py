@@ -18,7 +18,7 @@ def cadastro(db):
     cliente = Cliente.objects.create(
         nome="Maria Teste", cpf=CPF().generate(), telefone_whatsapp="+5583999990000",
     )
-    aparelho = Aparelho.objects.create(modelo="iPhone 13 128GB")
+    aparelho = Aparelho.objects.create(modelo="iPhone 13 128GB", imei="359999053372501")
     return {
         "cliente": cliente.pk, "aparelho": aparelho.pk, "apelido": "iPhone da Maria",
         "aparelho_modelo": "iPhone 13 128GB", "imei": "359999053372501", "valor_total": "1000,00",
@@ -166,24 +166,21 @@ def test_pagas_nao_podem_exceder_quantidade_calculada(auth_client, cadastro):
 
 @pytest.mark.django_db
 def test_catalogo_nos_dois_formularios_so_permite_escolher(auth_client):
-    for nome in ("aparelhos:novo", "contratos:novo"):
-        resposta = auth_client.get(reverse(nome))
-        texto = resposta.content.decode()
-        assert "<select" in texto
-        assert "<datalist" not in texto
-        assert 'value="iPhone 13 Pro Max"' in texto
-        assert 'value="iPhone 18 Pro"' in texto
-        assert 'value="iPhone 11"' in texto
-        assert 'value="iPhone X"' not in texto
-        assert 'value="iPhone 8"' not in texto
-        assert 'value="iPhone SE (3ª geração)"' not in texto
+    # O modelo só se escolhe no cadastro do aparelho; o contrato herda do estoque.
+    texto = auth_client.get(reverse("aparelhos:novo")).content.decode()
+    assert "<select" in texto
+    assert "<datalist" not in texto
+    assert 'value="iPhone 13 Pro Max"' in texto
+    assert 'value="iPhone 18 Pro"' in texto
+    assert 'value="iPhone 11"' in texto
+    assert 'value="iPhone X"' not in texto
+    assert 'value="iPhone 8"' not in texto
+    assert 'value="iPhone SE (3ª geração)"' not in texto
+    assert "aparelho_modelo" not in auth_client.get(reverse("contratos:novo")).context["form"].fields
 
 
 @pytest.mark.django_db
 def test_modelo_fora_da_lista_e_recusado(auth_client, cadastro):
-    resposta = auth_client.post(reverse("contratos:novo"), {**cadastro, "aparelho_modelo": "Modelo inventado"})
-    assert "aparelho_modelo" in resposta.context["form"].errors
-    assert not Contrato.objects.exists()
     from apps.aparelhos.forms import AparelhoForm
     form = AparelhoForm(data={"modelo": "Modelo inventado"})
     assert not form.is_valid()

@@ -1,4 +1,5 @@
 import datetime
+import itertools
 from decimal import Decimal
 
 import pytest
@@ -7,18 +8,28 @@ from django.core.management import call_command
 from django.urls import reverse
 from validate_docbr import CPF as CPFGen
 
+from apps.aparelhos.models import Aparelho
 from apps.clientes.models import Cliente
 from apps.contratos.forms import moeda_para_decimal
 from apps.contratos.test_helpers import cadastrar_contrato
 from apps.contratos.models import Contrato
 
 
+_imeis = itertools.count(1)
+
+
+def novo_aparelho(**campos):
+    """Aparelho do estoque com IMEI único (todo contrato novo parte de um)."""
+    campos.setdefault("modelo", "iPhone 11 64GB")
+    campos.setdefault("imei", f"3599990533{next(_imeis):05d}")
+    return Aparelho.objects.create(**campos)
+
+
 def dados_form(cliente, **over):
     dados = {
         "cliente": cliente.pk,
         "apelido": "iPhone 11",
-        "aparelho_modelo": "iPhone 11",
-        "imei": "359999053372501",
+        "aparelho": novo_aparelho().pk,
         "valor_total": "2400,00",
         "estrutura": Contrato.Estrutura.DIARIA,
         "num_parcelas": "12",
@@ -261,7 +272,9 @@ def test_editar_contrato(auth_client, cliente):
     ct = novo_contrato(cliente)
     resp = auth_client.post(
         reverse("contratos:editar", args=[ct.pk]),
-        dados_form(cliente, apelido="iPhone 11 Pro", estrutura=Contrato.Estrutura.SEMANAL),
+        # contrato antigo, sem vínculo com o estoque: continua com modelo/IMEI digitados
+        dados_form(cliente, apelido="iPhone 11 Pro", estrutura=Contrato.Estrutura.SEMANAL,
+                   aparelho="", aparelho_modelo="iPhone 11", imei="359999053372501"),
     )
     assert resp.status_code == 302
     ct.refresh_from_db()
@@ -298,15 +311,6 @@ def test_aparelho_ja_alocado_nao_aparece_pra_escolher_de_novo(auth_client, clien
     resp = auth_client.get(reverse("contratos:novo"))
     queryset = resp.context["form"].fields["aparelho"].queryset
     assert ap not in queryset
-
-
-@pytest.mark.django_db
-def test_sem_escolher_aparelho_continua_funcionando_como_antes(auth_client, cliente):
-    resp = cadastrar_contrato(auth_client, dados_form(cliente), follow=True)
-    assert resp.status_code == 200
-    ct = Contrato.objects.get(cliente=cliente)
-    assert ct.aparelho_id is None
-    assert ct.aparelho_modelo == "iPhone 11"
 
 
 # ---------- Gerar parcelas pela web (sem terminal) ----------
@@ -490,11 +494,12 @@ def test_form_valor_invalido_mostra_erro(auth_client, cliente):
 
 
 @pytest.mark.django_db
-def test_form_normaliza_imei(auth_client, cliente):
-    resp = cadastrar_contrato(auth_client, dados_form(cliente, imei="35 999905 337250 1"),
-    )
+def test_modelo_e_imei_vem_do_aparelho_do_estoque(auth_client, cliente):
+    ap = novo_aparelho(modelo="iPhone 13 128GB", imei="359999053372501")
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, aparelho=ap.pk))
     assert resp.status_code == 302
-    assert Contrato.objects.get().imei == "359999053372501"
+    ct = Contrato.objects.get(cliente=cliente)
+    assert (ct.aparelho_id, ct.aparelho_modelo, ct.imei) == (ap.pk, "iPhone 13 128GB", "359999053372501")
 
 
 @pytest.mark.django_db
@@ -750,11 +755,27 @@ def test_entrada_nao_aparece_na_edicao(auth_client, cliente):
 
 
 @pytest.mark.django_db
-def test_contrato_exige_imei(auth_client, cliente):
-    resp = cadastrar_contrato(auth_client, dados_form(cliente, imei=""), follow=False)
+def test_contrato_novo_exige_aparelho_do_estoque(auth_client, cliente):
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, aparelho=""))
     assert resp.status_code == 200
+    assert "aparelho" in resp.context["form"].errors
     assert not Contrato.objects.exists()
-    assert "imei" in resp.context["form"].errors
+
+
+@pytest.mark.django_db
+def test_aparelho_sem_imei_no_estoque_nao_vira_contrato(auth_client, cliente):
+    ap = Aparelho.objects.create(modelo="iPhone 11 64GB")  # imei None (cadastro antigo)
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, aparelho=ap.pk))
+    assert resp.status_code == 200
+    assert "aparelho" in resp.context["form"].errors
+    assert not Contrato.objects.exists()
+
+
+@pytest.mark.django_db
+def test_formulario_novo_nao_pede_modelo_nem_imei(auth_client):
+    campos = auth_client.get(reverse("contratos:novo")).context["form"].fields
+    assert "aparelho_modelo" not in campos and "imei" not in campos
+
 
 
 @pytest.mark.django_db
