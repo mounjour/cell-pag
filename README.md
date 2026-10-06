@@ -8,7 +8,7 @@ Contexto completo do projeto: `PLANO-DO-PROJETO.md` (não versionado).
 
 ## Requisitos
 
-- Python 3.12+ (testado com 3.14)
+- Python 3.12+ (produção usa 3.12; o CI roda em 3.12 e 3.13)
 - SQLite no desenvolvimento; PostgreSQL em produção
 
 ## Setup
