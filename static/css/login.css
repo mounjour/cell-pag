@@ -80,7 +80,7 @@
 /* Opções abaixo da senha e telas simples de conta (recuperação de senha). */
 .login-opcoes { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; font-size: 14px; }
 .login-check { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-soft); cursor: pointer; }
-.login-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.login-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); }
 .login-opcoes a, .login-voltar a { font-weight: 500; }
 .login-voltar { margin: 24px 0 0; font-size: 14px; }
 .login-ajuda { margin-top: 6px; color: var(--ink-faint); font-size: 13px; }
