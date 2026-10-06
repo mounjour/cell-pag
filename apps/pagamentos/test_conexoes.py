@@ -1,8 +1,12 @@
+import datetime
+
 import pytest
 from django.core.cache import cache
 from django.urls import reverse
 
 from apps.pagamentos.whatsapp import WhatsAppErro
+
+BASE = datetime.datetime(2026, 10, 5, 12, 0, tzinfo=datetime.timezone.utc)
 
 
 @pytest.fixture(autouse=True)
@@ -80,7 +84,7 @@ def test_voltar_a_pagina_antes_de_expirar_reaproveita_o_qr_e_retoma_o_cronometro
     auth_client, qr_pedido, monkeypatch
 ):
     agora = [1000.0]
-    monkeypatch.setattr("apps.pagamentos.views.time.time", lambda: agora[0])
+    monkeypatch.setattr("apps.pagamentos.views._agora", lambda: BASE + datetime.timedelta(seconds=agora[0]))
     url = reverse("pagamentos:conexoes")
 
     primeira = auth_client.get(url)
@@ -98,7 +102,7 @@ def test_voltar_a_pagina_antes_de_expirar_reaproveita_o_qr_e_retoma_o_cronometro
 @pytest.mark.django_db
 def test_qr_expirado_nao_e_reaproveitado(auth_client, qr_pedido, monkeypatch):
     agora = [1000.0]
-    monkeypatch.setattr("apps.pagamentos.views.time.time", lambda: agora[0])
+    monkeypatch.setattr("apps.pagamentos.views._agora", lambda: BASE + datetime.timedelta(seconds=agora[0]))
     url = reverse("pagamentos:conexoes")
     auth_client.get(url)
 
@@ -116,3 +120,32 @@ def test_gerar_outro_qr_descarta_o_guardado(auth_client, qr_pedido):
     auth_client.post(reverse("pagamentos:conexoes_gerar_qr"))
     resposta = auth_client.get(url)
     assert resposta.context["qr_code"].endswith("QR2")
+
+
+@pytest.mark.django_db
+def test_qr_continua_contando_em_outra_sessao(auth_client, qr_pedido, django_user_model, monkeypatch):
+    """O QR é da instância da Evolution: outra sessão (ou o mesmo usuário depois de
+    sair e entrar) vê o mesmo código com a contagem de onde está, não de 25 s."""
+    from django.test import Client
+
+    agora = [1000.0]
+    monkeypatch.setattr("apps.pagamentos.views._agora", lambda: BASE + datetime.timedelta(seconds=agora[0]))
+    url = reverse("pagamentos:conexoes")
+    auth_client.get(url)  # primeira sessão pede o QR
+
+    outro = Client()  # outro navegador/aparelho, já com o QR ativo na sessão
+    outro.force_login(django_user_model.objects.create_user("outro", password="s3nha-forte-123"))
+    outro.post(reverse("pagamentos:conexoes_gerar_qr"))
+    # "gerar" descarta o guardado: precisa de código novo
+    assert outro.get(url).context["qr_code"].endswith("QR2")
+
+    agora[0] += 12
+    auth_client.logout()
+    auth_client.force_login(django_user_model.objects.get(username="op"))
+    sessao = auth_client.session
+    sessao["conexoes_whatsapp_gerar_qr"] = True
+    sessao.save()
+    resposta = auth_client.get(url)
+    assert resposta.context["qr_code"].endswith("QR2")  # não pediu outro
+    assert resposta.context["qr_atraso_css"] == "-12.0s"
+    assert len(qr_pedido) == 2

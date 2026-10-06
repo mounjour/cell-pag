@@ -441,3 +441,33 @@ class ComprovanteRecebido(models.Model):
     def __str__(self):
         return f"{self.cliente} - {self.get_tipo_display()} - {self.get_status_display()}"
 
+
+
+class QrWhatsApp(models.Model):
+    """Último QR code de conexão pedido à Evolution (registro único, ``pk=1``).
+
+    O QR pertence à instância da Evolution, não a um usuário nem a uma sessão — e
+    é lá que ele expira. Guardar aqui (e não na sessão) faz a contagem continuar
+    valendo ao fechar a página, sair e entrar de novo ou abrir em outro aparelho.
+    Apagado assim que o WhatsApp conecta.
+    """
+
+    imagem = models.TextField("QR code (data URI)")
+    gerado_em = models.DateTimeField("gerado em")
+
+    class Meta:
+        verbose_name = "QR code do WhatsApp"
+        verbose_name_plural = "QR codes do WhatsApp"
+
+    @classmethod
+    def guardar(cls, imagem: str, gerado_em) -> "QrWhatsApp":
+        qr, _ = cls.objects.update_or_create(pk=1, defaults={"imagem": imagem, "gerado_em": gerado_em})
+        return qr
+
+    @classmethod
+    def atual(cls):
+        return cls.objects.filter(pk=1).first()
+
+    @classmethod
+    def limpar(cls) -> None:
+        cls.objects.filter(pk=1).delete()

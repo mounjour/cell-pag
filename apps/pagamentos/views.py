@@ -7,7 +7,6 @@ só a conta WhatsApp Business para o envio de verdade (ver `lembrete.py`).
 """
 
 import logging
-import time
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -16,6 +15,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
@@ -30,7 +30,7 @@ from .agenda import montar_agenda_do_dia
 from .forms import PagamentoForm
 from .comprovantes import conferir_na_cora
 from .limpeza import encerrar_cobranca_automatica
-from .models import CobrancaCora, ComprovanteRecebido, Pagamento, Vencimento
+from .models import CobrancaCora, ComprovanteRecebido, Pagamento, QrWhatsApp, Vencimento
 from .pix_cora import (
     parcelas_do_pix,
     CancelamentoRecusado,
@@ -419,8 +419,11 @@ class HistoricoPagamentosView(LoginRequiredMixin, ListView):
 
 
 CHAVE_SESSAO_QR_ATIVO = "conexoes_whatsapp_gerar_qr"
-CHAVE_SESSAO_QR_GUARDADO = "conexoes_whatsapp_qr"
 QR_RENOVA_SEGUNDOS = 25
+
+
+def _agora():
+    return timezone.now()
 
 
 class ConexoesView(LoginRequiredMixin, TemplateView):
@@ -431,9 +434,11 @@ class ConexoesView(LoginRequiredMixin, TemplateView):
     pra não gastar código à toa enquanto ninguém está de fato tentando
     escanear (o código expira em segundos de qualquer forma).
 
-    O QR e a hora em que foi gerado ficam na sessão: ao sair da página e voltar
-    antes de expirar, a tela mostra o mesmo código com o cronômetro de onde
-    parou — em vez de reiniciar a contagem e deixar ler um código já expirado.
+    O QR e a hora em que foi gerado ficam no banco (`QrWhatsApp`, um só para a
+    instância da Evolution — é lá que ele expira): ao fechar a página, sair e
+    entrar de novo ou abrir em outro aparelho antes de expirar, a tela mostra o
+    mesmo código com o cronômetro de onde parou — em vez de reiniciar a contagem
+    e deixar ler um código já expirado.
     """
 
     template_name = "pagamentos/conexoes.html"
@@ -456,21 +461,21 @@ class ConexoesView(LoginRequiredMixin, TemplateView):
         sessao = self.request.session
         if status_whatsapp in ("open", "simulado"):
             sessao.pop(CHAVE_SESSAO_QR_ATIVO, None)
-            sessao.pop(CHAVE_SESSAO_QR_GUARDADO, None)
+            QrWhatsApp.limpar()
 
         qr_code = ""
         qr_decorrido = 0.0
         quer_qr = status_whatsapp not in ("open", "simulado") and sessao.get(CHAVE_SESSAO_QR_ATIVO)
         if quer_qr:
-            guardado = sessao.get(CHAVE_SESSAO_QR_GUARDADO) or {}
-            decorrido = time.time() - guardado.get("gerado_em", 0)
-            if guardado.get("imagem") and 0 <= decorrido < QR_RENOVA_SEGUNDOS:
-                qr_code, qr_decorrido = guardado["imagem"], decorrido
+            guardado = QrWhatsApp.atual()
+            decorrido = (_agora() - guardado.gerado_em).total_seconds() if guardado else None
+            if guardado and 0 <= decorrido < QR_RENOVA_SEGUNDOS:
+                qr_code, qr_decorrido = guardado.imagem, decorrido
             else:
-                sessao.pop(CHAVE_SESSAO_QR_GUARDADO, None)
+                QrWhatsApp.limpar()
                 try:
                     qr_code = obter_qrcode()
-                    sessao[CHAVE_SESSAO_QR_GUARDADO] = {"imagem": qr_code, "gerado_em": time.time()}
+                    QrWhatsApp.guardar(qr_code, _agora())
                 except WhatsAppErro as exc:
                     erro_whatsapp = erro_whatsapp or str(exc)
 
@@ -508,7 +513,7 @@ class ConexoesGerarQrView(LoginRequiredMixin, View):
     def post(self, request):
         cache.delete("whatsapp_status")  # a página e o menu já refletem na hora
         request.session[CHAVE_SESSAO_QR_ATIVO] = True
-        request.session.pop(CHAVE_SESSAO_QR_GUARDADO, None)  # "gerar outro" = código novo de verdade
+        QrWhatsApp.limpar()  # "gerar outro" = código novo de verdade
         return redirect("pagamentos:conexoes")
 
 
