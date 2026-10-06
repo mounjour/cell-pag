@@ -32,7 +32,7 @@
             </form>
           </div>
         </div>
-        <p class="helptext">Escaneie agora — o código expira em {{ qr_restante_segundos }} segundos. No celular: WhatsApp → Configurações → Aparelhos conectados → Conectar um aparelho.</p>
+        <p class="helptext" data-qr-contagem>Escaneie agora — o código expira em <strong data-qr-restante="{{ qr_restante_segundos }}" aria-hidden="true">{{ qr_restante_segundos }}</strong><span class="sr-only"> alguns</span> <span data-qr-unidade>segundos</span>. No celular: WhatsApp → Configurações → Aparelhos conectados → Conectar um aparelho.</p>
       </div>
       <form method="post" action="{% url 'pagamentos:conexoes_gerar_qr' %}">
         {% csrf_token %}
