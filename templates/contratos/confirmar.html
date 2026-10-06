@@ -121,8 +121,8 @@
 
     <div class="passos-rodape">
       <div class="passos-rodape-extras">
-        <button type="submit" name="acao" value="corrigir" class="linkish" formnovalidate>Corrigir dados do contrato</button>
-        <a class="linkish linkish--cancelar" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Cancelar</a>
+        <button type="submit" name="acao" value="corrigir" class="btn secondary" formnovalidate>Corrigir dados do contrato</button>
+        <a class="btn cancelar" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Cancelar</a>
       </div>
       <div class="passos-rodape-principal">
         <button type="button" class="btn secondary" data-passos-voltar hidden>Voltar</button>

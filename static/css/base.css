@@ -713,12 +713,13 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 
 /* Rodapé da conferência: só os botões principais em destaque; o resto vira link. */
 .passos-rodape { display: flex; flex-wrap: wrap-reverse; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; margin-top: 1rem; }
-.passos-rodape-extras { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.25rem; font-size: .9rem; }
-.passos-rodape-extras .linkish { padding: .4rem 0; }
-.linkish--cancelar { color: var(--critical-ink); }
+.passos-rodape-extras { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.passos-rodape-extras .btn { white-space: nowrap; }
 .passos-rodape-principal { display: flex; gap: .6rem; margin-left: auto; }
 .passos-rodape-principal .btn { white-space: nowrap; }
 @media (max-width: 639px) {
+  .passos-rodape-extras { width: 100%; }
+  .passos-rodape-extras .btn { flex: 1; white-space: normal; }
   .passos-rodape-principal { width: 100%; }
   .passos-rodape-principal .btn { flex: 1; white-space: normal; }
 }
