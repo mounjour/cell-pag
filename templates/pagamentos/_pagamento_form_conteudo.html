@@ -26,7 +26,7 @@
     </section>
     <div class="form-actions">
       <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Registrar pagamento</button>
-      <a class="btn secondary" href="{% url 'contratos:detalhe' contrato.pk %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
+      <a class="btn cancelar" href="{% url 'contratos:detalhe' contrato.pk %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
     </div>
   </form>
 {% elif parcelas_abertas %}

@@ -11,7 +11,7 @@
     {% include "_form.html" %}
     <div class="form-actions">
       <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Salvar</button>
-      <a class="btn secondary" href="{% if form.instance.pk %}{% url 'aparelhos:detalhe' form.instance.pk %}{% else %}{% url 'aparelhos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
+      <a class="btn cancelar" href="{% if form.instance.pk %}{% url 'aparelhos:detalhe' form.instance.pk %}{% else %}{% url 'aparelhos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
     </div>
   </form>
 </div>

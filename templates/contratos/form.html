@@ -80,7 +80,7 @@
   </section>
   <div class="form-actions">
     <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}{% if form.instance.pk %}Salvar{% else %}Revisar cadastro{% endif %}</button>
-    <a class="btn secondary" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
+    <a class="btn cancelar" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
   </div>
 </form>
 </div>
