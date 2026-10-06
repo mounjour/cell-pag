@@ -193,3 +193,23 @@ def test_sem_contrato_nenhum_mostra_aviso_de_excluir(auth_client):
     assert c.todos_contratos_quitados is False  # sem contrato nenhum não conta
     corpo = auth_client.get(reverse("clientes:detalhe", args=[c.pk])).content.decode()
     assert reverse("clientes:excluir", args=[c.pk]) in corpo
+
+
+@pytest.mark.django_db
+def test_campos_de_cpf_e_telefone_tem_mascara_e_aceitam_valor_formatado(auth_client):
+    from validate_docbr import CPF
+
+    resp = auth_client.get(reverse("clientes:novo"))
+    html = resp.content.decode()
+    assert 'data-mascara="cpf"' in html and 'data-mascara="telefone"' in html
+    assert "(83) 99999-0000" in html  # placeholder
+
+    cpf = CPF().generate()
+    formatado = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}"
+    resp = auth_client.post(reverse("clientes:novo"), {
+        "nome": "Maria Máscara", "cpf": formatado, "telefone_whatsapp": "(83) 99999-0000", "endereco": "",
+    })
+    assert resp.status_code == 302
+    cliente = Cliente.objects.get(nome="Maria Máscara")
+    assert cliente.cpf == cpf
+    assert str(cliente.telefone_whatsapp) == "+5583999990000"

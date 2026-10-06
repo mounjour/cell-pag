@@ -251,7 +251,13 @@ class PlanilhaPreviaForm(forms.Form):
 
 
 class ResolverImportacaoForm(forms.Form):
-    cpf = forms.CharField(label="CPF")
-    telefone = forms.CharField(label="Telefone / WhatsApp")
+    cpf = forms.CharField(
+        label="CPF",
+        widget=forms.TextInput(attrs={"inputmode": "numeric", "placeholder": "000.000.000-00", "data-mascara": "cpf"}),
+    )
+    telefone = forms.CharField(
+        label="Telefone / WhatsApp",
+        widget=forms.TextInput(attrs={"inputmode": "tel", "placeholder": "(83) 99999-0000", "data-mascara": "telefone"}),
+    )
     valor_total = forms.CharField(label="Valor total financiado")
     parcelas_ja_pagas = forms.IntegerField(label="Parcelas já pagas", min_value=0, required=False, initial=0)

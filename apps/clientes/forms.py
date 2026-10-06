@@ -8,7 +8,9 @@ class ClienteForm(forms.ModelForm):
     cpf = forms.CharField(
         label="CPF",
         max_length=14,
-        widget=forms.TextInput(attrs={"inputmode": "numeric", "placeholder": "Somente números"}),
+        widget=forms.TextInput(
+            attrs={"inputmode": "numeric", "placeholder": "000.000.000-00", "data-mascara": "cpf", "autocomplete": "off"}
+        ),
     )
 
     class Meta:
@@ -16,6 +18,9 @@ class ClienteForm(forms.ModelForm):
         fields = ["nome", "cpf", "telefone_whatsapp", "endereco"]
         widgets = {
             "nome": forms.TextInput(attrs={"autofocus": True}),
+            "telefone_whatsapp": forms.TextInput(
+                attrs={"inputmode": "tel", "placeholder": "(83) 99999-0000", "data-mascara": "telefone", "autocomplete": "off"}
+            ),
             "endereco": forms.TextInput(attrs={"placeholder": "Opcional"}),
         }
 
