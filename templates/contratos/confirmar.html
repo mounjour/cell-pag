@@ -121,13 +121,13 @@
 
     <div class="passos-rodape">
       <div class="passos-rodape-extras">
-        <button type="submit" name="acao" value="corrigir" class="btn secondary" formnovalidate>Corrigir dados do contrato</button>
-        <a class="btn cancelar" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Cancelar</a>
+        <button type="submit" name="acao" value="corrigir" class="btn secondary" formnovalidate>{% include "_icone.html" with nome="editar" %}Corrigir dados do contrato</button>
+        <a class="btn cancelar" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
       </div>
       <div class="passos-rodape-principal">
-        <button type="button" class="btn secondary" data-passos-voltar hidden>Voltar</button>
-        <button type="button" class="btn" data-passos-proximo hidden>Próximo</button>
-        <button type="submit" name="acao" value="confirmar" class="btn" data-passos-confirmar>{% if contrato.quitado or not contrato.valor_parcela %}Confirmar cadastro{% else %}Confirmar e iniciar cobrança{% endif %}</button>
+        <button type="button" class="btn secondary" data-passos-voltar hidden>{% include "_icone.html" with nome="voltar" %}Voltar</button>
+        <button type="button" class="btn" data-passos-proximo hidden>Próximo{% include "_icone.html" with nome="proximo" %}</button>
+        <button type="submit" name="acao" value="confirmar" class="btn" data-passos-confirmar>{% include "_icone.html" with nome="salvar" %}{% if contrato.quitado or not contrato.valor_parcela %}Confirmar cadastro{% else %}Confirmar e iniciar cobrança{% endif %}</button>
       </div>
     </div>
   </form>
