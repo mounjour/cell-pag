@@ -663,6 +663,35 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .resumo-numeros strong { font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .resumo-numeros span { font-size: .78rem; color: var(--ink-faint); }
 .resumo-numero--alerta strong { color: var(--critical-ink); }
+/* Conferência em passos. Sem JS (.passos-ativos ausente) tudo aparece de uma vez. */
+.passos-trilha { display: flex; gap: .25rem; list-style: none; margin: 0 0 1.1rem; padding: 0; counter-reset: passo; }
+.passos-trilha li { flex: 1 1 0; min-width: 0; display: flex; }
+.passos-trilha button {
+  appearance: none; flex: 1; display: flex; align-items: center; gap: .55rem; padding: .55rem .6rem;
+  border: 0; border-bottom: 3px solid var(--line); background: none; color: var(--ink-faint);
+  font: inherit; font-size: .88rem; text-align: left; cursor: pointer; min-width: 0;
+}
+.passos-trilha button:disabled { cursor: default; opacity: .7; }
+.passos-trilha .n {
+  flex: none; width: 1.6rem; height: 1.6rem; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px solid currentColor; font-size: .78rem; font-weight: 700;
+}
+.passos-trilha .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.passos-trilha .feito button { color: var(--ink); border-bottom-color: var(--ok); }
+.passos-trilha .feito .n { background: var(--ok-wash); border-color: var(--ok); color: var(--ok-ink); }
+.passos-trilha .atual button { color: var(--ink); font-weight: 700; border-bottom-color: var(--ink); }
+.passos-trilha .atual .n { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.passos-trilha button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 639px) {
+  .passos-trilha .t { display: none; }
+  .passos-trilha .atual .t { display: inline; }
+  .passos-trilha li:not(.atual) { flex: 0 0 auto; }
+  .passos-trilha button { padding-inline: .35rem; }
+}
+.passo > .card { margin-top: 0; }
+.passos-ativos .passo .lista-dados { grid-template-columns: 1fr; }
+@media (min-width: 900px) { .passos-ativos .passo .lista-dados { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; } }
+.passo[hidden], .btn[hidden], .passos-trilha[hidden] { display: none !important; }
 .confirmacao-responsabilidade {
   margin: 1.25rem 0; padding: 1.1rem 1.25rem; border-radius: var(--radius-sm);
   background: var(--amber-wash); border: 2px solid var(--amber);
