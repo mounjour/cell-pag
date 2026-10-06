@@ -21,8 +21,7 @@ def dados_form(cliente, **over):
         "imei": "359999053372501",
         "valor_total": "2400,00",
         "estrutura": Contrato.Estrutura.DIARIA,
-        "valor_parcela": "",
-        "num_parcelas": "",
+        "num_parcelas": "12",
         "data_inicio": "2026-08-01",
         "dia_referencia": "",
         "proximo_vencimento": "",
@@ -317,7 +316,6 @@ def test_cadastro_com_valor_parcela_ja_gera_vencimentos(auth_client, cliente):
     resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             estrutura=Contrato.Estrutura.MENSAL,
-            valor_parcela="200,00",
             num_parcelas="12",
             data_inicio="2026-08-01",
         ),
@@ -331,21 +329,32 @@ def test_cadastro_com_valor_parcela_ja_gera_vencimentos(auth_client, cliente):
 
 
 @pytest.mark.django_db
-def test_cadastro_sem_num_parcelas_calcula_sozinho(auth_client, cliente):
-    resp = cadastrar_contrato(auth_client, dados_form(
-            cliente,
-            valor_total="2400,00",
-            estrutura=Contrato.Estrutura.MENSAL,
-            valor_parcela="200,00",
-            num_parcelas="",  # deixado em branco de propósito
-            data_inicio="2026-08-01",
-        ),
-        follow=True,
-    )
+def test_num_parcelas_e_obrigatorio(auth_client, cliente):
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, num_parcelas=""))
     assert resp.status_code == 200
+    assert "num_parcelas" in resp.context["form"].errors
+    assert not Contrato.objects.exists()
+
+
+@pytest.mark.parametrize("total, parcelas, esperado", [
+    ("1000,00", "3", "333.30"),   # 333,33 → 333,30
+    ("1000,00", "7", "142.90"),   # 142,857 → 142,90
+    ("103,35", "1", "103.40"),    # meio sobe
+    ("2400,00", "12", "200.00"),  # já termina em 0
+])
+@pytest.mark.django_db
+def test_parcela_calculada_e_arredondada_para_dez_centavos(auth_client, cliente, total, parcelas, esperado):
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, valor_total=total, num_parcelas=parcelas))
+    assert resp.status_code == 302
     ct = Contrato.objects.get(cliente=cliente)
-    assert ct.num_parcelas == 12  # 2400 / 200
-    assert ct.data_prevista_quitacao is not None  # já usa o num_parcelas calculado
+    assert ct.valor_parcela == Decimal(esperado)
+    assert ct.num_parcelas == int(parcelas)
+
+
+@pytest.mark.django_db
+def test_formulario_nao_tem_campo_de_valor_da_parcela(auth_client, cliente):
+    resp = auth_client.get(reverse("contratos:novo"))
+    assert "valor_parcela" not in resp.context["form"].fields
 
 
 @pytest.mark.django_db
@@ -354,7 +363,6 @@ def test_cadastro_com_num_parcelas_informado_nao_e_sobrescrito(auth_client, clie
             cliente,
             valor_total="2400,00",
             estrutura=Contrato.Estrutura.MENSAL,
-            valor_parcela="200,00",
             num_parcelas="20",  # divergente do cálculo (12) — decisão do vendedor
             data_inicio="2026-08-01",
         ),
@@ -363,16 +371,6 @@ def test_cadastro_com_num_parcelas_informado_nao_e_sobrescrito(auth_client, clie
     assert resp.status_code == 200
     ct = Contrato.objects.get(cliente=cliente)
     assert ct.num_parcelas == 20
-
-
-@pytest.mark.django_db
-def test_cadastro_sem_valor_parcela_nao_gera_nada(auth_client, cliente):
-    resp = cadastrar_contrato(auth_client, dados_form(cliente, valor_parcela="", num_parcelas=""),
-        follow=True,
-    )
-    assert resp.status_code == 200
-    ct = Contrato.objects.get(cliente=cliente)
-    assert ct.vencimentos.count() == 0
 
 
 @pytest.mark.django_db
@@ -475,12 +473,12 @@ def test_moeda_para_decimal(entrada, esperado):
 
 @pytest.mark.django_db
 def test_form_aceita_valor_com_virgula(auth_client, cliente):
-    resp = cadastrar_contrato(auth_client, dados_form(cliente, valor_total="1.899,90", valor_parcela="63,33"),
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, valor_total="1.899,90", num_parcelas="30"),
     )
     assert resp.status_code == 302
     ct = Contrato.objects.get()
     assert ct.valor_total == Decimal("1899.90")
-    assert ct.valor_parcela == Decimal("63.33")
+    assert ct.valor_parcela == Decimal("63.30")  # 1.899,90 ÷ 30 = 63,33 → R$ 0,10 mais próximo
 
 
 @pytest.mark.django_db
@@ -626,7 +624,6 @@ def test_parcelas_ja_pagas_marca_as_primeiras_parcelas_como_pagas(auth_client, c
     resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             estrutura=Contrato.Estrutura.DIARIA,
-            valor_parcela="40,00",
             num_parcelas="10",
             data_inicio="2026-09-20",
             parcelas_ja_pagas="3",
@@ -651,29 +648,10 @@ def test_parcelas_ja_pagas_marca_as_primeiras_parcelas_como_pagas(auth_client, c
 
 
 @pytest.mark.django_db
-def test_parcelas_ja_pagas_sem_parcelas_geradas_avisa(auth_client, cliente):
-    resp = cadastrar_contrato(auth_client, dados_form(
-            cliente,
-            estrutura=Contrato.Estrutura.DIARIA,
-            valor_parcela="",  # sem valor de parcela: nada é gerado
-            num_parcelas="",
-            data_inicio="2026-09-20",
-            parcelas_ja_pagas="2",
-        ),
-        follow=True,
-    )
-    assert resp.status_code == 200
-    ct = Contrato.objects.get(cliente=cliente)
-    assert ct.vencimentos.count() == 0
-    assert "não foram marcadas" in resp.content.decode()
-
-
-@pytest.mark.django_db
 def test_parcelas_ja_pagas_nao_pode_passar_do_num_parcelas(auth_client, cliente):
     resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
             estrutura=Contrato.Estrutura.DIARIA,
-            valor_parcela="40,00",
             num_parcelas="5",
             data_inicio="2026-09-20",
             parcelas_ja_pagas="10",
@@ -701,7 +679,6 @@ def test_entrada_vira_pagamento_sem_parcela_vinculada(auth_client, cliente):
             cliente,
             valor_total="1000,00",
             estrutura=Contrato.Estrutura.MENSAL,
-            valor_parcela="100,00",
             num_parcelas="10",
             data_inicio="2026-09-01",
             entrada="200,00",
@@ -739,7 +716,6 @@ def test_entrada_aparece_na_tela_do_contrato(auth_client, cliente):
             cliente,
             valor_total="1000,00",
             estrutura=Contrato.Estrutura.MENSAL,
-            valor_parcela="100,00",
             num_parcelas="10",
             data_inicio="2026-09-01",
             entrada="150,50",

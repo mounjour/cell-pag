@@ -38,11 +38,6 @@ class ContratoForm(forms.ModelForm):
         label="Valor total do contrato",
         widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}),
     )
-    valor_parcela = forms.CharField(
-        label="Valor da parcela",
-        required=False,
-        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}),
-    )
     juros_diario = forms.CharField(
         label="Juros diário", required=False, initial="5,00",
         widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "5,00", "class": "money"}),
@@ -58,7 +53,6 @@ class ContratoForm(forms.ModelForm):
             "imei",
             "valor_total",
             "estrutura",
-            "valor_parcela",
             "juros_diario",
             "num_parcelas",
             "data_inicio",
@@ -124,7 +118,7 @@ class ContratoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for campo in ("data_inicio", "proximo_vencimento", "data_prevista_quitacao"):
             self.fields[campo].input_formats = ["%Y-%m-%d"]
-        self.fields["num_parcelas"].required = False
+        self.fields["num_parcelas"].required = True
         self.fields["imei"].required = True
         # Estoque: só aparelhos ainda não vendidos — mais o já vinculado a este
         # contrato (senão ele some da lista ao editar). Escolher um aqui não
@@ -155,16 +149,13 @@ class ContratoForm(forms.ModelForm):
             del self.fields["entrada"]
             del self.fields["entrada_forma"]
         self.fields["num_parcelas"].help_text = (
-            "Deixe em branco para calcular sozinho (valor total ÷ valor da "
-            "parcela, arredondado para cima). Confira o total do plano na prévia; "
-            "o valor da última parcela não é reduzido automaticamente."
+            "O valor de cada parcela é calculado sozinho: valor total ÷ nº de parcelas, "
+            "arredondado para o múltiplo de R$ 0,10 mais próximo. Confira na prévia."
         )
         # Ao editar, mostra os valores de dinheiro já formatados com vírgula.
         if self.instance and self.instance.pk:
             if self.instance.valor_total is not None:
                 self.initial["valor_total"] = _formata_moeda(self.instance.valor_total)
-            if self.instance.valor_parcela is not None:
-                self.initial["valor_parcela"] = _formata_moeda(self.instance.valor_parcela)
             self.initial["juros_diario"] = _formata_moeda(self.instance.juros_diario)
 
     def clean_valor_total(self):
@@ -172,9 +163,6 @@ class ContratoForm(forms.ModelForm):
         if valor is None:
             raise forms.ValidationError("Informe o valor total do contrato.")
         return valor
-
-    def clean_valor_parcela(self):
-        return moeda_para_decimal(self.cleaned_data.get("valor_parcela"))
 
     def clean_juros_diario(self):
         valor = moeda_para_decimal(self.cleaned_data.get("juros_diario"))
@@ -201,6 +189,9 @@ class ContratoForm(forms.ModelForm):
 
     def clean(self):
         dados = super().clean()
+        if dados.get("valor_total") and dados.get("num_parcelas"):
+            # Não é campo do formulário: sai do total e do nº de parcelas.
+            self.instance.valor_parcela = Contrato.valor_da_parcela(dados["valor_total"], dados["num_parcelas"])
         quantidade = dados.get("parcelas_ja_pagas")
         num_parcelas = dados.get("num_parcelas")
         if quantidade and num_parcelas and quantidade > num_parcelas:
@@ -228,20 +219,19 @@ class DocumentoContratoForm(forms.ModelForm):
 
 class PrevisaoContratoForm(forms.Form):
     valor_total = forms.CharField()
-    valor_parcela = forms.CharField()
-    num_parcelas = forms.IntegerField(required=False, min_value=1, max_value=10000)
+    num_parcelas = forms.IntegerField(min_value=1, max_value=10000)
     estrutura = forms.ChoiceField(choices=Contrato.Estrutura.choices)
     data_inicio = forms.DateField(input_formats=["%Y-%m-%d"])
 
     def clean(self):
         dados = super().clean()
-        for nome in ("valor_total", "valor_parcela"):
-            if nome not in dados:
-                continue
-            valor = moeda_para_decimal(dados[nome])
+        if "valor_total" in dados:
+            valor = moeda_para_decimal(dados["valor_total"])
             if valor is None or not valor.is_finite() or valor <= 0 or valor.as_tuple().exponent < -2:
                 raise forms.ValidationError("Informe valores positivos com até duas casas decimais.")
-            dados[nome] = valor
+            dados["valor_total"] = valor
+            if dados.get("num_parcelas"):
+                dados["valor_parcela"] = Contrato.valor_da_parcela(valor, dados["num_parcelas"])
         return dados
 
 

@@ -23,7 +23,7 @@
   </p>
 </details>
 
-<form method="post" class="form-grid form-page" data-previsao-url="{% url 'contratos:previsao' %}" data-previsao-campos="valor_total,valor_parcela,num_parcelas,estrutura,data_inicio">
+<form method="post" class="form-grid form-page" data-previsao-url="{% url 'contratos:previsao' %}" data-previsao-campos="valor_total,num_parcelas,estrutura,data_inicio">
   {% csrf_token %}
   {% if form.non_field_errors %}
     <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
@@ -43,7 +43,6 @@
     <p class="form-section-title">Valores e estrutura</p>
     {% include "_field.html" with field=form.valor_total %}
     {% include "_field.html" with field=form.estrutura %}
-    {% include "_field.html" with field=form.valor_parcela %}
     {% include "_field.html" with field=form.num_parcelas %}
     {% include "_field.html" with field=form.juros_diario %}
     {% if not form.instance.pk %}

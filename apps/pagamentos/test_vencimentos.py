@@ -314,7 +314,6 @@ def test_editar_contrato_pela_web_poda_parcelas_reduzidas(auth_client, cliente):
         "imei": "359999053372501",
         "valor_total": "280,00",
         "estrutura": Contrato.Estrutura.MENSAL,
-        "valor_parcela": "40,00",
         "num_parcelas": "3",
         "data_inicio": INICIO.isoformat(),
         "dia_referencia": "",
@@ -355,14 +354,12 @@ def test_parcelas_conferem(cliente):
 
 
 @pytest.mark.django_db
-def test_form_avisa_quando_parcela_nao_bate(auth_client, cliente):
-    from apps.contratos.tests import dados_form
+def test_parcelas_conferem_aceita_o_arredondamento_e_avisa_divergencia_maior():
+    def contrato(total, parcela, n):
+        return Contrato(valor_total=Decimal(total), valor_parcela=Decimal(parcela), num_parcelas=n)
 
-    resp = cadastrar_contrato(auth_client, dados_form(cliente, valor_total="1.800,00", valor_parcela="150,00", num_parcelas="10"),
-        follow=True,
-    )
-    corpo = resp.content.decode()
-    assert "diferente do valor total" in corpo or "Confira os números" in corpo
+    assert contrato("1000.00", "333.30", 3).parcelas_conferem is True  # 0,10 de arredondamento
+    assert contrato("1800.00", "150.00", 10).parcelas_conferem is False  # contrato importado/admin
 
 
 # ── management command gerar_vencimentos ─────────────────────────────────────

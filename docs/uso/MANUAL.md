@@ -279,14 +279,13 @@ O formulário é dividido em quatro blocos:
 |---|---|---|
 | **Valor total do contrato** | Sim | com vírgula: `1.500,00` |
 | **Estrutura de pagamento** | Sim | diária / semanal / por dezena / quinzenal / mensal |
-| **Valor da parcela** | Não* | **digitado à mão** (o cálculo é feito fora do sistema). **Sem ele o sistema não gera as parcelas.** |
-| **Nº de parcelas** | Não* | **digitado à mão**. Sem ele não há **data prevista de quitação** e a geração de parcelas usa um teto de segurança |
+| **Nº de parcelas** | Sim | quantas parcelas o contrato terá |
 
-\* Não são obrigatórios para salvar, mas **sem os dois o contrato fica incompleto** (não gera parcelas / não calcula quitação).
-
-> **Aviso de conferência:** se `valor da parcela × nº de parcelas` não bater com
-> o valor total, aparece um aviso amarelo ("Parcela × nº dá R$ X, diferente do
-> valor total"). É só um alerta — **o sistema não recalcula nada** e deixa você salvar.
+> **Valor da parcela:** você **não digita**. O sistema calcula `valor total ÷ nº de
+> parcelas` e arredonda para o múltiplo de **R$ 0,10** mais próximo (ex.: R$ 1.000
+> em 3 parcelas = R$ 333,30). A prévia na tela mostra o resultado antes de salvar.
+> Por causa do arredondamento, o total das parcelas pode diferir uns centavos do
+> valor total; só diferenças maiores (contratos importados) geram aviso amarelo.
 
 ### Datas
 | Campo | Obrigatório | Observação |
@@ -302,7 +301,7 @@ O formulário é dividido em quatro blocos:
 | **Status** | em dia / atrasado / inadimplente / quitado. Em geral deixe "em dia" — o sistema recalcula sozinho nas telas. Use "quitado" só se quiser encerrar já no cadastro |
 | **Observações** | texto livre |
 
-**Ao salvar:** se o **valor da parcela** estiver preenchido, o sistema **já gera
+**Ao salvar:** o sistema **já gera
 as parcelas na hora** (até ~60 dias à frente), calcula a data prevista de
 quitação e ajusta o status. Você vê mensagens tipo "3 parcela(s) gerada(s)
 automaticamente". O botão "Gerar parcelas" no detalhe continua disponível como reforço.
@@ -354,8 +353,8 @@ baixa"** nas que ainda não estão pagas.
   faltam **até 60 dias à frente**, a partir da data de início + estrutura.
   Pode clicar de novo mais tarde para gerar as próximas. É **idempotente**
   (clicar duas vezes não duplica nada).
-- Se **não há parcelas** e falta o **valor da parcela**, a tela pede para editar
-  o contrato e preencher esse campo primeiro.
+- Se **não há parcelas** e o contrato não tem valor da parcela (contrato antigo
+  importado), a tela pede para editar o contrato e salvar de novo.
 
 ### Saldo transportado
 Aviso que aparece **só quando existe** saldo de um pagamento parcial (ou de um
@@ -602,8 +601,8 @@ Pode. A parcela fica **Parcial** e a diferença entra na próxima parcela
 automaticamente.
 
 **Por que o contrato não gera parcelas?**
-Falta o **valor da parcela** no cadastro. Edite o contrato, preencha e salve (ou
-use o botão **Gerar parcelas** no detalhe).
+Contratos antigos importados podem estar sem valor da parcela. Edite o contrato e
+salve (o valor é calculado sozinho) ou use o botão **Gerar parcelas** no detalhe.
 
 **A baixa quitou o contrato?**
 Não. Quitar é sempre **manual**: botão **Marcar como quitado** no detalhe, que só

@@ -22,7 +22,7 @@ from .models import Contrato, DocumentoContrato, ImportacaoContratoPendente
 
 def _avisar_se_parcela_nao_bate(request, contrato):
     """Aviso não-bloqueante quando ``valor_parcela × num_parcelas`` diverge do
-    valor total (o cálculo da parcela é feito fora do sistema — seção 5 do plano)."""
+    valor total (a parcela é arredondada para R$ 0,10; só passa daí se o contrato veio de importação)."""
     if contrato.parcelas_conferem is False:
         soma = f"{contrato.total_das_parcelas:.2f}".replace(".", ",")
         total = f"{contrato.valor_total:.2f}".replace(".", ",")
@@ -96,7 +96,6 @@ class ContratoPrevisaoView(LoginRequiredMixin, View):
         if not form.is_valid():
             return JsonResponse({"texto": "Informe valores positivos, a frequência e a data de início para visualizar o plano."})
         contrato = Contrato(**form.cleaned_data)
-        contrato.calcular_num_parcelas(salvar=False)
         try:
             primeira = data_da_parcela(contrato.data_inicio, contrato.estrutura, 1)
             ultima = data_da_parcela(contrato.data_inicio, contrato.estrutura, contrato.num_parcelas)
@@ -108,7 +107,7 @@ class ContratoPrevisaoView(LoginRequiredMixin, View):
             f"Total das parcelas: {moeda(contrato.total_das_parcelas)}. Valor do contrato: {moeda(contrato.valor_total)}."
         )
         if not contrato.parcelas_conferem:
-            texto += "\nAtenção: os totais são diferentes. Ajuste os valores ou a quantidade; a última parcela não é reduzida automaticamente."
+            texto += "\nAtenção: os totais são diferentes. Ajuste os valores ou a quantidade."
         return JsonResponse({"texto": texto})
 
 
@@ -402,7 +401,6 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
         from apps.pagamentos.recorrencia import data_da_parcela
 
         contrato = form.instance
-        contrato.calcular_num_parcelas(salvar=False)
         try:
             contrato.atualizar_data_prevista_quitacao(salvar=False)
             primeira = data_da_parcela(contrato.data_inicio, contrato.estrutura, (form.cleaned_data.get("parcelas_ja_pagas") or 0) + 1)
@@ -461,7 +459,6 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
     def _confirmar(self, form):
         with transaction.atomic():
             form.instance.cadastro_confirmacao = self.revisao["id"]
-            form.instance.calcular_num_parcelas(salvar=False)
             quantidade = form.cleaned_data.get("parcelas_ja_pagas") or 0
             if form.instance.num_parcelas and quantidade > form.instance.num_parcelas:
                 form.add_error("parcelas_ja_pagas", "A quantidade paga não pode exceder o total de parcelas.")
@@ -492,7 +489,6 @@ class ContratoUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Contrato atualizado.")
-        self.object.calcular_num_parcelas()
         _avisar_se_parcela_nao_bate(self.request, self.object)
         _gerar_parcelas_ao_salvar(self.request, self.object)
         return response
