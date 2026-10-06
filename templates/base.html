@@ -14,7 +14,7 @@
   <script src="{% static 'js/notificacoes.js' %}?v=20261002-2" defer></script>
   <script src="{% static 'js/formularios.js' %}?v=1" defer></script>
   {% if user.is_authenticated %}<script src="{% static 'js/conexoes_vivo.js' %}?v=6" defer></script>{% endif %}
-  <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261006-pausa">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261006-pausa2">
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}?v=20260928-ux">
   <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261005-calendario">
   {% block extra_styles %}{% endblock %}
@@ -94,7 +94,8 @@
           {% if importacoes_pendentes_n %}<a class="menu-item" href="{% url 'contratos:importacao_pendencias' %}">{% include "_icone.html" with nome="contratos" %}<span>{{ importacoes_pendentes_n }} {{ importacoes_pendentes_rotulo }} de importação</span></a>{% endif %}
           {% if pix_alertas_n %}<a class="menu-item" href="{% url 'pagamentos:pix_painel' %}">{% include "_icone.html" with nome="pix" %}<span>{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span></a>{% endif %}
           <a class="menu-item" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-notificacao{% if not whatsapp_desconectado %} hidden{% endif %}>{% include "_icone.html" with nome="conexoes" %}<span>WhatsApp desconectado</span></a>
-          <p class="menu-quem" data-notificacoes-vazio{% if importacoes_pendentes_n or pix_alertas_n or whatsapp_desconectado %} hidden{% endif %}>Nenhuma notificação pendente.</p>
+          {% if cobrancas_pausadas %}<a class="menu-item" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="cobrar" %}<span>Cobranças automáticas desligadas</span></a>{% endif %}
+          <p class="menu-quem" data-notificacoes-vazio{% if importacoes_pendentes_n or pix_alertas_n or whatsapp_desconectado or cobrancas_pausadas %} hidden{% endif %}>Nenhuma notificação pendente.</p>
           <details class="notificacoes-exemplos">
             <summary>Ver exemplos de notificações</summary>
             <button class="notificacao-exemplo sucesso" type="button" data-demo-notificacao="Pagamento confirmado|O Pix de Maria foi confirmado e a baixa foi registrada.|success"><strong>Pagamento confirmado</strong><span>O Pix de Maria foi confirmado e a baixa foi registrada.</span></button>
@@ -146,12 +147,6 @@
 
   <main id="conteudo" tabindex="-1" class="wrap {% block wrap_class %}{% endblock %}">
     {% include "_mensagens.html" %}
-    {% if user.is_authenticated and cobrancas_pausadas %}
-    <p class="aviso-pausa" role="status">
-      <strong>Cobranças automáticas desligadas.</strong> Nenhuma mensagem nem Pix está saindo para os clientes.
-      <a href="{% url 'pagamentos:cobrar_hoje' %}">Ver em Cobrar hoje</a>
-    </p>
-    {% endif %}
     {% block content %}{% endblock %}
   </main>
   <script src="{% static 'js/voltar.js' %}" defer></script>

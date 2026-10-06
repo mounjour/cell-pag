@@ -57,7 +57,12 @@ def shell(request):
         return ImportacaoContratoPendente.objects.filter(resolvida_em__isnull=True).count()
 
     def notificacoes_n():
-        return pix_alertas() + importacoes_pendentes() + (1 if whatsapp_desconectado() else 0)
+        return (
+            pix_alertas()
+            + importacoes_pendentes()
+            + (1 if whatsapp_desconectado() else 0)
+            + (1 if cobrancas_pausadas() else 0)
+        )
 
     def rotulo_importacoes_pendentes():
         quantidade = importacoes_pendentes()
