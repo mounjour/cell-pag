@@ -758,8 +758,9 @@ def test_contrato_exige_imei(auth_client, cliente):
 
 
 @pytest.mark.django_db
-def test_formulario_nao_mostra_proximo_vencimento_manual(auth_client, cliente):
+def test_formulario_nao_mostra_datas_automaticas(auth_client, cliente):
     ct = novo_contrato(cliente)
     for resp in (auth_client.get(reverse("contratos:novo")), auth_client.get(reverse("contratos:editar", args=[ct.pk]))):
         assert "proximo_vencimento" not in resp.context["form"].fields
+        assert "data_prevista_quitacao" not in resp.context["form"].fields
         assert "Próximo vencimento" not in resp.content.decode()
