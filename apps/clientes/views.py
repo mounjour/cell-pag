@@ -15,7 +15,8 @@ from apps.pagamentos.models import Cobranca, CobrancaCora, Pagamento
 
 from apps.contratos.models import Contrato
 
-from .forms import ClienteForm
+from . import importacao
+from .forms import ClienteForm, ImportarClientesForm
 from .models import Cliente
 from .situacao import EM_ATRASO, EM_DIA, QUITADO, SEM_CONTRATO, situacoes_dos_clientes
 
@@ -299,3 +300,45 @@ class BuscaSugestoesView(LoginRequiredMixin, View):
                 ],
             }
         )
+
+
+CHAVE_SESSAO_IMPORTACAO = "importacao_clientes_csv"
+
+
+class ClienteImportarView(LoginRequiredMixin, TemplateView):
+    """Envia o CSV e mostra a prévia (quem entra e quem fica de fora, com o motivo)."""
+
+    template_name = "clientes/importar.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.setdefault("form", ImportarClientesForm())
+        ctx.setdefault("linhas", None)
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        form = ImportarClientesForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return self.render_to_response(self.get_context_data(form=form))
+        linhas, erro = importacao.analisar(form.cleaned_data["arquivo"].read())
+        if erro:
+            request.session.pop(CHAVE_SESSAO_IMPORTACAO, None)
+            return self.render_to_response(self.get_context_data(form=form, erro=erro))
+        request.session[CHAVE_SESSAO_IMPORTACAO] = linhas
+        return self.render_to_response(
+            self.get_context_data(form=ImportarClientesForm(), linhas=linhas, resumo=importacao.resumir(linhas))
+        )
+
+
+class ClienteImportarConfirmarView(LoginRequiredMixin, View):
+    """Cria os clientes da prévia (só as linhas válidas e novas)."""
+
+    def post(self, request):
+        linhas = request.session.pop(CHAVE_SESSAO_IMPORTACAO, None)
+        if not linhas:
+            messages.error(request, "A prévia expirou. Envie o arquivo de novo.")
+            return redirect("clientes:importar")
+        criados = importacao.gravar(linhas)
+        plural = "s" if criados != 1 else ""
+        messages.success(request, f"{criados} cliente{plural} cadastrado{plural}.")
+        return redirect("clientes:lista")

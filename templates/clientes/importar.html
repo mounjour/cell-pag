@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Importar clientes{% endblock %}
+{% block content %}
+{% url 'clientes:lista' as clientes_url %}{% include "_voltar.html" with url=clientes_url %}
+<div class="toolbar"><h1>Importar clientes (CSV)</h1></div>
+<p class="note">Só entram clientes com <strong>nome, CPF válido e telefone</strong>. Linhas com CPF incompleto ou inválido, sem telefone, repetidas ou de CPF já cadastrado ficam de fora, e a prévia mostra o motivo. CPF que perdeu o zero à esquerda na planilha é completado, desde que o resultado seja um CPF válido. Nenhum contrato é criado.</p>
+<form method="post" enctype="multipart/form-data" class="form-grid form-grid--full">
+  {% csrf_token %}{% include "_form.html" with form=form %}
+  <div class="form-actions"><button class="btn" type="submit">Analisar arquivo</button></div>
+</form>
+{% if erro %}<p class="msg error">{{ erro }}</p>{% endif %}
+{% if linhas is not None %}
+  <h2>Prévia</h2>
+  <dl class="meta importacao-resumo">
+    <div><dt>Linhas lidas</dt><dd>{{ resumo.total }}</dd></div>
+    <div><dt>Serão cadastrados</dt><dd>{{ resumo.novos }}</dd></div>
+    <div><dt>Ficam de fora</dt><dd>{{ resumo.de_fora }}</dd></div>
+  </dl>
+  <div class="tbl-wrap cards"><table><thead><tr><th>Linha</th><th>Nome</th><th>CPF</th><th>Telefone</th><th>Situação</th></tr></thead><tbody>
+  {% for linha in linhas %}
+    <tr>
+      <td data-label="Linha">{{ linha.linha }}</td>
+      <td data-label="Nome">{{ linha.nome|default:"—" }}</td>
+      <td data-label="CPF">{{ linha.cpf|default:"—" }}</td>
+      <td data-label="Telefone">{{ linha.telefone|default:"—" }}</td>
+      <td data-label="Situação">{% if linha.situacao == "novo" %}<span class="pill pago">Será cadastrado</span>{% else %}<span class="pill inadimplente">Fica de fora</span> {{ linha.motivo }}{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody></table></div>
+  {% if resumo.novos %}
+    <form method="post" action="{% url 'clientes:importar_confirmar' %}" style="margin-top:1rem">{% csrf_token %}
+      <button class="btn" type="submit">Cadastrar {{ resumo.novos }} cliente{{ resumo.novos|pluralize }}</button>
+    </form>
+  {% else %}
+    <p class="note">Nenhuma linha válida para cadastrar.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}
