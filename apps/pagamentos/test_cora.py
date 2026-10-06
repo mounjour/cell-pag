@@ -656,3 +656,57 @@ def test_abrir_nao_repete_em_erro_definitivo_do_cliente(monkeypatch, settings):
     with pytest.raises(cora_api.CoraErro):
         cora_api._abrir(object(), contexto=None, autenticada=True)
     assert chamadas["n"] == 1
+
+
+def test_token_vencido_e_pedido_uma_so_vez_com_threads_simultaneas(monkeypatch):
+    import threading
+    import time
+
+    chamadas = []
+
+    def _abrir_lento(requisicao, *, contexto, autenticada, tentativas=None):
+        chamadas.append(1)
+        time.sleep(0.05)  # dá tempo das outras threads chegarem juntas
+        return {"access_token": "tok", "expires_in": 3600}
+
+    monkeypatch.setattr(cora_api, "_token_cache", {"valor": "", "expira_em": 0.0})
+    monkeypatch.setattr(cora_api, "_configuracao", lambda: {
+        "CORA_CLIENT_ID": "id", "CORA_CERT_PATH": "c", "CORA_KEY_PATH": "k",
+        "CORA_TOKEN_URL": "https://exemplo.invalid/token", "CORA_API_BASE_URL": "https://exemplo.invalid",
+    })
+    monkeypatch.setattr(cora_api, "_contexto_ssl", lambda config: None)
+    monkeypatch.setattr(cora_api, "_abrir", _abrir_lento)
+
+    resultados = []
+    threads = [threading.Thread(target=lambda: resultados.append(cora_api.obter_token())) for _ in range(6)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert resultados == ["tok"] * 6
+    assert len(chamadas) == 1
+
+
+def test_contexto_ssl_e_reaproveitado_ate_o_certificado_mudar(monkeypatch, tmp_path):
+    import os
+
+    cert, chave = tmp_path / "c.pem", tmp_path / "k.key"
+    cert.write_text("x")
+    chave.write_text("y")
+    carregados = []
+
+    class _Contexto:
+        def load_cert_chain(self, c, k):
+            carregados.append((c, k))
+
+    monkeypatch.setattr(cora_api.ssl, "create_default_context", lambda: _Contexto())
+    monkeypatch.setattr(cora_api, "_contextos_ssl", {})
+    config = {"CORA_CERT_PATH": str(cert), "CORA_KEY_PATH": str(chave)}
+
+    primeiro = cora_api._contexto_ssl(config)
+    assert cora_api._contexto_ssl(config) is primeiro
+    assert len(carregados) == 1
+
+    os.utime(cert, ns=(1, 1))  # certificado renovado no disco
+    assert cora_api._contexto_ssl(config) is not primeiro
+    assert len(carregados) == 2

@@ -93,6 +93,18 @@
     await consultar();
     window.setTimeout(ciclo, INTERVALO());
   };
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) consultar(); });
+  /* O cronômetro do QR é uma animação CSS: ao voltar à página (botão Voltar,
+     cache de navegação, aba que ficou escondida) o navegador pode retomá-la de
+     onde parou, sem passar pelo servidor. Buscar o cartão de novo traz o tempo
+     real decorrido (calculado no servidor) — ou um QR novo, se já expirou. */
+  const retomarQr = () => {
+    if (document.querySelector("[data-conexoes-card] .card-cronometro")) atualizarCartao();
+  };
+  window.addEventListener("pageshow", (e) => { if (e.persisted) retomarQr(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    consultar();
+    retomarQr();
+  });
   ciclo();
 })();
