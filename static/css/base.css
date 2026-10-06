@@ -1175,3 +1175,7 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .pausa-cobrancas--ativa { border-color: var(--amber); background: var(--amber-wash); }
 .check-linha { display: flex; gap: 0.5rem; align-items: flex-start; margin: 0 0 0.9rem; font-size: 0.9rem; }
 .check-linha input { margin-top: 0.2rem; }
+
+.resumo-cobranca { border-left: 4px solid var(--accent); }
+.resumo-frase { font-size: 1.05rem; line-height: 1.5; margin: 0 0 .75rem; }
+.resumo-alerta { margin: 0 0 1rem; padding: .6rem .8rem; background: var(--amber-wash); border: 1px solid var(--amber); border-radius: var(--radius-sm); font-size: .9rem; }

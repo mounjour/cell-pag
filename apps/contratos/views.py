@@ -18,6 +18,7 @@ from apps.clientes.models import Cliente
 
 from .forms import ContratoForm, DocumentoContratoForm, PlanilhaPreviaForm, PrevisaoContratoForm, ResolverImportacaoForm, moeda_para_decimal
 from .models import Contrato, DocumentoContrato, ImportacaoContratoPendente
+from .resumo import resumo_do_cadastro
 
 
 def _avisar_se_parcela_nao_bate(request, contrato):
@@ -418,13 +419,18 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
             "id": uuid.uuid4().hex, "usuario": self.request.user.pk,
             "dados": dados, "cliente": self._dados_cliente(contrato.cliente),
         }, salt="revisao-contrato", compress=True)
+        from apps.pagamentos.models import ConfiguracaoCobranca
+
+        hoje = timezone.localdate()
         return render(self.request, "contratos/confirmar.html", {
             "contrato": contrato, "revisao": token, "primeira": primeira,
+            "resumo": resumo_do_cadastro(contrato, quantidade, hoje),
+            "cobrancas_desligadas": ConfiguracaoCobranca.esta_pausada(),
             "parcelas_ja_pagas": quantidade,
             "todas_pagas": bool(contrato.num_parcelas and quantidade >= contrato.num_parcelas),
             "entrada": form.cleaned_data.get("entrada"),
             "entrada_forma": dict(form.fields["entrada_forma"].choices).get(form.cleaned_data.get("entrada_forma")),
-            "hoje": timezone.localdate(),
+            "hoje": hoje,
         })
 
     def get_initial(self):
