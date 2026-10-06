@@ -124,5 +124,26 @@
   "Message": "Fase 1 — cadastros de cliente e contrato\n\n- Dependencias: validate-docbr, django-phonenumber-field, django-import-export,\n  whitenoise; pytest-django + model-bakery em requirements-dev.txt\n- Cliente: CPF validado (validate-docbr) e normalizado para digitos;\n  telefone como PhoneNumberField (BR / E.164)\n- CRUD web de clientes em /clientes/ (lista com busca, detalhe, novo, editar)\n- Contrato + DocumentoContrato: cadastro e anexo de documentos; CRUD em /contratos/\n  (sem geracao de vencimentos / calculo de parcela — Fase 2)\n- Admin de Cliente com import/export (migracao da planilha); inline de documentos\n- Login/logout proprios em /entrar/ e /sair/; LOGIN_URL/redirects ajustados\n- settings: apps de terceiros, WhiteNoise, pt-br ja estava, regiao de telefone BR\n- templates base + CSS proprio (sem framework); 7 testes passando\n\nCo-Authored-By: Claude Sonnet 5 \u003cnoreply@anthropic.com\u003e",
   "Tags": [],
   "Fingerprint": "2c7bf88b81b857a5567c90441c570196fba9660e:apps/contratos/tests.py:generic-api-key:22"
- }
+ },
+{
+ "RuleID": "generic-api-key",
+ "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+ "StartLine": 137,
+ "EndLine": 137,
+ "StartColumn": 0,
+ "EndColumn": 0,
+ "Match": "password=\"REDACTED\"",
+ "Secret": "REDACTED",
+ "File": "apps/pagamentos/test_conexoes.py",
+ "SymlinkFile": "",
+ "Commit": "5dd807aa525b7d1c665d37b0817406cb8c66bd19",
+ "Link": "https://github.com/mounjour/cell-pag/blob/5dd807aa525b7d1c665d37b0817406cb8c66bd19/apps/pagamentos/test_conexoes.py#L137",
+ "Entropy": 3.640224,
+ "Author": "nayara-moreira",
+ "Email": "nayaramoreira0101@gmail.com",
+ "Date": "2026-10-06T00:14:53Z",
+ "Message": "QR do WhatsApp: contagem vale para a instância, não para a sessão",
+ "Tags": [],
+ "Fingerprint": "5dd807aa525b7d1c665d37b0817406cb8c66bd19:apps/pagamentos/test_conexoes.py:generic-api-key:137"
+}
 ]
