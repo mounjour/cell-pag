@@ -106,5 +106,26 @@
     consultar();
     retomarQr();
   });
+  /* Contagem regressiva do texto "expira em N segundos". O cartão é trocado
+     inteiro por atualizarCartao(), então o relógio olha o elemento atual a cada
+     segundo e calcula pelo horário de término (não perde tempo com a aba
+     escondida): o N do servidor vira o instante em que o código expira. */
+  const fins = new WeakMap();
+  const tique = () => {
+    const el = document.querySelector("[data-qr-restante]");
+    if (!el) return;
+    if (!fins.has(el)) fins.set(el, Date.now() + Number(el.dataset.qrRestante) * 1000);
+    const restante = Math.max(0, Math.ceil((fins.get(el) - Date.now()) / 1000));
+    const texto = el.closest("[data-qr-contagem]");
+    if (restante === 0 && texto) {
+      texto.textContent = "O código expirou. Gere um novo para conectar.";
+      return;
+    }
+    el.textContent = restante;
+    const unidade = texto && texto.querySelector("[data-qr-unidade]");
+    if (unidade) unidade.textContent = restante === 1 ? "segundo" : "segundos";
+  };
+  window.setInterval(tique, 1000);
+  tique();
   ciclo();
 })();
