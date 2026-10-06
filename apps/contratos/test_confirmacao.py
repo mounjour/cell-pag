@@ -204,7 +204,7 @@ def test_resumo_da_cobranca_explica_primeira_cobranca_e_numeros(auth_client, cad
     texto = auth_client.post(reverse("contratos:novo"), cadastro).content.decode()
     assert "Resumo da cobrança" in texto
     assert "primeira cobrança sai em" in texto
-    assert "Faltam pagar" in texto and "Em atraso" in texto and "Débito em atraso hoje" in texto
+    assert "faltam pagar" in texto and "em atraso" in texto and "Débito em atraso hoje" in texto
     assert "R$ 100,00" in texto  # 1.000 ÷ 10
 
 

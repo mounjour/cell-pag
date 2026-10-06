@@ -27,13 +27,15 @@
     {% if cobrancas_desligadas and not contrato.quitado %}
       <p class="resumo-alerta"><strong>Atenção:</strong> as cobranças automáticas do sistema ainda estão desligadas. Essa data só vale depois de clicar em <em>Começar cobranças</em> em Cobrar hoje.</p>
     {% endif %}
-    <dl class="meta meta--4col">
+    <div class="resumo-numeros">
+      <div><strong>{{ resumo.total }}</strong><span>parcelas no total</span></div>
+      <div><strong>{{ resumo.pagas }}</strong><span>já pagas</span></div>
+      <div><strong>{{ resumo.restantes }}</strong><span>faltam pagar</span></div>
+      <div class="{% if resumo.atrasadas %}resumo-numero--alerta{% endif %}"><strong>{{ resumo.atrasadas }}</strong><span>em atraso{% if resumo.vencem_hoje %} · {{ resumo.vencem_hoje }} vence{{ resumo.vencem_hoje|pluralize:",m" }} hoje{% endif %}</span></div>
+      <div><strong>{{ resumo.a_vencer }}</strong><span>ainda a vencer</span></div>
+    </div>
+    <dl class="lista-dados">
       <div><dt>Valor de cada parcela</dt><dd>R$ {{ resumo.valor_parcela|floatformat:2 }}</dd></div>
-      <div><dt>Parcelas no total</dt><dd>{{ resumo.total }}</dd></div>
-      <div><dt>Já pagas</dt><dd>{{ resumo.pagas }}</dd></div>
-      <div><dt>Faltam pagar</dt><dd>{{ resumo.restantes }}</dd></div>
-      <div><dt>Em atraso</dt><dd>{{ resumo.atrasadas }}{% if resumo.vencem_hoje %} · {{ resumo.vencem_hoje }} vence{{ resumo.vencem_hoje|pluralize:",m" }} hoje{% endif %}</dd></div>
-      <div><dt>Ainda a vencer</dt><dd>{{ resumo.a_vencer }}</dd></div>
       <div><dt>Débito em atraso hoje</dt><dd>R$ {{ resumo.debito_em_atraso|floatformat:2 }}{% if resumo.juros_atrasado %} <small>(inclui R$ {{ resumo.juros_atrasado|floatformat:2 }} de juros)</small>{% endif %}</dd></div>
       <div><dt>Saldo restante do contrato</dt><dd>R$ {{ resumo.saldo_restante|floatformat:2 }} <small>(sem juros)</small></dd></div>
       <div><dt>Já recebido</dt><dd>R$ {% if entrada %}{{ resumo.ja_pago_em_parcelas|add:entrada|floatformat:2 }} <small>(parcelas pagas + entrada de R$ {{ entrada|floatformat:2 }})</small>{% else %}{{ resumo.ja_pago_em_parcelas|floatformat:2 }} <small>(parcelas pagas, sem entrada)</small>{% endif %}</dd></div>
@@ -51,7 +53,7 @@
 
   <section class="card">
     <h2>Cliente</h2>
-    <dl class="meta">
+    <dl class="lista-dados">
       <div><dt>Cliente</dt><dd>{{ contrato.cliente.nome }}</dd></div>
       <div><dt>CPF</dt><dd>{{ contrato.cliente.cpf_formatado }}</dd></div>
       <div><dt>WhatsApp da cobrança</dt><dd>{{ contrato.cliente.telefone_exibicao }}</dd></div>
@@ -62,7 +64,7 @@
 
   <section class="card">
     <h2>Aparelho e contrato</h2>
-    <dl class="meta">
+    <dl class="lista-dados">
       <div><dt>Contrato</dt><dd>{{ contrato.apelido }}</dd></div>
       <div><dt>Modelo</dt><dd>{{ contrato.aparelho_modelo }}</dd></div>
       <div><dt>IMEI</dt><dd>{{ contrato.imei|default:"Não informado" }}</dd></div>
@@ -72,7 +74,7 @@
 
   <section class="card resumo-largo">
     <h2>Valores e datas</h2>
-    <dl class="meta">
+    <dl class="lista-dados">
       <div><dt>Total financiado</dt><dd>R$ {{ contrato.valor_total|floatformat:2 }}</dd></div>
       <div><dt>Parcelas</dt><dd>{{ contrato.num_parcelas|default:"Não informado" }} × {% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela|floatformat:2 }}{% else %}valor não informado{% endif %}</dd></div>
       <div><dt>Total das parcelas</dt><dd>{% if contrato.total_das_parcelas != None %}R$ {{ contrato.total_das_parcelas|floatformat:2 }}{% else %}Não calculado{% endif %}</dd></div>

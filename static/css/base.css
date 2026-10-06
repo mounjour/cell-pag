@@ -646,8 +646,23 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 @media (min-width: 900px) {
   .resumo-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
   .resumo-grade > .resumo-largo { grid-column: 1 / -1; }
-  .resumo-grade > .resumo-largo .meta { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .resumo-grade > .resumo-largo .lista-dados { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; }
 }
+/* Listas de dados da conferência: linhas simples, sem cartão por item. */
+.lista-dados { display: grid; grid-template-columns: 1fr; margin: .25rem 0 0; padding: 0; }
+.lista-dados > div {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  padding: .6rem 0; border-bottom: 1px solid var(--line); min-width: 0;
+}
+.lista-dados dt { flex: none; max-width: 45%; font-size: .78rem; color: var(--ink-faint); }
+.lista-dados dd { margin: 0; text-align: right; font-weight: 500; overflow-wrap: anywhere; }
+.lista-dados dd small { color: var(--ink-faint); font-weight: 400; }
+.resumo-numeros { display: flex; flex-wrap: wrap; margin: .25rem 0 1.1rem; border-block: 1px solid var(--line); }
+.resumo-numeros > div { flex: 1 1 110px; display: grid; gap: .1rem; padding: .8rem 1rem; border-left: 1px solid var(--line); }
+.resumo-numeros > div:first-child { border-left: 0; padding-left: 0; }
+.resumo-numeros strong { font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.resumo-numeros span { font-size: .78rem; color: var(--ink-faint); }
+.resumo-numero--alerta strong { color: var(--critical-ink); }
 .confirmacao-responsabilidade {
   margin: 1.25rem 0; padding: 1.1rem 1.25rem; border-radius: var(--radius-sm);
   background: var(--amber-wash); border: 2px solid var(--amber);
@@ -1208,3 +1223,5 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 
 .resumo-frase { font-size: 1.05rem; line-height: 1.5; margin: 0 0 .75rem; }
 .resumo-alerta { margin: 0 0 1rem; padding: .6rem .8rem; background: var(--amber-wash); border: 1px solid var(--amber); border-radius: var(--radius-sm); font-size: .9rem; }
+
+input[type="checkbox"], input[type="radio"] { accent-color: var(--ink); }
