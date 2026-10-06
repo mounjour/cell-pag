@@ -112,6 +112,14 @@
 }
 .menu-item:hover { background: var(--surface-2); text-decoration: none; }
 .menu-item .icone { color: var(--ink-faint); }
+/* Itens do card de notificações, por gravidade: vermelho = quebrado/ação já, âmbar = atenção. */
+.menu-item--erro { background: var(--critical-wash); }
+.menu-item--erro .icone { color: var(--critical-ink); }
+.menu-item--aviso { background: var(--amber-wash); }
+.menu-item--aviso .icone { color: var(--amber-ink); }
+.menu-item--erro:hover { background: color-mix(in srgb, var(--critical-wash) 82%, var(--critical)); }
+.menu-item--aviso:hover { background: color-mix(in srgb, var(--amber-wash) 82%, var(--amber)); }
+.menu-notificacoes .menu-item + .menu-item { margin-top: 0.3rem; }
 
 /* ---------- Barra inferior (celular) ---------- */
 .tabbar {
