@@ -7,8 +7,12 @@ on:
 
 jobs:
   testes:
-    name: Testes (pytest)
+    name: Testes (pytest, Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
     env:
       # DEBUG nao tem valor padrao em config/settings.py — precisa vir de algum
       # lugar mesmo em CI, onde nao existe .env.
@@ -18,7 +22,7 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           cache: "pip"
 
       - name: Instalar dependencias

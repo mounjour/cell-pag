@@ -29,6 +29,11 @@ RUN useradd --create-home --uid 1000 app \
 USER app
 
 EXPOSE 8000
+
+# Saudável = a tela de login responde 200. Manda o Host de ALLOWED_HOSTS e
+# X-Forwarded-Proto: https, senão o SECURE_SSL_REDIRECT/ALLOWED_HOSTS de produção
+# recusariam a chamada local. start-period cobre as migrações do entrypoint.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3     CMD python -c "import os, urllib.request as u; h = (os.environ.get('ALLOWED_HOSTS') or 'localhost').split(',')[0].strip(); u.urlopen(u.Request('http://127.0.0.1:8000/entrar/', headers={'Host': h, 'X-Forwarded-Proto': 'https'}), timeout=5)"
 ENTRYPOINT ["/app/deploy/entrypoint.sh"]
 # O log de acesso usa %(U)s (caminho sem query string): os webhooks autenticam por
 # ?token=, que não pode ir parar nos logs. gthread evita que uma chamada lenta à
