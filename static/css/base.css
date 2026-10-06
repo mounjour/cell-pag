@@ -639,6 +639,24 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 }
 
 .form-centered { max-width: 920px; margin-inline: auto; }
+/* Tela de conferência do cadastro: mais larga, cartões lado a lado. */
+.form-centered.resumo-confirmacao { max-width: 1180px; }
+.resumo-grade { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+.resumo-grade > .card { margin: 0; }
+@media (min-width: 900px) {
+  .resumo-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+  .resumo-grade > .resumo-largo { grid-column: 1 / -1; }
+  .resumo-grade > .resumo-largo .meta { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.confirmacao-responsabilidade {
+  margin: 1.25rem 0; padding: 1.1rem 1.25rem; border-radius: var(--radius-sm);
+  background: var(--amber-wash); border: 2px solid var(--amber);
+}
+.confirmacao-responsabilidade p { margin: 0 0 .75rem; line-height: 1.5; }
+.confirmacao-titulo { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: 1.05rem; color: var(--amber-ink); }
+.confirmacao-titulo .icone { width: 22px; height: 22px; flex: none; }
+.confirmacao-responsabilidade .check-linha { margin: 0; font-weight: 500; }
+.confirmacao-responsabilidade .check-linha input { width: 1.15rem; height: 1.15rem; flex: none; accent-color: var(--amber-ink); }
 .form-centered h1 { margin-bottom: 1rem; }
 .resumo-confirmacao .meta dd { overflow-wrap: anywhere; }
 .resumo-confirmacao .meta > div { min-width: 0; }
