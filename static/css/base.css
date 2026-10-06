@@ -247,7 +247,11 @@ h2 {
 @keyframes pagamento-confirmado { from { background: color-mix(in srgb, var(--ok) 32%, var(--surface)); } to { background: var(--ok-wash); } }
 
 /* Movimento sutil: dá retorno visual sem atrasar o trabalho. */
-#conteudo > :not(.messages) { animation: conteudo-entra .28s ease-out both; }
+/* "backwards" (não "both"): com fill-mode forwards o transform final fica ativo
+   para sempre e cada bloco vira um contexto de empilhamento — o pop-up do
+   calendário (z-index dentro do formulário) passava por baixo dos blocos
+   seguintes. */
+#conteudo > :not(.messages) { animation: conteudo-entra .28s ease-out backwards; }
 @keyframes conteudo-entra { from { opacity: 0; transform: translateY(.45rem); } to { opacity: 1; transform: translateY(0); } }
 .card, .note, .empty { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 a.card:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); }
@@ -707,6 +711,7 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 
 .pill.aberto { background: var(--surface-2); color: var(--ink-faint); }
 .pill.disponivel { background: var(--accent-wash); color: var(--accent-ink); }
+.pill.alocado { background: var(--amber-wash); color: var(--amber-ink); }
 .pill.vendido { background: var(--ok-wash); color: var(--ok-ink); }
 .pill.vendido::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 .pill.parcial { background: var(--amber-wash); color: var(--amber-ink); }
@@ -983,8 +988,8 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 
 .card--cronometro { position: relative; }
 /* Barra que encolhe até o próximo QR code renovar — avisa visualmente o
-   tempo restante sem precisar de JS (a página toda recarrega nesse momento,
-   via <meta http-equiv="refresh">, o que já reinicia a animação sozinha). */
+   tempo restante sem precisar de JS. O atraso negativo (--qr-atraso) retoma a
+   contagem de onde parou quando a página é reaberta antes de o código expirar. */
 .card-cronometro {
   position: absolute; top: 0; left: 0; height: 3px; width: 100%;
   background: var(--accent); border-radius: var(--radius) 0 0 0;
@@ -997,7 +1002,7 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .qrcode-caixa { position: relative; display: inline-block; }
 .qrcode-caixa img {
   display: block; border: 1px solid var(--line); border-radius: var(--radius-sm); max-width: 100%; height: auto;
-  animation: qrcode-borra linear forwards; animation-duration: var(--qr-dur);
+  animation: qrcode-borra linear forwards; animation-duration: var(--qr-dur); animation-delay: var(--qr-atraso, 0s);
 }
 /* Só borra pertinho do fim (94%→100%) — o resto do tempo fica nítido pra escanear. */
 @keyframes qrcode-borra { 0%, 94% { filter: none; } 100% { filter: blur(6px) grayscale(60%); } }
@@ -1005,7 +1010,7 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
   position: absolute; inset: 0; display: grid; place-items: center; gap: 0.6rem; padding: 1rem;
   background: var(--surface); border-radius: var(--radius-sm);
   opacity: 0; visibility: hidden;
-  animation: qrcode-expirou-aparece linear forwards; animation-duration: var(--qr-dur);
+  animation: qrcode-expirou-aparece linear forwards; animation-duration: var(--qr-dur); animation-delay: var(--qr-atraso, 0s);
 }
 @keyframes qrcode-expirou-aparece { 0%, 94% { opacity: 0; visibility: hidden; } 100% { opacity: 1; visibility: visible; } }
 .qrcode-expirou p { margin: 0; font-weight: 600; color: var(--critical-ink); }

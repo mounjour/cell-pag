@@ -24,9 +24,9 @@
   <p class="note">{{ aparelho.observacoes|linebreaksbr }}</p>
 {% endif %}
 
-{% if aparelho.vendido %}
+{% if aparelho.com_contrato %}
   <div class="card">
-    <h2>Vendido</h2>
+    <h2>{{ aparelho.status_label }}</h2>
     <p>
       Vinculado ao contrato de <a href="{% url 'clientes:detalhe' aparelho.contrato.cliente.pk %}">{{ aparelho.contrato.cliente.nome }}</a>
       — <a href="{% url 'contratos:detalhe' aparelho.contrato.pk %}">{{ aparelho.contrato.apelido }}</a>.

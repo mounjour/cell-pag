@@ -35,7 +35,7 @@
 .sidebar-rodape .menu-usuario > summary { width: 100%; box-sizing: border-box; justify-content: flex-start; }
 .sidebar-rodape .user-name { flex: 1; }
 .sidebar-rodape .chevron { margin-left: auto; }
-.sidebar-rodape .menu-painel { left: 0; right: 0; top: auto; bottom: calc(100% + 8px); min-width: 0; width: 100%; box-sizing: border-box; }
+.sidebar-rodape .menu-painel { left: 0; right: auto; top: auto; bottom: calc(100% + 8px); min-width: 100%; width: max-content; max-width: 320px; box-sizing: border-box; }
 
 /* Contador (ex.: quantos itens em "Cobrar hoje") */
 .selo {
@@ -97,12 +97,14 @@
 .chevron { flex: none; transition: transform 0.15s ease; }
 .menu-usuario[open] .chevron { transform: rotate(180deg); }
 .menu-painel {
-  position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; min-width: 230px; padding: 6px;
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 40; min-width: 230px; width: max-content; max-width: min(92vw, 360px); padding: 6px;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--raise-hover);
 }
 .menu-quem { display: grid; gap: 2px; margin-bottom: 6px; padding: 0.6rem 0.7rem 0.7rem; border-bottom: 1px solid var(--line); }
 .menu-quem strong { font-size: 0.92rem; }
-.menu-quem span { color: var(--ink-faint); font-size: 0.8rem; overflow-wrap: anywhere; }
+/* O e-mail não pode quebrar no meio ("...gmail.co" / "m"): o painel cresce até
+   caber, e só e-mails enormes quebram (depois de @, ., _ ou -). */
+.menu-quem span { color: var(--ink-faint); font-size: 0.8rem; overflow-wrap: break-word; word-break: normal; }
 .menu-item {
   display: flex; align-items: center; gap: 0.65rem; width: 100%; min-height: 42px; padding: 0.5rem 0.7rem;
   border: 0; border-radius: var(--radius-sm); background: none; color: var(--ink);
@@ -196,6 +198,8 @@
 /* ---------- Seletor de período (relatórios) ---------- */
 .report-filter { display: block; position: relative; }
 .periodo { display: inline-block; max-width: 100%; }
+/* Garante que o pop-up do calendário fique acima do conteúdo que vem depois. */
+.report-filter { z-index: 20; }
 .periodo-botao {
   display: inline-flex; align-items: center; gap: 0.6rem;
   min-height: var(--tap); padding: 0 0.9rem;

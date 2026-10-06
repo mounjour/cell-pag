@@ -7,6 +7,7 @@ só a conta WhatsApp Business para o envio de verdade (ver `lembrete.py`).
 """
 
 import logging
+import time
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -418,6 +419,7 @@ class HistoricoPagamentosView(LoginRequiredMixin, ListView):
 
 
 CHAVE_SESSAO_QR_ATIVO = "conexoes_whatsapp_gerar_qr"
+CHAVE_SESSAO_QR_GUARDADO = "conexoes_whatsapp_qr"
 QR_RENOVA_SEGUNDOS = 25
 
 
@@ -428,6 +430,10 @@ class ConexoesView(LoginRequiredMixin, TemplateView):
     (grava um flag na sessão) — nunca sozinho a cada carregamento da página,
     pra não gastar código à toa enquanto ninguém está de fato tentando
     escanear (o código expira em segundos de qualquer forma).
+
+    O QR e a hora em que foi gerado ficam na sessão: ao sair da página e voltar
+    antes de expirar, a tela mostra o mesmo código com o cronômetro de onde
+    parou — em vez de reiniciar a contagem e deixar ler um código já expirado.
     """
 
     template_name = "pagamentos/conexoes.html"
@@ -447,18 +453,26 @@ class ConexoesView(LoginRequiredMixin, TemplateView):
             status_whatsapp = "erro"
             erro_whatsapp = str(exc)
 
+        sessao = self.request.session
         if status_whatsapp in ("open", "simulado"):
-            self.request.session.pop(CHAVE_SESSAO_QR_ATIVO, None)
+            sessao.pop(CHAVE_SESSAO_QR_ATIVO, None)
+            sessao.pop(CHAVE_SESSAO_QR_GUARDADO, None)
 
         qr_code = ""
-        quer_qr = status_whatsapp not in ("open", "simulado") and self.request.session.get(
-            CHAVE_SESSAO_QR_ATIVO
-        )
+        qr_decorrido = 0.0
+        quer_qr = status_whatsapp not in ("open", "simulado") and sessao.get(CHAVE_SESSAO_QR_ATIVO)
         if quer_qr:
-            try:
-                qr_code = obter_qrcode()
-            except WhatsAppErro as exc:
-                erro_whatsapp = erro_whatsapp or str(exc)
+            guardado = sessao.get(CHAVE_SESSAO_QR_GUARDADO) or {}
+            decorrido = time.time() - guardado.get("gerado_em", 0)
+            if guardado.get("imagem") and 0 <= decorrido < QR_RENOVA_SEGUNDOS:
+                qr_code, qr_decorrido = guardado["imagem"], decorrido
+            else:
+                sessao.pop(CHAVE_SESSAO_QR_GUARDADO, None)
+                try:
+                    qr_code = obter_qrcode()
+                    sessao[CHAVE_SESSAO_QR_GUARDADO] = {"imagem": qr_code, "gerado_em": time.time()}
+                except WhatsAppErro as exc:
+                    erro_whatsapp = erro_whatsapp or str(exc)
 
         ctx.update(
             status_whatsapp=status_whatsapp,
@@ -466,6 +480,9 @@ class ConexoesView(LoginRequiredMixin, TemplateView):
             qr_code=qr_code,
             quer_qr=bool(quer_qr),
             qr_renova_segundos=QR_RENOVA_SEGUNDOS,
+            qr_restante_segundos=max(1, round(QR_RENOVA_SEGUNDOS - qr_decorrido)),
+            # Ponto decimal fixo: vai direto para o CSS (animation-delay negativo).
+            qr_atraso_css=f"-{qr_decorrido:.1f}s",
             ttl_status_whatsapp=TTL_WHATSAPP_SEGUNDOS,
             cora_provider=settings.CORA_PROVIDER,
             cora_webhook_configurado=bool(settings.CORA_WEBHOOK_TOKEN),
@@ -491,6 +508,7 @@ class ConexoesGerarQrView(LoginRequiredMixin, View):
     def post(self, request):
         cache.delete("whatsapp_status")  # a página e o menu já refletem na hora
         request.session[CHAVE_SESSAO_QR_ATIVO] = True
+        request.session.pop(CHAVE_SESSAO_QR_GUARDADO, None)  # "gerar outro" = código novo de verdade
         return redirect("pagamentos:conexoes")
 
 

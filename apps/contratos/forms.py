@@ -142,7 +142,7 @@ class ContratoForm(forms.ModelForm):
         self.fields["aparelho"].required = False
         self.fields["aparelho"].help_text = (
             "Vincula a um aparelho já cadastrado no estoque — ele passa a "
-            "aparecer como vendido. Ao escolher, modelo e IMEI abaixo são "
+            "aparecer como alocado. Ao escolher, modelo e IMEI abaixo são "
             "preenchidos sozinhos (confira antes de salvar)."
         )
         self.fields["aparelho"].widget.attrs["data-preenche-aparelho"] = "1"

@@ -62,7 +62,7 @@ class Contrato(models.Model):
         verbose_name="aparelho do estoque",
         help_text=(
             "Opcional — vincula a um aparelho já cadastrado no estoque, que "
-            "passa a aparecer como vendido. Sem isso, modelo e IMEI acima "
+            "passa a aparecer como alocado. Sem isso, modelo e IMEI acima "
             "ficam só como texto, sem controle de estoque."
         ),
     )

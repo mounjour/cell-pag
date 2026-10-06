@@ -58,3 +58,61 @@ def test_pagina_conexoes_tem_o_cartao_que_a_tela_atualiza(auth_client, monkeypat
     html = auth_client.get(reverse("pagamentos:conexoes")).content.decode()
     assert "data-conexoes-card" in html
     assert 'data-conexoes-status-url="' in html
+
+
+@pytest.fixture
+def qr_pedido(auth_client, monkeypatch):
+    """Cliente logado, WhatsApp desconectado e QR já pedido; devolve a lista de chamadas."""
+    chamadas = []
+
+    def _qr():
+        chamadas.append(1)
+        return f"data:image/png;base64,QR{len(chamadas)}"
+
+    monkeypatch.setattr("apps.pagamentos.whatsapp.obter_status_conexao", lambda: "close")
+    monkeypatch.setattr("apps.pagamentos.whatsapp.obter_qrcode", _qr)
+    auth_client.post(reverse("pagamentos:conexoes_gerar_qr"))
+    return chamadas
+
+
+@pytest.mark.django_db
+def test_voltar_a_pagina_antes_de_expirar_reaproveita_o_qr_e_retoma_o_cronometro(
+    auth_client, qr_pedido, monkeypatch
+):
+    agora = [1000.0]
+    monkeypatch.setattr("apps.pagamentos.views.time.time", lambda: agora[0])
+    url = reverse("pagamentos:conexoes")
+
+    primeira = auth_client.get(url)
+    assert primeira.context["qr_code"].endswith("QR1")
+    assert primeira.context["qr_atraso_css"] == "-0.0s"
+
+    agora[0] += 10  # saiu da página e voltou 10 s depois
+    segunda = auth_client.get(url)
+    assert segunda.context["qr_code"].endswith("QR1")  # mesmo código, sem pedir outro
+    assert segunda.context["qr_atraso_css"] == "-10.0s"  # barra retoma de onde parou
+    assert segunda.context["qr_restante_segundos"] == 15
+    assert len(qr_pedido) == 1
+
+
+@pytest.mark.django_db
+def test_qr_expirado_nao_e_reaproveitado(auth_client, qr_pedido, monkeypatch):
+    agora = [1000.0]
+    monkeypatch.setattr("apps.pagamentos.views.time.time", lambda: agora[0])
+    url = reverse("pagamentos:conexoes")
+    auth_client.get(url)
+
+    agora[0] += 26  # passou dos 25 s
+    resposta = auth_client.get(url)
+    assert resposta.context["qr_code"].endswith("QR2")
+    assert resposta.context["qr_atraso_css"] == "-0.0s"
+    assert len(qr_pedido) == 2
+
+
+@pytest.mark.django_db
+def test_gerar_outro_qr_descarta_o_guardado(auth_client, qr_pedido):
+    url = reverse("pagamentos:conexoes")
+    auth_client.get(url)
+    auth_client.post(reverse("pagamentos:conexoes_gerar_qr"))
+    resposta = auth_client.get(url)
+    assert resposta.context["qr_code"].endswith("QR2")

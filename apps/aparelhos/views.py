@@ -6,6 +6,8 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
+from apps.contratos.models import Contrato
+
 from .forms import AparelhoForm
 from .models import Aparelho
 
@@ -24,8 +26,10 @@ class AparelhoListView(LoginRequiredMixin, ListView):
         self.status = self.request.GET.get("status", "").strip()
         if self.status == Aparelho.Status.DISPONIVEL:
             qs = qs.filter(contrato__isnull=True)
+        elif self.status == Aparelho.Status.ALOCADO:
+            qs = qs.filter(contrato__isnull=False).exclude(contrato__status=Contrato.Status.QUITADO)
         elif self.status == Aparelho.Status.VENDIDO:
-            qs = qs.filter(contrato__isnull=False)
+            qs = qs.filter(contrato__status=Contrato.Status.QUITADO)
         return qs.select_related("contrato__cliente")
 
     def get_context_data(self, **kwargs):
@@ -75,9 +79,9 @@ class AparelhoUpdateView(LoginRequiredMixin, UpdateView):
 
 
 class AparelhoExcluirView(LoginRequiredMixin, View):
-    """Apaga o aparelho do estoque (POST) — só funciona se não estiver vendido.
+    """Apaga o aparelho do estoque (POST) — só funciona se não estiver alocado/vendido.
 
-    Um aparelho vendido está `on_delete=PROTECT` no contrato: apagar perderia
+    Um aparelho com contrato está `on_delete=PROTECT` no contrato: apagar perderia
     o vínculo do histórico. A mensagem orienta a não usar exclusão nesse caso.
     """
 

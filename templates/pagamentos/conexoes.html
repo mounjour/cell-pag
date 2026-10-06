@@ -6,7 +6,7 @@
 <p class="note">Status das integrações externas. A conexão do WhatsApp cai de vez em quando (o celular ficou sem internet, alguém removeu o aparelho da lista de conectados, ou o WhatsApp exigiu reconexão) — quando isso acontece, as cobranças automáticas param de sair até reconectar aqui.</p>
 
 <section class="card{% if quer_qr %} card--cronometro{% endif %}" data-conexoes-card>
-  {% if quer_qr %}<div class="card-cronometro" style="animation-duration: {{ qr_renova_segundos }}s;" aria-hidden="true"></div>{% endif %}
+  {% if quer_qr %}<div class="card-cronometro" style="animation-duration: {{ qr_renova_segundos }}s; animation-delay: {{ qr_atraso_css }};" aria-hidden="true"></div>{% endif %}
   <h2>WhatsApp</h2>
   {% if status_whatsapp == "open" %}
     <p><span class="pill pago">Conectado</span></p>
@@ -21,7 +21,7 @@
         <button type="submit" class="btn">{% include "_icone.html" with nome="conexoes" %}Gerar QR Code</button>
       </form>
     {% elif qr_code %}
-      <div class="qrcode-conexao" style="--qr-dur: {{ qr_renova_segundos }}s;">
+      <div class="qrcode-conexao" style="--qr-dur: {{ qr_renova_segundos }}s; --qr-atraso: {{ qr_atraso_css }};">
         <div class="qrcode-caixa">
           <img src="{{ qr_code }}" alt="QR code para conectar o WhatsApp" width="260" height="260">
           <div class="qrcode-expirou">
@@ -32,7 +32,7 @@
             </form>
           </div>
         </div>
-        <p class="helptext">Escaneie agora — o código expira em {{ qr_renova_segundos }} segundos. No celular: WhatsApp → Configurações → Aparelhos conectados → Conectar um aparelho.</p>
+        <p class="helptext">Escaneie agora — o código expira em {{ qr_restante_segundos }} segundos. No celular: WhatsApp → Configurações → Aparelhos conectados → Conectar um aparelho.</p>
       </div>
       <form method="post" action="{% url 'pagamentos:conexoes_gerar_qr' %}">
         {% csrf_token %}
