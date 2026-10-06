@@ -226,14 +226,6 @@ h2 {
 }
 .menu-notificacoes[open] .menu-painel { transform-origin: top right; animation: notificacoes-entra .2s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes notificacoes-entra { from { opacity: 0; transform: translateY(-.5rem) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.notificacoes-exemplos { border-top: 1px solid var(--line); margin-top: .35rem; padding: .7rem .8rem 0; }
-.notificacoes-exemplos summary { cursor: pointer; font-size: .82rem; color: var(--ink-soft); }
-.notificacao-exemplo { appearance: none; display: grid; width: 100%; box-sizing: border-box; border: 0; text-align: left; gap: .2rem; margin-top: .6rem; padding: .8rem .9rem; border-radius: var(--radius-sm); font: inherit; font-size: .88rem; line-height: 1.25; color: var(--ink); cursor: pointer; }
-.notificacao-exemplo strong, .notificacao-exemplo span { margin: 0; padding: 0; }
-.notificacao-exemplo span { color: var(--ink-soft); }
-.notificacao-exemplo.sucesso { background: var(--ok-wash); }
-.notificacao-exemplo.exemplo-aviso { background: var(--accent-wash); }
-.notificacao-exemplo.erro { background: var(--critical-wash); }
 .dialog-confirmacao { width: min(28rem, calc(100vw - 2rem)); padding: 0; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--raise-hover); color: var(--ink); background: var(--surface); }
 .dialog-confirmacao::backdrop { background: rgb(17 24 39 / 45%); }
 .dialog-confirmacao__conteudo { padding: 1.35rem; }

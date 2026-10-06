@@ -47,11 +47,4 @@
     }
   };
   for (const mensagem of [...area.children]) preparar(mensagem);
-  document.addEventListener("click", (evento) => {
-    const botao = evento.target.closest("[data-demo-notificacao]");
-    if (botao) {
-      const [titulo, texto, tipo] = botao.dataset.demoNotificacao.split("|");
-      adicionar(`${titulo}: ${texto}`, tipo);
-    }
-  });
 })();

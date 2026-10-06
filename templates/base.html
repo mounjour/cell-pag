@@ -11,12 +11,12 @@
   <link rel="icon" type="image/svg+xml" href="{% static favicon_arquivo %}">{# mapeamento em config/context_processors.py #}
   <link rel="preload" href="{% static 'fonts/dm-sans-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
   <script src="{% static 'js/tema.js' %}"></script>{# no <head>, antes da pintura: evita o flash do tema errado #}
-  <script src="{% static 'js/notificacoes.js' %}?v=20261002-2" defer></script>
+  <script src="{% static 'js/notificacoes.js' %}?v=20261006-1" defer></script>
   <script src="{% static 'js/formularios.js' %}?v=1" defer></script>
   {% if user.is_authenticated %}<script src="{% static 'js/conexoes_vivo.js' %}?v=6" defer></script>{% endif %}
-  <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261006-pausa2">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261006-notif">
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}?v=20260928-ux">
-  <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261005-calendario">
+  <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261006-notif">
   {% block extra_styles %}{% endblock %}
   {% block extra_head %}{% endblock %}
 </head>
@@ -91,17 +91,11 @@
         <summary aria-label="Notificações">{% include "_icone.html" with nome="notificacoes" %}<span class="selo selo--alerta" data-notificacoes-selo{% if not notificacoes_n %} hidden{% endif %}><span class="sr-only">notificações pendentes:</span><span data-notificacoes-n>{{ notificacoes_n|default:0 }}</span></span></summary>
         <div class="menu-painel">
           <div class="menu-quem"><strong>Notificações</strong><span>Itens que precisam de atenção</span></div>
-          {% if importacoes_pendentes_n %}<a class="menu-item" href="{% url 'contratos:importacao_pendencias' %}">{% include "_icone.html" with nome="contratos" %}<span>{{ importacoes_pendentes_n }} {{ importacoes_pendentes_rotulo }} de importação</span></a>{% endif %}
-          {% if pix_alertas_n %}<a class="menu-item" href="{% url 'pagamentos:pix_painel' %}">{% include "_icone.html" with nome="pix" %}<span>{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span></a>{% endif %}
-          <a class="menu-item" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-notificacao{% if not whatsapp_desconectado %} hidden{% endif %}>{% include "_icone.html" with nome="conexoes" %}<span>WhatsApp desconectado</span></a>
-          {% if cobrancas_pausadas %}<a class="menu-item" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="cobrar" %}<span>Cobranças automáticas desligadas</span></a>{% endif %}
+          {% if importacoes_pendentes_n %}<a class="menu-item menu-item--aviso" href="{% url 'contratos:importacao_pendencias' %}">{% include "_icone.html" with nome="contratos" %}<span>{{ importacoes_pendentes_n }} {{ importacoes_pendentes_rotulo }} de importação</span></a>{% endif %}
+          {% if pix_alertas_n %}<a class="menu-item menu-item--erro" href="{% url 'pagamentos:pix_painel' %}">{% include "_icone.html" with nome="pix" %}<span>{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span></a>{% endif %}
+          <a class="menu-item menu-item--erro" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-notificacao{% if not whatsapp_desconectado %} hidden{% endif %}>{% include "_icone.html" with nome="conexoes" %}<span>WhatsApp desconectado</span></a>
+          {% if cobrancas_pausadas %}<a class="menu-item menu-item--aviso" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="cobrar" %}<span>Cobranças automáticas desligadas</span></a>{% endif %}
           <p class="menu-quem" data-notificacoes-vazio{% if importacoes_pendentes_n or pix_alertas_n or whatsapp_desconectado or cobrancas_pausadas %} hidden{% endif %}>Nenhuma notificação pendente.</p>
-          <details class="notificacoes-exemplos">
-            <summary>Ver exemplos de notificações</summary>
-            <button class="notificacao-exemplo sucesso" type="button" data-demo-notificacao="Pagamento confirmado|O Pix de Maria foi confirmado e a baixa foi registrada.|success"><strong>Pagamento confirmado</strong><span>O Pix de Maria foi confirmado e a baixa foi registrada.</span></button>
-            <button class="notificacao-exemplo exemplo-aviso" type="button" data-demo-notificacao="Contrato vence hoje|A parcela de João vence hoje. A cobrança está pronta.|info"><strong>Contrato vence hoje</strong><span>A parcela de João vence hoje. A cobrança está pronta.</span></button>
-            <button class="notificacao-exemplo erro" type="button" data-demo-notificacao="Falha ao enviar mensagem|Não foi possível enviar a cobrança. Tente novamente.|error"><strong>Falha ao enviar mensagem</strong><span>Não foi possível enviar a cobrança. Tente novamente.</span></button>
-          </details>
         </div>
       </details>
       <details class="menu-pop menu-usuario menu-usuario--topo">
