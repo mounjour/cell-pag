@@ -100,7 +100,7 @@
     <div class="form-actions">
       <button type="submit" name="acao" value="confirmar" class="btn">{% if contrato.quitado or not contrato.valor_parcela %}Confirmar cadastro{% else %}Confirmar e iniciar cobrança{% endif %}</button>
       <button type="submit" name="acao" value="corrigir" class="btn secondary" formnovalidate>Corrigir dados do contrato</button>
-      <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Cancelar</a>
+      <a class="btn cancelar" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Cancelar</a>
     </div>
   </form>
 </div>

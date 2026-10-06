@@ -22,7 +22,7 @@
       <button type="submit" name="acao" value="retomar" class="btn">{% include "_icone.html" with nome="retomar" %}Retomar cobranças automáticas</button>
     {% else %}
       <p><span class="pill pago">Ativas</span> A rotina das 8h30 cobra os clientes automaticamente (mensagem e Pix).</p>
-      <button type="submit" name="acao" value="pausar" class="btn secondary">{% include "_icone.html" with nome="suspender" %}Pausar cobranças automáticas</button>
+      <button type="submit" name="acao" value="pausar" class="btn cancelar">{% include "_icone.html" with nome="suspender" %}Pausar cobranças automáticas</button>
     {% endif %}
   </form>
 </section>

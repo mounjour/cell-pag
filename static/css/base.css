@@ -345,14 +345,26 @@ a.card:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); }
 .btn .icone { width: 16px; height: 16px; }
 .btn-block { width: 100%; font-size: 0.9375rem; }
 
+/* Secundário: neutro (o azul fica só na ação principal da tela). */
 .btn.secondary {
-  background: var(--surface); color: var(--accent-ink);
-  border-color: var(--line); box-shadow: none;
-}
-.btn.secondary:hover {
-  background: var(--accent-wash); color: var(--accent-ink);
+  background: var(--surface); color: var(--ink);
   border-color: var(--line-strong); box-shadow: none;
 }
+.btn.secondary:hover {
+  background: var(--surface-2); color: var(--ink);
+  border-color: var(--ink-faint); box-shadow: none;
+}
+
+/* Cancelar / descartar / pausar: sempre vermelho, para não parecer ação segura. */
+.btn.cancelar {
+  background: var(--surface); color: var(--critical-ink);
+  border-color: color-mix(in srgb, var(--critical-ink) 35%, var(--surface)); box-shadow: none;
+}
+.btn.cancelar:hover {
+  background: var(--critical-wash); color: var(--critical-ink);
+  border-color: var(--critical-ink); box-shadow: none;
+}
+.btn.cancelar:focus-visible { outline-color: var(--critical-ink); }
 
 /* Botão "Copiar código" (Pix): compacto pra caber numa célula de tabela. */
 .btn-copiar-pix {
