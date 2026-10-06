@@ -36,7 +36,7 @@
             <td><a class="link-linha" href="{% url 'aparelhos:detalhe' a.pk %}">{{ a.modelo }}</a></td>
             <td data-label="IMEI" class="num">{{ a.imei|default:"—" }}</td>
             <td data-label="Status"><span class="pill {{ a.status }}">{{ a.status_label }}</span></td>
-            <td data-label="Cliente">{% if a.vendido %}<a href="{% url 'clientes:detalhe' a.contrato.cliente.pk %}">{{ a.contrato.cliente.nome }}</a>{% else %}—{% endif %}</td>
+            <td data-label="Cliente">{% if a.com_contrato %}<a href="{% url 'clientes:detalhe' a.contrato.cliente.pk %}">{{ a.contrato.cliente.nome }}</a>{% else %}—{% endif %}</td>
             <td data-label="Custo" class="num">{% if a.custo %}R$ {{ a.custo }}{% else %}—{% endif %}</td>
           </tr>
         {% endfor %}

@@ -51,7 +51,7 @@ def test_revisao_nao_libera_rotina_nem_reserva_estoque(auth_client, cadastro):
     assert not Pagamento.objects.exists()
     assert not Cobranca.objects.exists()
     assert not CobrancaCora.objects.exists()
-    assert not Aparelho.objects.get(pk=cadastro["aparelho"]).vendido
+    assert not Aparelho.objects.get(pk=cadastro["aparelho"]).com_contrato
 
 
 @pytest.mark.django_db
@@ -64,7 +64,7 @@ def test_confirma_uma_vez_e_preserva_entrada_e_parcelas_pagas(auth_client, cadas
     assert contrato.vencimentos.filter(status=Vencimento.Status.PAGO).count() == 2
     assert contrato.pagamentos.filter(vencimento__isnull=True).get().valor_pago == Decimal("200.00")
     assert contrato.pagamentos.count() == 3
-    assert contrato.aparelho.vendido
+    assert contrato.aparelho.alocado
     from apps.pagamentos.agenda import montar_agenda_do_dia
     agenda = montar_agenda_do_dia(hoje=datetime.date(2026, 10, 2))
     assert len(agenda["linhas"]) == 1

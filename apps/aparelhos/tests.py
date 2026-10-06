@@ -40,7 +40,7 @@ def test_aparelho_sem_contrato_esta_disponivel():
 
 
 @pytest.mark.django_db
-def test_aparelho_vinculado_a_contrato_fica_vendido(cliente):
+def test_aparelho_com_contrato_em_andamento_fica_alocado(cliente):
     ap = Aparelho.objects.create(modelo="iPhone 11")
     Contrato.objects.create(
         cliente=cliente,
@@ -52,8 +52,29 @@ def test_aparelho_vinculado_a_contrato_fica_vendido(cliente):
         data_inicio="2026-09-01",
     )
     ap.refresh_from_db()
+    assert ap.status == Aparelho.Status.ALOCADO
+    assert ap.alocado is True
+    assert ap.vendido is False
+
+
+@pytest.mark.django_db
+def test_aparelho_so_fica_vendido_quando_o_contrato_e_quitado(cliente):
+    ap = Aparelho.objects.create(modelo="iPhone 12")
+    contrato = Contrato.objects.create(
+        cliente=cliente,
+        apelido="iPhone 12",
+        aparelho_modelo="iPhone 12",
+        aparelho=ap,
+        valor_total=Decimal("1000.00"),
+        estrutura=Contrato.Estrutura.MENSAL,
+        data_inicio="2026-09-01",
+    )
+    contrato.status = Contrato.Status.QUITADO
+    contrato.save()
+    ap = Aparelho.objects.get(pk=ap.pk)
     assert ap.status == Aparelho.Status.VENDIDO
     assert ap.vendido is True
+    assert ap.alocado is False
 
 
 @pytest.mark.django_db
@@ -119,6 +140,16 @@ def test_lista_filtra_por_status(auth_client):
     cliente = Cliente.objects.create(
         nome="Fulano", cpf=CPFGen().generate(), telefone_whatsapp="+5583999991111"
     )
+    alocado = Aparelho.objects.create(modelo="Alocado")
+    Contrato.objects.create(
+        cliente=cliente,
+        apelido="Alocado",
+        aparelho_modelo="Alocado",
+        aparelho=alocado,
+        valor_total=Decimal("500.00"),
+        estrutura=Contrato.Estrutura.MENSAL,
+        data_inicio="2026-09-01",
+    )
     vendido = Aparelho.objects.create(modelo="Vendido")
     Contrato.objects.create(
         cliente=cliente,
@@ -128,11 +159,16 @@ def test_lista_filtra_por_status(auth_client):
         valor_total=Decimal("500.00"),
         estrutura=Contrato.Estrutura.MENSAL,
         data_inicio="2026-09-01",
+        status=Contrato.Status.QUITADO,
     )
 
     resp_disp = auth_client.get(reverse("aparelhos:lista"), {"status": "disponivel"})
     nomes = [a.modelo for a in resp_disp.context["aparelhos"]]
     assert nomes == ["Disponível"]
+
+    resp_aloc = auth_client.get(reverse("aparelhos:lista"), {"status": "alocado"})
+    nomes = [a.modelo for a in resp_aloc.context["aparelhos"]]
+    assert nomes == ["Alocado"]
 
     resp_vend = auth_client.get(reverse("aparelhos:lista"), {"status": "vendido"})
     nomes = [a.modelo for a in resp_vend.context["aparelhos"]]

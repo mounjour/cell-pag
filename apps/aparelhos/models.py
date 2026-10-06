@@ -5,9 +5,11 @@ Separado do `Contrato` de propósito: o aparelho pode ser comprado (e ficar
 vínculo com o contrato é opcional — quem prefere digitar modelo/IMEI direto
 no contrato (fluxo antigo, sem controle de estoque) continua podendo.
 
-``status`` não é um campo salvo: é derivado de ``contrato`` existir ou não
-(`Contrato.aparelho`, `OneToOneField`) — sem isso sincronizar campo e relação
-poderia divergir (ex.: contrato apagado sem atualizar o aparelho).
+``status`` não é um campo salvo: é derivado do ``contrato`` (`Contrato.aparelho`,
+`OneToOneField`) — sem isso sincronizar campo e relação poderia divergir (ex.:
+contrato apagado sem atualizar o aparelho). Sem contrato: disponível. Com
+contrato em andamento: **alocado** (locação). Só vira **vendido** quando o
+contrato é quitado.
 """
 
 from django.db import models
@@ -16,6 +18,7 @@ from django.db import models
 class Aparelho(models.Model):
     class Status(models.TextChoices):
         DISPONIVEL = "disponivel", "Disponível"
+        ALOCADO = "alocado", "Alocado"
         VENDIDO = "vendido", "Vendido"
 
     modelo = models.CharField("modelo", max_length=120, help_text='Ex.: "iPhone 11 64GB".')
@@ -58,12 +61,25 @@ class Aparelho(models.Model):
         super().save(*args, **kwargs)
 
     @property
-    def vendido(self) -> bool:
+    def com_contrato(self) -> bool:
         return hasattr(self, "contrato")
 
     @property
+    def alocado(self) -> bool:
+        return self.com_contrato and not self.contrato.quitado
+
+    @property
+    def vendido(self) -> bool:
+        """Só é vendido quando a locação foi quitada."""
+        return self.com_contrato and self.contrato.quitado
+
+    @property
     def status(self) -> str:
-        return self.Status.VENDIDO if self.vendido else self.Status.DISPONIVEL
+        if self.vendido:
+            return self.Status.VENDIDO
+        if self.alocado:
+            return self.Status.ALOCADO
+        return self.Status.DISPONIVEL
 
     @property
     def status_label(self) -> str:

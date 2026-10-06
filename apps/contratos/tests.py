@@ -273,7 +273,7 @@ def test_editar_contrato(auth_client, cliente):
 # ---------- Aparelho do estoque (apps.aparelhos) ----------
 
 @pytest.mark.django_db
-def test_escolher_aparelho_do_estoque_vincula_e_marca_como_vendido(auth_client, cliente):
+def test_escolher_aparelho_do_estoque_vincula_e_marca_como_alocado(auth_client, cliente):
     from apps.aparelhos.models import Aparelho
 
     ap = Aparelho.objects.create(modelo="iPhone 11 64GB", imei="123456789012345")
@@ -284,11 +284,11 @@ def test_escolher_aparelho_do_estoque_vincula_e_marca_como_vendido(auth_client, 
     ct = Contrato.objects.get(cliente=cliente)
     assert ct.aparelho_id == ap.pk
     ap.refresh_from_db()
-    assert ap.vendido is True
+    assert ap.alocado is True
 
 
 @pytest.mark.django_db
-def test_aparelho_ja_vendido_nao_aparece_pra_escolher_de_novo(auth_client, cliente):
+def test_aparelho_ja_alocado_nao_aparece_pra_escolher_de_novo(auth_client, cliente):
     from apps.aparelhos.models import Aparelho
 
     ap = Aparelho.objects.create(modelo="iPhone 11")
