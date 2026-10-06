@@ -2,6 +2,8 @@ from django import forms
 
 from .models import Cliente, so_digitos
 
+TAMANHO_MAX_CSV = 1024 * 1024  # 1 MB
+
 
 class ClienteForm(forms.ModelForm):
     # max_length maior que o do modelo para aceitar CPF com máscara; normalizado em clean_cpf.
@@ -26,3 +28,18 @@ class ClienteForm(forms.ModelForm):
 
     def clean_cpf(self) -> str:
         return so_digitos(self.cleaned_data.get("cpf", ""))
+
+
+class ImportarClientesForm(forms.Form):
+    arquivo = forms.FileField(
+        label="Arquivo CSV de clientes",
+        help_text="Colunas: nome, cpf e telefone (endereço é opcional). A prévia não cadastra nada.",
+    )
+
+    def clean_arquivo(self):
+        arquivo = self.cleaned_data["arquivo"]
+        if not arquivo.name.lower().endswith(".csv"):
+            raise forms.ValidationError("Envie um arquivo .csv.")
+        if arquivo.size > TAMANHO_MAX_CSV:
+            raise forms.ValidationError("O arquivo deve ter no máximo 1 MB.")
+        return arquivo

@@ -18,6 +18,7 @@
     <a class="btn secondary" href="{% url 'clientes:lista' %}">Ver ativos</a>
   {% else %}
     <a class="btn secondary" href="?arquivados=1">Ver arquivados</a>
+    <a class="btn secondary" href="{% url 'clientes:importar' %}">{% include "_icone.html" with nome="baixar" %}Importar CSV</a>
     <a class="btn" href="{% url 'clientes:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo cliente</a>
   {% endif %}
 </div>
