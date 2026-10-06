@@ -24,6 +24,8 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY", default=SECRET_KEY_INSEGURA)
 DEBUG = env("DEBUG")
 ROTINA_HEALTHCHECK_URL = env("ROTINA_HEALTHCHECK_URL", default="")
+# Cobranças aos clientes só começam depois do botão "Começar cobranças" (Cobrar hoje).
+COBRANCAS_EXIGEM_INICIO = True
 
 # Em produção a SECRET_KEY tem de vir do ambiente — sem ela, sessões, tokens de
 # reset e assinatura de cookies ficam previsíveis.

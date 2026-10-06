@@ -8,6 +8,7 @@ def _sem_provedores_externos_reais(settings):
     settings.CORA_PROVIDER = "log"
     settings.ROTINA_HEALTHCHECK_URL = ""
     settings.TERMOS_EXIGIR_ACEITE = False  # o aceite só é exigido nos testes de termos
+    settings.COBRANCAS_EXIGEM_INICIO = False  # nos testes as cobranças já nascem ativas; test_pausa.py liga
 
 
 @pytest.fixture(autouse=True)

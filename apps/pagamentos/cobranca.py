@@ -8,7 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from .agenda import montar_agenda_do_dia
-from .models import Cobranca, CobrancaCora
+from .models import Cobranca, CobrancaCora, ConfiguracaoCobranca
 from .pix_cora import obter_ou_criar_cobranca
 from .whatsapp import WhatsAppErro, enviar_imagem, enviar_mensagem, numero_so_digitos
 
@@ -153,8 +153,12 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
 
 def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=False) -> dict:
     hoje = hoje or timezone.localdate()
+    resultado = {"preparadas": 0, "enviadas": 0, "simuladas": 0, "erros": 0, "ignoradas": 0, "pausada": False}
+    if ConfiguracaoCobranca.esta_pausada():
+        # Chave geral desligada por alguém: nem Pix novo nem mensagem sai.
+        resultado["pausada"] = True
+        return resultado
     agenda = montar_agenda_do_dia(hoje=hoje)
-    resultado = {"preparadas": 0, "enviadas": 0, "simuladas": 0, "erros": 0, "ignoradas": 0}
 
     for linha in agenda["linhas"]:
         dados_iniciais = dados_da_mensagem(linha)

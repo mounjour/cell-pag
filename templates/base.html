@@ -14,7 +14,7 @@
   <script src="{% static 'js/notificacoes.js' %}?v=20261002-2" defer></script>
   <script src="{% static 'js/formularios.js' %}?v=1" defer></script>
   {% if user.is_authenticated %}<script src="{% static 'js/conexoes_vivo.js' %}?v=4" defer></script>{% endif %}
-  <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261005-qr">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261006-pausa">
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}?v=20260928-ux">
   <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261005-calendario">
   {% block extra_styles %}{% endblock %}
@@ -146,6 +146,12 @@
 
   <main id="conteudo" tabindex="-1" class="wrap {% block wrap_class %}{% endblock %}">
     {% include "_mensagens.html" %}
+    {% if user.is_authenticated and cobrancas_pausadas %}
+    <p class="aviso-pausa" role="status">
+      <strong>Cobranças automáticas desligadas.</strong> Nenhuma mensagem nem Pix está saindo para os clientes.
+      <a href="{% url 'pagamentos:cobrar_hoje' %}">Ver em Cobrar hoje</a>
+    </p>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
   <script src="{% static 'js/voltar.js' %}" defer></script>

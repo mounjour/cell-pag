@@ -47,6 +47,11 @@ def shell(request):
 
         return status_whatsapp() not in ("open", "simulado")
 
+    def cobrancas_pausadas():
+        from apps.pagamentos.models import ConfiguracaoCobranca
+
+        return ConfiguracaoCobranca.esta_pausada()
+
     def importacoes_pendentes():
         from apps.contratos.models import ImportacaoContratoPendente
         return ImportacaoContratoPendente.objects.filter(resolvida_em__isnull=True).count()
@@ -62,6 +67,7 @@ def shell(request):
         "cobrar_hoje_n": SimpleLazyObject(contagem_cobrar_hoje),
         "pix_alertas_n": SimpleLazyObject(pix_alertas),  # duplicidades + comprovantes a conferir
         "whatsapp_desconectado": SimpleLazyObject(whatsapp_desconectado),
+        "cobrancas_pausadas": SimpleLazyObject(cobrancas_pausadas),
         "importacoes_pendentes_n": SimpleLazyObject(importacoes_pendentes),
         "notificacoes_n": SimpleLazyObject(notificacoes_n),
         "importacoes_pendentes_rotulo": SimpleLazyObject(rotulo_importacoes_pendentes),

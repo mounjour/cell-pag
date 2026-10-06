@@ -471,3 +471,64 @@ class QrWhatsApp(models.Model):
     @classmethod
     def limpar(cls) -> None:
         cls.objects.filter(pk=1).delete()
+
+
+class ConfiguracaoCobranca(models.Model):
+    """Chave geral das cobranças automáticas (registro único, ``pk=1``).
+
+    O sistema nasce com as cobranças **paradas**: só saem mensagens e Pix aos
+    clientes depois que alguém clica em "Começar cobranças" (``iniciada_em``
+    registra quando). Depois disso a mesma chave serve para pausar e retomar.
+    Parada ou pausada, a rotina continua gerando parcelas, mandando o resumo à
+    equipe e conferindo pagamentos na Cora (quem já pagou segue sendo baixado e
+    avisado). Diferente de "suspender" uma parcela, vale para o sistema todo.
+
+    Sem registro, vale ``settings.COBRANCAS_EXIGEM_INICIO`` (padrão: paradas).
+    """
+
+    pausada = models.BooleanField("cobranças automáticas paradas", default=True)
+    iniciada_em = models.DateTimeField("cobranças iniciadas em", null=True, blank=True)
+    pausada_em = models.DateTimeField("pausada em", null=True, blank=True)
+    pausada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="pausada por",
+    )
+
+    class Meta:
+        verbose_name = "configuração de cobrança"
+        verbose_name_plural = "configuração de cobrança"
+
+    @property
+    def nunca_iniciada(self) -> bool:
+        return self.iniciada_em is None
+
+    @classmethod
+    def obter(cls) -> "ConfiguracaoCobranca":
+        config, _ = cls.objects.get_or_create(
+            pk=1, defaults={"pausada": settings.COBRANCAS_EXIGEM_INICIO}
+        )
+        return config
+
+    @classmethod
+    def esta_pausada(cls) -> bool:
+        pausada = cls.objects.filter(pk=1).values_list("pausada", flat=True).first()
+        return settings.COBRANCAS_EXIGEM_INICIO if pausada is None else pausada
+
+    @classmethod
+    def definir(cls, pausada: bool, usuario=None) -> "ConfiguracaoCobranca":
+        config = cls.obter()
+        config.pausada = pausada
+        if pausada:
+            config.pausada_em = timezone.now()
+            config.pausada_por = usuario
+        else:
+            config.pausada_em = None
+            config.pausada_por = None
+            if config.iniciada_em is None:
+                config.iniciada_em = timezone.now()
+        config.save()
+        return config

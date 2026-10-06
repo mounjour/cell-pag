@@ -27,6 +27,17 @@ class Command(BaseCommand):
             hoje=hoje,
             somente_preparar=options["somente_preparar"],
         )
+        if resultado.get("pausada"):
+            self.stdout.write(
+                self.style.WARNING(
+                    "Cobranças automáticas PAUSADAS: nenhuma mensagem nem Pix foi gerado. "
+                    f"Conciliação Cora: {conciliacao['consultadas']} consultada(s), "
+                    f"{conciliacao['pagas']} paga(s), {conciliacao['erros']} erro(s)."
+                )
+            )
+            if conciliacao["erros"]:
+                raise CommandError("Falha na conciliação Cora; consulte o painel.")
+            return
         self.stdout.write(
             self.style.SUCCESS(
                 "Cobranças processadas: "

@@ -30,7 +30,14 @@ from .agenda import montar_agenda_do_dia
 from .forms import PagamentoForm
 from .comprovantes import conferir_na_cora
 from .limpeza import encerrar_cobranca_automatica
-from .models import CobrancaCora, ComprovanteRecebido, Pagamento, QrWhatsApp, Vencimento
+from .models import (
+    CobrancaCora,
+    ComprovanteRecebido,
+    ConfiguracaoCobranca,
+    Pagamento,
+    QrWhatsApp,
+    Vencimento,
+)
 from .pix_cora import (
     parcelas_do_pix,
     CancelamentoRecusado,
@@ -64,7 +71,37 @@ class CobrarHojeView(LoginRequiredMixin, TemplateView):
         ctx.update(_agenda_paginada(self.request, estrutura))
         ctx["estrutura_atual"] = estrutura
         ctx["estrutura_opcoes"] = Contrato.Estrutura.choices
+        ctx["config_cobranca"] = ConfiguracaoCobranca.obter()
         return ctx
+
+
+class CobrancasPausaView(LoginRequiredMixin, View):
+    """Começa, pausa ou retoma as cobranças automáticas de todo o sistema (POST).
+
+    A primeira vez ("começar") exige o aceite de que está tudo conferido."""
+
+    def post(self, request):
+        acao = request.POST.get("acao")
+        config = ConfiguracaoCobranca.obter()
+        if acao == "pausar":
+            ConfiguracaoCobranca.definir(True, request.user)
+            messages.warning(
+                request,
+                "Cobranças automáticas pausadas. Nenhuma mensagem nem Pix será enviado aos clientes até você retomar.",
+            )
+        elif acao in ("comecar", "retomar"):
+            if config.nunca_iniciada and not request.POST.get("conferido"):
+                messages.error(request, "Marque que conferiu tudo antes de começar as cobranças. Nada foi alterado.")
+            else:
+                primeira_vez = config.nunca_iniciada
+                ConfiguracaoCobranca.definir(False, request.user)
+                messages.success(
+                    request,
+                    "Cobranças começaram. A próxima rotina cobra os clientes."
+                    if primeira_vez
+                    else "Cobranças automáticas retomadas. A próxima rotina volta a cobrar normalmente.",
+                )
+        return _voltar_para_origem(request, padrao="pagamentos:cobrar_hoje")
 
 
 def _rotulo_parcelas(cobranca, hoje):
@@ -246,13 +283,13 @@ class CobrancaRetomarView(LoginRequiredMixin, View):
         return _voltar_para_origem(request)
 
 
-def _voltar_para_origem(request):
+def _voltar_para_origem(request, padrao="pagamentos:pix_painel"):
     """Redireciona para o `next` do formulário — só se for uma página deste site."""
     destino = request.POST.get("next", "")
     if not url_has_allowed_host_and_scheme(
         destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()
     ):
-        destino = reverse("pagamentos:pix_painel")
+        destino = reverse(padrao)
     return redirect(destino)
 
 
