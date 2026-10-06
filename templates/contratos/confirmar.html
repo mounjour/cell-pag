@@ -72,13 +72,11 @@
       <div><dt>Frequência</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
       <div><dt>Início do contrato</dt><dd>{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
       <div><dt>Primeira parcela a cobrar</dt><dd>{% if todas_pagas %}Todas as parcelas já estão pagas{% else %}Parcela {{ parcelas_ja_pagas|add:1 }} em {{ primeira|date:"d/m/Y" }}{% endif %}</dd></div>
-      <div><dt>Último vencimento previsto</dt><dd>{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"Não calculado" }}</dd></div>
       <div><dt>Parcelas já pagas</dt><dd>{{ parcelas_ja_pagas }} (ficam fora da cobrança)</dd></div>
       <div><dt>Entrada recebida</dt><dd>{% if entrada %}R$ {{ entrada|floatformat:2 }} · {{ entrada_forma }}{% else %}Sem entrada{% endif %}</dd></div>
       <div><dt>Juros diário</dt><dd>R$ {{ contrato.juros_diario|floatformat:2 }} por dia de atraso</dd></div>
       <div><dt>Status informado</dt><dd>{{ contrato.get_status_display }}</dd></div>
       <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"Não informado" }}</dd></div>
-      <div><dt>Próximo vencimento manual</dt><dd>{{ contrato.proximo_vencimento|date:"d/m/Y"|default:"Não informado" }}</dd></div>
       <div><dt>Observações</dt><dd>{{ contrato.observacoes|default:"Nenhuma"|linebreaksbr }}</dd></div>
     </dl>
   </section>

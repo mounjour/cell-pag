@@ -38,7 +38,7 @@
   <div><dt>Parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %} × {{ contrato.num_parcelas|default:"—" }}</dd></div>
   <div><dt>Data de início</dt><dd class="num">{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
   <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"—" }}</dd></div>
-  <div><dt>Próximo vencimento</dt><dd class="num">{{ contrato.proximo_vencimento|date:"d/m/Y"|default:"—" }}</dd></div>
+  <div><dt>Próximo vencimento</dt><dd class="num">{{ contrato.data_referencia_atraso|date:"d/m/Y"|default:"—" }}</dd></div>
   <div><dt>Previsão de quitação</dt><dd class="num">{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
 </dl>
 

@@ -10,11 +10,10 @@
 <details class="note">
   <summary>Como os campos de parcela e datas funcionam</summary>
   <p>
-    Informe o valor da parcela. Deixe o nº de parcelas vazio para calcular pela divisão
-    do total pelo valor da parcela, arredondada para cima. Confira a soma na prévia.
-    A primeira parcela vence um período após a data de início. Com parcelas geradas,
-    o atraso segue a mais antiga em aberto; “Próximo vencimento” só é usado enquanto
-    não há parcelas. A previsão de quitação é calculada a partir da última parcela.
+    Informe o valor total e o nº de parcelas: o valor de cada parcela é calculado
+    sozinho (total ÷ nº de parcelas, arredondado para R$ 0,10). Confira na prévia.
+    A primeira parcela vence um período após a data de início; os vencimentos e a
+    previsão de quitação são gerados automaticamente.
     Contrato que já estava em andamento antes de entrar no sistema: informe a
     <strong>data de início real</strong> e quantas parcelas já foram pagas — elas
     saem da cobrança automática. As demais, vencidas ou não, entram na cobrança
@@ -55,8 +54,6 @@
     <p class="form-section-title">Datas</p>
     {% include "_field.html" with field=form.data_inicio %}
     {% include "_field.html" with field=form.dia_referencia %}
-    {% include "_field.html" with field=form.proximo_vencimento %}
-    {% include "_field.html" with field=form.data_prevista_quitacao %}
   </div>
 
   {% if not form.instance.pk %}
