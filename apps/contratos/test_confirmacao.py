@@ -227,3 +227,24 @@ def test_sem_aceite_volta_no_ultimo_passo(auth_client, cadastro):
     resumo = auth_client.post(reverse("contratos:novo"), cadastro)
     resposta = confirmar(auth_client, resumo, conferido="")
     assert 'data-passo-inicial="4"' in resposta.content.decode()
+
+
+@pytest.mark.django_db
+def test_resumo_ao_vivo_no_formulario_devolve_o_mesmo_card(auth_client, cadastro):
+    dados = {
+        "valor_total": "2400,00", "num_parcelas": "12", "estrutura": "mensal",
+        "data_inicio": (datetime.date.today() + datetime.timedelta(days=5)).isoformat(),
+        "juros_diario": "5,00", "parcelas_ja_pagas": "0", "entrada": "", "cliente": cadastro["cliente"],
+    }
+    resposta = auth_client.post(reverse("contratos:previsao"), dados).json()
+    assert "12 parcelas de R$ 200,00" in resposta["texto"]
+    html = resposta["html"]
+    assert "Resumo da cobrança" in html and "primeira cobrança sai em" in html
+    assert "faltam pagar" in html and "Débito em atraso hoje" in html
+    assert "WhatsApp" in html  # destino da cobrança, a partir do cliente escolhido
+
+
+@pytest.mark.django_db
+def test_formulario_novo_tem_card_ao_vivo_e_edicao_mantem_a_previa_simples(auth_client, cadastro):
+    pagina = auth_client.get(reverse("contratos:novo")).content.decode()
+    assert "data-previsao-card" in pagina and "contrato-resumo" in pagina

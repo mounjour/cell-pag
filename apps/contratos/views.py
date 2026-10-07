@@ -96,7 +96,13 @@ class ContratoPrevisaoView(LoginRequiredMixin, View):
         form = PrevisaoContratoForm(request.POST)
         if not form.is_valid():
             return JsonResponse({"texto": "Informe valores positivos, a frequência e a data de início para visualizar o plano."})
-        contrato = Contrato(**form.cleaned_data)
+        dados = dict(form.cleaned_data)
+        pagas = dados.pop("parcelas_ja_pagas") or 0
+        entrada = dados.pop("entrada")
+        cliente = dados.pop("cliente")
+        contrato = Contrato(**dados)
+        if cliente:
+            contrato.cliente = cliente
         try:
             primeira = data_da_parcela(contrato.data_inicio, contrato.estrutura, 1)
             ultima = data_da_parcela(contrato.data_inicio, contrato.estrutura, contrato.num_parcelas)
@@ -109,7 +115,17 @@ class ContratoPrevisaoView(LoginRequiredMixin, View):
         )
         if not contrato.parcelas_conferem:
             texto += "\nAtenção: os totais são diferentes. Ajuste os valores ou a quantidade."
-        return JsonResponse({"texto": texto})
+        resumo = resumo_do_cadastro(contrato, pagas, timezone.localdate())
+        html = ""
+        if resumo:
+            from django.template.loader import render_to_string
+            from apps.pagamentos.models import ConfiguracaoCobranca
+
+            html = render_to_string("contratos/_resumo_cobranca.html", {
+                "resumo": resumo, "contrato": contrato, "entrada": entrada,
+                "cobrancas_desligadas": ConfiguracaoCobranca.esta_pausada(),
+            }, request=request)
+        return JsonResponse({"texto": texto, "html": html})
 
 
 class PlanilhaPreviaView(LoginRequiredMixin, View):

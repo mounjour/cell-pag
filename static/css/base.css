@@ -1286,6 +1286,35 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 
 input[type="checkbox"], input[type="radio"] { accent-color: var(--ink); }
 
+/* ---------- Formulário de contrato: resumo ao vivo ao lado ---------- */
+.contrato-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.contrato-resumo [data-previsao-card] { transition: opacity .2s ease; }
+.contrato-resumo [data-previsao-card].carregando { opacity: .55; }
+.resumo-vazio { color: var(--ink-faint); margin: 0; line-height: 1.5; }
+@media (min-width: 1100px) {
+  /* A página fica mais larga só quando há o resumo ao lado (senão o formulário e o card se espremem). */
+  .form-centered:has(.contrato-layout) { max-width: 1240px; }
+  .contrato-layout { grid-template-columns: minmax(0, 1fr) 430px; gap: 1.75rem; }
+  .contrato-layout .form-page { max-width: none; }
+  .contrato-resumo { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; scrollbar-width: thin; }
+}
+/* Versão compacta do resumo (cabe na coluna ao lado sem rolar). */
+.contrato-resumo .card { padding: 1.1rem 1.15rem; }
+.contrato-resumo .resumo-frase { font-size: .98rem; line-height: 1.45; margin-bottom: .65rem; }
+.contrato-resumo .resumo-alerta { font-size: .8rem; padding: .5rem .65rem; margin-bottom: .75rem; }
+.contrato-resumo .resumo-numeros { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: .1rem 0 .6rem; }
+.contrato-resumo .resumo-numeros > div { flex: none; padding: .55rem .45rem; min-width: 0; }
+.contrato-resumo .resumo-numeros > div:first-child { padding-left: 0; }
+.contrato-resumo .resumo-numeros strong { font-size: 1.3rem; }
+.contrato-resumo .resumo-numeros span { font-size: .66rem; line-height: 1.2; }
+.contrato-resumo .lista-dados { grid-template-columns: 1fr; }
+.contrato-resumo .lista-dados > div { padding: .42rem 0; gap: .75rem; }
+.contrato-resumo .lista-dados dt { font-size: .74rem; }
+.contrato-resumo .lista-dados dd { font-size: .88rem; }
+.contrato-resumo .lista-dados dd small { display: block; font-size: .7rem; }
+/* No card ao lado só o essencial; a conferência mostra tudo. */
+.contrato-resumo .lista-dados .opcional { display: none; }
+
 /* ---------- Lista de clientes ---------- */
 .clientes-toolbar { flex-direction: row; flex-wrap: wrap; align-items: center; }
 .clientes-busca { flex: 1 1 320px; max-width: 520px; position: relative; display: flex; align-items: center; }
