@@ -78,9 +78,7 @@ def test_previa_sem_parcela_pede_correcao(plano, auth_client):
 
 
 @pytest.mark.parametrize("estrutura,primeira,ultima", [
-    ("diaria", "01/02/2026", "02/02/2026"),
     ("semanal", "07/02/2026", "14/02/2026"),
-    ("dezena", "10/02/2026", "20/02/2026"),
     ("quinzenal", "15/02/2026", "02/03/2026"),
     ("mensal", "28/02/2026", "31/03/2026"),
 ])

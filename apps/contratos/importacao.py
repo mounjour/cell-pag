@@ -20,10 +20,11 @@ _COLUNAS = {
     "jurosdiario": "juros_diario", "pagouhoje": "pagou_hoje", "status": "status",
     "observacoes": "observacoes",
 }
-_ESTRUTURAS = {"diário": "diaria", "diario": "diaria", "semanal": "semanal",
-               "quinzenal": "quinzenal", "mensal": "mensal", "mensal - 05": "mensal",
-               "mensal - 10": "mensal", "mensal - 15": "mensal", "mensal - 19": "mensal",
-               "mensal - 30": "mensal", "por dezena": "dezena"}
+_ESTRUTURAS = {"semanal": "semanal", "quinzenal": "quinzenal", "mensal": "mensal",
+               "mensal - 05": "mensal", "mensal - 10": "mensal", "mensal - 15": "mensal",
+               "mensal - 19": "mensal", "mensal - 30": "mensal"}
+# Frequências que deixaram de existir: a linha é recusada com um motivo claro.
+_ESTRUTURAS_REMOVIDAS = {"diário", "diario", "diária", "diaria", "por dezena", "dezena"}
 
 
 def _texto(valor):
@@ -95,6 +96,10 @@ def analisar(arquivo):
         try:
             estrutura = _ESTRUTURAS.get(_texto(bruto.get("estrutura")).lower())
             if not estrutura:
+                if _texto(bruto.get("estrutura")).lower() in _ESTRUTURAS_REMOVIDAS:
+                    resultado.append({"linha": numero, "erros": [
+                        "Frequência não aceita: o sistema trabalha só com semanal, quinzenal e mensal."]})
+                    continue
                 raise ValueError("frequência não reconhecida")
             resultado.append({
                 "linha": numero, "cliente": _texto(bruto.get("cliente")), "modelo": _texto(bruto.get("modelo")),

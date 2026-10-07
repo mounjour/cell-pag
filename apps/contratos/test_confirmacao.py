@@ -22,7 +22,7 @@ def cadastro(db):
     return {
         "cliente": cliente.pk, "aparelho": aparelho.pk, "apelido": "iPhone da Maria",
         "aparelho_modelo": "iPhone 13 128GB", "imei": "359999053372501", "valor_total": "1000,00",
-        "num_parcelas": "10", "estrutura": "diaria",
+        "num_parcelas": "10", "estrutura": "semanal",
         "juros_diario": "5,00", "data_inicio": "2026-09-01", "status": "em_dia",
         "entrada": "200,00", "entrada_forma": "dinheiro", "parcelas_ja_pagas": "2",
     }
@@ -42,7 +42,7 @@ def test_revisao_nao_libera_rotina_nem_reserva_estoque(auth_client, cadastro):
     texto = resposta.content.decode()
     assert "Confirmar e iniciar cobrança" in texto
     assert "Maria Teste" in texto and "iPhone 13 128GB" in texto
-    assert "04/09/2026" in texto  # primeira parcela não paga
+    assert "22/09/2026" in texto  # primeira parcela não paga (3ª semana)
     call_command("gerar_vencimentos", stdout=StringIO())
     from apps.pagamentos.cobranca import processar_cobrancas
     processar_cobrancas(hoje=datetime.date(2026, 10, 2))

@@ -31,7 +31,7 @@ def dados_form(cliente, **over):
         "apelido": "iPhone 11",
         "aparelho": novo_aparelho().pk,
         "valor_total": "2400,00",
-        "estrutura": Contrato.Estrutura.DIARIA,
+        "estrutura": Contrato.Estrutura.MENSAL,
         "num_parcelas": "12",
         "data_inicio": "2026-08-01",
         "dia_referencia": "",
@@ -568,9 +568,9 @@ def test_seed_demo_cria_massa_variada():
     # Um cliente fica sem contrato de propósito.
     assert Cliente.objects.filter(contratos__isnull=True).count() == 1
 
-    # As 5 estruturas aparecem.
+    # As 3 estruturas que existem hoje aparecem.
     estruturas = set(Contrato.objects.values_list("estrutura", flat=True))
-    assert estruturas == {e.value for e in Contrato.Estrutura}
+    assert estruturas == {"semanal", "quinzenal", "mensal"}
 
     # Situações-chave: um quitado, um sem próximo vencimento, e pelo menos um
     # inadimplente com alerta de bloqueio pelo cálculo de hoje.
@@ -628,9 +628,9 @@ def test_parcelas_ja_pagas_marca_as_primeiras_parcelas_como_pagas(auth_client, c
 
     resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
-            estrutura=Contrato.Estrutura.DIARIA,
+            estrutura=Contrato.Estrutura.SEMANAL,
             num_parcelas="10",
-            data_inicio="2026-09-20",
+            data_inicio=(datetime.date.today() - datetime.timedelta(days=20)).isoformat(),
             parcelas_ja_pagas="3",
         ),
         follow=True,
@@ -656,7 +656,7 @@ def test_parcelas_ja_pagas_marca_as_primeiras_parcelas_como_pagas(auth_client, c
 def test_parcelas_ja_pagas_nao_pode_passar_do_num_parcelas(auth_client, cliente):
     resp = cadastrar_contrato(auth_client, dados_form(
             cliente,
-            estrutura=Contrato.Estrutura.DIARIA,
+            estrutura=Contrato.Estrutura.SEMANAL,
             num_parcelas="5",
             data_inicio="2026-09-20",
             parcelas_ja_pagas="10",
@@ -785,3 +785,18 @@ def test_formulario_nao_mostra_datas_automaticas(auth_client, cliente):
         assert "proximo_vencimento" not in resp.context["form"].fields
         assert "data_prevista_quitacao" not in resp.context["form"].fields
         assert "Próximo vencimento" not in resp.content.decode()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("removida", ["diaria", "dezena"])
+def test_formulario_recusa_frequencias_que_sairam(auth_client, cliente, removida):
+    resp = cadastrar_contrato(auth_client, dados_form(cliente, estrutura=removida))
+    assert resp.status_code == 200
+    assert "estrutura" in resp.context["form"].errors
+    assert not Contrato.objects.exists()
+
+
+@pytest.mark.django_db
+def test_formulario_so_oferece_semanal_quinzenal_e_mensal(auth_client):
+    opcoes = [valor for valor, _ in auth_client.get(reverse("contratos:novo")).context["form"].fields["estrutura"].choices if valor]
+    assert opcoes == ["semanal", "quinzenal", "mensal"]
