@@ -1296,7 +1296,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--ink); }
   .form-centered:has(.contrato-layout) { max-width: 1240px; }
   .contrato-layout { grid-template-columns: minmax(0, 1fr) 430px; gap: 1.75rem; }
   .contrato-layout .form-page { max-width: none; }
-  .contrato-resumo { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; scrollbar-width: thin; }
+  /* Gruda logo abaixo da barra fixa do topo (--topo-h, 60px): com top menor ele ficava escondido atrás dela. */
+  .contrato-resumo { position: sticky; top: calc(var(--topo-h, 60px) + 1rem); max-height: calc(100vh - var(--topo-h, 60px) - 2rem); overflow-y: auto; scrollbar-width: thin; }
 }
 /* Versão compacta do resumo (cabe na coluna ao lado sem rolar). */
 .contrato-resumo .card { padding: 1.1rem 1.15rem; }
