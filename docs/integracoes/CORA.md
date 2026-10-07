@@ -104,8 +104,14 @@ atualiza o sistema.
 ## Regras aplicadas
 
 - Uma cobrança Pix por parcela, protegida por UUID de idempotência.
-- O valor do QR é o principal da parcela; os juros continuam informados fora do
-  QR, conforme a decisão do projeto.
+- O valor do QR é **parcela + juros de atraso**: o cliente não tem a opção de
+  pagar só a parcela. Com mais de uma parcela vencida, o QR cobre todas elas mais
+  os juros de cada uma. O juros cresce R$ 5 por dia, então a rotina diária troca o
+  QR (cancela o antigo e cria um novo) quando o total muda.
+- Na baixa automática (`PAID`), o principal abate a parcela e o juros fica em
+  `Pagamento.juros_pago` (a parte do juros é guardada em `CobrancaCora.juros`). Se
+  o cliente pagar o QR do dia anterior antes de a rotina refazê-lo, a baixa é
+  aceita: a conferência compara só o principal, que não muda com os dias.
 - Se uma cobrança atrasada precisar ser criada após o vencimento, a API recebe
   o dia atual porque a Cora não aceita uma nova fatura com data passada. A data
   original da parcela permanece registrada no sistema.

@@ -20,14 +20,15 @@ class PagamentoForm(forms.ModelForm):
         ),
     )
     juros_pago = forms.CharField(
-        label="Juros recebidos (opcional)",
+        label="Juros recebidos",
         required=False,
         widget=forms.TextInput(
             attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}
         ),
         help_text=(
-            "Só preencha se o cliente pagou o juros do atraso junto. Fica "
-            "registrado à parte — não altera o valor da parcela nem da próxima."
+            "O cliente paga a parcela mais o juros do atraso (já vem preenchido pelo "
+            "cálculo de hoje). Fica registrado à parte — não altera o valor da parcela "
+            "nem da próxima. Deixe 0,00 só se o combinado for outro."
         ),
     )
 
@@ -68,7 +69,13 @@ class PagamentoForm(forms.ModelForm):
             primeira = abertas.first()
             self.initial.setdefault("vencimento", primeira.pk)
             self.initial.setdefault("valor_pago", _formata_moeda(primeira.saldo))
-            self.initial.setdefault("juros_pago", "0,00")
+            from .agenda import parcelas_a_cobrar
+
+            juros = next(
+                (p.juros for p in parcelas_a_cobrar(contrato, timezone.localdate()) if p.numero == primeira.numero),
+                Decimal("0.00"),
+            )
+            self.initial.setdefault("juros_pago", _formata_moeda(juros))
             self.initial.setdefault("data_pagamento", timezone.localdate())
 
     @staticmethod
