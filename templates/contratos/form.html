@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% block wrap_class %}wrap--wide{% endblock %}
 {% block title %}{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}{% endblock %}
 
 {% block content %}
@@ -22,7 +23,8 @@
   </p>
 </details>
 
-<form method="post" class="form-grid form-page" data-previsao-url="{% url 'contratos:previsao' %}" data-previsao-campos="valor_total,num_parcelas,estrutura,data_inicio">
+<div class="contrato-layout">
+<form method="post" class="form-grid form-page" data-previsao-url="{% url 'contratos:previsao' %}" data-previsao-campos="valor_total,num_parcelas,estrutura,data_inicio,juros_diario,parcelas_ja_pagas,entrada,cliente">
   {% csrf_token %}
   {% if form.non_field_errors %}
     <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
@@ -74,17 +76,31 @@
     {% include "_field.html" with field=form.observacoes %}
   </div>
 
+  {% if form.instance.pk %}
   <section class="note previsao-form" aria-labelledby="previsao-titulo">
     <h2 id="previsao-titulo">Confira o plano</h2>
     <p data-previsao-texto role="status" aria-live="polite">Informe os valores e as datas para visualizar as parcelas antes de salvar.</p>
-    {% if form.instance.pk %}<p>Esta prévia descreve o plano informado. Parcelas já geradas mantêm seus valores e datas; confira-as no contrato após a edição.</p>{% endif %}
+    <p>Esta prévia descreve o plano informado. Parcelas já geradas mantêm seus valores e datas; confira-as no contrato após a edição.</p>
     <noscript>Ative JavaScript para visualizar o resumo antes de salvar.</noscript>
   </section>
+  {% endif %}
   <div class="form-actions">
     <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}{% if form.instance.pk %}Salvar{% else %}Revisar cadastro{% endif %}</button>
     <a class="btn cancelar" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
   </div>
 </form>
+{% if not form.instance.pk %}
+<aside class="contrato-resumo" aria-label="Resumo da cobrança ao vivo">
+  <div data-previsao-card role="status" aria-live="polite">
+    <section class="card resumo-cobranca">
+      <h2>Resumo da cobrança</h2>
+      <p class="resumo-vazio">Preencha o valor total, o nº de parcelas, a frequência e a data de início: o resumo aparece aqui e se atualiza enquanto você digita.</p>
+    </section>
+  </div>
+  <noscript><p class="note">Ative o JavaScript para ver o resumo ao vivo. Ele também aparece na conferência, antes de confirmar.</p></noscript>
+</aside>
+{% endif %}
+</div>
 </div>
 {% endblock %}
 {% block scripts %}

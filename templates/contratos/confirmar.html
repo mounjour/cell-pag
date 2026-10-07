@@ -58,50 +58,7 @@
     </div>
 
     <div class="passo" data-passo-titulo="Resumo e confirmação">
-  {% if resumo %}
-  <section class="card resumo-cobranca">
-    <h2>Resumo da cobrança</h2>
-    {% if contrato.quitado %}
-      <p class="resumo-frase">Contrato informado como quitado: <strong>não haverá cobrança automática</strong>.</p>
-    {% elif resumo.primeira.quando == "proxima_rotina" %}
-      <p class="resumo-frase">A <strong>primeira cobrança sai na próxima rotina diária (8h30)</strong>: há
-        {{ resumo.primeira.parcelas }} parcela{{ resumo.primeira.parcelas|pluralize }}
-        {% if resumo.atrasadas %}em atraso{% else %}vencendo hoje{% endif %}.
-        Valor a cobrar: <strong>R$ {{ resumo.primeira.valor|floatformat:2 }}</strong>
-        {% if resumo.primeira.juros %}(parcelas R$ {{ resumo.principal_atrasado|floatformat:2 }} + juros de atraso R$ {{ resumo.primeira.juros|floatformat:2 }}){% endif %}.</p>
-    {% elif resumo.primeira.quando == "no_vencimento" %}
-      <p class="resumo-frase">A <strong>primeira cobrança sai em {{ resumo.primeira.data|date:"d/m/Y" }} ({{ resumo.primeira.data|date:"l" }}), às 8h30</strong>,
-        referente à parcela {{ resumo.primeira.numero }}, no valor de <strong>R$ {{ resumo.primeira.valor|floatformat:2 }}</strong>.
-        Até lá o cliente não recebe nenhuma cobrança.</p>
-    {% else %}
-      <p class="resumo-frase">Todas as parcelas já estão pagas: <strong>não haverá cobrança</strong>.</p>
-    {% endif %}
-    {% if cobrancas_desligadas and not contrato.quitado %}
-      <p class="resumo-alerta"><strong>Atenção:</strong> as cobranças automáticas do sistema ainda estão desligadas. Essa data só vale depois de clicar em <em>Começar cobranças</em> em Cobrar hoje.</p>
-    {% endif %}
-    <div class="resumo-numeros">
-      <div><strong>{{ resumo.total }}</strong><span>parcelas no total</span></div>
-      <div><strong>{{ resumo.pagas }}</strong><span>já pagas</span></div>
-      <div><strong>{{ resumo.restantes }}</strong><span>faltam pagar</span></div>
-      <div class="{% if resumo.atrasadas %}resumo-numero--alerta{% endif %}"><strong>{{ resumo.atrasadas }}</strong><span>em atraso{% if resumo.vencem_hoje %} · {{ resumo.vencem_hoje }} vence{{ resumo.vencem_hoje|pluralize:",m" }} hoje{% endif %}</span></div>
-      <div><strong>{{ resumo.a_vencer }}</strong><span>ainda a vencer</span></div>
-    </div>
-    <dl class="lista-dados">
-      <div><dt>Valor de cada parcela</dt><dd>R$ {{ resumo.valor_parcela|floatformat:2 }}</dd></div>
-      <div><dt>Débito em atraso hoje</dt><dd>R$ {{ resumo.debito_em_atraso|floatformat:2 }}{% if resumo.juros_atrasado %} <small>(inclui R$ {{ resumo.juros_atrasado|floatformat:2 }} de juros)</small>{% endif %}</dd></div>
-      <div><dt>Saldo restante do contrato</dt><dd>R$ {{ resumo.saldo_restante|floatformat:2 }} <small>(sem juros)</small></dd></div>
-      <div><dt>Já recebido</dt><dd>R$ {% if entrada %}{{ resumo.ja_pago_em_parcelas|add:entrada|floatformat:2 }} <small>(parcelas pagas + entrada de R$ {{ entrada|floatformat:2 }})</small>{% else %}{{ resumo.ja_pago_em_parcelas|floatformat:2 }} <small>(parcelas pagas, sem entrada)</small>{% endif %}</dd></div>
-      <div><dt>Maior atraso hoje</dt><dd>{% if resumo.maior_atraso_dias %}{{ resumo.maior_atraso_dias }} dia{{ resumo.maior_atraso_dias|pluralize }} · ficará {% if resumo.status_esperado == "inadimplente" %}inadimplente{% else %}atrasado{% endif %}{% else %}Nenhum · ficará em dia{% endif %}</dd></div>
-      <div><dt>Juros por dia de atraso</dt><dd>R$ {{ resumo.juros_por_dia|floatformat:2 }}</dd></div>
-      <div><dt>Último vencimento</dt><dd>{{ resumo.ultimo_vencimento|date:"d/m/Y" }}</dd></div>
-      <div><dt>Cobrança enviada para</dt><dd>WhatsApp {{ contrato.cliente.telefone_exibicao }}, com Pix</dd></div>
-      {% if resumo.proximas %}<div><dt>Depois disso, vencem em</dt><dd>{% for d in resumo.proximas %}{{ d|date:"d/m" }}{% if not forloop.last %} · {% endif %}{% endfor %}…</dd></div>{% endif %}
-    </dl>
-    {% if resumo.alerta_bloqueio %}
-      <p class="resumo-alerta"><strong>Alerta de bloqueio:</strong> há parcela com {{ resumo.maior_atraso_dias }} dias de atraso (7 ou mais). O sistema só sinaliza; o bloqueio do aparelho é manual.</p>
-    {% endif %}
-  </section>
-  {% endif %}
+  {% if resumo %}{% include "contratos/_resumo_cobranca.html" %}{% endif %}
   {% if contrato.parcelas_conferem is False %}
     <p class="note"><strong>Confira os números:</strong> o total das parcelas é diferente do valor total financiado. A última parcela não é reduzida automaticamente.</p>
   {% endif %}

@@ -6,6 +6,7 @@ from django.db import models
 
 from apps.aparelhos.models import Aparelho
 from apps.aparelhos.catalogo import opcoes_modelos
+from apps.clientes.models import Cliente
 
 from apps.pagamentos.models import Pagamento
 
@@ -238,6 +239,24 @@ class PrevisaoContratoForm(forms.Form):
     num_parcelas = forms.IntegerField(min_value=1, max_value=10000)
     estrutura = forms.ChoiceField(choices=Contrato.Estrutura.choices)
     data_inicio = forms.DateField(input_formats=["%Y-%m-%d"])
+    # Opcionais: só enriquecem o resumo ao vivo (a prévia antiga continua valendo sem eles).
+    juros_diario = forms.CharField(required=False)
+    parcelas_ja_pagas = forms.IntegerField(required=False, min_value=0, max_value=10000)
+    entrada = forms.CharField(required=False)
+    cliente = forms.ModelChoiceField(queryset=Cliente.objects.all(), required=False)
+
+    def clean_juros_diario(self):
+        try:
+            return moeda_para_decimal(self.cleaned_data.get("juros_diario")) or Decimal("5.00")
+        except forms.ValidationError:
+            return Decimal("5.00")
+
+    def clean_entrada(self):
+        try:
+            valor = moeda_para_decimal(self.cleaned_data.get("entrada"))
+        except forms.ValidationError:
+            return None
+        return valor if valor and valor > 0 else None
 
     def clean(self):
         dados = super().clean()
