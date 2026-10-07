@@ -201,6 +201,25 @@ class ResolverImportacaoView(LoginRequiredMixin, View):
         self.pendencia = get_object_or_404(ImportacaoContratoPendente, pk=kwargs["pk"], resolvida_em__isnull=True)
         return super().dispatch(request, *args, **kwargs)
 
+    @staticmethod
+    def _aparelho_do_estoque(dados):
+        """Aparelho do estoque para o IMEI da planilha: reaproveita o que já existe ou cria um novo.
+
+        Sem IMEI na linha o contrato fica sem vínculo (como os contratos antigos). Um IMEI que já
+        pertence a outro contrato não passa: seria vender o mesmo aparelho duas vezes.
+        """
+        from apps.aparelhos.models import Aparelho
+
+        imei = dados.get("imei") or ""
+        if not imei:
+            return None
+        aparelho = Aparelho.objects.filter(imei=imei).first()
+        if aparelho is None:
+            return Aparelho.objects.create(modelo=dados["modelo"], imei=imei)
+        if hasattr(aparelho, "contrato"):
+            raise ValueError("Este IMEI já pertence a um aparelho com contrato.")
+        return aparelho
+
     def get(self, request, pk):
         dados = self.pendencia.dados
         return render(request, self.template_name, {"pendencia": self.pendencia, "form": ResolverImportacaoForm(initial={"cpf": dados.get("cpf", ""), "telefone": dados.get("telefone", ""), "parcelas_ja_pagas": 0})})
@@ -225,7 +244,8 @@ class ResolverImportacaoView(LoginRequiredMixin, View):
                 pagas = form.cleaned_data.get("parcelas_ja_pagas") or 0
                 if pagas > int(dados["parcelas"]):
                     raise ValueError("Parcelas já pagas não pode ser maior que o total.")
-                contrato = Contrato.objects.create(cliente=cliente, apelido=dados["modelo"], aparelho_modelo=dados["modelo"], valor_total=total, valor_parcela=moeda_para_decimal(dados["valor"]), juros_diario=moeda_para_decimal(dados["juros"]), num_parcelas=int(dados["parcelas"]), estrutura=dados["estrutura"], data_inicio=datetime.date.fromisoformat(dados["inicio"]), proximo_vencimento=datetime.date.fromisoformat(dados["vencimento"]), observacoes=dados.get("observacoes", ""))
+                aparelho = self._aparelho_do_estoque(dados)
+                contrato = Contrato.objects.create(cliente=cliente, aparelho=aparelho, imei=(dados.get("imei") or ""), apelido=dados["modelo"], aparelho_modelo=dados["modelo"], valor_total=total, valor_parcela=moeda_para_decimal(dados["valor"]), juros_diario=moeda_para_decimal(dados["juros"]), num_parcelas=int(dados["parcelas"]), estrutura=dados["estrutura"], data_inicio=datetime.date.fromisoformat(dados["inicio"]), proximo_vencimento=datetime.date.fromisoformat(dados["vencimento"]), observacoes=dados.get("observacoes", ""))
                 _gerar_parcelas_ao_salvar(request, contrato)
                 _registrar_parcelas_ja_pagas(request, contrato, pagas)
                 self.pendencia.resolvida_em = timezone.now()
