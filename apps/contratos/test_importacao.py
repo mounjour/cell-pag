@@ -162,3 +162,14 @@ def test_resolver_sem_imei_cria_contrato_sem_vinculo(auth_client):
     _resolver(auth_client, _pendencia(""), CPF().generate())
     assert Contrato.objects.get().aparelho_id is None
     assert not Aparelho.objects.exists()
+
+
+@pytest.mark.django_db
+def test_botao_de_importar_contratos_segue_o_padrao_do_de_clientes(auth_client):
+    contratos = auth_client.get(reverse("contratos:lista")).content.decode()
+    clientes = auth_client.get(reverse("clientes:lista")).content.decode()
+    assert "Importar planilha" in contratos and "Prévia de importação" not in contratos
+    # mesmo estilo (secundário) e mesmo ícone de "Importar CSV" na lista de clientes
+    assert 'data-icone="baixar"' in contratos and 'data-icone="baixar"' in clientes
+    pagina = auth_client.get(reverse("contratos:importar_previa")).content.decode()
+    assert "Importar contratos (planilha)" in pagina

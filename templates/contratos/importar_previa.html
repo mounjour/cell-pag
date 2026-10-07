@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Prévia de importação{% endblock %}
+{% block title %}Importar contratos{% endblock %}
 {% block content %}
 {% url 'contratos:lista' as contratos_url %}{% include "_voltar.html" with url=contratos_url %}
-<div class="toolbar"><h1>Prévia de importação</h1></div>
+<div class="toolbar"><h1>Importar contratos (planilha)</h1></div>
 <p class="note">Esta tela apenas lê e valida a planilha. Nenhum cliente, contrato, pagamento ou cobrança é criado.</p>
 <form method="post" enctype="multipart/form-data" class="form-grid form-grid--full">
   {% csrf_token %}{% include "_form.html" with form=form %}
