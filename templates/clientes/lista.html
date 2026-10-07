@@ -51,6 +51,7 @@
             <td data-label="Situação">
               {% if s.estado == "atraso" %}
                 <span class="pill {% if s.inadimplente %}inadimplente{% else %}atrasado{% endif %}">{% if s.inadimplente %}Inadimplente · {% else %}Atrasado · {% endif %}{{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }}</span>
+                {% if s.alertar_bloqueio %}<span class="pill alerta-bloqueio">⚠ bloquear aparelho</span>{% endif %}
               {% elif s.estado == "hoje" %}<span class="pill parcial">Vence hoje</span>
               {% elif s.estado == "em_dia" %}<span class="pill em_dia">Em dia</span>
               {% elif s.estado == "quitado" %}<span class="pill quitado">Quitado</span>

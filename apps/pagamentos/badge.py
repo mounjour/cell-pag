@@ -17,18 +17,39 @@ def _chave() -> str:
     return f"cobrar_hoje_n:{timezone.localdate().isoformat()}"
 
 
-def contagem_cobrar_hoje() -> int:
+def _chave_bloqueio() -> str:
+    return f"aparelhos_a_bloquear_n:{timezone.localdate().isoformat()}"
+
+
+def _calcular_e_guardar() -> tuple[int, int]:
+    """Monta a agenda uma vez e guarda os dois números (a cobrar hoje e a bloquear)."""
     from .agenda import montar_agenda_do_dia
 
+    agenda = montar_agenda_do_dia()
+    n, bloqueio = len(agenda["linhas"]), agenda["n_bloqueio"]
+    cache.set(_chave(), n, TTL_SEGUNDOS)
+    cache.set(_chave_bloqueio(), bloqueio, TTL_SEGUNDOS)
+    return n, bloqueio
+
+
+def contagem_cobrar_hoje() -> int:
     n = cache.get(_chave())
     if n is None:
-        n = len(montar_agenda_do_dia()["linhas"])
-        cache.set(_chave(), n, TTL_SEGUNDOS)
+        n = _calcular_e_guardar()[0]
+    return n
+
+
+def contagem_a_bloquear() -> int:
+    """Contratos com 7 dias ou mais de atraso: hora de bloquear o aparelho (ação manual)."""
+    n = cache.get(_chave_bloqueio())
+    if n is None:
+        n = _calcular_e_guardar()[1]
     return n
 
 
 def invalidar(**_kwargs) -> None:
     cache.delete(_chave())
+    cache.delete(_chave_bloqueio())
 
 
 TTL_WHATSAPP_SEGUNDOS = 60

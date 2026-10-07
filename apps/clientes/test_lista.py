@@ -109,3 +109,37 @@ def test_a_partir_de_tres_dias_aparece_inadimplente(auth_client):
     c = novo_cliente("Muito Atrasada")
     contrato_com_parcela(c, datetime.date.today() - datetime.timedelta(days=4))
     assert "Inadimplente · 4 dias" in auth_client.get(reverse("clientes:lista")).content.decode()
+
+
+# ── Aviso de bloquear o aparelho a partir de 7 dias de atraso ──
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("dias, avisa", [(6, False), (7, True), (10, True)])
+def test_lista_avisa_bloquear_aparelho_a_partir_de_7_dias(auth_client, dias, avisa):
+    c = novo_cliente(f"Atraso {dias}")
+    contrato_com_parcela(c, datetime.date.today() - datetime.timedelta(days=dias))
+    html = auth_client.get(reverse("clientes:lista")).content.decode()
+    assert ("bloquear aparelho" in html) is avisa
+
+
+@pytest.mark.django_db
+def test_card_de_notificacoes_conta_os_aparelhos_a_bloquear(auth_client):
+    from django.core.cache import cache
+
+    cache.clear()
+    for nome, dias in (("Seis", 6), ("Sete", 7), ("Dez", 10)):
+        contrato_com_parcela(novo_cliente(nome), datetime.date.today() - datetime.timedelta(days=dias))
+    cache.clear()
+    html = auth_client.get(reverse("clientes:lista")).content.decode()
+    assert "2 aparelhos para bloquear (7+ dias de atraso)" in html
+
+
+@pytest.mark.django_db
+def test_card_de_notificacoes_no_singular_e_sem_aviso_quando_nao_ha(auth_client):
+    from django.core.cache import cache
+
+    cache.clear()
+    assert "para bloquear" not in auth_client.get(reverse("clientes:lista")).content.decode()
+    contrato_com_parcela(novo_cliente("Um So"), datetime.date.today() - datetime.timedelta(days=9))
+    cache.clear()
+    assert "1 aparelho para bloquear (7+ dias de atraso)" in auth_client.get(reverse("clientes:lista")).content.decode()
