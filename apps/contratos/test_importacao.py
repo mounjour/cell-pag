@@ -173,3 +173,29 @@ def test_botao_de_importar_contratos_segue_o_padrao_do_de_clientes(auth_client):
     assert 'data-icone="baixar"' in contratos and 'data-icone="baixar"' in clientes
     pagina = auth_client.get(reverse("contratos:importar_previa")).content.decode()
     assert "Importar contratos (planilha)" in pagina
+
+
+@pytest.mark.django_db
+def test_lista_de_contratos_so_mostra_o_botao_de_pendencias_quando_ha_pendencias(auth_client):
+    sem = auth_client.get(reverse("contratos:lista")).content.decode()
+    assert "Pendências de importação" not in sem
+    _pendencia("351166892953468")
+    _pendencia("")
+    com = auth_client.get(reverse("contratos:lista")).content.decode()
+    assert "Pendências de importação (2)" in com
+    assert reverse("contratos:importacao_pendencias") in com
+
+
+@pytest.mark.django_db
+def test_tela_de_pendencias_corta_o_texto_longo_e_mantem_o_botao_resolver_visivel(auth_client):
+    from apps.contratos.models import ImportacaoContratoPendente
+
+    p = _pendencia("")
+    p.problemas = ["CPF ou telefone ausente nesta linha.", "IMEI ausente: o contrato ficará sem vínculo com o estoque."]
+    p.save()
+    html = auth_client.get(reverse("contratos:importacao_pendencias")).content.decode()
+    assert 'class="pend-texto"' in html and "2 avisos" in html
+    # o texto completo fica acessível ao passar o mouse
+    assert 'title="CPF ou telefone ausente nesta linha. · IMEI ausente' in html
+    assert reverse("contratos:resolver_importacao", args=[p.pk]) in html and "Resolver" in html
+    assert ImportacaoContratoPendente.objects.count() == 1
