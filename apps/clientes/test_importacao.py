@@ -37,11 +37,29 @@ def test_cpf_que_perdeu_o_zero_e_completado_quando_fica_valido():
     assert linhas[0]["cpf"] == cpf
 
 
+def _cpf_e_prefixo_que_nao_vira_valido():
+    """CPF válido e um prefixo de 8 dígitos que, completado com zeros, continua inválido.
+
+    O importador completa CPF que perdeu o zero à esquerda *quando o resultado é válido*; um
+    prefixo sorteado pode, por acaso, virar válido (~1% das vezes) e tornar o teste instável.
+    """
+    from django.core.exceptions import ValidationError
+
+    from apps.clientes.models import valida_cpf
+
+    while True:
+        valido = _cpf_valido()
+        try:
+            valida_cpf(valido[:8].zfill(11))
+        except ValidationError:
+            return valido, valido[:8]
+
+
 def test_cpf_incompleto_ou_invalido_fica_de_fora():
-    valido = _cpf_valido()
+    valido, curto = _cpf_e_prefixo_que_nao_vira_valido()
     invalido = valido[:-1] + str((int(valido[-1]) + 1) % 10)
     linhas, _ = importacao.analisar(_csv(
-        f"Curto,{valido[:8]},88992351726",
+        f"Curto,{curto},88992351726",
         f"Invalido,{invalido},88992351726",
         "SemCpf,,88992351726",
     ))
