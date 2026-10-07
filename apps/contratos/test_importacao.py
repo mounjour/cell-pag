@@ -8,7 +8,7 @@ CABECALHO = "cliente;contato;modelo;data da compra;frequencia de pagamento;parce
 
 
 def _linha(cliente, contato, modelo="iPhone 11"):
-    return f"{cliente};{contato};{modelo};05/06/2026;diario;3;100;28/09/2026;20,00"
+    return f"{cliente};{contato};{modelo};05/06/2026;semanal;3;100;28/09/2026;20,00"
 
 
 def test_mesmo_telefone_e_o_mesmo_cliente_mesmo_com_nome_escrito_diferente():
@@ -57,3 +57,12 @@ def test_previa_mostra_mais_linhas_que_clientes(auth_client):
     assert resposta.status_code == 200
     assert "São 3 linhas para 2 clientes" in html
     assert "mesmo cliente de outras 1 linha" in html
+
+
+@pytest.mark.parametrize("removida", ["diario", "Diário", "por dezena"])
+def test_frequencia_que_saiu_e_recusada_com_motivo_claro(removida):
+    from apps.contratos.importacao import analisar
+
+    conteudo = CABECALHO + "\nAna;88999990000;iPhone 11;05/06/2026;" + removida + ";3;100;28/09/2026;20,00"
+    linhas, avisos = analisar(SimpleUploadedFile("c.csv", conteudo.encode("utf-8-sig")))
+    assert linhas[0]["erros"] == ["Frequência não aceita: o sistema trabalha só com semanal, quinzenal e mensal."]

@@ -35,6 +35,15 @@ class Contrato(models.Model):
         QUINZENAL = "quinzenal", "Quinzenal"
         MENSAL = "mensal", "Mensal"
 
+    #: O que se pode escolher hoje: semanal, quinzenal e mensal. Diária e "por dezena" saíram do
+    #: produto — continuam no enum só para ler contratos antigos e para a lógica de datas, mas não
+    #: aparecem no formulário, nos filtros nem na importação.
+    ESTRUTURAS_ATIVAS = [
+        ("semanal", "Semanal"),
+        ("quinzenal", "Quinzenal"),
+        ("mensal", "Mensal"),
+    ]
+
     class Status(models.TextChoices):
         EM_DIA = "em_dia", "Em dia"
         ATRASADO = "atrasado", "Atrasado"
@@ -69,7 +78,7 @@ class Contrato(models.Model):
     )
 
     valor_total = models.DecimalField("valor total do contrato", max_digits=10, decimal_places=2)
-    estrutura = models.CharField("estrutura de pagamento", max_length=12, choices=Estrutura.choices)
+    estrutura = models.CharField("estrutura de pagamento", max_length=12, choices=ESTRUTURAS_ATIVAS)
     valor_parcela = models.DecimalField(
         "valor da parcela", max_digits=10, decimal_places=2, null=True, blank=True
     )

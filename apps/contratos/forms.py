@@ -237,7 +237,7 @@ class DocumentoContratoForm(forms.ModelForm):
 class PrevisaoContratoForm(forms.Form):
     valor_total = forms.CharField()
     num_parcelas = forms.IntegerField(min_value=1, max_value=10000)
-    estrutura = forms.ChoiceField(choices=Contrato.Estrutura.choices)
+    estrutura = forms.ChoiceField(choices=Contrato.ESTRUTURAS_ATIVAS)
     data_inicio = forms.DateField(input_formats=["%Y-%m-%d"])
     # Opcionais: só enriquecem o resumo ao vivo (a prévia antiga continua valendo sem eles).
     juros_diario = forms.CharField(required=False)

@@ -47,14 +47,13 @@ vale. O perfil de cada usuário é definido no Admin (campo **perfil**).
 
 ### Estruturas de pagamento
 
-Como as parcelas se repetem no tempo. A primeira parcela vence **um período
-depois** da data de início (o dia da compra não conta como vencimento).
+Como as parcelas se repetem no tempo: **semanal, quinzenal ou mensal** (diária e por dezena
+não existem mais). A primeira parcela vence **um período depois** da data de início (o dia da
+compra não conta como vencimento).
 
 | Estrutura | Quando vence a parcela nº *n* | Observação |
 |---|---|---|
-| **Diária** | data de início + *n* dias | todo dia, domingo incluído |
 | **Semanal** | data de início + 7×*n* dias | o atraso só começa **na segunda-feira** depois do domingo que fecha a semana |
-| **Por dezena** | data de início + 10×*n* dias | "pegou dia 3, paga dia 13" |
 | **Quinzenal** | data de início + 15×*n* dias | 15 dias corridos, não é "duas vezes no mês" |
 | **Mensal** | mesmo dia do mês, mês a mês | 31/01 → cai em 28/02 nos meses curtos |
 
@@ -279,7 +278,7 @@ O formulário é dividido em quatro blocos:
 | Campo | Obrigatório | Observação |
 |---|---|---|
 | **Valor total do contrato** | Sim | com vírgula: `1.500,00` |
-| **Estrutura de pagamento** | Sim | diária / semanal / por dezena / quinzenal / mensal |
+| **Estrutura de pagamento** | Sim | semanal / quinzenal / mensal |
 | **Nº de parcelas** | Sim | quantas parcelas o contrato terá |
 
 > **Valor da parcela:** você **não digita**. O sistema calcula `valor total ÷ nº de

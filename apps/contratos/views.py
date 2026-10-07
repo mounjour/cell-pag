@@ -262,7 +262,7 @@ class ContratoListView(LoginRequiredMixin, ListView):
         ctx["status_atual"] = self.status
         ctx["status_opcoes"] = Contrato.Status.choices
         ctx["estrutura_atual"] = self.estrutura
-        ctx["estrutura_opcoes"] = Contrato.Estrutura.choices
+        ctx["estrutura_opcoes"] = Contrato.ESTRUTURAS_ATIVAS
         return ctx
 
 

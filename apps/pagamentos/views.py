@@ -70,7 +70,7 @@ class CobrarHojeView(LoginRequiredMixin, TemplateView):
         estrutura = self.request.GET.get("estrutura", "").strip()
         ctx.update(_agenda_paginada(self.request, estrutura))
         ctx["estrutura_atual"] = estrutura
-        ctx["estrutura_opcoes"] = Contrato.Estrutura.choices
+        ctx["estrutura_opcoes"] = Contrato.ESTRUTURAS_ATIVAS
         ctx["config_cobranca"] = ConfiguracaoCobranca.obter()
         return ctx
 
