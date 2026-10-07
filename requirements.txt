@@ -3,7 +3,7 @@ Django==5.2.17
 django-environ==0.14.0
 django-phonenumber-field==8.5.0
 phonenumbers==9.0.40
-validate-docbr==2.0.0
+validate-docbr==2.0.1
 django-import-export==4.4.1
 django-auditlog==3.4.1         # trilha de baixa / quem fez o quê (Fase 3)
 django-axes==8.3.1            # lockout de login por força-bruta
@@ -20,7 +20,7 @@ psycopg[binary]==3.3.6       # driver PostgreSQL (ativado quando há DATABASE_UR
 # Dependências transitivas
 asgiref==3.12.1
 sqlparse==0.6.0
-tzdata==2026.4
+tzdata==2026.5
 tablib==3.10.0
 diff-match-patch==20241021
 six==1.17.0                    # dependência do python-dateutil
