@@ -95,8 +95,9 @@
           {% if importacoes_pendentes_n %}<a class="menu-item menu-item--aviso" href="{% url 'contratos:importacao_pendencias' %}">{% include "_icone.html" with nome="contratos" %}<span>{{ importacoes_pendentes_n }} {{ importacoes_pendentes_rotulo }} de importação</span></a>{% endif %}
           {% if pix_alertas_n %}<a class="menu-item menu-item--erro" href="{% url 'pagamentos:pix_painel' %}">{% include "_icone.html" with nome="pix" %}<span>{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span></a>{% endif %}
           <a class="menu-item menu-item--erro" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-notificacao{% if not whatsapp_desconectado %} hidden{% endif %}>{% include "_icone.html" with nome="conexoes" %}<span>WhatsApp desconectado</span></a>
+          {% if aparelhos_a_bloquear_n %}<a class="menu-item menu-item--erro" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="aparelhos" %}<span>{{ aparelhos_a_bloquear_n }} {{ aparelhos_a_bloquear_rotulo }} (7+ dias de atraso)</span></a>{% endif %}
           {% if cobrancas_pausadas %}<a class="menu-item menu-item--aviso" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="cobrar" %}<span>Cobranças automáticas desligadas</span></a>{% endif %}
-          <p class="menu-quem" data-notificacoes-vazio{% if importacoes_pendentes_n or pix_alertas_n or whatsapp_desconectado or cobrancas_pausadas %} hidden{% endif %}>Nenhuma notificação pendente.</p>
+          <p class="menu-quem" data-notificacoes-vazio{% if importacoes_pendentes_n or pix_alertas_n or whatsapp_desconectado or cobrancas_pausadas or aparelhos_a_bloquear_n %} hidden{% endif %}>Nenhuma notificação pendente.</p>
         </div>
       </details>
       <details class="menu-pop menu-usuario menu-usuario--topo">

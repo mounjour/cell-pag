@@ -41,6 +41,11 @@ class Situacao:
         return self.dias_atraso >= atraso.LIMITE_INADIMPLENTE
 
     @property
+    def alertar_bloqueio(self) -> bool:
+        """7 dias ou mais de atraso: hora de bloquear o aparelho (ação manual do vendedor)."""
+        return atraso.precisa_alertar_bloqueio(self.dias_atraso)
+
+    @property
     def filtro(self) -> str:
         """Grupo do filtro rápido: atraso / em_dia (inclui vence hoje) / sem_contrato / quitado."""
         return EM_DIA if self.estado == VENCE_HOJE else self.estado
