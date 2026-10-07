@@ -1338,3 +1338,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--ink); }
 .tabela-clientes td.num { color: var(--ink); }
 .filtro-n { margin-left: .3rem; padding: 0 .4rem; border-radius: 999px; background: var(--surface-2); color: var(--ink-faint); font-size: .75rem; font-weight: 600; }
 .filtro-pill.ativo .filtro-n { background: color-mix(in srgb, currentColor 18%, transparent); color: inherit; }
+
+/* ---------- Pendências de importação ---------- */
+.tabela-pendencias td { vertical-align: middle; }
+/* A coluna do texto ocupa o espaço que sobra (width:100% + max-width:0) e corta com reticências;
+   o botão fica na coluna estreita logo ao lado. O texto inteiro aparece ao passar o mouse. */
+.tabela-pendencias .pend-celula { width: 100%; max-width: 0; }
+.pend-texto { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-soft); }
+.pend-n { display: block; color: var(--ink-faint); font-size: .75rem; margin-top: .1rem; }
+.tabela-pendencias .pend-acao { width: 1%; white-space: nowrap; padding-left: .5rem; }
+@media (max-width: 639px) {
+  .tabela-pendencias .pend-celula { width: auto; max-width: none; }
+  .pend-texto { white-space: normal; }
+}

@@ -1,7 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Pendências de importação{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
 {% block content %}
-<div class="toolbar"><h1>Pendências de importação</h1><span class="spacer"></span><a class="btn secondary" href="{% url 'contratos:importar_previa' %}">Nova prévia</a></div>
+<div class="toolbar">
+  <h1>{% include "_icone.html" with nome="alerta" %}Pendências de importação</h1>
+  <span class="spacer"></span>
+  <a class="btn secondary" href="{% url 'contratos:importar_previa' %}">{% include "_icone.html" with nome="baixar" %}Importar planilha</a>
+</div>
 <p class="note">Resolva os dados de cada linha antes de criar o contrato e liberar a cobrança automática.</p>
-<div class="tbl-wrap cards"><table><thead><tr><th>Linha</th><th>Cliente</th><th>Aparelho</th><th>Pendências</th><th></th></tr></thead><tbody>{% for p in pendencias %}<tr><td>{{ p.linha_origem }}</td><td>{{ p.dados.cliente }}</td><td>{{ p.dados.modelo }}</td><td>{{ p.problemas|join:", " }}</td><td><a class="btn secondary" href="{% url 'contratos:resolver_importacao' p.pk %}">Resolver</a></td></tr>{% empty %}<tr><td colspan="5">Nenhuma pendência aberta.</td></tr>{% endfor %}</tbody></table></div>
+{% if pendencias %}
+  <p class="count">{{ pendencias|length }} linha{{ pendencias|length|pluralize }} para resolver</p>
+{% endif %}
+<div class="tbl-wrap cards">
+  <table class="tabela-pendencias">
+    <thead>
+      <tr><th>Linha</th><th>Cliente</th><th>Aparelho</th><th>Pendências</th><th><span class="sr-only">Ação</span></th></tr>
+    </thead>
+    <tbody>
+      {% for p in pendencias %}
+        <tr>
+          <td data-label="Linha">{{ p.linha_origem }}</td>
+          <td data-label="Cliente"><strong>{{ p.dados.cliente }}</strong></td>
+          <td data-label="Aparelho">{{ p.dados.modelo }}</td>
+          <td data-label="Pendências" class="pend-celula">
+            {% if p.problemas %}
+              <span class="pend-texto" title="{{ p.problemas|join:' · ' }}">{{ p.problemas|join:" · " }}</span>
+              {% if p.problemas|length > 1 %}<small class="pend-n">{{ p.problemas|length }} avisos</small>{% endif %}
+            {% else %}<span class="nada">—</span>{% endif %}
+          </td>
+          <td class="pend-acao"><a class="btn secondary" href="{% url 'contratos:resolver_importacao' p.pk %}">{% include "_icone.html" with nome="editar" %}Resolver</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">Nenhuma pendência aberta.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endblock %}
