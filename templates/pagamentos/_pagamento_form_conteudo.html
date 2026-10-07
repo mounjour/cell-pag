@@ -11,9 +11,9 @@
   {% if juros_ate_hoje %}
     <p class="note">
       <strong>Juros das parcelas a cobrar: R$ {{ juros_ate_hoje }}.</strong>
-      É um valor à parte (R$ 5/dia de atraso) — só entra no pagamento se o
-      cliente realmente pagou o juros também. Preencha "Juros recebidos"
-      abaixo só nesse caso; não é obrigatório.
+      O cliente paga a parcela <em>mais</em> o juros do atraso (R$ 5/dia): o
+      campo "Juros recebidos" já vem preenchido com o cálculo de hoje. Ele fica
+      registrado à parte e não abate a parcela.
     </p>
   {% endif %}
   <form method="post" class="form-grid form-page" enctype="multipart/form-data" data-previsao-url="{% url 'pagamentos:previsao' contrato.pk %}">

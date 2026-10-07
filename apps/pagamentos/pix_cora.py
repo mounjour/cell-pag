@@ -36,8 +36,9 @@ def parcelas_do_pix(vencimento: Vencimento, hoje) -> list:
     """Parcelas que o Pix desta parcela quita: todas as vencidas em aberto do contrato.
 
     O Pix fica preso à parcela **mais antiga** em aberto, mas cobra o total das
-    parcelas vencidas (o juros fica de fora — é combinado à parte). Quando só há
-    ela, é só ela. Se ``vencimento`` não é a mais antiga, cobra só o saldo dele.
+    parcelas vencidas **mais os juros de atraso** (o cliente não tem a opção de
+    pagar só a parcela). Quando só há ela, é só ela. Se ``vencimento`` não é a
+    mais antiga, cobra só o saldo dele (e o juros dele).
     """
     from .agenda import parcelas_a_cobrar
 
@@ -47,14 +48,27 @@ def parcelas_do_pix(vencimento: Vencimento, hoje) -> list:
     return []
 
 
+def composicao_do_pix(vencimento: Vencimento, hoje) -> tuple[Decimal, Decimal]:
+    """``(principal, juros)`` que o Pix desta parcela cobra hoje."""
+    from .agenda import parcelas_a_cobrar
+
+    parcelas = parcelas_a_cobrar(vencimento.contrato, hoje)
+    if len(parcelas) > 1 and parcelas[0].numero == vencimento.numero:
+        return (
+            sum((p.saldo for p in parcelas), Decimal("0.00")),
+            sum((p.juros for p in parcelas), Decimal("0.00")),
+        )
+    juros = next((p.juros for p in parcelas if p.numero == vencimento.numero), Decimal("0.00"))
+    return max(vencimento.saldo, Decimal("0.00")), juros
+
+
 def valor_do_pix(vencimento: Vencimento, hoje) -> Decimal:
-    parcelas = parcelas_do_pix(vencimento, hoje)
-    if parcelas:
-        return sum((p.saldo for p in parcelas), Decimal("0.00"))
-    return max(vencimento.saldo, Decimal("0.00"))
+    """Total que o cliente paga: parcelas em atraso (ou do dia) **mais os juros**."""
+    principal, juros = composicao_do_pix(vencimento, hoje)
+    return principal + juros
 
 
-def _substituir_fatura(cobranca: CobrancaCora, valor: Decimal) -> bool:
+def _substituir_fatura(cobranca: CobrancaCora, valor: Decimal, juros: Decimal = Decimal("0.00")) -> bool:
     """Troca a fatura aberta por outra de ``valor`` diferente (total que mudou).
 
     Cancela a antiga na Cora e zera o registro para o fluxo normal criar uma nova
@@ -83,6 +97,7 @@ def _substituir_fatura(cobranca: CobrancaCora, valor: Decimal) -> bool:
     cobranca.cora_id = None
     cobranca.idempotency_key = uuid.uuid4()
     cobranca.valor = valor
+    cobranca.juros = juros
     cobranca.total_pago = Decimal("0.00")
     cobranca.pix_copia_e_cola = ""
     cobranca.qr_code_url = ""
@@ -93,11 +108,13 @@ def _substituir_fatura(cobranca: CobrancaCora, valor: Decimal) -> bool:
 
 def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
     hoje = hoje or timezone.localdate()
-    valor = valor_do_pix(vencimento, hoje)
+    principal, juros = composicao_do_pix(vencimento, hoje)
+    valor = principal + juros
     cobranca, _ = CobrancaCora.objects.get_or_create(
         vencimento=vencimento,
         defaults={
             "valor": valor,
+            "juros": juros,
             "data_vencimento": vencimento.data_vencimento,
         },
     )
@@ -108,13 +125,18 @@ def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
     if cobranca.status == CobrancaCora.Status.PAGO:
         return cobranca
     if cobranca.valor != valor:
-        # O total a cobrar mudou (entrou outra parcela vencida, ou saiu uma).
+        # O total a cobrar mudou (entrou outra parcela vencida, ou saiu uma, ou o juros
+        # de mais um dia de atraso entrou): o QR passa a refletir o novo total.
         if cobranca.cora_id:
-            if settings.CORA_PROVIDER != "cora" or not _substituir_fatura(cobranca, valor):
+            if settings.CORA_PROVIDER != "cora" or not _substituir_fatura(cobranca, valor, juros):
                 return cobranca
         else:
             cobranca.valor = valor
-            cobranca.save(update_fields=["valor", "atualizado_em"])
+            cobranca.juros = juros
+            cobranca.save(update_fields=["valor", "juros", "atualizado_em"])
+    elif cobranca.juros != juros:
+        cobranca.juros = juros  # mesmo total, divisão diferente: só atualiza a composição
+        cobranca.save(update_fields=["juros", "atualizado_em"])
     if cobranca.cora_id or settings.CORA_PROVIDER == "log":
         return cobranca
     if settings.CORA_PROVIDER != "cora":
@@ -130,6 +152,8 @@ def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
         if len(numeros) == 1
         else "Parcelas " + ", ".join(str(n) for n in numeros)
     )
+    if cobranca.juros:
+        rotulo += " + juros"
     payload = {
         # Sufixo da chave: uma fatura substituída (total mudou) não repete o código.
         "code": f"vencimento-{vencimento.pk}-{str(cobranca.idempotency_key)[:8]}",
@@ -244,6 +268,7 @@ def retomar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
     cobranca.cora_id = None
     cobranca.idempotency_key = uuid.uuid4()
     cobranca.valor = max(vencimento.saldo, Decimal("0.00"))
+    cobranca.juros = Decimal("0.00")
     cobranca.data_vencimento = vencimento.data_vencimento
     cobranca.total_pago = Decimal("0.00")
     cobranca.pix_copia_e_cola = ""
@@ -322,11 +347,20 @@ def _dar_baixa(cobranca: CobrancaCora) -> None:
         return
     vencimento = cobranca.vencimento
     vencimento.refresh_from_db()
+    # O Pix é sempre parcela + juros: o juros vai para o campo próprio e só o principal
+    # abate a parcela. Se vier menos que o total, o juros é o primeiro a ser coberto.
+    juros_pago = min(cobranca.juros, cobranca.total_pago)
+    principal_pago = cobranca.total_pago - juros_pago
+    principal_esperado = cobranca.valor - cobranca.juros
+    # Compara o PRINCIPAL (não o total): o juros cresce a cada dia, então quem paga o QR de ontem
+    # logo cedo, antes da rotina refazê-lo, não pode cair em revisão manual só por isso.
+    principal_atual, _ = composicao_do_pix(vencimento, timezone.localdate())
     if (
         vencimento.status == Vencimento.Status.PAGO
+        or principal_pago <= 0
         or (
-            max(cobranca.valor, cobranca.total_pago) > vencimento.saldo
-            and cobranca.total_pago != valor_do_pix(vencimento, timezone.localdate())
+            max(principal_esperado, principal_pago) > vencimento.saldo
+            and principal_pago != principal_atual
         )
     ):
         cobranca.duplicada = True
@@ -340,7 +374,8 @@ def _dar_baixa(cobranca: CobrancaCora) -> None:
         contrato=cobranca.vencimento.contrato,
         vencimento=cobranca.vencimento,
         data_pagamento=(cobranca.pago_em or timezone.now()).date(),
-        valor_pago=cobranca.total_pago,
+        valor_pago=principal_pago,
+        juros_pago=juros_pago,
         forma=Pagamento.Forma.PIX,
         observacao=f"{PREFIXO_BAIXA_AUTOMATICA} ({cobranca.cora_id}).",
     )

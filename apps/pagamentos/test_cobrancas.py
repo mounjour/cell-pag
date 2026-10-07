@@ -100,7 +100,9 @@ def test_mensagem_lista_cada_parcela_com_o_atraso_dela(cliente_cobranca):
     assert "*Parcela 3* (vence hoje): R$ 100,00" in msg
     assert "Total das parcelas: R$ 300,00" in msg
     assert "Juros pelo atraso: R$ 15,00" in msg
-    assert "pagar o total das parcelas — *R$ 300,00*" in msg
+    assert "Total a pagar: R$ 315,00" in msg
+    assert "pagar o total — *R$ 315,00* (parcelas + juros)" in msg
+    assert "combina à parte" not in msg
     # o painel cobra o conjunto: 300 de parcelas + 15 de juros
     assert linha["a_cobrar"] == Decimal("315.00")
 
@@ -361,3 +363,15 @@ def test_webhook_nao_regride_status(client, settings, cliente_cobranca):
     assert resposta.status_code == 200
     cobranca.refresh_from_db()
     assert cobranca.status == Cobranca.Status.LIDO
+
+
+@pytest.mark.django_db
+def test_mensagem_de_uma_parcela_atrasada_mostra_o_total_com_juros_sem_combinar_a_parte(cliente_cobranca):
+    from apps.pagamentos.agenda import montar_agenda_do_dia
+
+    hoje = date(2026, 9, 10)
+    _contrato(cliente_cobranca, hoje, atraso=2)
+    msg = dados_da_mensagem(montar_agenda_do_dia(hoje)["linhas"][0])["mensagem"]
+    assert "Juros pelo atraso: R$ 10,00" in msg
+    assert "Total a pagar: R$ 110,00" in msg and "o Pix já vem com esse valor" in msg
+    assert "combina à parte" not in msg

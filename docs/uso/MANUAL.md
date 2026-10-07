@@ -75,6 +75,11 @@ aberto mais antiga do contrato.
 - Começa a contar **no dia seguinte** ao vencimento (vencer "hoje" ainda não é atraso).
 - Na estrutura **semanal**, começa na segunda-feira após o domingo que fecha a semana.
 - No atraso, a cobrança continua **todos os dias**.
+- **O cliente paga sempre a parcela + o juros**: a mensagem de WhatsApp mostra a
+  conta ("Parcela R$ X + Juros R$ Y = Total a pagar R$ Z") e o Pix já vem com o
+  total. Por isso o QR muda a cada dia de atraso. Na baixa, o juros fica registrado
+  à parte e só o valor da parcela abate a parcela. Ao registrar um pagamento à mão,
+  o campo "Juros recebidos" já vem preenchido com o cálculo de hoje.
 
 ### Alerta de bloqueio
 

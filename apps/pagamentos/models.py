@@ -356,6 +356,9 @@ class CobrancaCora(models.Model):
     cora_id = models.CharField(max_length=100, blank=True, unique=True, null=True)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDENTE)
     valor = models.DecimalField(max_digits=10, decimal_places=2)
+    # Quanto de ``valor`` é juros de atraso (o resto é o principal das parcelas). O cliente paga
+    # sempre o total: parcela + juros. Na baixa, o juros vai para ``Pagamento.juros_pago``.
+    juros = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     total_pago = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     data_vencimento = models.DateField()
     pix_copia_e_cola = models.TextField(blank=True)

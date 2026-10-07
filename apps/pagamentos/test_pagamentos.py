@@ -422,3 +422,31 @@ def test_comprovante_so_baixa_autenticado(auth_client, cliente, settings, tmp_pa
     assert ok.status_code == 200
     assert ok["X-Content-Type-Options"] == "nosniff"
     assert "attachment" in ok["Content-Disposition"]
+
+
+@pytest.mark.django_db
+def test_baixa_manual_ja_sugere_a_parcela_e_o_juros_do_atraso():
+    """O cliente paga parcela + juros: o formulário de baixa já vem com os dois valores."""
+    import datetime
+
+    from django.utils import timezone
+
+    from apps.clientes.models import Cliente
+    from apps.contratos.models import Contrato
+    from apps.pagamentos.forms import PagamentoForm
+    from apps.pagamentos.models import Vencimento
+    from validate_docbr import CPF as CPFGen
+
+    cliente = Cliente.objects.create(nome="Sugere Juros", cpf=CPFGen().generate(), telefone_whatsapp="+5583999991234")
+    contrato = Contrato.objects.create(
+        cliente=cliente, apelido="iPhone", aparelho_modelo="iPhone 11", valor_total=Decimal("1200.00"),
+        estrutura=Contrato.Estrutura.MENSAL, valor_parcela=Decimal("100.00"), num_parcelas=12,
+        data_inicio=timezone.localdate() - datetime.timedelta(days=60),
+    )
+    Vencimento.objects.create(
+        contrato=contrato, numero=1, data_vencimento=timezone.localdate() - datetime.timedelta(days=3),
+        valor_previsto=Decimal("100.00"),
+    )
+    inicial = PagamentoForm(contrato=contrato).initial
+    assert inicial["valor_pago"] == "100,00"
+    assert inicial["juros_pago"] == "15,00"  # 3 dias × R$ 5

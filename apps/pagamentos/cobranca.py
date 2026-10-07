@@ -40,7 +40,8 @@ def _mensagem_varias_parcelas(base, parcelas, numero_pix, bloco_pix, *, alertar_
     """Cobrança de um contrato com mais de uma parcela em aberto.
 
     Lista cada parcela com o atraso próprio. O Pix fica vinculado à mais
-    antiga e cobra a soma dos saldos das parcelas vencidas, sem os juros.
+    antiga e cobra o total: a soma dos saldos das parcelas vencidas **mais os
+    juros** (não existe a opção de pagar só a parcela).
     """
     soma = sum((p.saldo for p in parcelas), Decimal("0.00"))
     juros = sum((p.juros for p in parcelas), Decimal("0.00"))
@@ -50,7 +51,7 @@ def _mensagem_varias_parcelas(base, parcelas, numero_pix, bloco_pix, *, alertar_
         f"O seu {base['aparelho']} tem {len(parcelas)} parcelas em aberto:",
         "\n".join(_linha_da_parcela(p) for p in parcelas),
         f"💰 *Total das parcelas: R$ {_moeda(soma)}*"
-        + (f"\n➕ Juros pelo atraso: R$ {_moeda(juros)} (isso a gente combina à parte)" if juros else ""),
+        + (f"\n➕ Juros pelo atraso: R$ {_moeda(juros)}\n✅ *Total a pagar: R$ {_moeda(soma + juros)}*" if juros else ""),
     ]
     if alertar_bloqueio:
         partes.append(
@@ -58,8 +59,9 @@ def _mensagem_varias_parcelas(base, parcelas, numero_pix, bloco_pix, *, alertar_
             "preciso que seja regularizada *hoje* para evitar o bloqueio do aparelho."
         )
     partes.append(
-        f"Pra deixar tudo em dia, é só pagar o total das parcelas — *R$ {_moeda(soma)}* — "
-        "no Pix abaixo.\n\n" + bloco_pix
+        f"Pra deixar tudo em dia, é só pagar o total — *R$ {_moeda(soma + juros)}*"
+        + (" (parcelas + juros)" if juros else "")
+        + " — no Pix abaixo.\n\n" + bloco_pix
     )
     partes.append("Depois é só me mandar o comprovante por aqui. Se já pagou, é só desconsiderar. 🙏")
     return "\n\n".join(partes)
@@ -72,12 +74,9 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
     data_vencimento = vencimento.data_vencimento if vencimento else contrato.proximo_vencimento
     numero = vencimento.numero if vencimento else "-"
     chave_pix = chave_pix or settings.WHATSAPP_PIX_CHAVE or "a combinar"
-    # O Pix automático (via Cora) cobra só o saldo da parcela — nunca o
-    # juros (decisão do Alisson, 18/09: juros fica de cobrança manual, já
-    # que o valor muda todo dia de atraso e a Cora não recria a cobrança
-    # sozinha). A mensagem não pode prometer um "valor atualizado" maior do
-    # que o Pix realmente vai pedir — por isso os dois valores vêm
-    # separados aqui, com o juros marcado como "a combinar".
+    # O Pix (via Cora) cobra sempre o total: parcela + juros de atraso. O cliente
+    # não tem a opção de pagar só a parcela, e o QR é refeito a cada dia de atraso
+    # para acompanhar o juros. A mensagem mostra a conta e o total que o Pix pede.
     parcela = linha.get("parcela") or Decimal("0.00")
     juros = situacao.juros
 
@@ -104,8 +103,10 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
         bloco_pix = f"*Chave Pix:* {chave_pix}"
     linha_valor = f"💰 *Parcela: R$ {base['parcela']}*"
     if juros:
+        total = _moeda(parcela + juros)
         linha_valor += (
-            f"\n➕ Juros pelo atraso: R$ {base['juros']} (isso a gente combina à parte)"
+            f"\n➕ Juros pelo atraso: R$ {base['juros']}"
+            f"\n✅ *Total a pagar: R$ {total}* (o Pix já vem com esse valor)"
         )
     parcelas = linha.get("parcelas") or []
     if len(parcelas) > 1:
