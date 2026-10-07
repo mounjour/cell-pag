@@ -14,7 +14,7 @@ from .models import Contrato
 
 _COLUNAS = {
     "cliente": "cliente", "contato": "telefone", "cpf": "cpf", "cpfs": "cpf",
-    "modelo": "modelo", "datadacompra": "data_inicio", "frequenciadepagamento": "estrutura",
+    "modelo": "modelo", "imei": "imei", "emei": "imei", "datadacompra": "data_inicio", "frequenciadepagamento": "estrutura",
     "parcelaatual": "parcela_atual", "totaldeparcelas": "num_parcelas",
     "vencimentodaparcela": "proximo_vencimento", "valordaparcela": "valor_parcela",
     "jurosdiario": "juros_diario", "pagouhoje": "pagou_hoje", "status": "status",
@@ -101,15 +101,23 @@ def analisar(arquivo):
                         "Frequência não aceita: o sistema trabalha só com semanal, quinzenal e mensal."]})
                     continue
                 raise ValueError("frequência não reconhecida")
+            imei_bruto = re.sub(r"\D", "", _texto(bruto.get("imei")))
+            imei = imei_bruto if len(imei_bruto) == 15 else ""
+            alerta_imei = (
+                [] if imei else
+                ["IMEI inválido (devem ser 15 dígitos): o contrato ficará sem vínculo com o estoque."] if imei_bruto else
+                ["IMEI ausente: o contrato ficará sem vínculo com o estoque."]
+            )
             resultado.append({
                 "linha": numero, "cliente": _texto(bruto.get("cliente")), "modelo": _texto(bruto.get("modelo")),
+                "imei": imei,
                 "cpf": re.sub(r"\D", "", _texto(bruto.get("cpf"))), "telefone": re.sub(r"\D", "", _texto(bruto.get("telefone"))),
                 "estrutura": estrutura, "inicio": _data(bruto.get("data_inicio")),
                 "vencimento": _data(bruto.get("proximo_vencimento")),
                 "parcelas": int(bruto.get("num_parcelas")), "valor": _decimal(bruto.get("valor_parcela")),
                 "juros": _decimal(bruto.get("juros_diario")) if bruto.get("juros_diario") not in (None, "") else Decimal("5.00"),
                 "observacoes": _texto(bruto.get("observacoes")),
-                "alertas": (["CPF ou telefone ausente nesta linha."] if not _texto(bruto.get("cpf")) or not _texto(bruto.get("telefone")) else []) + ["Confirme o valor total financiado antes de importar."] +
+                "alertas": (["CPF ou telefone ausente nesta linha."] if not _texto(bruto.get("cpf")) or not _texto(bruto.get("telefone")) else []) + alerta_imei + ["Confirme o valor total financiado antes de importar."] +
                     (["Confirme o significado de ‘parcela atual’ antes de marcar pagamentos anteriores."] if bruto.get("parcela_atual") not in (None, "") else []),
             })
         except (ValueError, InvalidOperation, TypeError):

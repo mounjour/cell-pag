@@ -3,6 +3,6 @@
 {% block content %}
 {% url 'contratos:importacao_pendencias' as volta_url %}{% include "_voltar.html" with url=volta_url %}
 <h1>Resolver pendência de importação</h1>
-<p class="note"><strong>{{ pendencia.dados.cliente }}</strong> · {{ pendencia.dados.modelo }} · linha {{ pendencia.linha_origem }}. Confira os dados antes de liberar a cobrança automática.</p>
+<p class="note"><strong>{{ pendencia.dados.cliente }}</strong> · {{ pendencia.dados.modelo }}{% if pendencia.dados.imei %} · IMEI {{ pendencia.dados.imei }} (entra no estoque como aparelho alocado){% endif %} · linha {{ pendencia.linha_origem }}. Confira os dados antes de liberar a cobrança automática.</p>
 <form method="post" class="form-grid form-page">{% csrf_token %}{% include "_form.html" with form=form %}<div class="form-actions"><button class="btn" type="submit">Criar contrato e liberar cobrança</button></div></form>
 {% endblock %}
