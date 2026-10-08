@@ -7,6 +7,8 @@ from apps.contratos.forms import moeda_para_decimal
 from .models import Aparelho
 from .catalogo import opcoes_modelos
 
+TAMANHO_MAX_CSV = 1024 * 1024  # 1 MB
+
 
 def _formata_moeda(valor) -> str:
     return f"{valor:.2f}".replace(".", ",")
@@ -50,3 +52,18 @@ class AparelhoForm(forms.ModelForm):
         if not imei:
             raise forms.ValidationError("Informe o IMEI do aparelho.")
         return imei
+
+
+class ImportarAparelhosForm(forms.Form):
+    arquivo = forms.FileField(
+        label="Arquivo CSV de aparelhos",
+        help_text="Colunas: modelo e imei (custo, fornecedor, data da compra e observações são opcionais). A prévia não cadastra nada.",
+    )
+
+    def clean_arquivo(self):
+        arquivo = self.cleaned_data["arquivo"]
+        if not arquivo.name.lower().endswith(".csv"):
+            raise forms.ValidationError("Envie um arquivo .csv.")
+        if arquivo.size > TAMANHO_MAX_CSV:
+            raise forms.ValidationError("O arquivo deve ter no máximo 1 MB.")
+        return arquivo
