@@ -4,12 +4,16 @@ from django.db.models import ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
 from apps.contratos.models import Contrato
 
-from .forms import AparelhoForm
+from . import importacao
+from .forms import AparelhoForm, ImportarAparelhosForm
 from .models import Aparelho
+
+
+CHAVE_SESSAO_IMPORTACAO = "importacao_aparelhos_csv"
 
 
 class AparelhoListView(LoginRequiredMixin, ListView):
@@ -97,4 +101,43 @@ class AparelhoExcluirView(LoginRequiredMixin, View):
             )
             return redirect("aparelhos:detalhe", pk=pk)
         messages.success(request, f"{nome} excluído do estoque.")
+        return redirect("aparelhos:lista")
+
+
+class AparelhoImportarView(LoginRequiredMixin, TemplateView):
+    """Envia o CSV e mostra a prévia (quais aparelhos entram e quais ficam de fora, com o motivo)."""
+
+    template_name = "aparelhos/importar.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.setdefault("form", ImportarAparelhosForm())
+        ctx.setdefault("linhas", None)
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        form = ImportarAparelhosForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return self.render_to_response(self.get_context_data(form=form))
+        linhas, erro = importacao.analisar(form.cleaned_data["arquivo"].read())
+        if erro:
+            request.session.pop(CHAVE_SESSAO_IMPORTACAO, None)
+            return self.render_to_response(self.get_context_data(form=form, erro=erro))
+        request.session[CHAVE_SESSAO_IMPORTACAO] = linhas
+        return self.render_to_response(
+            self.get_context_data(form=ImportarAparelhosForm(), linhas=linhas, resumo=importacao.resumir(linhas))
+        )
+
+
+class AparelhoImportarConfirmarView(LoginRequiredMixin, View):
+    """Cria os aparelhos da prévia (só as linhas válidas e novas)."""
+
+    def post(self, request):
+        linhas = request.session.pop(CHAVE_SESSAO_IMPORTACAO, None)
+        if not linhas:
+            messages.error(request, "A prévia expirou. Envie o arquivo de novo.")
+            return redirect("aparelhos:importar")
+        criados = importacao.gravar(linhas)
+        plural = "s" if criados != 1 else ""
+        messages.success(request, f"{criados} aparelho{plural} cadastrado{plural} no estoque.")
         return redirect("aparelhos:lista")
