@@ -29,7 +29,7 @@ def _avisar_se_parcela_nao_bate(request, contrato):
         total = f"{contrato.valor_total:.2f}".replace(".", ",")
         messages.warning(
             request,
-            f"Parcela × nº de parcelas dá R$ {soma}, "
+            f"Parcela × quantidade de parcelas dá R$ {soma}, "
             f"diferente do valor total (R$ {total}). Confira os números.",
         )
 
@@ -54,13 +54,13 @@ def _gerar_parcelas_ao_salvar(request, contrato):
     if removidas:
         messages.info(
             request,
-            f"Nº de parcelas reduzido: {len(removidas)} parcela(s) além do novo "
+            f"Quantidade de parcelas reduzida: {len(removidas)} parcela(s) além do novo "
             f"total ({contrato.num_parcelas}) foram removidas automaticamente.",
         )
     elif removidas is None:
         messages.warning(
             request,
-            "O nº de parcelas foi reduzido, mas há parcela além dele com pagamento "
+            "A quantidade de parcelas foi reduzida, mas há parcela além dele com pagamento "
             "ou Pix já gerado — nada foi apagado. Revise as parcelas na mão.",
         )
 
@@ -91,11 +91,12 @@ def _parcelas_relevantes(vencimentos, *, todas=False):
 class ContratoPrevisaoView(LoginRequiredMixin, View):
     def post(self, request):
         from apps.pagamentos.previsao import moeda
-        from apps.pagamentos.recorrencia import data_da_parcela
 
         form = PrevisaoContratoForm(request.POST)
         if not form.is_valid():
-            return JsonResponse({"texto": "Informe valores positivos, a frequência e a data de início para visualizar o plano."})
+            erros = form.non_field_errors()
+            return JsonResponse({"texto": erros[0] if erros else
+                                 "Informe os valores, a frequência, a data da compra e o dia de cobrança para visualizar o plano."})
         dados = dict(form.cleaned_data)
         pagas = dados.pop("parcelas_ja_pagas") or 0
         entrada = dados.pop("entrada")
@@ -104,13 +105,13 @@ class ContratoPrevisaoView(LoginRequiredMixin, View):
         if cliente:
             contrato.cliente = cliente
         try:
-            primeira = data_da_parcela(contrato.data_inicio, contrato.estrutura, 1)
-            ultima = data_da_parcela(contrato.data_inicio, contrato.estrutura, contrato.num_parcelas)
+            primeira = contrato.data_da_parcela(1)
+            ultima = contrato.data_da_parcela(contrato.num_parcelas)
         except (ValueError, OverflowError):
             return JsonResponse({"texto": "Confira a data e a quantidade de parcelas: o período informado é muito longo."})
         texto = (
-            f"{contrato.num_parcelas} parcelas de {moeda(contrato.valor_parcela)} · {contrato.get_estrutura_display()}.\n"
-            f"Primeiro vencimento: {primeira:%d/%m/%Y}. Último: {ultima:%d/%m/%Y}.\n"
+            f"{contrato.num_parcelas} parcelas de {moeda(contrato.valor_parcela)} · {contrato.get_estrutura_display()} ({contrato.dia_de_cobranca.lower()}).\n"
+            f"Primeira cobrança: {primeira:%d/%m/%Y}. Última: {ultima:%d/%m/%Y}.\n"
             f"Total das parcelas: {moeda(contrato.total_das_parcelas)}. Valor do contrato: {moeda(contrato.valor_total)}."
         )
         if not contrato.parcelas_conferem:
@@ -222,7 +223,7 @@ class ResolverImportacaoView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
         dados = self.pendencia.dados
-        return render(request, self.template_name, {"pendencia": self.pendencia, "form": ResolverImportacaoForm(initial={"cpf": dados.get("cpf", ""), "telefone": dados.get("telefone", ""), "parcelas_ja_pagas": 0})})
+        return render(request, self.template_name, {"pendencia": self.pendencia, "form": ResolverImportacaoForm(initial={"cpf": dados.get("cpf", ""), "telefone": dados.get("telefone", ""), "parcelas_ja_pagas": dados.get("parcela_atual", 0)})})
 
     def post(self, request, pk):
         form = ResolverImportacaoForm(request.POST)
@@ -245,7 +246,12 @@ class ResolverImportacaoView(LoginRequiredMixin, View):
                 if pagas > int(dados["parcelas"]):
                     raise ValueError("Parcelas já pagas não pode ser maior que o total.")
                 aparelho = self._aparelho_do_estoque(dados)
-                contrato = Contrato.objects.create(cliente=cliente, aparelho=aparelho, imei=(dados.get("imei") or ""), apelido=dados["modelo"], aparelho_modelo=dados["modelo"], valor_total=total, valor_parcela=moeda_para_decimal(dados["valor"]), juros_diario=moeda_para_decimal(dados["juros"]), num_parcelas=int(dados["parcelas"]), estrutura=dados["estrutura"], data_inicio=datetime.date.fromisoformat(dados["inicio"]), proximo_vencimento=datetime.date.fromisoformat(dados["vencimento"]), observacoes=dados.get("observacoes", ""))
+                from apps.pagamentos.recorrencia import primeira_cobranca_para_vencimento
+
+                dias_mes = dados.get("dias_mes", "")
+                primeira = primeira_cobranca_para_vencimento(
+                    datetime.date.fromisoformat(dados["vencimento"]), pagas, dados["estrutura"], dias_mes)
+                contrato = Contrato.objects.create(primeira_cobranca=primeira, dias_cobranca_mes=dias_mes, cliente=cliente, aparelho=aparelho, imei=(dados.get("imei") or ""), apelido=dados["modelo"], aparelho_modelo=dados["modelo"], valor_total=total, valor_parcela=moeda_para_decimal(dados["valor"]), juros_diario=moeda_para_decimal(dados["juros"]), num_parcelas=int(dados["parcelas"]), estrutura=dados["estrutura"], data_inicio=datetime.date.fromisoformat(dados["inicio"]), proximo_vencimento=datetime.date.fromisoformat(dados["vencimento"]), observacoes=dados.get("observacoes", ""))
                 _gerar_parcelas_ao_salvar(request, contrato)
                 _registrar_parcelas_ja_pagas(request, contrato, pagas)
                 self.pendencia.resolvida_em = timezone.now()
@@ -435,12 +441,10 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
         return [cliente.nome, cliente.cpf, str(cliente.telefone_whatsapp), cliente.endereco]
 
     def _resumo(self, form):
-        from apps.pagamentos.recorrencia import data_da_parcela
-
         contrato = form.instance
         try:
             contrato.atualizar_data_prevista_quitacao(salvar=False)
-            primeira = data_da_parcela(contrato.data_inicio, contrato.estrutura, (form.cleaned_data.get("parcelas_ja_pagas") or 0) + 1)
+            primeira = contrato.data_da_parcela((form.cleaned_data.get("parcelas_ja_pagas") or 0) + 1)
         except (ValueError, OverflowError):
             form.add_error("num_parcelas", "Confira a quantidade e as datas: o período informado é muito longo.")
             return self.form_invalid(form)
@@ -511,8 +515,7 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
             _avisar_se_parcela_nao_bate(self.request, self.object)
             _gerar_parcelas_ao_salvar(self.request, self.object)
             if quantidade:
-                from apps.pagamentos.recorrencia import data_da_parcela
-                ultima_paga = data_da_parcela(self.object.data_inicio, self.object.estrutura, quantidade)
+                ultima_paga = self.object.data_da_parcela(quantidade)
                 self.object.gerar_vencimentos(dias_a_frente=max(60, (ultima_paga - timezone.localdate()).days))
                 _registrar_parcelas_ja_pagas(self.request, self.object, quantidade)
             entrada = form.cleaned_data.get("entrada")

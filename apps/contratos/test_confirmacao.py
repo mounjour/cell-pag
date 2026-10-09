@@ -23,7 +23,7 @@ def cadastro(db):
         "cliente": cliente.pk, "aparelho": aparelho.pk, "apelido": "iPhone da Maria",
         "aparelho_modelo": "iPhone 13 128GB", "imei": "359999053372501", "valor_total": "1000,00",
         "num_parcelas": "10", "estrutura": "semanal",
-        "juros_diario": "5,00", "data_inicio": "2026-09-01", "status": "em_dia",
+        "juros_diario": "5,00", "data_inicio": "2026-09-01", "dia_semana": "1", "status": "em_dia",
         "entrada": "200,00", "entrada_forma": "dinheiro", "parcelas_ja_pagas": "2",
     }
 
@@ -196,7 +196,9 @@ def test_edicao_preserva_modelo_antigo_com_capacidade(auth_client):
 
 @pytest.mark.django_db
 def test_resumo_da_cobranca_explica_primeira_cobranca_e_numeros(auth_client, cadastro):
-    cadastro["data_inicio"] = (datetime.date.today() + datetime.timedelta(days=5)).isoformat()
+    compra = datetime.date.today() + datetime.timedelta(days=5)
+    cadastro["data_inicio"] = compra.isoformat()
+    cadastro["dia_semana"] = str(compra.weekday())
     cadastro["parcelas_ja_pagas"] = "0"
     texto = auth_client.post(reverse("contratos:novo"), cadastro).content.decode()
     assert "Resumo da cobrança" in texto
@@ -234,6 +236,7 @@ def test_resumo_ao_vivo_no_formulario_devolve_o_mesmo_card(auth_client, cadastro
     dados = {
         "valor_total": "2400,00", "num_parcelas": "12", "estrutura": "mensal",
         "data_inicio": (datetime.date.today() + datetime.timedelta(days=5)).isoformat(),
+        "dia_mes": str((datetime.date.today() + datetime.timedelta(days=5)).day),
         "juros_diario": "5,00", "parcelas_ja_pagas": "0", "entrada": "", "cliente": cadastro["cliente"],
     }
     resposta = auth_client.post(reverse("contratos:previsao"), dados).json()

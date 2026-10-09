@@ -19,16 +19,47 @@ _COLUNAS = {
     "vencimentodaparcela": "proximo_vencimento", "valordaparcela": "valor_parcela",
     "jurosdiario": "juros_diario", "pagouhoje": "pagou_hoje", "status": "status",
     "observacoes": "observacoes",
+    "diadecobranca": "dia_cobranca", "diacobranca": "dia_cobranca", "diasdecobranca": "dia_cobranca",
 }
-_ESTRUTURAS = {"semanal": "semanal", "quinzenal": "quinzenal", "mensal": "mensal",
-               "mensal - 05": "mensal", "mensal - 10": "mensal", "mensal - 15": "mensal",
-               "mensal - 19": "mensal", "mensal - 30": "mensal"}
+_FREQUENCIA = re.compile(r"^(semanal|quinzenal|mensal)(?:\s*[-–]\s*(\d{1,2}))?$")
+_DOIS_DIAS = re.compile(r"dias?\s*(\d{1,2})\s*(?:e|/|,|&)\s*(\d{1,2})")
 # Frequências que deixaram de existir: a linha é recusada com um motivo claro.
 _ESTRUTURAS_REMOVIDAS = {"diário", "diario", "diária", "diaria", "por dezena", "dezena"}
 
 
 def _texto(valor):
     return str(valor or "").strip()
+
+
+def _frequencia(valor):
+    """``"Mensal - 15"`` → ``("mensal", 15)``; ``"Semanal"`` → ``("semanal", None)``; senão ``(None, None)``."""
+    acho = _FREQUENCIA.match(re.sub(r"\s+", " ", _texto(valor).lower()))
+    if not acho:
+        return None, None
+    return acho.group(1), int(acho.group(2)) if acho.group(2) else None
+
+
+def _dia_de_cobranca(estrutura, sufixo, vencimento, texto_livre):
+    """Dias do mês da cobrança (``"5,20"`` / ``"15"`` / ``""``) e avisos sobre a planilha.
+
+    O calendário nasce do **vencimento da parcela**: semanal e quinzenal seguem o dia da semana
+    dele, mensal o dia do mês. O número depois de "Mensal -" costuma ser só um agrupamento da
+    planilha, então não manda: se divergir do vencimento, vale o vencimento e o aviso aparece.
+    """
+    avisos = []
+    if estrutura == "mensal":
+        if sufixo and sufixo != vencimento.day:
+            avisos.append(f"A planilha diz “Mensal - {sufixo}”, mas o vencimento é dia {vencimento.day}: a cobrança ficou no dia {vencimento.day}.")
+        return str(vencimento.day), avisos
+    if estrutura == "quinzenal":
+        acho = _DOIS_DIAS.search(texto_livre.lower())
+        if acho:
+            dias = sorted({int(acho.group(1)), int(acho.group(2))})
+            if len(dias) == 2 and all(1 <= d <= 31 for d in dias):
+                if vencimento.day not in dias:
+                    avisos.append(f"A planilha diz “dias {dias[0]} e {dias[1]}”, mas o vencimento é dia {vencimento.day}: confira o calendário.")
+                return ",".join(str(d) for d in dias), avisos
+    return "", avisos
 
 
 def _cabecalho(valor):
@@ -94,7 +125,7 @@ def analisar(arquivo):
         bruto = {cabecalho[i]: valores[i] for i in range(min(len(cabecalho), len(valores))) if cabecalho[i]}
         erros = []
         try:
-            estrutura = _ESTRUTURAS.get(_texto(bruto.get("estrutura")).lower())
+            estrutura, sufixo_mensal = _frequencia(bruto.get("estrutura"))
             if not estrutura:
                 if _texto(bruto.get("estrutura")).lower() in _ESTRUTURAS_REMOVIDAS:
                     resultado.append({"linha": numero, "erros": [
@@ -108,17 +139,27 @@ def analisar(arquivo):
                 ["IMEI inválido (devem ser 15 dígitos): o contrato ficará sem vínculo com o estoque."] if imei_bruto else
                 ["IMEI ausente: o contrato ficará sem vínculo com o estoque."]
             )
+            vencimento = _data(bruto.get("proximo_vencimento"))
+            dias_mes, avisos_dia = _dia_de_cobranca(
+                estrutura, sufixo_mensal, vencimento,
+                f"{_texto(bruto.get('dia_cobranca'))} {_texto(bruto.get('observacoes'))}",
+            )
+            try:
+                parcela_atual = max(0, int(float(str(bruto.get("parcela_atual")).replace(",", ".")))) if bruto.get("parcela_atual") not in (None, "") else 0
+            except ValueError:
+                parcela_atual = 0
             resultado.append({
                 "linha": numero, "cliente": _texto(bruto.get("cliente")), "modelo": _texto(bruto.get("modelo")),
                 "imei": imei,
                 "cpf": re.sub(r"\D", "", _texto(bruto.get("cpf"))), "telefone": re.sub(r"\D", "", _texto(bruto.get("telefone"))),
                 "estrutura": estrutura, "inicio": _data(bruto.get("data_inicio")),
-                "vencimento": _data(bruto.get("proximo_vencimento")),
+                "vencimento": vencimento, "dias_mes": dias_mes, "parcela_atual": parcela_atual,
                 "parcelas": int(bruto.get("num_parcelas")), "valor": _decimal(bruto.get("valor_parcela")),
                 "juros": _decimal(bruto.get("juros_diario")) if bruto.get("juros_diario") not in (None, "") else Decimal("5.00"),
                 "observacoes": _texto(bruto.get("observacoes")),
                 "alertas": (["CPF ou telefone ausente nesta linha."] if not _texto(bruto.get("cpf")) or not _texto(bruto.get("telefone")) else []) + alerta_imei + ["Confirme o valor total financiado antes de importar."] +
-                    (["Confirme o significado de ‘parcela atual’ antes de marcar pagamentos anteriores."] if bruto.get("parcela_atual") not in (None, "") else []),
+                    avisos_dia +
+                    (["Confira a quantidade de parcelas já pagas (a planilha informa a última parcela paga)."] if bruto.get("parcela_atual") not in (None, "") else []),
             })
         except (ValueError, InvalidOperation, TypeError):
             erros.append("Revise data, frequência, quantidade de parcelas e valores.")

@@ -9,8 +9,15 @@ from apps.aparelhos.catalogo import opcoes_modelos
 from apps.clientes.models import Cliente
 
 from apps.pagamentos.models import Pagamento
+from apps.pagamentos.recorrencia import DIAS_DA_SEMANA, interpretar_dia_de_cobranca
 
 from .models import Contrato, DocumentoContrato
+
+#: Duas formas de cobrar quinzenalmente: a cada 14 dias (mesmo dia da semana) ou em dois dias fixos do mês.
+QUINZENAS = [
+    ("semana", "A cada 14 dias, no mesmo dia da semana"),
+    ("dias_mes", "Dois dias fixos do mês (ex.: 5 e 20)"),
+]
 
 
 def moeda_para_decimal(valor):
@@ -57,7 +64,7 @@ class ContratoForm(forms.ModelForm):
             "juros_diario",
             "num_parcelas",
             "data_inicio",
-            "dia_referencia",
+            "primeira_cobranca",
             "status",
             "observacoes",
         ]
@@ -70,9 +77,34 @@ class ContratoForm(forms.ModelForm):
             ),
             "num_parcelas": forms.NumberInput(attrs={"inputmode": "numeric", "min": "1", "step": "1"}),
             "data_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
-            "dia_referencia": forms.TextInput(attrs={"placeholder": "Ex.: dia 15  ·  a cada 10 dias"}),
+            "primeira_cobranca": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "observacoes": forms.Textarea(attrs={"rows": 3}),
         }
+
+    # Dia de cobrança: o usuário escolhe o dia da semana (ou do mês) e o sistema sugere a
+    # primeira data; `primeira_cobranca` continua editável. Só `primeira_cobranca` e
+    # `dias_cobranca_mes` são gravados — estes quatro campos só ajudam a escolher.
+    quinzena = forms.ChoiceField(
+        label="Como é a cobrança quinzenal?",
+        required=False,
+        choices=QUINZENAS,
+        initial="semana",
+    )
+    dia_semana = forms.TypedChoiceField(
+        label="Dia da semana da cobrança",
+        required=False,
+        choices=[("", "Escolha o dia…")] + [(str(i), nome.capitalize()) for i, nome in enumerate(DIAS_DA_SEMANA)],
+        coerce=int,
+        empty_value=None,
+    )
+    dia_mes = forms.IntegerField(
+        label="Dia do mês da cobrança", required=False, min_value=1, max_value=31,
+        widget=forms.NumberInput(attrs={"inputmode": "numeric", "min": "1", "max": "31", "placeholder": "Ex.: 15"}),
+    )
+    dia_mes_2 = forms.IntegerField(
+        label="Segundo dia do mês", required=False, min_value=1, max_value=31,
+        widget=forms.NumberInput(attrs={"inputmode": "numeric", "min": "1", "max": "31", "placeholder": "Ex.: 20"}),
+    )
 
     # Só usado no cadastro (contrato em andamento antes de entrar no sistema)
     # — não é campo do modelo, o ModelForm ignora ele no save().
@@ -116,6 +148,16 @@ class ContratoForm(forms.ModelForm):
         for campo in ("data_inicio",):
             self.fields[campo].input_formats = ["%Y-%m-%d"]
         self.fields["num_parcelas"].required = True
+        self.fields["data_inicio"].label = "Data da compra"
+        self.fields["primeira_cobranca"].label = "Primeira cobrança"
+        self.fields["primeira_cobranca"].required = False
+        self.fields["primeira_cobranca"].help_text = (
+            "Dia em que vence a parcela 1. O sistema sugere a data a partir do dia de cobrança; "
+            "altere se a primeira cobrança foi combinada em outra data."
+        )
+        self.fields["dia_semana"].help_text = "Dia da semana em que a parcela vence."
+        self.fields["dia_mes"].help_text = "Em meses mais curtos, a cobrança cai no último dia do mês."
+        self._valores_iniciais_do_dia_de_cobranca()
         # Estoque: só aparelhos ainda não vendidos — mais o já vinculado a este
         # contrato (senão ele some da lista ao editar).
         atual = self.instance.aparelho_id if self.instance and self.instance.pk else None
@@ -159,7 +201,7 @@ class ContratoForm(forms.ModelForm):
             del self.fields["entrada"]
             del self.fields["entrada_forma"]
         self.fields["num_parcelas"].help_text = (
-            "O valor de cada parcela é calculado sozinho: valor total ÷ nº de parcelas, "
+            "O valor de cada parcela é calculado sozinho: valor total ÷ quantidade de parcelas, "
             "arredondado para o múltiplo de R$ 0,10 mais próximo. Confira na prévia."
         )
         # Ao editar, mostra os valores de dinheiro já formatados com vírgula.
@@ -167,6 +209,19 @@ class ContratoForm(forms.ModelForm):
             if self.instance.valor_total is not None:
                 self.initial["valor_total"] = _formata_moeda(self.instance.valor_total)
             self.initial["juros_diario"] = _formata_moeda(self.instance.juros_diario)
+
+    def _valores_iniciais_do_dia_de_cobranca(self):
+        """Ao editar, mostra o dia de cobrança já gravado nos campos de escolha."""
+        contrato = self.instance
+        if not (contrato and contrato.pk and contrato.primeira_cobranca):
+            return
+        dias = [int(d) for d in contrato.dias_cobranca_mes.split(",") if d]
+        self.initial["quinzena"] = "dias_mes" if len(dias) >= 2 else "semana"
+        self.initial["dia_semana"] = contrato.primeira_cobranca.weekday()
+        if dias:
+            self.initial["dia_mes"] = dias[0]
+        if len(dias) >= 2:
+            self.initial["dia_mes_2"] = dias[1]
 
     def clean_valor_total(self):
         valor = moeda_para_decimal(self.cleaned_data.get("valor_total"))
@@ -214,11 +269,37 @@ class ContratoForm(forms.ModelForm):
         if quantidade and num_parcelas and quantidade > num_parcelas:
             self.add_error(
                 "parcelas_ja_pagas",
-                f"Não pode ser maior que o nº de parcelas ({num_parcelas}).",
+                f"Não pode ser maior que a quantidade de parcelas ({num_parcelas}).",
             )
         if dados.get("entrada") and not dados.get("entrada_forma"):
             self.add_error("entrada_forma", "Escolha a forma da entrada.")
+        self._resolver_dia_de_cobranca(dados)
         return dados
+
+    def _resolver_dia_de_cobranca(self, dados):
+        """Valida o dia de cobrança e completa a primeira cobrança (sugerida quando vazia)."""
+        contrato = self.instance
+        informou = any(
+            dados.get(c) not in (None, "") for c in ("primeira_cobranca", "dia_semana", "dia_mes", "dia_mes_2")
+        )
+        legado = bool(contrato.pk and not contrato.primeira_cobranca)
+        if legado and not informou:
+            return  # contrato antigo, sem dia de cobrança: continua contando pela data da compra
+        if not dados.get("estrutura") or not dados.get("data_inicio") or self.errors.get("primeira_cobranca"):
+            return
+        try:
+            primeira, dias = interpretar_dia_de_cobranca(
+                dados["estrutura"], dados["data_inicio"], primeira_cobranca=dados.get("primeira_cobranca"),
+                quinzena=dados.get("quinzena") or "semana", dia_semana=dados.get("dia_semana"),
+                dia_mes=dados.get("dia_mes"), dia_mes_2=dados.get("dia_mes_2"),
+            )
+        except ValueError as erro:
+            campo = {"Informe o dia": "dia_mes", "Informe os dois": "dia_mes", "Escolha o dia da": "dia_semana"}
+            alvo = next((c for prefixo, c in campo.items() if str(erro).startswith(prefixo)), "primeira_cobranca")
+            self.add_error(alvo, str(erro))
+            return
+        dados["primeira_cobranca"] = primeira
+        contrato.dias_cobranca_mes = dias
 
 
 def _formata_moeda(valor: Decimal) -> str:
@@ -239,6 +320,13 @@ class PrevisaoContratoForm(forms.Form):
     num_parcelas = forms.IntegerField(min_value=1, max_value=10000)
     estrutura = forms.ChoiceField(choices=Contrato.ESTRUTURAS_ATIVAS)
     data_inicio = forms.DateField(input_formats=["%Y-%m-%d"])
+    primeira_cobranca = forms.DateField(input_formats=["%Y-%m-%d"], required=False)
+    quinzena = forms.ChoiceField(choices=QUINZENAS, required=False)
+    dia_semana = forms.TypedChoiceField(
+        choices=[("", "")] + [(str(i), "") for i in range(7)], coerce=int, empty_value=None, required=False
+    )
+    dia_mes = forms.IntegerField(min_value=1, max_value=31, required=False)
+    dia_mes_2 = forms.IntegerField(min_value=1, max_value=31, required=False)
     # Opcionais: só enriquecem o resumo ao vivo (a prévia antiga continua valendo sem eles).
     juros_diario = forms.CharField(required=False)
     parcelas_ja_pagas = forms.IntegerField(required=False, min_value=0, max_value=10000)
@@ -267,6 +355,16 @@ class PrevisaoContratoForm(forms.Form):
             dados["valor_total"] = valor
             if dados.get("num_parcelas"):
                 dados["valor_parcela"] = Contrato.valor_da_parcela(valor, dados["num_parcelas"])
+        quinzena, dia_semana = dados.pop("quinzena", ""), dados.pop("dia_semana", None)
+        dia_mes, dia_mes_2 = dados.pop("dia_mes", None), dados.pop("dia_mes_2", None)
+        if dados.get("estrutura") and dados.get("data_inicio"):
+            try:
+                dados["primeira_cobranca"], dados["dias_cobranca_mes"] = interpretar_dia_de_cobranca(
+                    dados["estrutura"], dados["data_inicio"], primeira_cobranca=dados.get("primeira_cobranca"),
+                    quinzena=quinzena or "semana", dia_semana=dia_semana, dia_mes=dia_mes, dia_mes_2=dia_mes_2,
+                )
+            except ValueError as erro:
+                raise forms.ValidationError(str(erro)) from erro
         return dados
 
 

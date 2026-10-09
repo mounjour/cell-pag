@@ -45,17 +45,24 @@ página**, o que fazer em cada uma e as regras por trás dos números.
 O dono vê tudo que o financeiro vê e ainda tem os Relatórios. O contrário não
 vale. O perfil de cada usuário é definido no Admin (campo **perfil**).
 
-### Estruturas de pagamento
+### Frequência e dia de cobrança
 
 Como as parcelas se repetem no tempo: **semanal, quinzenal ou mensal** (diária e por dezena
-não existem mais). A primeira parcela vence **um período depois** da data de início (o dia da
-compra não conta como vencimento).
+não existem mais). Além da frequência, você escolhe o **dia de cobrança** e, se precisar, a
+data da **primeira cobrança**. As demais parcelas seguem a partir dela.
 
-| Estrutura | Quando vence a parcela nº *n* | Observação |
+| Frequência | Dia de cobrança | Como vencem as parcelas |
 |---|---|---|
-| **Semanal** | data de início + 7×*n* dias | o atraso só começa **na segunda-feira** depois do domingo que fecha a semana |
-| **Quinzenal** | data de início + 15×*n* dias | 15 dias corridos, não é "duas vezes no mês" |
-| **Mensal** | mesmo dia do mês, mês a mês | 31/01 → cai em 28/02 nos meses curtos |
+| **Semanal** | um dia da semana (ex.: segunda) | toda semana nesse dia. O atraso só começa **na segunda-feira** depois do domingo que fecha a semana |
+| **Quinzenal — a cada 14 dias** | um dia da semana (ex.: quarta) | de 14 em 14 dias, sempre no mesmo dia da semana |
+| **Quinzenal — dois dias do mês** | dois dias (ex.: 5 e 20) | todo mês nesses dois dias |
+| **Mensal** | um dia do mês (ex.: 15) | todo mês nesse dia. Mês curto cai no último dia (31 → 28/02) |
+
+Ao escolher o dia, o sistema **sugere a primeira cobrança**: a primeira data com esse dia a
+partir de **um período depois da compra**. Dá para alterar a data (por exemplo, quando a
+primeira cobrança foi combinada para outra data) e o dia da semana acompanha. Contratos
+antigos, cadastrados sem dia de cobrança, continuam contando a partir da data da compra até
+você escolher um dia ao editá-los.
 
 ### Status e cores
 
@@ -236,7 +243,7 @@ Tudo sobre um cliente numa página só.
 WhatsApp), Endereço, Data de cadastro.
 
 **Contratos** — tabela de todos os contratos do cliente: Apelido (link),
-Aparelho, Estrutura, Valor total e Status (selo colorido, recalculado na hora).
+Aparelho, Frequência, Valor total e Status (selo colorido, recalculado na hora).
 
 **Pagamentos** — os **50 pagamentos mais recentes** do cliente (todos os
 contratos juntos): Data, Contrato, nº da parcela, Valor e Forma. Se houver mais
@@ -256,7 +263,7 @@ Todos os contratos, ordenados por nome do cliente, **20 por página**.
 **Elementos da tela:**
 - **Filtro por status** — lista suspensa: Todos / Em dia / Atrasado / Inadimplente / Quitado. Muda a lista na hora. O filtro usa o status **calculado hoje** (o mesmo que a tela mostra).
 - **Novo contrato** — botão à direita.
-- **Tabela:** Apelido (link para o detalhe), Cliente (link para a ficha), Estrutura, Valor total, Início e Status.
+- **Tabela:** Contrato (link para o detalhe), Cliente (link para a ficha), Frequência, Valor total, Compra e Status.
 - **Paginação** no rodapé.
 
 ---
@@ -274,33 +281,41 @@ O formulário é dividido em quatro blocos:
 | Campo | Obrigatório | Observação |
 |---|---|---|
 | **Cliente** | Sim | escolha na lista; já vem preenchido se você veio do botão "Novo contrato" da ficha |
-| **Apelido / descrição** | Sim | diferencia contratos do mesmo cliente. Ex.: "iPhone 11" |
+| **Nome do contrato** | Sim | diferencia contratos do mesmo cliente. Ex.: "iPhone 11" |
 | **Aparelho do estoque** | Sim | todo contrato novo parte de um aparelho **já cadastrado no estoque** (menu Aparelhos). **Modelo e IMEI vêm do cadastro dele**, não se digitam aqui. Se não houver aparelho disponível, cadastre-o primeiro (o link "+ Cadastrar aparelho novo no estoque" abre em outra aba) |
 
 > **Importar aparelhos (estoque):** em **Aparelhos → Importar CSV** envie um arquivo com `modelo` e `imei` (opcionais: `custo`, `fornecedor`, `data da compra`, `observações`). Só entram linhas com modelo e **IMEI de 15 dígitos**; IMEI inválido, repetido no arquivo ou já cadastrado fica de fora, e a prévia mostra o motivo. Nada é gravado até clicar em **Cadastrar**.
 
 > **Importação por planilha:** se a planilha tiver a coluna **IMEI** (ou "EMEI"), ao resolver cada linha o sistema **cria o aparelho no estoque** com esse IMEI (ou reaproveita o que já estiver livre lá) e já o vincula ao contrato. Linha sem IMEI ou com IMEI inválido (diferente de 15 dígitos) vira contrato sem vínculo, com aviso na prévia. Um IMEI que já pertence a outro contrato é recusado.
+
+> **Dia de cobrança na planilha:** o calendário nasce do **vencimento da parcela** e da **parcela atual** (a última parcela paga): o sistema reconstrói a primeira cobrança de modo que a próxima parcela caia exatamente no vencimento informado. Semanal e quinzenal seguem o dia da semana do vencimento; mensal, o dia do mês dele (o número em "Mensal - 30" é só agrupamento: se divergir do vencimento, vale o vencimento, com aviso). Quinzenal em dois dias fixos é reconhecido por "dias 5 e 20" nas observações (ou numa coluna opcional **dia de cobrança**). A tela de resolver pendência já vem com as parcelas pagas preenchidas.
 >
 > Contratos antigos, sem vínculo com o estoque, continuam editáveis com modelo e IMEI digitados, e o vínculo é opcional.
 
-### Valores e estrutura
+### Valores e parcelas
 | Campo | Obrigatório | Observação |
 |---|---|---|
 | **Valor total do contrato** | Sim | com vírgula: `1.500,00` |
-| **Estrutura de pagamento** | Sim | semanal / quinzenal / mensal |
-| **Nº de parcelas** | Sim | quantas parcelas o contrato terá |
+| **Quantidade de parcelas** | Sim | quantas parcelas o contrato terá |
 
-> **Valor da parcela:** você **não digita**. O sistema calcula `valor total ÷ nº de
-> parcelas` e arredonda para o múltiplo de **R$ 0,10** mais próximo (ex.: R$ 1.000
+> **Valor da parcela:** você **não digita**. O sistema calcula `valor total ÷ quantidade
+> de parcelas` e arredonda para o múltiplo de **R$ 0,10** mais próximo (ex.: R$ 1.000
 > em 3 parcelas = R$ 333,30). A prévia na tela mostra o resultado antes de salvar.
 > Por causa do arredondamento, o total das parcelas pode diferir uns centavos do
 > valor total; só diferenças maiores (contratos importados) geram aviso amarelo.
 
-### Datas
+### Frequência e dia de cobrança
 | Campo | Obrigatório | Observação |
 |---|---|---|
-| **Data de início** | Sim | base de todo o cronograma de parcelas |
-| **Dia(s) de referência** | Não | anotação livre (ex.: "dia 15", "a cada 10 dias"). **Não entra no cálculo**, é só lembrete |
+| **Data da compra** | Sim | dia em que o aparelho foi vendido |
+| **Frequência de pagamento** | Sim | semanal / quinzenal / mensal |
+| **Como é a cobrança quinzenal?** | Só no quinzenal | "a cada 14 dias, no mesmo dia da semana" ou "dois dias fixos do mês" |
+| **Dia da semana** / **Dia do mês** | Sim | o dia de cobrança (um ou dois dias, conforme a frequência) |
+| **Primeira cobrança** | Sugerida | data da parcela 1; o sistema sugere, você pode alterar |
+
+### Outras datas
+| Campo | Obrigatório | Observação |
+|---|---|---|
 | **Próximo vencimento** | Não | data manual da próxima parcela. Só é usada para medir atraso/juros **enquanto o contrato ainda não tem parcelas geradas**. Depois disso quem manda é a parcela em aberto mais antiga |
 | **Data prevista de quitação** | Não | normalmente **calculada pelo sistema** (data da última parcela). Só preencha à mão em casos especiais |
 
@@ -337,9 +352,9 @@ Aparece **só quando todas as parcelas previstas já estão pagas**. Traz o bot�
 > registra a data real de quitação e some da agenda "Cobrar hoje".
 
 ### Dados do contrato
-Aparelho + IMEI, Estrutura, Telefone (com link WhatsApp), Status, Valor total,
-**Parcela** (valor da parcela × nº de parcelas, ex.: "R$ 600,00 x 6"), Data de
-início, Dia(s) de referência, Próximo vencimento, Previsão de quitação.
+Aparelho + IMEI, Frequência, Telefone (com link WhatsApp), Status, Valor total,
+**Parcela** (valor da parcela × quantidade de parcelas, ex.: "R$ 600,00 x 6"), Data de
+compra, Dia de cobrança, Próxima cobrança, Última parcela prevista.
 
 - Se `parcela × nº` não bate com o total, repete aqui o aviso de conferência.
 
@@ -359,7 +374,7 @@ Previsto, Pago, Saldo, Status (Em aberto / Parcial / Pago) e o link **"dar
 baixa"** nas que ainda não estão pagas.
 
 - **Botão "Gerar parcelas" / "Gerar parcelas seguintes":** cria as parcelas que
-  faltam **até 60 dias à frente**, a partir da data de início + estrutura.
+  faltam **até 60 dias à frente**, a partir da primeira cobrança + frequência.
   Pode clicar de novo mais tarde para gerar as próximas. É **idempotente**
   (clicar duas vezes não duplica nada).
 - Se **não há parcelas** e o contrato não tem valor da parcela (contrato antigo

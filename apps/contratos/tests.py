@@ -34,7 +34,7 @@ def dados_form(cliente, **over):
         "estrutura": Contrato.Estrutura.MENSAL,
         "num_parcelas": "12",
         "data_inicio": "2026-08-01",
-        "dia_referencia": "",
+        "dia_mes": "1",
         "proximo_vencimento": "",
         "status": Contrato.Status.EM_DIA,
         "data_prevista_quitacao": "",
@@ -273,7 +273,7 @@ def test_editar_contrato(auth_client, cliente):
     resp = auth_client.post(
         reverse("contratos:editar", args=[ct.pk]),
         # contrato antigo, sem vínculo com o estoque: continua com modelo/IMEI digitados
-        dados_form(cliente, apelido="iPhone 11 Pro", estrutura=Contrato.Estrutura.SEMANAL,
+        dados_form(cliente, apelido="iPhone 11 Pro", estrutura=Contrato.Estrutura.SEMANAL, dia_semana="0",
                    aparelho="", aparelho_modelo="iPhone 11", imei="359999053372501"),
     )
     assert resp.status_code == 302
@@ -631,6 +631,7 @@ def test_parcelas_ja_pagas_marca_as_primeiras_parcelas_como_pagas(auth_client, c
             estrutura=Contrato.Estrutura.SEMANAL,
             num_parcelas="10",
             data_inicio=(datetime.date.today() - datetime.timedelta(days=20)).isoformat(),
+            dia_semana=str((datetime.date.today() - datetime.timedelta(days=20)).weekday()),
             parcelas_ja_pagas="3",
         ),
         follow=True,
@@ -664,7 +665,7 @@ def test_parcelas_ja_pagas_nao_pode_passar_do_num_parcelas(auth_client, cliente)
     )
     assert resp.status_code == 200  # form volta com erro, não redireciona
     assert not Contrato.objects.filter(cliente=cliente).exists()
-    assert "Não pode ser maior que o nº de parcelas" in resp.content.decode()
+    assert "Não pode ser maior que a quantidade de parcelas" in resp.content.decode()
 
 
 @pytest.mark.django_db

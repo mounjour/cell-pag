@@ -57,9 +57,9 @@ class Contrato(models.Model):
         verbose_name="cliente",
     )
     apelido = models.CharField(
-        "apelido / descrição",
+        "nome do contrato",
         max_length=80,
-        help_text='Diferencia contratos do mesmo cliente. Ex.: "iPhone 11".',
+        help_text='Para diferenciar os contratos do mesmo cliente. Ex.: "iPhone 11".',
     )
     aparelho_modelo = models.CharField("aparelho (modelo)", max_length=120)
     imei = models.CharField("IMEI", max_length=20, blank=True)
@@ -78,7 +78,7 @@ class Contrato(models.Model):
     )
 
     valor_total = models.DecimalField("valor total do contrato", max_digits=10, decimal_places=2)
-    estrutura = models.CharField("estrutura de pagamento", max_length=12, choices=ESTRUTURAS_ATIVAS)
+    estrutura = models.CharField("frequência de pagamento", max_length=12, choices=ESTRUTURAS_ATIVAS)
     valor_parcela = models.DecimalField(
         "valor da parcela", max_digits=10, decimal_places=2, null=True, blank=True
     )
@@ -86,13 +86,22 @@ class Contrato(models.Model):
         "juros diário", max_digits=8, decimal_places=2, default=Decimal("5.00"),
         help_text="Cobrado por dia de atraso neste contrato.",
     )
-    num_parcelas = models.PositiveIntegerField("nº de parcelas", null=True, blank=True)
-    data_inicio = models.DateField("data de início")
-    dia_referencia = models.CharField(
-        "dia(s) de referência",
-        max_length=40,
+    num_parcelas = models.PositiveIntegerField("quantidade de parcelas", null=True, blank=True)
+    data_inicio = models.DateField("data da compra")
+    primeira_cobranca = models.DateField(
+        "primeira cobrança",
+        null=True,
         blank=True,
-        help_text="Anotação livre (ex.: quinzenal — data combinada com o Alisson). Não entra no cálculo.",
+        help_text=(
+            "Data da parcela 1. As demais seguem o dia de cobrança (dia da semana ou do mês). "
+            "Vazio nos contratos antigos, que contam a partir da data da compra."
+        ),
+    )
+    dias_cobranca_mes = models.CharField(
+        "dia(s) do mês da cobrança",
+        max_length=5,
+        blank=True,
+        help_text='Mensal: o dia (ex.: "15"). Quinzenal em dois dias fixos: "5,20". Vazio nos demais.',
     )
     proximo_vencimento = models.DateField(
         "próximo vencimento",
@@ -197,6 +206,23 @@ class Contrato(models.Model):
     #: (~1 ano de diária). Evita laço gigante; o job roda todo dia e completa.
     MAX_PARCELAS_SEM_TETO = 400
 
+    def data_da_parcela(self, numero: int) -> datetime.date:
+        """Data de vencimento da parcela ``numero`` (1, 2, ...), pelo dia de cobrança do contrato."""
+        from apps.pagamentos import recorrencia
+
+        return recorrencia.data_da_parcela(
+            self.data_inicio, self.estrutura, numero, self.primeira_cobranca, self.dias_cobranca_mes
+        )
+
+    @property
+    def dia_de_cobranca(self) -> str:
+        """O dia de cobrança em linguagem simples ("Toda segunda-feira", "Todo dia 15")."""
+        from apps.pagamentos import recorrencia
+
+        return recorrencia.descrever_dia_de_cobranca(
+            self.estrutura, self.data_inicio, self.primeira_cobranca, self.dias_cobranca_mes
+        )
+
     def gerar_vencimentos(self, dias_a_frente: int = 60, hoje=None) -> list:
         """Cria os `Vencimento` que faltam, das parcelas vencidas até
         ``hoje + dias_a_frente``.
@@ -206,7 +232,6 @@ class Contrato(models.Model):
         ``UniqueConstraint(contrato, numero)`` e só cria o que falta. Contrato
         quitado não gera nada. Devolve a lista de `Vencimento` criados.
         """
-        from apps.pagamentos import recorrencia
         from apps.pagamentos.models import Vencimento
 
         if self.quitado or self.valor_parcela is None:
@@ -222,7 +247,7 @@ class Contrato(models.Model):
 
         novos = []
         for numero in range(1, teto + 1):
-            data = recorrencia.data_da_parcela(self.data_inicio, self.estrutura, numero)
+            data = self.data_da_parcela(numero)
             if data > horizonte:
                 break
             if numero not in ja_existem:
@@ -306,11 +331,7 @@ class Contrato(models.Model):
 
         Sem ``num_parcelas`` o resultado é ``None`` (não dá para saber a data).
         """
-        from apps.pagamentos import recorrencia
-
-        nova = recorrencia.data_prevista_quitacao(
-            self.data_inicio, self.estrutura, self.num_parcelas
-        )
+        nova = self.data_da_parcela(self.num_parcelas) if self.num_parcelas else None
         if nova == self.data_prevista_quitacao:
             return False
         self.data_prevista_quitacao = nova

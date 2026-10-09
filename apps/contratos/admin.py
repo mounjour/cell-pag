@@ -23,7 +23,7 @@ class ContratoResource(resources.ModelResource):
         fields = (
             "id", "cliente", "apelido", "aparelho_modelo", "imei", "valor_total",
             "estrutura", "valor_parcela", "num_parcelas", "data_inicio",
-            "dia_referencia", "proximo_vencimento", "status", "data_prevista_quitacao",
+            "primeira_cobranca", "dias_cobranca_mes", "proximo_vencimento", "status", "data_prevista_quitacao",
         )
         export_order = fields
 

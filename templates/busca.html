@@ -11,7 +11,7 @@
 
 {% if not q %}
   <div class="empty">
-    <p>Digite o nome ou CPF de um cliente, ou o apelido, aparelho, IMEI ou número (CT-0001) de um contrato.</p>
+    <p>Digite o nome ou CPF de um cliente, ou o nome do contrato, aparelho, IMEI ou número (CT-0001) de um contrato.</p>
     <p class="helptext">Dica: aperte <kbd>/</kbd> em qualquer tela para buscar.</p>
   </div>
 {% elif curta %}
@@ -44,12 +44,12 @@
     <h2 class="resultado-grupo">Contratos <small>{{ contratos|length }}</small></h2>
     <div class="tbl-wrap cards">
       <table>
-        <thead><tr><th>Nº</th><th>Apelido</th><th>Cliente</th><th>Aparelho</th><th>Status</th></tr></thead>
+        <thead><tr><th>Nº</th><th>Contrato</th><th>Cliente</th><th>Aparelho</th><th>Status</th></tr></thead>
         <tbody>
           {% for ct in contratos %}
             <tr class="linha-link row-acento row-acento--{{ ct.status_efetivo }}">
               <td data-label="Nº">{{ ct.numero_interno }}</td>
-              <td data-label="Apelido"><a class="link-linha" href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
+              <td data-label="Contrato"><a class="link-linha" href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
               <td data-label="Cliente"><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></td>
               <td data-label="Aparelho">{{ ct.aparelho_modelo }}</td>
               <td class="status-cell" data-label="Status"><span class="pill {{ ct.status_efetivo }}">{{ ct.status_efetivo_label }}</span></td>
