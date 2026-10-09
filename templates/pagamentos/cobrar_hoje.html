@@ -28,7 +28,7 @@
 </section>
 
 <div class="filtro-pills">
-  <a class="filtro-pill{% if not estrutura_atual %} ativo{% endif %}" href="?">Todos os tipos</a>
+  <a class="filtro-pill{% if not estrutura_atual %} ativo{% endif %}" href="?">Todas as frequências</a>
   {% for valor, rotulo in estrutura_opcoes %}
     <a class="filtro-pill{% if valor == estrutura_atual %} ativo{% endif %}" href="?estrutura={{ valor }}">{{ rotulo }}</a>
   {% endfor %}

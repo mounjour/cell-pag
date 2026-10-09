@@ -28,7 +28,7 @@
   <div class="tbl-wrap cards">
     <table>
       <thead>
-        <tr><th>Nº</th><th>Apelido</th><th>Cliente</th><th>Estrutura</th><th class="num">Valor total</th><th class="num">Início</th><th>Status</th></tr>
+        <tr><th>Nº</th><th>Contrato</th><th>Cliente</th><th>Frequência</th><th class="num">Valor total</th><th class="num">Compra</th><th>Status</th></tr>
       </thead>
       <tbody>
         {% for ct in contratos %}
@@ -36,9 +36,9 @@
             <td data-label="Nº">{{ ct.numero_interno }}</td>
             <td data-label="Aparelho"><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
             <td data-label="Cliente"><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></td>
-            <td data-label="Estrutura">{{ ct.get_estrutura_display }}</td>
+            <td data-label="Frequência">{{ ct.get_estrutura_display }}</td>
             <td class="num" data-label="Valor total">R$ {{ ct.valor_total }}</td>
-            <td class="num" data-label="Início">{{ ct.data_inicio|date:"d/m/Y" }}</td>
+            <td class="num" data-label="Compra">{{ ct.data_inicio|date:"d/m/Y" }}</td>
             <td class="status-cell" data-label="Status"><span class="pill {{ ct.status_efetivo }}">{{ ct.status_efetivo_label }}</span></td>
           </tr>
         {% endfor %}

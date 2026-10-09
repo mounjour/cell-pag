@@ -13,7 +13,6 @@ import datetime
 from decimal import Decimal
 
 from apps.pagamentos import atraso
-from apps.pagamentos.recorrencia import data_da_parcela
 
 ZERO = Decimal("0.00")
 
@@ -33,7 +32,7 @@ def resumo_do_cadastro(contrato, parcelas_ja_pagas: int, hoje: datetime.date) ->
     cobradas_na_primeira = []  # parcelas vencidas ou que vencem hoje (entram juntas)
     primeira_futura = None
     for numero in range(pagas + 1, total + 1):
-        vence = data_da_parcela(contrato.data_inicio, contrato.estrutura, numero)
+        vence = contrato.data_da_parcela(numero)
         dias = atraso.dias_de_atraso(vence, hoje, contrato.estrutura)
         if dias > 0:
             atrasadas += 1
@@ -71,7 +70,7 @@ def resumo_do_cadastro(contrato, parcelas_ja_pagas: int, hoje: datetime.date) ->
         "maior_atraso_dias": max_dias,
         "status_esperado": atraso.classificar_status(max_dias),
         "alerta_bloqueio": atraso.precisa_alertar_bloqueio(max_dias),
-        "ultimo_vencimento": data_da_parcela(contrato.data_inicio, contrato.estrutura, total),
+        "ultimo_vencimento": contrato.data_da_parcela(total),
         # as 3 próximas depois da primeira cobrança futura (a primeira já vai na frase)
         "proximas": [vence for _, vence in futuras[1:4]] if not cobradas_na_primeira else [vence for _, vence in futuras[:3]],
         "primeira": None,

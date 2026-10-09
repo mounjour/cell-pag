@@ -316,7 +316,6 @@ def test_editar_contrato_pela_web_poda_parcelas_reduzidas(auth_client, cliente):
         "estrutura": Contrato.Estrutura.MENSAL,
         "num_parcelas": "3",
         "data_inicio": INICIO.isoformat(),
-        "dia_referencia": "",
         "proximo_vencimento": "",
         "status": Contrato.Status.EM_DIA,
         "data_prevista_quitacao": "",

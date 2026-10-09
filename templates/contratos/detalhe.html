@@ -25,7 +25,7 @@
 
 <dl class="meta">
   <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}{% if contrato.imei %} · IMEI <span class="num">{{ contrato.imei }}</span>{% endif %}</dd></div>
-  <div><dt>Estrutura</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
+  <div><dt>Frequência de pagamento</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
   <div><dt>Telefone</dt><dd>
     <a class="num" href="tel:{{ contrato.cliente.telefone_whatsapp.as_e164 }}">{{ contrato.cliente.telefone_exibicao }}</a>
     <a class="zap" href="{{ contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
@@ -35,16 +35,16 @@
   {% if entradas %}
     <div><dt>Entrada</dt><dd class="num">{% for e in entradas %}R$ {{ e.valor_pago }} ({{ e.get_forma_display }}){% if not forloop.last %} + {% endif %}{% endfor %}</dd></div>
   {% endif %}
-  <div><dt>Parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %} × {{ contrato.num_parcelas|default:"—" }}</dd></div>
-  <div><dt>Data de início</dt><dd class="num">{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
-  <div><dt>Dia(s) de referência</dt><dd>{{ contrato.dia_referencia|default:"—" }}</dd></div>
-  <div><dt>Próximo vencimento</dt><dd class="num">{{ contrato.data_referencia_atraso|date:"d/m/Y"|default:"—" }}</dd></div>
-  <div><dt>Previsão de quitação</dt><dd class="num">{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
+  <div><dt>Parcela (valor × quantidade)</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %} × {{ contrato.num_parcelas|default:"—" }}</dd></div>
+  <div><dt>Data da compra</dt><dd class="num">{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
+  <div><dt>Dia de cobrança</dt><dd>{{ contrato.dia_de_cobranca }}</dd></div>
+  <div><dt>Próxima cobrança</dt><dd class="num">{{ contrato.data_referencia_atraso|date:"d/m/Y"|default:"—" }}</dd></div>
+  <div><dt>Última parcela prevista</dt><dd class="num">{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
 </dl>
 
 {% if contrato.parcelas_conferem is False %}
   <p class="note">
-    <strong>Confira as parcelas:</strong> valor da parcela × nº de parcelas =
+    <strong>Confira as parcelas:</strong> valor da parcela × quantidade de parcelas =
     <span class="num">R$ {{ contrato.total_das_parcelas }}</span>, diferente do valor total
     (<span class="num">R$ {{ contrato.valor_total }}</span>). O sistema não recalcula — é só um aviso.
   </p>
@@ -124,7 +124,7 @@
           {% csrf_token %}
           <button type="submit" class="btn">{% include "_icone.html" with nome="gerar" %}Gerar parcelas</button>
         </form>
-        <p class="helptext">Cria as parcelas com vencimento até 60 dias à frente, a partir da data de início e da estrutura ({{ contrato.get_estrutura_display|lower }}). Pode gerar de novo mais tarde para as parcelas seguintes.</p>
+        <p class="helptext">Cria as parcelas com vencimento até 60 dias à frente, a partir da primeira cobrança e da frequência ({{ contrato.get_estrutura_display|lower }}). Pode gerar de novo mais tarde para as parcelas seguintes.</p>
       {% endif %}
     </div>
   {% endif %}
