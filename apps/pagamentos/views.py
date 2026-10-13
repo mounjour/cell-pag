@@ -28,8 +28,8 @@ from apps.contratos.models import Contrato
 from . import cora_api
 from .agenda import montar_agenda_do_dia
 from .contatos import promessas_a_retornar
-from . import acordos
-from .forms import AcordoNovaDataForm, AcordoPerdaoForm, ContatoDeCobrancaForm, PagamentoForm
+from . import acordos, parcelas
+from .forms import AcordoNovaDataForm, AcordoPerdaoForm, ContatoDeCobrancaForm, PagamentoForm, ParcelaEditarForm
 from .comprovantes import conferir_na_cora
 from .limpeza import encerrar_cobranca_automatica
 from .models import (
@@ -146,6 +146,50 @@ class AcordoView(LoginRequiredMixin, View):
         ctx["form_perdao"] = form if not usa_data else AcordoPerdaoForm(initial={"juros": hoje_juros})
         ctx["form_data"] = form if usa_data else AcordoNovaDataForm()
         return render(request, self.template_name, ctx)
+
+
+class ParcelaEditarView(LoginRequiredMixin, View):
+    """Edita data, valor e valor a mais de uma parcela (GET mostra, POST aplica)."""
+
+    template_name = "pagamentos/parcela_editar.html"
+
+    def _vencimento(self, pk):
+        return get_object_or_404(Vencimento.objects.select_related("contrato__cliente"), pk=pk)
+
+    def _render(self, request, vencimento, form):
+        return render(request, self.template_name, {
+            "vencimento": vencimento, "contrato": vencimento.contrato, "form": form,
+            "motivo": parcelas.motivo_para_nao_editar(vencimento),
+        })
+
+    def get(self, request, pk):
+        vencimento = self._vencimento(pk)
+        form = ParcelaEditarForm(initial={
+            "data_vencimento": vencimento.data_vencimento,
+            "valor_base": f"{parcelas.valor_base(vencimento):.2f}".replace(".", ","),
+            "acrescimo": f"{vencimento.acrescimo:.2f}".replace(".", ",") if vencimento.acrescimo else "",
+            "motivo": vencimento.acrescimo_motivo,
+        })
+        return self._render(request, vencimento, form)
+
+    def post(self, request, pk):
+        vencimento = self._vencimento(pk)
+        form = ParcelaEditarForm(request.POST)
+        if form.is_valid():
+            try:
+                avisos = parcelas.editar_parcela(
+                    vencimento, data_vencimento=form.cleaned_data["data_vencimento"],
+                    valor_base=form.cleaned_data["valor_base"], acrescimo=form.cleaned_data["acrescimo"],
+                    motivo=form.cleaned_data["motivo"],
+                )
+            except parcelas.ParcelaInvalida as exc:
+                form.add_error(None, str(exc))
+            else:
+                messages.success(request, f"Parcela {vencimento.numero} atualizada.")
+                for nivel, texto in avisos:
+                    getattr(messages, nivel)(request, texto)
+                return redirect(reverse("contratos:detalhe", args=[vencimento.contrato_id]))
+        return self._render(request, vencimento, form)
 
 
 class AcordoDesfazerView(LoginRequiredMixin, View):

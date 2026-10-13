@@ -70,6 +70,12 @@ class Vencimento(models.Model):
         help_text="Juros de atraso perdoados em um acordo: abatidos do que é cobrado desta parcela.",
     )
 
+    acrescimo = models.DecimalField(
+        "valor a mais", max_digits=10, decimal_places=2, default=Decimal("0.00"),
+        help_text="Valor combinado além da parcela (ou desconto, se negativo). Já está somado em ``valor_previsto``.",
+    )
+    acrescimo_motivo = models.CharField("motivo do ajuste", max_length=120, blank=True)
+
     criado_em = models.DateTimeField("criado em", auto_now_add=True)
     atualizado_em = models.DateTimeField("atualizado em", auto_now=True)
 

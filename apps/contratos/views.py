@@ -587,6 +587,15 @@ class ContratoUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, "Contrato atualizado.")
         _avisar_se_parcela_nao_bate(self.request, self.object)
         _gerar_parcelas_ao_salvar(self.request, self.object)
+        from apps.pagamentos.parcelas import ressincronizar_parcelas_em_aberto
+
+        n = ressincronizar_parcelas_em_aberto(self.object)
+        if n:
+            messages.info(
+                self.request,
+                f"{n} parcela(s) em aberto atualizada(s) com o valor e as datas novas. "
+                "O valor a mais de cada parcela foi mantido.",
+            )
         return response
 
     def get_success_url(self):
