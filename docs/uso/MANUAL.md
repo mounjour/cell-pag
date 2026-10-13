@@ -341,6 +341,12 @@ O formulário é dividido em quatro blocos:
 > Por causa do arredondamento, o total das parcelas pode diferir uns centavos do
 > valor total; só diferenças maiores (contratos importados) geram aviso amarelo.
 
+### Entrada
+
+A **entrada** é o valor recebido à vista no fechamento (e a forma: dinheiro, Pix…). Ela **não é parcela** e não entra no valor total financiado. Fica registrada como um pagamento sem parcela e aparece na tela do contrato.
+
+Ao **editar o contrato** os campos de entrada aparecem preenchidos: corrija o valor ou a forma, **apague o valor para remover a entrada**, ou, se o contrato não tinha, informe uma. Contrato com mais de um lançamento de entrada só pode ser corrigido pela Administração.
+
 ### Frequência e dia de cobrança
 | Campo | Obrigatório | Observação |
 |---|---|---|
