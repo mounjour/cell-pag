@@ -51,9 +51,11 @@
     {% include "_field.html" with field=form.valor_total %}
     {% include "_field.html" with field=form.num_parcelas %}
     {% include "_field.html" with field=form.juros_diario %}
-    {% if not form.instance.pk %}
+    {% if form.fields.entrada %}
       {% include "_field.html" with field=form.entrada %}
       {% include "_field.html" with field=form.entrada_forma %}
+    {% elif form.entradas_existentes %}
+      <p class="note">Este contrato tem {{ form.entradas_existentes|length }} lançamentos de entrada. Para corrigir, use a <a href="/admin/pagamentos/pagamento/?contrato__id__exact={{ form.instance.pk }}">Administração</a>.</p>
     {% endif %}
   </div>
 

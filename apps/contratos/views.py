@@ -423,6 +423,30 @@ def _registrar_entrada(request, contrato, valor, forma):
     messages.success(request, f"Entrada de R$ {valor_fmt} registrada.")
 
 
+def _atualizar_entrada(request, contrato, form):
+    """Aplica na entrada do contrato o que foi digitado ao editar: corrige, cria ou remove.
+
+    A entrada é o `Pagamento` sem parcela. Valor vazio remove; valor ou forma diferentes corrigem;
+    sem lançamento anterior, um valor cria. Sem mudança, não toca em nada.
+    """
+    if "entrada" not in form.fields:
+        return
+    novo = form.cleaned_data.get("entrada")
+    forma = form.cleaned_data.get("entrada_forma")
+    atual = form.entradas_existentes[0] if form.entradas_existentes else None
+    if atual is None:
+        if novo:
+            _registrar_entrada(request, contrato, novo, forma)
+        return
+    if not novo:
+        atual.delete()
+        messages.success(request, "Entrada removida.")
+    elif atual.valor_pago != novo or atual.forma != forma:
+        atual.valor_pago, atual.forma = novo, forma
+        atual.save(update_fields=["valor_pago", "forma"])
+        messages.success(request, f"Entrada corrigida para R$ {novo:.2f}.".replace(".", ","))
+
+
 class ContratoCreateView(LoginRequiredMixin, CreateView):
     model = Contrato
     form_class = ContratoForm
@@ -557,7 +581,9 @@ class ContratoUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "contratos/form.html"
 
     def form_valid(self, form):
-        response = super().form_valid(form)
+        with transaction.atomic():
+            response = super().form_valid(form)
+            _atualizar_entrada(self.request, self.object, form)
         messages.success(self.request, "Contrato atualizado.")
         _avisar_se_parcela_nao_bate(self.request, self.object)
         _gerar_parcelas_ao_salvar(self.request, self.object)

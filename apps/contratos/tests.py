@@ -748,11 +748,13 @@ def test_entrada_zero_ou_negativa_e_invalida(auth_client, cliente):
 
 
 @pytest.mark.django_db
-def test_entrada_nao_aparece_na_edicao(auth_client, cliente):
+def test_entrada_aparece_na_edicao_e_parcelas_ja_pagas_nao(auth_client, cliente):
+    """A entrada pode ser corrigida ao editar (ver test_entrada_edicao.py); "parcelas já pagas" é só do cadastro."""
     ct = novo_contrato(cliente)
     resp = auth_client.get(reverse("contratos:editar", args=[ct.pk]))
-    assert "entrada" not in resp.context["form"].fields
-    assert "entrada_forma" not in resp.context["form"].fields
+    assert "entrada" in resp.context["form"].fields
+    assert "entrada_forma" in resp.context["form"].fields
+    assert "parcelas_ja_pagas" not in resp.context["form"].fields
 
 
 @pytest.mark.django_db

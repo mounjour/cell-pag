@@ -193,13 +193,26 @@ class ContratoForm(forms.ModelForm):
             )
             self.fields["aparelho"].widget.attrs["data-preenche-aparelho"] = "1"
             self.fields["aparelho"].empty_label = "Nenhum — manter modelo/IMEI abaixo"
+        self.entradas_existentes = []
         if self.instance and self.instance.pk:
-            # Só faz sentido ao cadastrar — parcelas de um contrato já
-            # existente se registram pela tela de pagamento, uma a uma, e a
-            # entrada (se esqueceram de lançar) também dá pra registrar à mão.
+            # "Parcelas já pagas" só faz sentido ao cadastrar: num contrato existente as parcelas
+            # se registram pela tela de pagamento, uma a uma.
             del self.fields["parcelas_ja_pagas"]
-            del self.fields["entrada"]
-            del self.fields["entrada_forma"]
+            # A entrada é um pagamento sem parcela. Com 0 ou 1 lançamento dá para editar aqui
+            # (esvaziar o valor remove a entrada); com vários, só pelo Admin, para não adivinhar qual mexer.
+            self.entradas_existentes = list(self.instance.pagamentos.filter(vencimento__isnull=True))
+            if len(self.entradas_existentes) > 1:
+                del self.fields["entrada"]
+                del self.fields["entrada_forma"]
+            else:
+                self.fields["entrada"].help_text = (
+                    "Valor recebido à vista no fechamento. Corrija o valor ou a forma, ou apague o valor "
+                    "para remover a entrada. Não é uma parcela."
+                )
+                if self.entradas_existentes:
+                    atual = self.entradas_existentes[0]
+                    self.initial["entrada"] = _formata_moeda(atual.valor_pago)
+                    self.initial["entrada_forma"] = atual.forma
         self.fields["num_parcelas"].help_text = (
             "O valor de cada parcela é calculado sozinho: valor total ÷ quantidade de parcelas, "
             "arredondado para o múltiplo de R$ 0,10 mais próximo. Confira na prévia."
