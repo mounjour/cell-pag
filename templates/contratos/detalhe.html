@@ -24,24 +24,47 @@
   </div>
 {% endif %}
 
-<dl class="meta">
-  <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}{% if contrato.imei %} · IMEI <span class="num">{{ contrato.imei }}</span>{% endif %}</dd></div>
-  <div><dt>Frequência de pagamento</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
-  <div><dt>Telefone</dt><dd>
-    <a class="num" href="tel:{{ contrato.cliente.telefone_whatsapp.as_e164 }}">{{ contrato.cliente.telefone_exibicao }}</a>
-    <a class="zap" href="{{ contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
-  </dd></div>
-  <div><dt>Status</dt><dd><span class="pill {{ contrato.status_efetivo }}">{{ contrato.status_efetivo_label }}</span></dd></div>
-  <div><dt>Valor total</dt><dd class="num">R$ {{ contrato.valor_total }}</dd></div>
-  {% if entradas %}
-    <div><dt>Entrada</dt><dd class="num">{% for e in entradas %}R$ {{ e.valor_pago }} ({{ e.get_forma_display }}){% if not forloop.last %} + {% endif %}{% endfor %}</dd></div>
-  {% endif %}
-  <div><dt>Parcela (valor × quantidade)</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %} × {{ contrato.num_parcelas|default:"—" }}</dd></div>
-  <div><dt>Data da compra</dt><dd class="num">{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
-  <div><dt>Dia de cobrança</dt><dd>{{ contrato.dia_de_cobranca }}</dd></div>
-  <div><dt>Próxima cobrança</dt><dd class="num">{{ contrato.data_referencia_atraso|date:"d/m/Y"|default:"—" }}</dd></div>
-  <div><dt>Última parcela prevista</dt><dd class="num">{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
-</dl>
+<div class="contrato-dados">
+  <section class="card">
+    <h2>Aparelho e cliente</h2>
+    <dl class="lista-dados">
+      <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}</dd></div>
+      <div><dt>IMEI</dt><dd class="num">{{ contrato.imei|default:"—" }}</dd></div>
+      <div><dt>Cliente</dt><dd><a href="{% url 'clientes:detalhe' contrato.cliente.pk %}">{{ contrato.cliente.nome }}</a></dd></div>
+      <div><dt>Telefone</dt><dd>
+        <a class="num" href="tel:{{ contrato.cliente.telefone_whatsapp.as_e164 }}">{{ contrato.cliente.telefone_exibicao }}</a>
+        <a class="zap" href="{{ contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+      </dd></div>
+      <div><dt>Status</dt><dd><span class="pill {{ contrato.status_efetivo }}">{{ contrato.status_efetivo_label }}</span></dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Valores</h2>
+    <dl class="lista-dados">
+      <div><dt>Valor total</dt><dd class="num">R$ {{ contrato.valor_total }}</dd></div>
+      {% for e in entradas %}
+        <div><dt>Entrada</dt><dd class="num">R$ {{ e.valor_pago }} <small>({{ e.get_forma_display }})</small></dd></div>
+      {% endfor %}
+      <div><dt>Parcelas</dt><dd class="num">{{ contrato.num_parcelas|default:"—" }} × {% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
+      {% if contrato.total_das_parcelas != None %}
+        <div><dt>Total das parcelas</dt><dd class="num">R$ {{ contrato.total_das_parcelas }}</dd></div>
+      {% endif %}
+      <div><dt>Juros por dia de atraso</dt><dd class="num">R$ {{ contrato.juros_diario }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Datas e cobrança</h2>
+    <dl class="lista-dados">
+      <div><dt>Frequência de pagamento</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
+      <div><dt>Dia de cobrança</dt><dd>{{ contrato.dia_de_cobranca }}</dd></div>
+      <div><dt>Data da compra</dt><dd class="num">{{ contrato.data_inicio|date:"d/m/Y" }}</dd></div>
+      <div><dt>Próxima cobrança</dt><dd class="num">{{ contrato.data_referencia_atraso|date:"d/m/Y"|default:"—" }}</dd></div>
+      <div><dt>Última parcela prevista</dt><dd class="num">{{ contrato.data_prevista_quitacao|date:"d/m/Y"|default:"—" }}</dd></div>
+    </dl>
+  </section>
+</div>
 
 {% if contrato.parcelas_conferem is False %}
   <p class="note">
