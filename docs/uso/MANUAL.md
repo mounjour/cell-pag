@@ -324,6 +324,8 @@ O formulário é dividido em quatro blocos:
 > **Importação por planilha:** se a planilha tiver a coluna **IMEI** (ou "EMEI"), ao resolver cada linha o sistema **cria o aparelho no estoque** com esse IMEI (ou reaproveita o que já estiver livre lá) e já o vincula ao contrato. Linha sem IMEI ou com IMEI inválido (diferente de 15 dígitos) vira contrato sem vínculo, com aviso na prévia. Um IMEI que já pertence a outro contrato é recusado.
 
 > **Dia de cobrança na planilha:** o calendário nasce do **vencimento da parcela** e da **parcela atual** (a última parcela paga): o sistema reconstrói a primeira cobrança de modo que a próxima parcela caia exatamente no vencimento informado. Semanal e quinzenal seguem o dia da semana do vencimento; mensal, o dia do mês dele (o número em "Mensal - 30" é só agrupamento: se divergir do vencimento, vale o vencimento, com aviso). Quinzenal em dois dias fixos é reconhecido por "dias 5 e 20" nas observações (ou numa coluna opcional **dia de cobrança**). A tela de resolver pendência já vem com as parcelas pagas preenchidas.
+
+> **Pendência resolvida à mão:** se você cadastrar o contrato direto em **Novo contrato** em vez de usar o botão Resolver, a pendência correspondente **sai da lista sozinha** e aparece um aviso ("Pendência de importação resolvida: linha N"). O sistema liga os dois pelo **IMEI**; se a linha da planilha não tinha IMEI, pelo **mesmo cliente (CPF ou nome) e o mesmo modelo** — mas só quando existe uma única pendência assim (na dúvida, nada é alterado).
 >
 > Contratos antigos, sem vínculo com o estoque, continuam editáveis com modelo e IMEI digitados, e o vínculo é opcional.
 

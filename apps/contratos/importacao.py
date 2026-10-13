@@ -192,3 +192,47 @@ def contar_por_cliente(linhas):
     for linha in validas:
         linha["contratos_do_cliente"] = contagem[chave_cliente(linha)]
     return len(contagem), len(validas)
+
+
+def _normaliza(texto) -> str:
+    sem_acento = unicodedata.normalize("NFKD", str(texto or "")).encode("ascii", "ignore").decode()
+    return re.sub(r"\s+", " ", sem_acento.lower()).strip()
+
+
+def pendencias_do_contrato(contrato) -> list:
+    """Pendências de importação em aberto que este contrato (cadastrado à mão) já resolve.
+
+    O IMEI é a ligação mais segura. Sem ele (linha da planilha sem IMEI), vale o **mesmo cliente
+    e o mesmo modelo** — mas só quando há uma única pendência assim: na dúvida, não mexe em nada.
+    """
+    from .models import ImportacaoContratoPendente
+
+    abertas = list(ImportacaoContratoPendente.objects.filter(resolvida_em__isnull=True))
+    imei = re.sub(r"\D", "", contrato.imei or "")
+    por_imei = [p for p in abertas if imei and re.sub(r"\D", "", str(p.dados.get("imei") or "")) == imei]
+    if por_imei:
+        return por_imei
+
+    cliente = contrato.cliente
+    nome, modelo = _normaliza(cliente.nome), _normaliza(contrato.aparelho_modelo)
+
+    def mesmo_cliente(p) -> bool:
+        cpf = re.sub(r"\D", "", str(p.dados.get("cpf") or ""))
+        return (cpf == cliente.cpf) if cpf else _normaliza(p.dados.get("cliente")) == nome
+
+    candidatas = [
+        p for p in abertas
+        if not p.dados.get("imei") and mesmo_cliente(p) and _normaliza(p.dados.get("modelo")) == modelo
+    ]
+    return candidatas if len(candidatas) == 1 else []
+
+
+def resolver_pendencias_do_contrato(contrato) -> list:
+    """Dá baixa nas pendências que o contrato recém-cadastrado resolve. Devolve as que foram resolvidas."""
+    from django.utils import timezone
+
+    resolvidas = pendencias_do_contrato(contrato)
+    for pendencia in resolvidas:
+        pendencia.resolvida_em = timezone.now()
+        pendencia.save(update_fields=["resolvida_em"])
+    return resolvidas
