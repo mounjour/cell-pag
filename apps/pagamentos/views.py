@@ -13,7 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.db.models import Q
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -28,7 +28,8 @@ from apps.contratos.models import Contrato
 from . import cora_api
 from .agenda import montar_agenda_do_dia
 from .contatos import promessas_a_retornar
-from .forms import ContatoDeCobrancaForm, PagamentoForm
+from . import acordos
+from .forms import AcordoNovaDataForm, AcordoPerdaoForm, ContatoDeCobrancaForm, PagamentoForm
 from .comprovantes import conferir_na_cora
 from .limpeza import encerrar_cobranca_automatica
 from .models import (
@@ -82,6 +83,87 @@ class CobrarHojeView(LoginRequiredMixin, TemplateView):
                 "vale falar com o cliente de novo.",
             )
         return ctx
+
+
+class AcordoView(LoginRequiredMixin, View):
+    """Negocia uma parcela atrasada: perdoar juros ou marcar uma nova data (GET mostra, POST aplica)."""
+
+    template_name = "pagamentos/acordo.html"
+
+    def _contexto(self, vencimento, **extra):
+        hoje = timezone.localdate()
+        contrato = vencimento.contrato
+        dias = acordos.atraso.dias_de_atraso(vencimento.data_vencimento, hoje, contrato.estrutura)
+        juros = acordos.juros_a_cobrar(vencimento, hoje)
+        return {
+            "vencimento": vencimento, "contrato": contrato, "hoje": hoje, "dias_atraso": dias,
+            "juros_hoje": juros, "total_hoje": max(vencimento.saldo, 0) + juros,
+            "motivo": acordos.motivo_para_nao_negociar(vencimento),
+            "juros_perdoados": vencimento.juros_abonado,
+            **extra,
+        }
+
+    def _vencimento(self, pk):
+        return get_object_or_404(Vencimento.objects.select_related("contrato__cliente"), pk=pk)
+
+    def get(self, request, pk):
+        vencimento = self._vencimento(pk)
+        ctx = self._contexto(vencimento)
+        ctx["form_perdao"] = AcordoPerdaoForm(initial={"juros": f"{ctx['juros_hoje']:.2f}".replace(".", ",")})
+        ctx["form_data"] = AcordoNovaDataForm()
+        return render(request, self.template_name, ctx)
+
+    def post(self, request, pk):
+        vencimento = self._vencimento(pk)
+        tipo = request.POST.get("tipo")
+        usa_data = tipo == "nova_data"
+        form = (AcordoNovaDataForm if usa_data else AcordoPerdaoForm)(request.POST)
+        if form.is_valid():
+            try:
+                acordo, avisos = acordos.aplicar_acordo(
+                    vencimento, tipo=tipo, autor=request.user, nota=form.cleaned_data.get("nota", ""),
+                    nova_data=form.cleaned_data.get("nova_data"), juros_perdoar=form.cleaned_data.get("juros"),
+                )
+            except acordos.AcordoInvalido as exc:
+                form.add_error(None, str(exc))
+            else:
+                if usa_data:
+                    messages.success(
+                        request,
+                        f"Acordo registrado: parcela {vencimento.numero} agora vence em {acordo.nova_data:%d/%m/%Y}.",
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f"Acordo registrado: R$ {acordo.juros_perdoados:.2f} de juros perdoados na parcela {vencimento.numero}."
+                        .replace(".", ","),
+                    )
+                for nivel, texto in avisos:
+                    getattr(messages, nivel)(request, texto)
+                return redirect(reverse("contratos:detalhe", args=[vencimento.contrato_id]) + "#acordos")
+        ctx = self._contexto(vencimento)
+        hoje_juros = f"{ctx['juros_hoje']:.2f}".replace(".", ",")
+        ctx["form_perdao"] = form if not usa_data else AcordoPerdaoForm(initial={"juros": hoje_juros})
+        ctx["form_data"] = form if usa_data else AcordoNovaDataForm()
+        return render(request, self.template_name, ctx)
+
+
+class AcordoDesfazerView(LoginRequiredMixin, View):
+    """Desfaz um acordo enquanto a parcela não foi paga (POST)."""
+
+    def post(self, request, pk):
+        from .models import Acordo
+
+        acordo = get_object_or_404(Acordo.objects.select_related("contrato"), pk=pk)
+        try:
+            avisos = acordos.desfazer_acordo(acordo, autor=request.user)
+        except acordos.AcordoInvalido as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(request, "Acordo desfeito: a parcela voltou ao que era antes.")
+            for nivel, texto in avisos:
+                getattr(messages, nivel)(request, texto)
+        return redirect(reverse("contratos:detalhe", args=[acordo.contrato_id]) + "#acordos")
 
 
 class ContatoCriarView(LoginRequiredMixin, View):

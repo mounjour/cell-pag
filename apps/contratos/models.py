@@ -381,13 +381,18 @@ class Contrato(models.Model):
             return None
         from apps.pagamentos import atraso
 
-        return atraso.avaliar(
+        situacao = atraso.avaliar(
             data_referencia,
             self.estrutura,
             hoje=hoje,
             quitado=self.quitado,
             valor_juros_diario=self.juros_diario,
         )
+        parcela = self.parcela_em_aberto()
+        if parcela is not None and parcela.juros_abonado and situacao.juros:
+            # Juros perdoados em acordo: o que se cobra é o juros do atraso menos o perdoado.
+            situacao = situacao._replace(juros=max(Decimal("0.00"), situacao.juros - parcela.juros_abonado))
+        return situacao
 
     @property
     def status_efetivo(self) -> str:

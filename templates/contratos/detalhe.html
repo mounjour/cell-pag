@@ -100,14 +100,17 @@
           {% for v in vencimentos_exibidos %}
             <tr{% if request.GET.pago == v.numero|stringformat:"s" %} class="linha-pagamento-confirmado"{% endif %}>
               <td>{{ v.numero }}</td>
-              <td class="num" data-label="Vencimento">{{ v.data_vencimento|date:"d/m/Y" }}</td>
+              <td class="num" data-label="Vencimento">{{ v.data_vencimento|date:"d/m/Y" }}{% if v.data_original %}<br><small>era {{ v.data_original|date:"d/m/Y" }}</small>{% endif %}</td>
               <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}</td>
               <td class="num" data-label="Pago">R$ {{ v.valor_pago }}</td>
               <td class="num" data-label="Saldo">R$ {{ v.saldo }}</td>
-              <td data-label="Status"><span class="pill {{ v.status }}">{{ v.get_status_display }}</span></td>
+              <td data-label="Status"><span class="pill {{ v.status }}">{{ v.get_status_display }}</span>{% if v.juros_abonado %}<br><small>juros perdoados: R$ {{ v.juros_abonado }}</small>{% endif %}</td>
               <td data-label="" class="num">
                 {% if not contrato.quitado and v.status != 'pago' %}
                   <a href="{% url 'pagamentos:novo' contrato.pk %}">registrar pagamento</a>
+                {% endif %}
+                {% if not contrato.quitado and v.status == 'aberto' %}
+                  <br><a href="{% url 'pagamentos:acordo' v.pk %}">negociar</a>
                 {% endif %}
               </td>
             </tr>
@@ -140,6 +143,8 @@
     parcela gerada.
   </p>
 {% endif %}
+
+{% include "pagamentos/_acordos_do_contrato.html" %}
 
 <h2>Pagamentos</h2>
 {% with pagamentos=pagamentos_exibidos %}

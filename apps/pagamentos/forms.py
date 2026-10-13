@@ -152,3 +152,38 @@ class ContatoDeCobrancaForm(forms.ModelForm):
             if resultado == ContatoDeCobranca.Resultado.OUTRO and not (dados.get("nota") or "").strip():
                 self.add_error("nota", "Escreva o que aconteceu neste contato.")
         return dados
+
+
+class AcordoPerdaoForm(forms.Form):
+    """Perdoar (parte d)o juros do atraso de uma parcela."""
+
+    juros = forms.CharField(
+        label="Juros a perdoar (R$)",
+        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}),
+    )
+    nota = forms.CharField(
+        label="Anotação (opcional)", required=False, max_length=200,
+        widget=forms.TextInput(attrs={"placeholder": "Ex.: cliente em dia há 6 meses"}),
+    )
+
+    def clean_juros(self):
+        try:
+            valor = moeda_para_decimal(self.cleaned_data.get("juros"))
+        except forms.ValidationError:
+            raise forms.ValidationError("Informe um valor válido, ex.: 25,00.") from None
+        if valor is None or valor <= 0:
+            raise forms.ValidationError("Informe um valor maior que zero.")
+        return valor
+
+
+class AcordoNovaDataForm(forms.Form):
+    """Marcar uma nova data de vencimento para a parcela."""
+
+    nova_data = forms.DateField(
+        label="Nova data de vencimento", input_formats=["%Y-%m-%d"],
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    )
+    nota = forms.CharField(
+        label="Anotação (opcional)", required=False, max_length=200,
+        widget=forms.TextInput(attrs={"placeholder": "Ex.: recebe o salário dia 20"}),
+    )

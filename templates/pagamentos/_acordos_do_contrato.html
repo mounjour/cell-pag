@@ -1,0 +1,31 @@
+{# Acordos feitos no contrato. Espera `acordos` (cada um com `pode_desfazer`). #}
+{% if acordos %}
+<section id="acordos" class="acordos-contrato">
+  <h2>Acordos</h2>
+  <div class="tbl-wrap cards">
+    <table>
+      <thead><tr><th class="num">Data</th><th>Parcela</th><th>Acordo</th><th>Anotação</th><th></th></tr></thead>
+      <tbody>
+        {% for a in acordos %}
+          <tr{% if not a.ativo %} class="acordo-desfeito"{% endif %}>
+            <td class="num" data-label="Data">{{ a.criado_em|date:"d/m/Y" }}{% if a.autor %}<br><small>{{ a.autor.nome_curto }}</small>{% endif %}</td>
+            <td data-label="Parcela">nº {{ a.vencimento.numero }}</td>
+            <td data-label="Acordo">
+              {% if a.tipo == "perdao_juros" %}R$ {{ a.juros_perdoados }} de juros perdoados{% else %}Vencimento de {{ a.data_anterior|date:"d/m/Y" }} para {{ a.nova_data|date:"d/m/Y" }}{% endif %}
+              {% if not a.ativo %}<br><span class="pill aberto">desfeito em {{ a.desfeito_em|date:"d/m/Y" }}</span>{% endif %}
+            </td>
+            <td data-label="Anotação" class="wrap-cell">{{ a.nota|default:"—" }}</td>
+            <td>
+              {% if a.pode_desfazer %}
+                <form method="post" action="{% url 'pagamentos:acordo_desfazer' a.pk %}" data-confirmar="Desfazer este acordo? A parcela volta ao que era antes.">
+                  {% csrf_token %}<button type="submit" class="btn-cancelar-pix">Desfazer</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}

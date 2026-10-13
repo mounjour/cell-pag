@@ -61,6 +61,14 @@ class Vencimento(models.Model):
     status = models.CharField(
         "status", max_length=10, choices=Status.choices, default=Status.ABERTO
     )
+    data_original = models.DateField(
+        "vencimento original", null=True, blank=True,
+        help_text="Preenchido quando a parcela foi prorrogada em um acordo.",
+    )
+    juros_abonado = models.DecimalField(
+        "juros perdoados", max_digits=10, decimal_places=2, default=Decimal("0.00"),
+        help_text="Juros de atraso perdoados em um acordo: abatidos do que é cobrado desta parcela.",
+    )
 
     criado_em = models.DateTimeField("criado em", auto_now_add=True)
     atualizado_em = models.DateTimeField("atualizado em", auto_now=True)
@@ -579,3 +587,56 @@ class ContatoDeCobranca(models.Model):
 
     def __str__(self) -> str:
         return f"{self.contrato} — {self.get_resultado_display()} ({self.criado_em:%d/%m/%Y})"
+
+
+class Acordo(models.Model):
+    """Acordo com o cliente sobre uma parcela atrasada: perdoar juros ou marcar uma nova data.
+
+    O efeito é gravado na própria parcela (``Vencimento.juros_abonado`` ou ``data_vencimento``), de modo
+    que a mensagem, o Pix e as telas já cobram o valor combinado. Este registro guarda **quem** combinou,
+    **quando**, o que mudou — e permite **desfazer** enquanto a parcela não for paga.
+    """
+
+    class Tipo(models.TextChoices):
+        PERDAO_JUROS = "perdao_juros", "Juros perdoados"
+        NOVA_DATA = "nova_data", "Nova data de vencimento"
+
+    contrato = models.ForeignKey(
+        "contratos.Contrato", on_delete=models.PROTECT, related_name="acordos", verbose_name="contrato"
+    )
+    vencimento = models.ForeignKey(
+        Vencimento, on_delete=models.PROTECT, related_name="acordos", verbose_name="parcela"
+    )
+    tipo = models.CharField("tipo", max_length=14, choices=Tipo.choices)
+    juros_perdoados = models.DecimalField(
+        "juros perdoados", max_digits=10, decimal_places=2, default=Decimal("0.00")
+    )
+    data_anterior = models.DateField("vencimento antes do acordo", null=True, blank=True)
+    nova_data = models.DateField("nova data de vencimento", null=True, blank=True)
+    abono_anterior = models.DecimalField(
+        "juros perdoados antes", max_digits=10, decimal_places=2, default=Decimal("0.00"),
+        help_text="Quanto já estava perdoado na parcela antes deste acordo (para poder desfazer).",
+    )
+    nota = models.CharField("anotação", max_length=200, blank=True)
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="combinado por",
+    )
+    criado_em = models.DateTimeField("combinado em", auto_now_add=True)
+    desfeito_em = models.DateTimeField("desfeito em", null=True, blank=True)
+    desfeito_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="desfeito por",
+    )
+
+    class Meta:
+        verbose_name = "acordo"
+        verbose_name_plural = "acordos"
+        ordering = ["-criado_em"]
+
+    def __str__(self) -> str:
+        return f"{self.get_tipo_display()} — {self.vencimento}"
+
+    @property
+    def ativo(self) -> bool:
+        return self.desfeito_em is None

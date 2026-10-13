@@ -115,6 +115,19 @@ Na tela de cada **contrato** (seção **Contatos de cobrança**) você anota o q
 - O histórico dos contatos também aparece na ficha do **cliente**. Uma anotação feita por engano pode ser apagada.
 - Anotar contato **não envia nada** ao cliente e não pausa a cobrança automática.
 
+### Acordo: negociar uma parcela atrasada
+
+Na tela do contrato, na lista de **Parcelas**, o link **negociar** (parcela em aberto, sem pagamento) abre a tela de acordo. Há dois tipos:
+
+| Acordo | O que muda | Detalhes |
+|---|---|---|
+| **Perdoar juros** | o juros cobrado cai pelo valor perdoado | pode perdoar tudo ou só parte (nunca mais que o juros de hoje). **O juros dos dias seguintes continua correndo** |
+| **Nova data de vencimento** | a parcela passa a vencer na nova data e o juros recomeça a contar dela | a data nova precisa ser depois do vencimento atual, não pode estar no passado e não passa do vencimento da parcela seguinte. A data antiga fica visível ("era 03/10/2026") |
+
+O acordo vale para tudo de uma vez: a **mensagem de WhatsApp**, o **Pix** e as telas (Cobrar hoje, contrato, cliente) já cobram o valor combinado. Se já existia um QR de Pix aberto, o sistema o cancela na Cora e a próxima rotina gera outro com o valor novo (se não conseguir cancelar, avisa para cancelar no painel Pix).
+
+Cada acordo fica registrado (quem combinou, quando, o quê, com anotação) na seção **Acordos** do contrato e pode ser **desfeito** enquanto a parcela não for paga (começando pelo mais recente). Parcela que já recebeu pagamento, mesmo parcial, não aceita acordo; para o restante, registre o pagamento.
+
 ### Parcela (Vencimento) × Pagamento (baixa)
 
 - **Parcela / Vencimento**: o que o cliente *deve* pagar numa data (nº, data, valor previsto). O sistema gera automaticamente.
