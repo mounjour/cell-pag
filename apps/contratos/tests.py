@@ -669,10 +669,10 @@ def test_parcelas_ja_pagas_nao_pode_passar_do_num_parcelas(auth_client, cliente)
 
 
 @pytest.mark.django_db
-def test_parcelas_ja_pagas_nao_aparece_na_edicao(auth_client, cliente):
+def test_parcelas_ja_pagas_aparece_na_edicao(auth_client, cliente):
     ct = novo_contrato(cliente)
     resp = auth_client.get(reverse("contratos:editar", args=[ct.pk]))
-    assert "parcelas_ja_pagas" not in resp.context["form"].fields
+    assert "parcelas_ja_pagas" in resp.context["form"].fields
 
 
 # ---------- Entrada (valor à vista no fechamento, à parte das parcelas) ----------
@@ -748,13 +748,13 @@ def test_entrada_zero_ou_negativa_e_invalida(auth_client, cliente):
 
 
 @pytest.mark.django_db
-def test_entrada_aparece_na_edicao_e_parcelas_ja_pagas_nao(auth_client, cliente):
-    """A entrada pode ser corrigida ao editar (ver test_entrada_edicao.py); "parcelas já pagas" é só do cadastro."""
+def test_entrada_e_parcelas_ja_pagas_aparecem_na_edicao(auth_client, cliente):
+    """A entrada pode ser corrigida ao editar (ver test_entrada_edicao.py); "parcelas já pagas" dá baixa de uma vez nas primeiras parcelas."""
     ct = novo_contrato(cliente)
     resp = auth_client.get(reverse("contratos:editar", args=[ct.pk]))
     assert "entrada" in resp.context["form"].fields
     assert "entrada_forma" in resp.context["form"].fields
-    assert "parcelas_ja_pagas" not in resp.context["form"].fields
+    assert "parcelas_ja_pagas" in resp.context["form"].fields
 
 
 @pytest.mark.django_db
