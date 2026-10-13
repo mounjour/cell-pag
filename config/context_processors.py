@@ -29,7 +29,7 @@ def shell(request):
         return {}
     from django.utils.functional import SimpleLazyObject
 
-    from apps.pagamentos.badge import contagem_a_bloquear, contagem_cobrar_hoje
+    from apps.pagamentos.badge import contagem_a_bloquear, contagem_a_desbloquear, contagem_cobrar_hoje
 
     def pix_alertas():
         from apps.pagamentos.models import CobrancaCora, ComprovanteRecebido
@@ -58,6 +58,15 @@ def shell(request):
     def aparelhos_a_bloquear_rotulo():
         return "aparelho para bloquear" if contagem_a_bloquear() == 1 else "aparelhos para bloquear"
 
+    def aparelhos_a_desbloquear():
+        return contagem_a_desbloquear()
+
+    def aparelhos_a_desbloquear_rotulo():
+        return "aparelho para desbloquear" if contagem_a_desbloquear() == 1 else "aparelhos para desbloquear"
+
+    def aparelhos_bloqueio_pendente():
+        return contagem_a_bloquear() + contagem_a_desbloquear()
+
     def importacoes_pendentes():
         from apps.contratos.models import ImportacaoContratoPendente
         return ImportacaoContratoPendente.objects.filter(resolvida_em__isnull=True).count()
@@ -69,6 +78,7 @@ def shell(request):
             + (1 if whatsapp_desconectado() else 0)
             + (1 if cobrancas_pausadas() else 0)
             + (1 if aparelhos_a_bloquear() else 0)
+            + (1 if aparelhos_a_desbloquear() else 0)
         )
 
     def rotulo_importacoes_pendentes():
@@ -82,6 +92,9 @@ def shell(request):
         "cobrancas_pausadas": SimpleLazyObject(cobrancas_pausadas),
         "aparelhos_a_bloquear_n": SimpleLazyObject(aparelhos_a_bloquear),
         "aparelhos_a_bloquear_rotulo": SimpleLazyObject(aparelhos_a_bloquear_rotulo),
+        "aparelhos_a_desbloquear_n": SimpleLazyObject(aparelhos_a_desbloquear),
+        "aparelhos_a_desbloquear_rotulo": SimpleLazyObject(aparelhos_a_desbloquear_rotulo),
+        "bloqueios_pendentes_n": SimpleLazyObject(aparelhos_bloqueio_pendente),
         "importacoes_pendentes_n": SimpleLazyObject(importacoes_pendentes),
         "notificacoes_n": SimpleLazyObject(notificacoes_n),
         "importacoes_pendentes_rotulo": SimpleLazyObject(rotulo_importacoes_pendentes),
