@@ -68,13 +68,23 @@ class PagamentoForm(forms.ModelForm):
         if not self.is_bound and abertas:
             primeira = abertas.first()
             self.initial.setdefault("vencimento", primeira.pk)
-            self.initial.setdefault("valor_pago", _formata_moeda(primeira.saldo))
             from .agenda import parcelas_a_cobrar
 
-            juros = next(
-                (p.juros for p in parcelas_a_cobrar(contrato, timezone.localdate()) if p.numero == primeira.numero),
-                Decimal("0.00"),
-            )
+            parcelas = parcelas_a_cobrar(contrato, timezone.localdate())
+            if len(parcelas) > 1 and parcelas[0].numero == primeira.numero:
+                # Várias parcelas vencidas: sugere o total delas (como o Pix já cobra). O valor que passa da
+                # parcela mais antiga abate e quita as seguintes sozinho.
+                valor = sum((p.saldo for p in parcelas), Decimal("0.00"))
+                juros = sum((p.juros for p in parcelas), Decimal("0.00"))
+                numeros = " + ".join(str(p.numero) for p in parcelas)
+                self.fields["valor_pago"].help_text = (
+                    f"Sugerido: as parcelas {numeros} somadas, como a cobrança automática faz. "
+                    f"Se o cliente pagou só a parcela {primeira.numero}, troque pelo valor dela."
+                )
+            else:
+                valor = primeira.saldo
+                juros = next((p.juros for p in parcelas if p.numero == primeira.numero), Decimal("0.00"))
+            self.initial.setdefault("valor_pago", _formata_moeda(valor))
             self.initial.setdefault("juros_pago", _formata_moeda(juros))
             self.initial.setdefault("data_pagamento", timezone.localdate())
 
