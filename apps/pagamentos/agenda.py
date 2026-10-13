@@ -110,6 +110,9 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
     if estrutura:
         contratos = contratos.filter(estrutura=estrutura)
 
+    from apps.aparelhos.bloqueios import ids_dos_contratos_bloqueados
+
+    bloqueados = ids_dos_contratos_bloqueados()
     linhas = []
     total_previsto = Decimal("0.00")
     n_atraso = n_bloqueio = 0
@@ -136,13 +139,15 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
         total_previsto += a_cobrar
         if situacao.dias_atraso:
             n_atraso += 1
-        if situacao.alertar_bloqueio:
+        ja_bloqueado = ct.pk in bloqueados
+        if situacao.alertar_bloqueio and not ja_bloqueado:
             n_bloqueio += 1
 
         linhas.append(
             {
                 "contrato": ct,
                 "situacao": situacao,
+                "bloqueado": ja_bloqueado,
                 "vence_hoje": vence_hoje and not situacao.dias_atraso,
                 "parcela": parcela,
                 "parcelas": parcelas,

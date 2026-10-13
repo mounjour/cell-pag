@@ -69,7 +69,7 @@
           </div>
           <div class="fila-situacao">
             {% if l.situacao.dias_atraso %}<span class="pill {{ l.situacao.status }}">{{ l.situacao.dias_atraso }} dia{{ l.situacao.dias_atraso|pluralize }} de atraso</span>{% else %}<span class="pill em_dia">Vence hoje</span>{% endif %}
-            {% if l.situacao.alertar_bloqueio %}<span class="pill alerta-bloqueio">⚠ bloquear aparelho</span>{% endif %}
+            {% if l.bloqueado %}<span class="pill bloqueado">{% include "_icone.html" with nome="bloqueio" %} bloqueado</span>{% elif l.situacao.alertar_bloqueio %}<a class="pill alerta-bloqueio" href="{% url 'aparelhos:bloqueios' %}">⚠ bloquear aparelho</a>{% endif %}
           </div>
           <strong class="fila-valor num">{% if l.a_cobrar is not None %}R$ {{ l.a_cobrar|floatformat:2 }}{% else %}—{% endif %}</strong>
           <div class="fila-acoes">

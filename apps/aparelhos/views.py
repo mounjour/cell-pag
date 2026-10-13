@@ -4,13 +4,14 @@ from django.db.models import ProtectedError, Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
+from django.utils import timezone
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
 from apps.contratos.models import Contrato
 
-from . import importacao
+from . import bloqueios, importacao
 from .forms import AparelhoForm, ImportarAparelhosForm
-from .models import Aparelho
+from .models import Aparelho, BloqueioAparelho
 
 
 CHAVE_SESSAO_IMPORTACAO = "importacao_aparelhos_csv"
@@ -141,3 +142,80 @@ class AparelhoImportarConfirmarView(LoginRequiredMixin, View):
         plural = "s" if criados != 1 else ""
         messages.success(request, f"{criados} aparelho{plural} cadastrado{plural} no estoque.")
         return redirect("aparelhos:lista")
+
+
+def _voltar_ou(request, padrao):
+    """Volta para a página de onde veio o clique (só endereços do próprio sistema)."""
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    destino = request.POST.get("next", "")
+    if destino and url_has_allowed_host_and_scheme(destino, {request.get_host()}, request.is_secure()):
+        return redirect(destino)
+    return redirect(padrao)
+
+
+class BloqueiosView(LoginRequiredMixin, TemplateView):
+    """Controle dos aparelhos bloqueados por atraso: o que bloquear, o que está bloqueado e o que liberar."""
+
+    template_name = "aparelhos/bloqueios.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        painel = bloqueios.montar_painel()
+        ctx.update(painel)
+        if painel["a_bloquear"]:
+            n = len(painel["a_bloquear"])
+            messages.warning(
+                self.request,
+                f"{n} aparelho{'s' if n != 1 else ''} com 7 dias ou mais de atraso "
+                f"{'esperam' if n != 1 else 'espera'} bloqueio.",
+            )
+        if painel["para_desbloquear"]:
+            n = len(painel["para_desbloquear"])
+            messages.info(
+                self.request,
+                f"{n} cliente{'s' if n != 1 else ''} regularizou{'aram' if n != 1 else ''}: "
+                f"libere {'os aparelhos' if n != 1 else 'o aparelho'}.",
+            )
+        return ctx
+
+
+class BloquearView(LoginRequiredMixin, View):
+    """Registra que o aparelho do contrato foi bloqueado (POST)."""
+
+    def post(self, request, contrato_pk):
+        from apps.contratos.models import Contrato
+        from apps.pagamentos import badge
+
+        contrato = get_object_or_404(Contrato, pk=contrato_pk)
+        if contrato.quitado:
+            messages.error(request, "Contrato quitado: o aparelho não deve ser bloqueado.")
+        elif contrato.bloqueios.filter(desbloqueado_em__isnull=True).exists():
+            messages.info(request, "Este aparelho já está registrado como bloqueado.")
+        else:
+            BloqueioAparelho.objects.create(
+                contrato=contrato, bloqueado_por=request.user, observacao=request.POST.get("observacao", "").strip()[:200]
+            )
+            badge.invalidar()
+            messages.success(request, f"Bloqueio registrado: {contrato.apelido} de {contrato.cliente.nome}.")
+        return _voltar_ou(request, "aparelhos:bloqueios")
+
+
+class DesbloquearView(LoginRequiredMixin, View):
+    """Registra que o aparelho foi liberado (POST)."""
+
+    def post(self, request, pk):
+        from apps.pagamentos import badge
+
+        bloqueio = get_object_or_404(BloqueioAparelho.objects.select_related("contrato__cliente"), pk=pk)
+        if bloqueio.desbloqueado_em:
+            messages.info(request, "Este aparelho já estava liberado.")
+        else:
+            bloqueio.desbloqueado_em = timezone.now()
+            bloqueio.desbloqueado_por = request.user
+            bloqueio.save(update_fields=["desbloqueado_em", "desbloqueado_por"])
+            badge.invalidar()
+            messages.success(
+                request, f"Aparelho liberado: {bloqueio.contrato.apelido} de {bloqueio.contrato.cliente.nome}."
+            )
+        return _voltar_ou(request, "aparelhos:bloqueios")

@@ -1,0 +1,28 @@
+{# Estado do bloqueio do aparelho na tela do contrato. Espera `contrato`, `bloqueio_ativo` e `s` (situação de atraso). #}
+{% if not contrato.quitado %}
+  {% if bloqueio_ativo %}
+    <div class="card bloqueio-card">
+      <h2>{% include "_icone.html" with nome="bloqueio" %}Aparelho bloqueado</h2>
+      <p>
+        <span class="pill bloqueado">{% include "_icone.html" with nome="bloqueio" %} bloqueado desde {{ bloqueio_ativo.bloqueado_em|date:"d/m/Y" }}</span>
+        {% if bloqueio_ativo.bloqueado_por %}por {{ bloqueio_ativo.bloqueado_por.nome_curto }}{% endif %}
+        {% if bloqueio_ativo.observacao %}· {{ bloqueio_ativo.observacao }}{% endif %}
+      </p>
+      {% if s and s.dias_atraso == 0 %}<p class="helptext">O cliente regularizou: já pode liberar o aparelho.</p>{% endif %}
+      <form method="post" action="{% url 'aparelhos:desbloquear' bloqueio_ativo.pk %}">
+        {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+        <button type="submit" class="btn secondary">{% include "_icone.html" with nome="bloqueio" %}Marcar como desbloqueado</button>
+      </form>
+    </div>
+  {% elif s and s.alertar_bloqueio %}
+    <div class="card bloqueio-card">
+      <h2>{% include "_icone.html" with nome="bloqueio" %}Bloquear aparelho</h2>
+      <p class="helptext">O sistema não bloqueia o celular sozinho. Bloqueie o aparelho (iCloud, MDM…) e registre aqui para a equipe saber.</p>
+      <form method="post" action="{% url 'aparelhos:bloquear' contrato.pk %}" class="bloqueio-form">
+        {% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+        <input type="text" name="observacao" maxlength="200" placeholder="Como foi bloqueado? (opcional)" aria-label="Como foi bloqueado">
+        <button type="submit" class="btn">{% include "_icone.html" with nome="bloqueio" %}Marcar como bloqueado</button>
+      </form>
+    </div>
+  {% endif %}
+{% endif %}

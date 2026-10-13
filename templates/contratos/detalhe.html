@@ -51,6 +51,7 @@
 {% endif %}
 
 {% with s=contrato.situacao_atraso p=contrato.parcela_em_aberto ref=contrato.data_referencia_atraso %}
+  {% include "aparelhos/_bloqueio_do_contrato.html" %}
   {% if s %}
     <div class="card">
       <h2>Situação hoje</h2>
@@ -64,7 +65,7 @@
           {% if p %}(parcela nº {{ p.numero }}){% endif %} ·
           juros da parcela mais antiga <strong class="num">R$ {{ s.juros }}</strong>
         </p>
-        {% if s.alertar_bloqueio %}
+        {% if s.alertar_bloqueio and not bloqueio_ativo %}
           <p class="pill inadimplente">⚠ {{ s.dias_atraso }} dias — hora de bloquear o aparelho (ação manual do vendedor).</p>
         {% endif %}
       {% else %}

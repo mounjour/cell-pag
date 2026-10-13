@@ -27,7 +27,7 @@
               {% else %}
                 <span class="situacao-selos">
                   <span class="pill {{ l.situacao.status }}">{{ l.contrato.status_efetivo_label }}</span>
-                  {% if l.situacao.alertar_bloqueio %}<span class="pill alerta-bloqueio">⚠ bloquear aparelho</span>{% endif %}
+                  {% if l.bloqueado %}<span class="pill bloqueado">{% include "_icone.html" with nome="bloqueio" %} bloqueado</span>{% elif l.situacao.alertar_bloqueio %}<a class="pill alerta-bloqueio" href="{% url 'aparelhos:bloqueios' %}">⚠ bloquear aparelho</a>{% endif %}
                 </span>
                 <span class="atraso-dias">{{ l.situacao.dias_atraso }} dia{{ l.situacao.dias_atraso|pluralize }} de atraso</span>
               {% endif %}

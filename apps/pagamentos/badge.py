@@ -47,9 +47,22 @@ def contagem_a_bloquear() -> int:
     return n
 
 
+def contagem_a_desbloquear() -> int:
+    """Aparelhos bloqueados cujo cliente já regularizou: hora de liberar."""
+    chave = f"aparelhos_a_desbloquear_n:{timezone.localdate().isoformat()}"
+    n = cache.get(chave)
+    if n is None:
+        from apps.aparelhos.bloqueios import contar_a_desbloquear
+
+        n = contar_a_desbloquear()
+        cache.set(chave, n, TTL_SEGUNDOS)
+    return n
+
+
 def invalidar(**_kwargs) -> None:
     cache.delete(_chave())
     cache.delete(_chave_bloqueio())
+    cache.delete(f"aparelhos_a_desbloquear_n:{timezone.localdate().isoformat()}")
 
 
 TTL_WHATSAPP_SEGUNDOS = 60

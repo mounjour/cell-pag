@@ -1356,3 +1356,14 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--ink); }
   .tabela-pendencias .pend-celula { width: auto; max-width: none; }
   .pend-texto { white-space: normal; }
 }
+
+/* Bloqueio de aparelhos */
+.pill.bloqueado { display: inline-flex; align-items: center; gap: .3rem; background: var(--critical-wash); color: var(--critical-ink); }
+.pill.bloqueado::before { content: none; }
+.pill.bloqueado .icone { width: 14px; height: 14px; }
+a.pill.alerta-bloqueio { text-decoration: none; }
+a.pill.alerta-bloqueio:hover { filter: brightness(.95); }
+.bloqueio-form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.bloqueio-form input[type="text"] { flex: 1 1 11rem; min-width: 0; }
+.bloqueio-card h2 .icone { vertical-align: -3px; margin-right: .4rem; }
+.card h2 .count { margin-left: .4rem; padding: 0 .5rem; border-radius: 999px; background: var(--line); font-size: .8rem; font-weight: 600; color: var(--ink-soft); }

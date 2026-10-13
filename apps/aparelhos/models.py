@@ -12,7 +12,9 @@ contrato em andamento: **alocado** (locação). Só vira **vendido** quando o
 contrato é quitado.
 """
 
+from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class Aparelho(models.Model):
@@ -84,3 +86,48 @@ class Aparelho(models.Model):
     @property
     def status_label(self) -> str:
         return self.Status(self.status).label
+
+
+class BloqueioAparelho(models.Model):
+    """Registro do bloqueio de um aparelho por atraso (e do desbloqueio, quando o cliente regulariza).
+
+    O sistema não bloqueia o celular sozinho: o bloqueio é feito à mão (iCloud, MDM...). Este
+    registro guarda **que** foi feito, **quando** e **por quem**, para a equipe saber quais
+    aparelhos estão travados e lembrar de liberá-los depois do pagamento. Um contrato tem no
+    máximo um bloqueio ativo (``desbloqueado_em`` vazio).
+    """
+
+    contrato = models.ForeignKey(
+        "contratos.Contrato", on_delete=models.PROTECT, related_name="bloqueios", verbose_name="contrato"
+    )
+    bloqueado_em = models.DateTimeField("bloqueado em", default=timezone.now)
+    bloqueado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+", verbose_name="bloqueado por",
+    )
+    observacao = models.CharField(
+        "como foi bloqueado", max_length=200, blank=True, help_text='Ex.: "iCloud — modo perdido".'
+    )
+    desbloqueado_em = models.DateTimeField("desbloqueado em", null=True, blank=True)
+    desbloqueado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+", verbose_name="desbloqueado por",
+    )
+
+    class Meta:
+        verbose_name = "bloqueio de aparelho"
+        verbose_name_plural = "bloqueios de aparelhos"
+        ordering = ["-bloqueado_em"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["contrato"], condition=models.Q(desbloqueado_em__isnull=True),
+                name="um_bloqueio_ativo_por_contrato",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"Bloqueio de {self.contrato} em {self.bloqueado_em:%d/%m/%Y}"
+
+    @property
+    def ativo(self) -> bool:
+        return self.desbloqueado_em is None
