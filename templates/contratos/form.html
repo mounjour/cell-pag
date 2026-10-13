@@ -25,7 +25,7 @@
 </details>
 
 <div class="contrato-layout">
-<form method="post" class="form-grid form-page" data-previsao-url="{% url 'contratos:previsao' %}" data-previsao-campos="valor_total,num_parcelas,estrutura,data_inicio,primeira_cobranca,proxima_cobranca,quinzena,dia_semana,dia_mes,dia_mes_2,juros_diario,parcelas_ja_pagas,entrada,cliente">
+<form method="post" class="form-grid form-page" data-previsao-url="{% url 'contratos:previsao' %}" data-previsao-campos="valor_total,num_parcelas,estrutura,data_inicio,primeira_cobranca,quinzena,dia_semana,dia_mes,dia_mes_2,juros_diario,parcelas_ja_pagas,entrada,cliente">
   {% csrf_token %}
   {% if form.non_field_errors %}
     <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
@@ -67,8 +67,7 @@
     <div data-cobranca-grupo="semana" hidden>{% include "_field.html" with field=form.dia_semana %}</div>
     <div data-cobranca-grupo="mes" hidden>{% include "_field.html" with field=form.dia_mes %}</div>
     <div data-cobranca-grupo="mes2" hidden>{% include "_field.html" with field=form.dia_mes_2 %}</div>
-    <div data-cobranca-grupo="primeira">{% include "_field.html" with field=form.primeira_cobranca %}</div>
-    {% if form.fields.proxima_cobranca %}<div data-cobranca-grupo="proxima" hidden>{% include "_field.html" with field=form.proxima_cobranca %}</div>{% endif %}
+    {% include "_field.html" with field=form.primeira_cobranca %}
   </div>
 
   {% if not form.instance.pk %}
@@ -112,7 +111,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
-  <script src="{% static 'js/dia_cobranca_form.js' %}" defer></script>
+  <script src="{% static 'js/dia_cobranca_form.js' %}?v=3" defer></script>
   <script src="{% static 'js/previsao_form.js' %}" defer></script>
   <script src="{% static 'js/aparelho_estoque.js' %}" defer></script>
 {% endblock %}

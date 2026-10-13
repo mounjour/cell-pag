@@ -23,7 +23,7 @@ def cadastro(db):
         "cliente": cliente.pk, "aparelho": aparelho.pk, "apelido": "iPhone da Maria",
         "aparelho_modelo": "iPhone 13 128GB", "imei": "359999053372501", "valor_total": "1000,00",
         "num_parcelas": "10", "estrutura": "semanal",
-        "juros_diario": "5,00", "data_inicio": "2026-09-01", "dia_semana": "1", "proxima_cobranca": "2026-09-22", "status": "em_dia",
+        "juros_diario": "5,00", "data_inicio": "2026-09-01", "dia_semana": "1", "primeira_cobranca": "2026-09-08", "status": "em_dia",
         "entrada": "200,00", "entrada_forma": "dinheiro", "parcelas_ja_pagas": "2",
     }
 
@@ -200,6 +200,7 @@ def test_resumo_da_cobranca_explica_primeira_cobranca_e_numeros(auth_client, cad
     cadastro["data_inicio"] = compra.isoformat()
     cadastro["dia_semana"] = str(compra.weekday())
     cadastro["parcelas_ja_pagas"] = "0"
+    cadastro.pop("primeira_cobranca")  # sem data digitada: o sistema sugere a partir da compra
     texto = auth_client.post(reverse("contratos:novo"), cadastro).content.decode()
     assert "Resumo da cobrança" in texto
     assert "primeira cobrança sai em" in texto

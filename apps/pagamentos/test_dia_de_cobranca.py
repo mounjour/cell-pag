@@ -101,3 +101,15 @@ def test_descricao_em_linguagem_simples():
     assert descrever_dia_de_cobranca("quinzenal", D(2026, 9, 1), D(2026, 10, 5), "5,20") == "Dias 5 e 20 de cada mês"
     assert descrever_dia_de_cobranca("mensal", D(2026, 9, 1), D(2026, 10, 15), "15") == "Todo dia 15"
     assert descrever_dia_de_cobranca("quinzenal", D(2026, 9, 1)) == "A cada 15 dias, a partir da compra"
+
+
+def test_contrato_em_andamento_cai_no_proximo_dia_escolhido_a_partir_de_hoje():
+    hoje = D(2026, 10, 13)  # terça
+    primeira, dias = interpretar_dia_de_cobranca(
+        "quinzenal", D(2026, 7, 22), quinzena="dias_mes", dia_mes=5, dia_mes_2=20, parcelas_pagas=5, hoje=hoje)
+    assert data_da_parcela(None, "quinzenal", 6, primeira, dias) == D(2026, 10, 20)  # a 6ª é a próxima: dia 20
+    assert data_da_parcela(None, "quinzenal", 10, primeira, dias) == D(2026, 12, 20)
+    primeira, dias = interpretar_dia_de_cobranca("semanal", D(2026, 9, 25), dia_semana=4, parcelas_pagas=2, hoje=hoje)
+    assert data_da_parcela(None, "semanal", 3, primeira, dias) == D(2026, 10, 16)  # próxima sexta
+    primeira, dias = interpretar_dia_de_cobranca("mensal", D(2026, 5, 1), dia_mes=15, parcelas_pagas=4, hoje=D(2026, 10, 16))
+    assert data_da_parcela(None, "mensal", 5, primeira, dias) == D(2026, 11, 15)  # dia 15 deste mês já passou

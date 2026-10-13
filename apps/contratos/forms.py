@@ -9,24 +9,9 @@ from apps.aparelhos.catalogo import opcoes_modelos
 from apps.clientes.models import Cliente
 
 from apps.pagamentos.models import Pagamento
-from apps.pagamentos.recorrencia import (
-    DIAS_DA_SEMANA, interpretar_dia_de_cobranca, primeira_cobranca_para_vencimento,
-)
+from apps.pagamentos.recorrencia import DIAS_DA_SEMANA, interpretar_dia_de_cobranca
 
 from .models import Contrato, DocumentoContrato
-
-def calendario_em_andamento(estrutura, data_inicio, proxima, pagas, *, quinzena, dia_semana, dia_mes, dia_mes_2):
-    """``(primeira_cobranca, dias_do_mes)`` de um contrato que já tem ``pagas`` parcelas pagas.
-
-    O dado confiável é o vencimento da **próxima parcela** (a ``pagas + 1``-ésima): a primeira cobrança
-    é reconstruída para trás a partir dele. Levanta ``ValueError`` com a mensagem para o usuário.
-    """
-    proxima, dias = interpretar_dia_de_cobranca(
-        estrutura, data_inicio, primeira_cobranca=proxima, quinzena=quinzena or "semana",
-        dia_semana=dia_semana, dia_mes=dia_mes, dia_mes_2=dia_mes_2,
-    )
-    return primeira_cobranca_para_vencimento(proxima, pagas, estrutura, dias), dias
-
 
 #: Duas formas de cobrar quinzenalmente: a cada 14 dias (mesmo dia da semana) ou em dois dias fixos do mês.
 QUINZENAS = [
@@ -121,13 +106,6 @@ class ContratoForm(forms.ModelForm):
         widget=forms.NumberInput(attrs={"inputmode": "numeric", "min": "1", "max": "31", "placeholder": "Ex.: 20"}),
     )
 
-    # Contrato que já estava rodando: o que se sabe é quando vence a PRÓXIMA parcela, não a primeira.
-    proxima_cobranca = forms.DateField(
-        label="Vencimento da próxima parcela", required=False, input_formats=["%Y-%m-%d"],
-        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
-        help_text="Quando vence a primeira parcela que ainda não foi paga. O sistema calcula o resto a partir dela.",
-    )
-
     # Só usado no cadastro (contrato em andamento antes de entrar no sistema)
     # — não é campo do modelo, o ModelForm ignora ele no save().
     parcelas_ja_pagas = forms.IntegerField(
@@ -175,7 +153,8 @@ class ContratoForm(forms.ModelForm):
         self.fields["primeira_cobranca"].required = False
         self.fields["primeira_cobranca"].help_text = (
             "Dia em que vence a parcela 1. O sistema sugere a data a partir do dia de cobrança; "
-            "altere se a primeira cobrança foi combinada em outra data."
+            "altere se a primeira cobrança foi combinada em outra data. Em contrato que já tem parcelas "
+            "pagas, deixe em branco: as próximas cobranças caem nos dias escolhidos, a partir de hoje."
         )
         self.fields["dia_semana"].help_text = "Dia da semana em que a parcela vence."
         self.fields["dia_mes"].help_text = "Em meses mais curtos, a cobrança cai no último dia do mês."
@@ -220,7 +199,6 @@ class ContratoForm(forms.ModelForm):
             # "Parcelas já pagas" só faz sentido ao cadastrar: num contrato existente as parcelas
             # se registram pela tela de pagamento, uma a uma.
             del self.fields["parcelas_ja_pagas"]
-            del self.fields["proxima_cobranca"]
             # A entrada é um pagamento sem parcela. Com 0 ou 1 lançamento dá para editar aqui
             # (esvaziar o valor remove a entrada); com vários, só pelo Admin, para não adivinhar qual mexer.
             self.entradas_existentes = list(self.instance.pagamentos.filter(vencimento__isnull=True))
@@ -312,37 +290,12 @@ class ContratoForm(forms.ModelForm):
         self._resolver_dia_de_cobranca(dados)
         return dados
 
-    def _calendario_em_andamento(self, dados, pagas):
-        """Contrato com parcelas já pagas: o calendário parte do vencimento da próxima parcela."""
-        if not dados.get("estrutura") or not dados.get("data_inicio") or self.errors.get("proxima_cobranca"):
-            return
-        proxima = dados.get("proxima_cobranca")
-        if not proxima:
-            self.add_error("proxima_cobranca", f"Informe quando vence a próxima parcela (a {pagas + 1}ª).")
-            return
-        try:
-            primeira, dias = calendario_em_andamento(
-                dados["estrutura"], dados["data_inicio"], proxima, pagas, quinzena=dados.get("quinzena"),
-                dia_semana=dados.get("dia_semana"), dia_mes=dados.get("dia_mes"), dia_mes_2=dados.get("dia_mes_2"),
-            )
-        except ValueError as erro:
-            campo = {"Informe o dia": "dia_mes", "Informe os dois": "dia_mes", "Escolha o dia da": "dia_semana"}
-            alvo = next((c for prefixo, c in campo.items() if str(erro).startswith(prefixo)), "proxima_cobranca")
-            self.add_error(alvo, str(erro).replace("A primeira cobrança", "O vencimento da próxima parcela"))
-            return
-        dados["primeira_cobranca"] = primeira
-        self.instance.dias_cobranca_mes = dias
-
     def _resolver_dia_de_cobranca(self, dados):
         """Valida o dia de cobrança e completa a primeira cobrança (sugerida quando vazia)."""
         contrato = self.instance
         informou = any(
             dados.get(c) not in (None, "") for c in ("primeira_cobranca", "dia_semana", "dia_mes", "dia_mes_2")
         )
-        pagas, total = dados.get("parcelas_ja_pagas") or 0, dados.get("num_parcelas") or 0
-        if not contrato.pk and 0 < pagas < total:
-            self._calendario_em_andamento(dados, pagas)
-            return
         legado = bool(contrato.pk and not contrato.primeira_cobranca)
         if legado and not informou:
             return  # contrato antigo, sem dia de cobrança: continua contando pela data da compra
@@ -353,6 +306,7 @@ class ContratoForm(forms.ModelForm):
                 dados["estrutura"], dados["data_inicio"], primeira_cobranca=dados.get("primeira_cobranca"),
                 quinzena=dados.get("quinzena") or "semana", dia_semana=dados.get("dia_semana"),
                 dia_mes=dados.get("dia_mes"), dia_mes_2=dados.get("dia_mes_2"),
+                parcelas_pagas=dados.get("parcelas_ja_pagas") or 0,
             )
         except ValueError as erro:
             campo = {"Informe o dia": "dia_mes", "Informe os dois": "dia_mes", "Escolha o dia da": "dia_semana"}
@@ -382,7 +336,6 @@ class PrevisaoContratoForm(forms.Form):
     estrutura = forms.ChoiceField(choices=Contrato.ESTRUTURAS_ATIVAS)
     data_inicio = forms.DateField(input_formats=["%Y-%m-%d"])
     primeira_cobranca = forms.DateField(input_formats=["%Y-%m-%d"], required=False)
-    proxima_cobranca = forms.DateField(input_formats=["%Y-%m-%d"], required=False)
     quinzena = forms.ChoiceField(choices=QUINZENAS, required=False)
     dia_semana = forms.TypedChoiceField(
         choices=[("", "")] + [(str(i), "") for i in range(7)], coerce=int, empty_value=None, required=False
@@ -419,23 +372,12 @@ class PrevisaoContratoForm(forms.Form):
                 dados["valor_parcela"] = Contrato.valor_da_parcela(valor, dados["num_parcelas"])
         quinzena, dia_semana = dados.pop("quinzena", ""), dados.pop("dia_semana", None)
         dia_mes, dia_mes_2 = dados.pop("dia_mes", None), dados.pop("dia_mes_2", None)
-        proxima = dados.pop("proxima_cobranca", None)
-        pagas, total = dados.get("parcelas_ja_pagas") or 0, dados.get("num_parcelas") or 0
-        if dados.get("estrutura") and dados.get("data_inicio") and 0 < pagas < total:
-            if not proxima:
-                raise forms.ValidationError(f"Informe quando vence a próxima parcela (a {pagas + 1}ª).")
-            try:
-                dados["primeira_cobranca"], dados["dias_cobranca_mes"] = calendario_em_andamento(
-                    dados["estrutura"], dados["data_inicio"], proxima, pagas, quinzena=quinzena or "semana",
-                    dia_semana=dia_semana, dia_mes=dia_mes, dia_mes_2=dia_mes_2,
-                )
-            except ValueError as erro:
-                raise forms.ValidationError(str(erro)) from erro
-        elif dados.get("estrutura") and dados.get("data_inicio"):
+        if dados.get("estrutura") and dados.get("data_inicio"):
             try:
                 dados["primeira_cobranca"], dados["dias_cobranca_mes"] = interpretar_dia_de_cobranca(
                     dados["estrutura"], dados["data_inicio"], primeira_cobranca=dados.get("primeira_cobranca"),
                     quinzena=quinzena or "semana", dia_semana=dia_semana, dia_mes=dia_mes, dia_mes_2=dia_mes_2,
+                    parcelas_pagas=dados.get("parcelas_ja_pagas") or 0,
                 )
             except ValueError as erro:
                 raise forms.ValidationError(str(erro)) from erro
