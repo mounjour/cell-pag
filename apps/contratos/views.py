@@ -377,7 +377,7 @@ def _registrar_parcelas_ja_pagas(request, contrato, quantidade):
             contrato=contrato,
             vencimento=venc,
             data_pagamento=venc.data_vencimento,
-            valor_pago=venc.valor_previsto,
+            valor_pago=venc.saldo if venc.saldo > 0 else venc.valor_previsto,
             forma=Pagamento.Forma.OUTRO,
             usuario_baixa=request.user if request.user.is_authenticated else None,
             observacao="Pagamento anterior ao cadastro no sistema (registrado na migração).",
@@ -590,6 +590,12 @@ class ContratoUpdateView(LoginRequiredMixin, UpdateView):
         from apps.pagamentos.parcelas import ressincronizar_parcelas_em_aberto
 
         n = ressincronizar_parcelas_em_aberto(self.object)
+        quantidade = form.cleaned_data.get("parcelas_ja_pagas")
+        if quantidade:
+            ultima = self.object.data_da_parcela(quantidade)
+            self.object.gerar_vencimentos(dias_a_frente=max(60, (ultima - timezone.localdate()).days))
+            _registrar_parcelas_ja_pagas(self.request, self.object, quantidade)
+            self.object.sincronizar_status()
         if n:
             messages.info(
                 self.request,
