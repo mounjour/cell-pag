@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Aparelho
+from .models import Aparelho, BloqueioAparelho
 
 
 @admin.register(Aparelho)
@@ -13,3 +13,11 @@ class AparelhoAdmin(admin.ModelAdmin):
     @admin.display(description="status")
     def status_label(self, obj: Aparelho) -> str:
         return obj.status_label
+
+
+@admin.register(BloqueioAparelho)
+class BloqueioAparelhoAdmin(admin.ModelAdmin):
+    list_display = ("contrato", "bloqueado_em", "bloqueado_por", "desbloqueado_em", "desbloqueado_por")
+    list_filter = ("desbloqueado_em",)
+    search_fields = ("contrato__apelido", "contrato__cliente__nome")
+    readonly_fields = ("bloqueado_em", "desbloqueado_em")

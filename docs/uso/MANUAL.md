@@ -93,6 +93,18 @@ aberto mais antiga do contrato.
 Aos **7 dias de atraso** o sistema mostra **"⚠ hora de bloquear o aparelho"**.
 O sistema **só avisa** — o bloqueio em si é ação manual do vendedor (Alisson).
 
+### Bloqueios (menu **Bloqueios**)
+
+Tela que controla o que a equipe já fez com os aparelhos atrasados:
+
+| Lista | Quando o contrato aparece | O que fazer |
+|---|---|---|
+| **Para bloquear** | 7+ dias de atraso e sem bloqueio registrado | bloqueie o celular (iCloud, MDM…) e clique em **Bloqueei** (dá para anotar como foi) |
+| **Bloqueados agora** | bloqueio registrado e o cliente ainda deve | mostra desde quando, por quem, o atraso e o valor para liberar |
+| **Para desbloquear** | bloqueio registrado, mas o cliente **regularizou** (sem atraso) ou **quitou** | libere o celular e clique em **Desbloqueei** |
+
+O registro guarda quem bloqueou/liberou e quando; os desbloqueios recentes ficam no histórico da tela. O botão também existe na tela do contrato. Quem já está bloqueado aparece como "bloqueado" no **Cobrar hoje** (em vez de pedir o bloqueio de novo). Há avisos no sino e um contador no menu para "para bloquear" e "para desbloquear".
+
 ### Parcela (Vencimento) × Pagamento (baixa)
 
 - **Parcela / Vencimento**: o que o cliente *deve* pagar numa data (nº, data, valor previsto). O sistema gera automaticamente.

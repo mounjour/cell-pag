@@ -316,6 +316,7 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
         contrato = self.object
         from apps.pagamentos.agenda import resumo_cobranca
         ctx["resumo_cobranca"] = resumo_cobranca(contrato)
+        ctx["bloqueio_ativo"] = contrato.bloqueios.filter(desbloqueado_em__isnull=True).first()
         # Entrada: Pagamento sem parcela vinculada (ver _registrar_entrada) —
         # já veio no prefetch de "pagamentos", sem consulta extra.
         ctx["entradas"] = [p for p in contrato.pagamentos.all() if p.vencimento_id is None]
