@@ -270,3 +270,13 @@ def test_telas_exigem_login(parcela):
     assert anonimo.get(reverse("pagamentos:acordo", args=[parcela.pk])).status_code == 302
     assert anonimo.post(reverse("pagamentos:acordo", args=[parcela.pk]), {"tipo": "perdao_juros", "juros": "5"}).status_code == 302
     assert not Acordo.objects.exists()
+
+
+def test_baixa_sugere_o_total_das_parcelas_em_atraso(auth_client, cliente):
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="300.00", num_parcelas=3, juros_diario=Decimal("5.00"))
+    for numero, dias in ((1, 10), (2, 2)):
+        Vencimento.objects.create(contrato=ct, numero=numero, data_vencimento=HOJE() - datetime.timedelta(days=dias),
+                                  valor_previsto=Decimal("300.00"))
+    form = auth_client.get(reverse("pagamentos:novo", args=[ct.pk])).context["form"]
+    assert form.initial["valor_pago"] == "600,00" and form.initial["juros_pago"] == "60,00"  # 50 + 10 de juros
+    assert "1 + 2" in form.fields["valor_pago"].help_text
