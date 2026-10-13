@@ -54,6 +54,53 @@
       const novo = new DOMParser().parseFromString(await resposta.text(), "text/html").querySelector("[data-conexoes-card]");
       if (novo) atual.replaceWith(novo);
     } catch (e) { /* tenta de novo na próxima mudança */ }
+    gerarQr();
+  };
+
+  /* O QR é gerado depois que a página abriu: a Evolution pode demorar alguns segundos, e a
+     tela não deve esperar por isso. Mostra "Gerando…", pede o QR e troca o cartão quando pronto. */
+  let gerandoQr = false;
+  let tentativasQr = 0;
+  const montarGerando = (caixa, mensagem) => {
+    const roda = document.createElement("span");
+    roda.className = "qrcode-gerando-roda";
+    roda.setAttribute("aria-hidden", "true");
+    const texto = document.createElement("p");
+    texto.textContent = mensagem;
+    caixa.replaceChildren(roda, texto);
+  };
+  const mostrarErroQr = (caixa, mensagem) => {
+    const texto = document.createElement("p");
+    texto.textContent = mensagem;
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "btn secondary";
+    botao.textContent = "Tentar de novo";
+    botao.addEventListener("click", () => {
+      tentativasQr = 0;
+      montarGerando(caixa, "Gerando o QR code… pode levar alguns segundos.");
+      gerarQr();
+    });
+    caixa.replaceChildren(texto, botao);
+  };
+  const gerarQr = async () => {
+    const caixa = document.querySelector("[data-qr-gerando]");
+    if (!caixa || gerandoQr || tentativasQr >= 3) return;
+    gerandoQr = true;
+    tentativasQr += 1;
+    try {
+      const resposta = await fetch(caixa.dataset.qrUrl, {
+        method: "POST", credentials: "same-origin", headers: { "X-CSRFToken": caixa.dataset.csrf },
+      });
+      const dados = await resposta.json().catch(() => ({ ok: false }));
+      gerandoQr = false;
+      if (dados.ok) { await atualizarCartao(); return; }
+      mostrarErroQr(caixa, dados.erro || "Não foi possível gerar o QR code agora.");
+    } catch (e) {
+      mostrarErroQr(caixa, "Sem conexão com o sistema. Confira a internet e tente de novo.");
+    } finally {
+      gerandoQr = false;
+    }
   };
 
   const avisar = (anterior, estado) => {
@@ -128,4 +175,5 @@
   window.setInterval(tique, 1000);
   tique();
   ciclo();
+  gerarQr();
 })();

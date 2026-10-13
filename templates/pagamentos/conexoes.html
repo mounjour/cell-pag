@@ -39,11 +39,10 @@
         <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}Gerar outro agora</button>
       </form>
     {% else %}
-      <p class="empty">Não foi possível gerar o QR code agora{% if erro_whatsapp %} ({{ erro_whatsapp }}){% endif %}.</p>
-      <form method="post" action="{% url 'pagamentos:conexoes_gerar_qr' %}">
-        {% csrf_token %}
-        <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}Tentar de novo</button>
-      </form>
+      <div class="qrcode-gerando" data-qr-gerando data-qr-url="{% url 'pagamentos:conexoes_qr' %}" data-csrf="{{ csrf_token }}" role="status" aria-live="polite">
+        <span class="qrcode-gerando-roda" aria-hidden="true"></span>
+        <p>Gerando o QR code… pode levar alguns segundos.</p>
+      </div>
     {% endif %}
   {% endif %}
 </section>

@@ -457,19 +457,44 @@ class HistoricoPagamentosView(LoginRequiredMixin, ListView):
 
 CHAVE_SESSAO_QR_ATIVO = "conexoes_whatsapp_gerar_qr"
 QR_RENOVA_SEGUNDOS = 25
+#: Quanto tempo, depois do clique em "Gerar QR Code", a página continua renovando o QR sozinha.
+#: Passado isso, abrir Conexões não pede QR à Evolution (só um novo clique).
+QR_PEDIDO_VALE_SEGUNDOS = 120
 
 
 def _agora():
     return timezone.now()
 
 
+def _qr_pedido_ativo(sessao) -> bool:
+    """O usuário clicou em "Gerar QR Code" há pouco tempo?
+
+    A sessão guarda o instante do clique. Antes ela guardava só ``True``, que ficava ligado
+    para sempre: toda visita à página pedia um QR à Evolution (devagar) sem ninguém ter clicado.
+    Esse valor antigo, sem horário, não vale mais.
+    """
+    pedido = sessao.get(CHAVE_SESSAO_QR_ATIVO)
+    if isinstance(pedido, bool) or not isinstance(pedido, (int, float)):
+        return False
+    return 0 <= _agora().timestamp() - pedido < QR_PEDIDO_VALE_SEGUNDOS
+
+
+def _qr_guardado_valido():
+    """``(QrWhatsApp, segundos_decorridos)`` do QR ainda válido, ou ``(None, 0)``."""
+    guardado = QrWhatsApp.atual()
+    if guardado:
+        decorrido = (_agora() - guardado.gerado_em).total_seconds()
+        if 0 <= decorrido < QR_RENOVA_SEGUNDOS:
+            return guardado, decorrido
+    return None, 0.0
+
+
 class ConexoesView(LoginRequiredMixin, TemplateView):
     """Status das integrações (WhatsApp, Cora) e QR code pra reconectar o WhatsApp.
 
-    O QR code só é pedido à Evolution quando a pessoa clica em "Gerar QR Code"
-    (grava um flag na sessão) — nunca sozinho a cada carregamento da página,
-    pra não gastar código à toa enquanto ninguém está de fato tentando
-    escanear (o código expira em segundos de qualquer forma).
+    Abrir a página é rápido: o estado do WhatsApp vem da cache curta e **nenhum QR é pedido
+    aqui**. O QR só nasce depois do clique em "Gerar QR Code" e é gerado em segundo plano
+    (``ConexoesQrView``): a tela mostra "Gerando…" e se atualiza quando ele fica pronto.
 
     O QR e a hora em que foi gerado ficam no banco (`QrWhatsApp`, um só para a
     instância da Evolution — é lá que ele expira): ao fechar a página, sair e
@@ -483,17 +508,12 @@ class ConexoesView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         from django.conf import settings
 
-        from .badge import TTL_WHATSAPP_SEGUNDOS
+        from .badge import TTL_WHATSAPP_SEGUNDOS, status_whatsapp_ao_vivo
         from .models import EventoCora
-        from .whatsapp import WhatsAppErro, obter_qrcode, obter_status_conexao
 
         ctx = super().get_context_data(**kwargs)
-        try:
-            status_whatsapp = obter_status_conexao()
-            erro_whatsapp = ""
-        except WhatsAppErro as exc:
-            status_whatsapp = "erro"
-            erro_whatsapp = str(exc)
+        status_whatsapp = status_whatsapp_ao_vivo()
+        erro_whatsapp = "Não foi possível consultar o WhatsApp agora." if status_whatsapp == "erro" else ""
 
         sessao = self.request.session
         if status_whatsapp in ("open", "simulado"):
@@ -502,25 +522,17 @@ class ConexoesView(LoginRequiredMixin, TemplateView):
 
         qr_code = ""
         qr_decorrido = 0.0
-        quer_qr = status_whatsapp not in ("open", "simulado") and sessao.get(CHAVE_SESSAO_QR_ATIVO)
+        quer_qr = status_whatsapp not in ("open", "simulado") and _qr_pedido_ativo(sessao)
         if quer_qr:
-            guardado = QrWhatsApp.atual()
-            decorrido = (_agora() - guardado.gerado_em).total_seconds() if guardado else None
-            if guardado and 0 <= decorrido < QR_RENOVA_SEGUNDOS:
-                qr_code, qr_decorrido = guardado.imagem, decorrido
-            else:
-                QrWhatsApp.limpar()
-                try:
-                    qr_code = obter_qrcode()
-                    QrWhatsApp.guardar(qr_code, _agora())
-                except WhatsAppErro as exc:
-                    erro_whatsapp = erro_whatsapp or str(exc)
+            guardado, qr_decorrido = _qr_guardado_valido()
+            qr_code = guardado.imagem if guardado else ""
 
         ctx.update(
             status_whatsapp=status_whatsapp,
             erro_whatsapp=erro_whatsapp,
             qr_code=qr_code,
             quer_qr=bool(quer_qr),
+            gerando_qr=bool(quer_qr and not qr_code),
             qr_renova_segundos=QR_RENOVA_SEGUNDOS,
             qr_restante_segundos=max(1, round(QR_RENOVA_SEGUNDOS - qr_decorrido)),
             # Ponto decimal fixo: vai direto para o CSS (animation-delay negativo).
@@ -545,13 +557,39 @@ class ConexoesStatusView(LoginRequiredMixin, View):
 
 
 class ConexoesGerarQrView(LoginRequiredMixin, View):
-    """Liga o pedido de QR code (fica ativo, se renovando, até conectar)."""
+    """Registra o pedido de QR code (vale por alguns minutos) e volta para a tela, sem esperar a Evolution."""
 
     def post(self, request):
         cache.delete("whatsapp_status")  # a página e o menu já refletem na hora
-        request.session[CHAVE_SESSAO_QR_ATIVO] = True
+        request.session[CHAVE_SESSAO_QR_ATIVO] = _agora().timestamp()
         QrWhatsApp.limpar()  # "gerar outro" = código novo de verdade
         return redirect("pagamentos:conexoes")
+
+
+class ConexoesQrView(LoginRequiredMixin, View):
+    """Gera o QR code em segundo plano (a tela chama este endereço depois de abrir).
+
+    É aqui que se espera pela Evolution, que pode levar alguns segundos: a página já abriu e
+    mostra "Gerando o QR code…". Só atende quem pediu o QR há pouco, e reaproveita o QR ainda válido.
+    """
+
+    def post(self, request):
+        from .badge import status_whatsapp_ao_vivo
+        from .whatsapp import WhatsAppErro, obter_qrcode
+
+        resposta = JsonResponse({"ok": False, "erro": "Clique em “Gerar QR Code” para pedir um código."}, status=409)
+        if not _qr_pedido_ativo(request.session):
+            return resposta
+        if status_whatsapp_ao_vivo() in ("open", "simulado"):
+            return JsonResponse({"ok": True, "conectado": True})
+        guardado, _ = _qr_guardado_valido()
+        if guardado:
+            return JsonResponse({"ok": True})
+        try:
+            QrWhatsApp.guardar(obter_qrcode(), _agora())
+        except WhatsAppErro as exc:
+            return JsonResponse({"ok": False, "erro": str(exc)})
+        return JsonResponse({"ok": True})
 
 
 class ComprovanteDownloadView(LoginRequiredMixin, View):

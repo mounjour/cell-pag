@@ -1096,6 +1096,11 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 @keyframes cronometro-regressivo { to { width: 0; } }
 @media (prefers-reduced-motion: reduce) { .card-cronometro { animation: none; opacity: 0.4; } }
 
+.qrcode-gerando { display: grid; justify-items: center; gap: .75rem; margin: 1rem 0; padding: 1.25rem; text-align: center; }
+.qrcode-gerando p { margin: 0; color: var(--ink-soft); }
+.qrcode-gerando-roda { width: 2rem; height: 2rem; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--ink); animation: qr-roda .9s linear infinite; }
+@keyframes qr-roda { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .qrcode-gerando-roda { animation-duration: 3s; } }
 .qrcode-conexao { display: grid; justify-items: center; gap: 0.5rem; margin: 1rem 0; text-align: center; }
 .qrcode-caixa { position: relative; display: inline-block; }
 .qrcode-caixa img {

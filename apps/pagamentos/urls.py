@@ -29,6 +29,7 @@ urlpatterns = [
     path("conexoes/", views.ConexoesView.as_view(), name="conexoes"),
     path("conexoes/status/", views.ConexoesStatusView.as_view(), name="conexoes_status"),
     path("conexoes/gerar-qr/", views.ConexoesGerarQrView.as_view(), name="conexoes_gerar_qr"),
+    path("conexoes/qr/", views.ConexoesQrView.as_view(), name="conexoes_qr"),
     path(
         "comprovante/<int:pk>/",
         views.ComprovanteDownloadView.as_view(),
