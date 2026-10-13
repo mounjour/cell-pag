@@ -632,6 +632,7 @@ def test_parcelas_ja_pagas_marca_as_primeiras_parcelas_como_pagas(auth_client, c
             num_parcelas="10",
             data_inicio=(datetime.date.today() - datetime.timedelta(days=20)).isoformat(),
             dia_semana=str((datetime.date.today() - datetime.timedelta(days=20)).weekday()),
+            proxima_cobranca=(datetime.date.today() + datetime.timedelta(days=8)).isoformat(),
             parcelas_ja_pagas="3",
         ),
         follow=True,
