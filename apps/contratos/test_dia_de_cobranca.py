@@ -56,8 +56,8 @@ def test_quinzenal_em_dois_dias_do_mes_grava_os_dias(cliente):
     assert form.is_valid(), form.errors
     contrato = form.save()
     assert contrato.dias_cobranca_mes == "5,20"
-    assert contrato.primeira_cobranca == datetime.date(2026, 8, 20)
-    assert [contrato.data_da_parcela(n) for n in (2, 3)] == [datetime.date(2026, 9, 5), datetime.date(2026, 9, 20)]
+    assert contrato.primeira_cobranca == datetime.date(2026, 8, 5)
+    assert [contrato.data_da_parcela(n) for n in (2, 3)] == [datetime.date(2026, 8, 20), datetime.date(2026, 9, 5)]
 
 
 def test_quinzenal_a_cada_14_dias_no_mesmo_dia_da_semana(cliente):

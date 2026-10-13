@@ -178,7 +178,7 @@ def sugerir_primeira_cobranca(
     if estrutura == Contrato.Estrutura.MENSAL:
         marco = data_inicio + relativedelta(months=1)
     elif estrutura == Contrato.Estrutura.QUINZENAL and len(dias) >= 2:
-        marco = data_inicio + datetime.timedelta(days=15)
+        marco = data_inicio + datetime.timedelta(days=14)
     else:
         passo = PASSO_COM_DIA_DE_COBRANCA[estrutura]
         marco = data_inicio + datetime.timedelta(days=passo)
@@ -195,42 +195,17 @@ def sugerir_primeira_cobranca(
         ano, mes = _somar_meses(ano, mes, 1)
 
 
-def proximo_dia_de_cobranca(
-    hoje: datetime.date, *, dia_semana: int | None = None, dias_do_mes=()
-) -> datetime.date:
-    """O próximo dia de cobrança escolhido, de hoje em diante (hoje inclusive)."""
-    dias = _dias(dias_do_mes) if dias_do_mes else []
-    if not dias:
-        return hoje + datetime.timedelta(days=(dia_semana - hoje.weekday()) % 7)
-    ano, mes = hoje.year, hoje.month
-    while True:
-        for data in _ocorrencias_do_mes(ano, mes, dias):
-            if data >= hoje:
-                return data
-        ano, mes = _somar_meses(ano, mes, 1)
-
-
 def interpretar_dia_de_cobranca(
     estrutura: str, data_inicio: datetime.date, *, primeira_cobranca=None, quinzena="semana",
     dia_semana: int | None = None, dia_mes: int | None = None, dia_mes_2: int | None = None,
-    parcelas_pagas: int = 0, hoje: datetime.date | None = None,
 ):
     """Valida o dia de cobrança escolhido e devolve ``(primeira_cobranca, dias_do_mes)``.
 
     ``dias_do_mes`` é ``""`` (semanal e quinzenal por dia da semana), ``"15"`` (mensal) ou
     ``"5,20"`` (quinzenal com dois dias do mês). Sem ``primeira_cobranca`` ela é sugerida.
     Levanta ``ValueError`` com a mensagem pronta para o usuário.
-
-    Contrato que **já tem parcelas pagas** e sem data digitada: a próxima parcela cai no próximo dia de
-    cobrança escolhido (de hoje em diante) e a primeira cobrança é reconstruída para trás a partir dela.
     """
     def sugerir(dias=(), semana=None):
-        if parcelas_pagas > 0:
-            from django.utils import timezone
-
-            proxima = proximo_dia_de_cobranca(hoje or timezone.localdate(), dia_semana=semana, dias_do_mes=dias)
-            texto = ",".join(str(d) for d in dias)
-            return primeira_cobranca_para_vencimento(proxima, parcelas_pagas, estrutura, texto)
         return sugerir_primeira_cobranca(data_inicio, estrutura, dia_semana=semana, dias_do_mes=dias)
 
     if estrutura not in (Contrato.Estrutura.SEMANAL, Contrato.Estrutura.QUINZENAL, Contrato.Estrutura.MENSAL):

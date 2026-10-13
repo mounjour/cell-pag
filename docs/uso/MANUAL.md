@@ -64,8 +64,6 @@ primeira cobrança foi combinada para outra data) e o dia da semana acompanha. C
 antigos, cadastrados sem dia de cobrança, continuam contando a partir da data da compra até
 você escolher um dia ao editá-los.
 
-**Contrato que já estava rodando** (com parcelas já pagas): não é preciso informar a primeira cobrança. Deixe o campo em branco e as próximas cobranças caem **nos dias que você escolheu, a partir de hoje**: a próxima parcela a pagar vence no próximo desses dias e as seguintes seguem o calendário. Ex.: dias 5 e 20, 5 parcelas pagas e hoje 13/10 → a 6ª vence em **20/10** e a 10ª em 20/12. Se a próxima parcela real for outra, digite a data da primeira cobrança.
-
 ### Status e cores
 
 O status é **recalculado toda vez que a tela abre**, com base na parcela em
