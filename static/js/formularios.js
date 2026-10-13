@@ -21,3 +21,12 @@
     }
   });
 })();
+
+/* Campo numérico focado muda de valor com a roda do mouse (10 vira 9 ao rolar a página).
+   Ao rolar com o cursor em cima dele, o campo perde o foco e a página rola normalmente. */
+(() => {
+  document.addEventListener("wheel", (evento) => {
+    const campo = document.activeElement;
+    if (campo instanceof HTMLInputElement && campo.type === "number" && campo === evento.target) campo.blur();
+  }, { passive: true });
+})();
