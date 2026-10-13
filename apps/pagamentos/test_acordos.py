@@ -280,3 +280,15 @@ def test_baixa_sugere_o_total_das_parcelas_em_atraso(auth_client, cliente):
     form = auth_client.get(reverse("pagamentos:novo", args=[ct.pk])).context["form"]
     assert form.initial["valor_pago"] == "600,00" and form.initial["juros_pago"] == "60,00"  # 50 + 10 de juros
     assert "1 + 2" in form.fields["valor_pago"].help_text
+
+
+def test_baixa_deixa_escolher_quantas_parcelas_quita(auth_client, cliente):
+    import json
+
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="300.00", num_parcelas=3, juros_diario=Decimal("5.00"))
+    for numero, dias in ((1, 10), (2, 2)):
+        Vencimento.objects.create(contrato=ct, numero=numero, data_vencimento=HOJE() - datetime.timedelta(days=dias),
+                                  valor_previsto=Decimal("300.00"))
+    campo = auth_client.get(reverse("pagamentos:novo", args=[ct.pk])).context["form"].fields["quantidade"]
+    assert [valor for valor, _ in campo.choices] == [1, 2]
+    assert [p["juros"] for p in json.loads(campo.widget.attrs["data-parcelas"])] == ["50.00", "10.00"]

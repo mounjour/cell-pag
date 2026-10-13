@@ -1,5 +1,6 @@
 """Formulário de baixa de pagamento (Fase 3)."""
 
+import json
 from decimal import Decimal
 
 from django import forms
@@ -31,6 +32,13 @@ class PagamentoForm(forms.ModelForm):
             "nem da próxima. Deixe 0,00 só se o combinado for outro."
         ),
     )
+
+    # Só ajuda a preencher o valor: a baixa continua sendo uma, na parcela escolhida; o que passa dela
+    # abate e quita as seguintes sozinho (ver Pagamento.registrar).
+    quantidade = forms.TypedChoiceField(
+        label="Quantas parcelas este pagamento quita?", required=False, coerce=int, empty_value=None, choices=[],
+    )
+    field_order = ["vencimento", "quantidade", "data_pagamento", "valor_pago", "juros_pago", "forma", "comprovante", "observacao"]
 
     class Meta:
         model = Pagamento
@@ -65,6 +73,7 @@ class PagamentoForm(forms.ModelForm):
         self.fields["vencimento"].empty_label = None
         self.fields["vencimento"].label_from_instance = self._rotulo_parcela
 
+        self._configurar_quantidade(abertas, contrato)
         if not self.is_bound and abertas:
             primeira = abertas.first()
             self.initial.setdefault("vencimento", primeira.pk)
@@ -84,9 +93,30 @@ class PagamentoForm(forms.ModelForm):
             else:
                 valor = primeira.saldo
                 juros = next((p.juros for p in parcelas if p.numero == primeira.numero), Decimal("0.00"))
+            if "quantidade" in self.fields:
+                self.initial.setdefault("quantidade", len(parcelas) if len(parcelas) > 1 else 1)
             self.initial.setdefault("valor_pago", _formata_moeda(valor))
             self.initial.setdefault("juros_pago", _formata_moeda(juros))
             self.initial.setdefault("data_pagamento", timezone.localdate())
+
+    def _configurar_quantidade(self, abertas, contrato):
+        """Escolha de quantas parcelas o pagamento quita: o valor e o juros sugeridos passam a ser a soma delas."""
+        lista = list(abertas[:24]) if contrato is not None else []
+        if len(lista) < 2:
+            del self.fields["quantidade"]
+            return
+        from .agenda import parcelas_a_cobrar
+
+        juros = {p.numero: p.juros for p in parcelas_a_cobrar(contrato, timezone.localdate())}
+        campo = self.fields["quantidade"]
+        campo.choices = [(i, f"{i} parcela{'s' if i > 1 else ''}") for i in range(1, len(lista) + 1)]
+        campo.help_text = (
+            "Conta a partir da parcela escolhida acima. O valor e o juros abaixo são preenchidos com a soma delas "
+            "(dá para ajustar). Pagamento maior que a parcela abate e quita as seguintes sozinho."
+        )
+        campo.widget.attrs["data-parcelas"] = json.dumps([
+            {"id": v.pk, "saldo": f"{v.saldo:.2f}", "juros": f"{juros.get(v.numero, Decimal('0.00')):.2f}"} for v in lista
+        ])
 
     @staticmethod
     def _rotulo_parcela(venc: Vencimento) -> str:

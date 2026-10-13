@@ -130,6 +130,8 @@ Cada acordo fica registrado (quem combinou, quando, o quê, com anotação) na s
 
 ### Parcela (Vencimento) × Pagamento (baixa)
 
+> **Quitar várias parcelas de uma vez:** em **Registrar pagamento**, o campo **Quantas parcelas este pagamento quita?** (aparece quando há mais de uma parcela em aberto) preenche o valor e o juros com a soma das parcelas escolhidas, a partir da parcela selecionada. Dá para ajustar os valores. A baixa é uma só, na parcela selecionada; o que passa dela abate e quita as seguintes sozinho.
+
 - **Parcela / Vencimento**: o que o cliente *deve* pagar numa data (nº, data, valor previsto). O sistema gera automaticamente.
 - **Pagamento / baixa**: o registro de que o dinheiro *entrou*. Você lança à mão.
 - Cada parcela aceita **uma única baixa**. Para corrigir, use **estornar** e lance de novo.
