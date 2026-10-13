@@ -39,24 +39,8 @@
     };
   }
 
-  // Contrato que já estava rodando (há parcelas pagas): pergunta a PRÓXIMA parcela, não a primeira.
-  function pagasEmAndamento() {
-    if (!el.parcelas_ja_pagas) return 0;
-    var pagas = parseInt(el.parcelas_ja_pagas.value, 10) || 0;
-    var total = parseInt(el.num_parcelas.value, 10) || 0;
-    return pagas > 0 && pagas < total ? pagas : 0;
-  }
-
   function mostrarGrupos() {
     var m = modo();
-    var pagas = pagasEmAndamento();
-    if (grupos.primeira) grupos.primeira.hidden = pagas > 0;
-    if (grupos.proxima && el.proxima_cobranca) {
-      grupos.proxima.hidden = pagas === 0;
-      el.proxima_cobranca.required = pagas > 0;
-      var rotuloProxima = form.querySelector('label[for="' + el.proxima_cobranca.id + '"]');
-      if (rotuloProxima) rotuloProxima.textContent = pagas > 0 ? 'Vencimento da próxima parcela (a ' + (pagas + 1) + 'ª):' : 'Vencimento da próxima parcela:';
-    }
     if (grupos.quinzena) grupos.quinzena.hidden = m.estrutura !== 'quinzenal';
     if (grupos.semana) grupos.semana.hidden = !m.semana;
     if (grupos.mes) grupos.mes.hidden = !m.mes;
@@ -95,7 +79,7 @@
 
   function aoMudarEscolha() {
     mostrarGrupos();
-    if (manual || pagasEmAndamento() > 0) return;
+    if (manual) return;
     var sugestao = sugerir();
     if (sugestao && sugestao !== el.primeira_cobranca.value) {
       el.primeira_cobranca.value = sugestao;
@@ -134,18 +118,6 @@
   ['data_inicio'].forEach(function (nome) {
     el[nome].addEventListener('change', aoMudarEscolha);
     el[nome].addEventListener('input', aoMudarEscolha);
-  });
-  // Próxima parcela digitada: o dia da semana (ou do mês) acompanha a data, como na primeira cobrança.
-  function aoEditarProxima() {
-    var d = lerData(el.proxima_cobranca.value);
-    if (!d) return;
-    var m = modo();
-    if (m.semana) el.dia_semana.value = String(diaDaSemana(d));
-    else if (el.dia_mes.value === '') el.dia_mes.value = d.getDate();
-  }
-  if (el.proxima_cobranca) el.proxima_cobranca.addEventListener('input', aoEditarProxima);
-  ['parcelas_ja_pagas', 'num_parcelas'].forEach(function (nome) {
-    if (el[nome]) el[nome].addEventListener('input', mostrarGrupos);
   });
   el.primeira_cobranca.addEventListener('input', aoEditarData);
   el.primeira_cobranca.addEventListener('change', function (evento) {

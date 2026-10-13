@@ -355,7 +355,6 @@ Ao **editar o contrato** os campos de entrada aparecem preenchidos: corrija o va
 | **Como é a cobrança quinzenal?** | Só no quinzenal | "a cada 14 dias, no mesmo dia da semana" ou "dois dias fixos do mês" |
 | **Dia da semana** / **Dia do mês** | Sim | o dia de cobrança (um ou dois dias, conforme a frequência) |
 | **Primeira cobrança** | Sugerida | data da parcela 1; o sistema sugere, você pode alterar |
-| **Vencimento da próxima parcela** | Só com parcelas já pagas | contrato que já estava rodando: em vez da primeira cobrança, informe quando vence a **próxima parcela a pagar**; o sistema reconstrói o calendário para trás (ex.: 5 parcelas pagas e próxima em 20/10 → a 6ª vence em 20/10) |
 
 ### Outras datas
 | Campo | Obrigatório | Observação |

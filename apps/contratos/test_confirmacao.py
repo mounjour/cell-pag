@@ -23,7 +23,7 @@ def cadastro(db):
         "cliente": cliente.pk, "aparelho": aparelho.pk, "apelido": "iPhone da Maria",
         "aparelho_modelo": "iPhone 13 128GB", "imei": "359999053372501", "valor_total": "1000,00",
         "num_parcelas": "10", "estrutura": "semanal",
-        "juros_diario": "5,00", "data_inicio": "2026-09-01", "dia_semana": "1", "proxima_cobranca": "2026-09-22", "status": "em_dia",
+        "juros_diario": "5,00", "data_inicio": "2026-09-01", "dia_semana": "1", "status": "em_dia",
         "entrada": "200,00", "entrada_forma": "dinheiro", "parcelas_ja_pagas": "2",
     }
 
