@@ -46,6 +46,11 @@ class ContratoForm(forms.ModelForm):
         label="Valor total do contrato",
         widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}),
     )
+    valor_parcela = forms.CharField(
+        label="Valor da parcela", required=False,
+        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "Calculado sozinho", "class": "money"}),
+        help_text="Deixe em branco para calcular (valor total ÷ parcelas, em múltiplos de R$ 0,10) ou informe o valor combinado.",
+    )
     juros_diario = forms.CharField(
         label="Juros diário", required=False, initial="5,00",
         widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "5,00", "class": "money"}),
@@ -60,6 +65,7 @@ class ContratoForm(forms.ModelForm):
             "aparelho_modelo",
             "imei",
             "valor_total",
+            "valor_parcela",
             "estrutura",
             "juros_diario",
             "num_parcelas",
@@ -194,6 +200,9 @@ class ContratoForm(forms.ModelForm):
             self.fields["aparelho"].widget.attrs["data-preenche-aparelho"] = "1"
             self.fields["aparelho"].empty_label = "Nenhum — manter modelo/IMEI abaixo"
         self.entradas_existentes = []
+        if not (self.instance and self.instance.pk):
+            # No cadastro o valor da parcela sai do cálculo; só na edição dá para fixar outro valor.
+            del self.fields["valor_parcela"]
         if self.instance and self.instance.pk:
             # "Parcelas já pagas" só faz sentido ao cadastrar: num contrato existente as parcelas
             # se registram pela tela de pagamento, uma a uma.
@@ -222,6 +231,8 @@ class ContratoForm(forms.ModelForm):
             if self.instance.valor_total is not None:
                 self.initial["valor_total"] = _formata_moeda(self.instance.valor_total)
             self.initial["juros_diario"] = _formata_moeda(self.instance.juros_diario)
+            if self.instance.valor_parcela is not None:
+                self.initial["valor_parcela"] = _formata_moeda(self.instance.valor_parcela)
 
     def _valores_iniciais_do_dia_de_cobranca(self):
         """Ao editar, mostra o dia de cobrança já gravado nos campos de escolha."""
@@ -240,6 +251,12 @@ class ContratoForm(forms.ModelForm):
         valor = moeda_para_decimal(self.cleaned_data.get("valor_total"))
         if valor is None:
             raise forms.ValidationError("Informe o valor total do contrato.")
+        return valor
+
+    def clean_valor_parcela(self):
+        valor = moeda_para_decimal(self.cleaned_data.get("valor_parcela"))
+        if valor is not None and valor <= 0:
+            raise forms.ValidationError("Informe um valor maior que zero, ou deixe em branco para calcular.")
         return valor
 
     def clean_juros_diario(self):
@@ -275,8 +292,10 @@ class ContratoForm(forms.ModelForm):
                 self.instance.aparelho_modelo = aparelho.modelo
                 self.instance.imei = aparelho.imei
         if dados.get("valor_total") and dados.get("num_parcelas"):
-            # Não é campo do formulário: sai do total e do nº de parcelas.
-            self.instance.valor_parcela = Contrato.valor_da_parcela(dados["valor_total"], dados["num_parcelas"])
+            # Em branco: sai do total e do nº de parcelas. Informado: vale o valor combinado.
+            if not dados.get("valor_parcela"):
+                dados["valor_parcela"] = Contrato.valor_da_parcela(dados["valor_total"], dados["num_parcelas"])
+            self.instance.valor_parcela = dados["valor_parcela"]
         quantidade = dados.get("parcelas_ja_pagas")
         num_parcelas = dados.get("num_parcelas")
         if quantidade and num_parcelas and quantidade > num_parcelas:

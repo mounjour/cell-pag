@@ -194,6 +194,45 @@ class ContatoDeCobrancaForm(forms.ModelForm):
         return dados
 
 
+class ParcelaEditarForm(forms.Form):
+    """Editar data, valor e "valor a mais" de uma parcela."""
+
+    data_vencimento = forms.DateField(
+        label="Data de vencimento", input_formats=["%Y-%m-%d"],
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    )
+    valor_base = forms.CharField(
+        label="Valor da parcela (R$)",
+        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}),
+    )
+    acrescimo = forms.CharField(
+        label="Valor a mais (R$)", required=False,
+        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}),
+        help_text="Somado à parcela na cobrança. Use negativo para dar desconto.",
+    )
+    motivo = forms.CharField(
+        label="Motivo do ajuste (opcional)", required=False, max_length=120,
+        widget=forms.TextInput(attrs={"placeholder": "Ex.: acessório, troca de tela"}),
+    )
+
+    def _dinheiro(self, nome, obrigatorio):
+        try:
+            valor = moeda_para_decimal(self.cleaned_data.get(nome))
+        except forms.ValidationError:
+            raise forms.ValidationError("Informe um valor válido, ex.: 25,00.") from None
+        if valor is None:
+            if obrigatorio:
+                raise forms.ValidationError("Informe o valor.")
+            return Decimal("0.00")
+        return valor
+
+    def clean_valor_base(self):
+        return self._dinheiro("valor_base", True)
+
+    def clean_acrescimo(self):
+        return self._dinheiro("acrescimo", False)
+
+
 class AcordoPerdaoForm(forms.Form):
     """Perdoar (parte d)o juros do atraso de uma parcela."""
 
