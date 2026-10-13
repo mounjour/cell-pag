@@ -9,13 +9,14 @@ class PagamentosConfig(AppConfig):
     def ready(self):
         from auditlog.registry import auditlog
 
-        from .models import Cobranca, CobrancaCora, EventoCora, Pagamento, Vencimento
+        from .models import Cobranca, CobrancaCora, ContatoDeCobranca, EventoCora, Pagamento, Vencimento
 
         auditlog.register(Vencimento)
         auditlog.register(Pagamento)
         auditlog.register(Cobranca)
         auditlog.register(CobrancaCora)
         auditlog.register(EventoCora)
+        auditlog.register(ContatoDeCobranca)
 
         # O contador de "Cobrar hoje" no menu depende destes dados.
         from django.db.models.signals import post_delete, post_save
@@ -24,6 +25,6 @@ class PagamentosConfig(AppConfig):
 
         from .badge import invalidar
 
-        for modelo in (Pagamento, Vencimento, Contrato):
+        for modelo in (Pagamento, Vencimento, Contrato, ContatoDeCobranca):
             post_save.connect(invalidar, sender=modelo, dispatch_uid=f"badge_{modelo.__name__}_save")
             post_delete.connect(invalidar, sender=modelo, dispatch_uid=f"badge_{modelo.__name__}_del")

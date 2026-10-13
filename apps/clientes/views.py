@@ -72,6 +72,11 @@ class ClienteDetailView(LoginRequiredMixin, DetailView):
         paineis = [_painel_do_contrato(ct) for ct in contratos]
         ctx["paineis"] = paineis
         ctx["avisos"] = [aviso for painel in paineis for aviso in painel["avisos"]]
+        from apps.pagamentos.models import ContatoDeCobranca
+
+        ctx["contatos"] = ContatoDeCobranca.objects.filter(
+            contrato__cliente=self.object
+        ).select_related("contrato", "autor")[:10]
         ctx["mensagens"] = Cobranca.objects.filter(contrato__cliente=self.object).select_related(
             "contrato"
         )[:10]

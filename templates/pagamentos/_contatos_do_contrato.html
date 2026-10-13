@@ -1,0 +1,53 @@
+{# Contatos de cobrança do contrato. Espera `contrato`, `form_contato`, `contatos` e `promessa` (a promessa em aberto, se houver). #}
+<section class="contatos-cobranca" id="contatos">
+  <h2>Contatos de cobrança</h2>
+  {% if promessa %}
+    <p>
+      {% if promessa.estado == "quebrada" %}
+        <span class="pill inadimplente">promessa não cumprida</span> Prometeu pagar até {{ promessa.contato.promessa_para|date:"d/m/Y" }} e não pagou.
+      {% elif promessa.estado == "hoje" %}
+        <span class="pill aberto">prometeu pagar hoje</span> A promessa vence hoje.
+      {% else %}
+        <span class="pill aberto">promessa em aberto</span> Prometeu pagar até {{ promessa.contato.promessa_para|date:"d/m/Y" }}.
+      {% endif %}
+    </p>
+  {% endif %}
+
+  {% if not contrato.quitado %}
+  <form method="post" action="{% url 'pagamentos:contato_novo' contrato.pk %}" class="contato-form" data-contato-form>
+    {% csrf_token %}
+    <div class="contato-form-linha">
+      <div class="form-row">{{ form_contato.tipo.label_tag }}{{ form_contato.tipo }}</div>
+      <div class="form-row">{{ form_contato.resultado.label_tag }}{{ form_contato.resultado }}</div>
+      <div class="form-row" data-contato-promessa>{{ form_contato.promessa_para.label_tag }}{{ form_contato.promessa_para }}</div>
+    </div>
+    <div class="form-row">{{ form_contato.nota.label_tag }}{{ form_contato.nota }}</div>
+    <button type="submit" class="btn">{% include "_icone.html" with nome="adicionar" %}Anotar contato</button>
+  </form>
+  {% endif %}
+
+  {% if contatos %}
+    <div class="tbl-wrap cards">
+      <table>
+        <thead><tr><th class="num">Data</th><th>Contato</th><th>Resultado</th><th>Anotação</th><th></th></tr></thead>
+        <tbody>
+          {% for c in contatos %}
+            <tr>
+              <td class="num" data-label="Data">{{ c.criado_em|date:"d/m/Y H:i" }}</td>
+              <td data-label="Contato">{{ c.get_tipo_display }}{% if c.autor %}<br><small>{{ c.autor.nome_curto }}</small>{% endif %}</td>
+              <td data-label="Resultado">{{ c.get_resultado_display }}{% if c.promessa_para %}<br><small>até {{ c.promessa_para|date:"d/m/Y" }}</small>{% endif %}</td>
+              <td data-label="Anotação" class="wrap-cell">{{ c.nota|default:"—" }}</td>
+              <td>
+                <form method="post" action="{% url 'pagamentos:contato_excluir' c.pk %}" data-confirmar="Apagar esta anotação?">
+                  {% csrf_token %}<button type="submit" class="btn-cancelar-pix">Apagar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">Nenhum contato anotado. Quando falar com o cliente, registre aqui o que foi combinado.</p>
+  {% endif %}
+</section>

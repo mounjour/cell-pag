@@ -1367,3 +1367,14 @@ a.pill.alerta-bloqueio:hover { filter: brightness(.95); }
 .bloqueio-form input[type="text"] { flex: 1 1 11rem; min-width: 0; }
 .bloqueio-card h2 .icone { vertical-align: -3px; margin-right: .4rem; }
 .card h2 .count { margin-left: .4rem; padding: 0 .5rem; border-radius: 999px; background: var(--line); font-size: .8rem; font-weight: 600; color: var(--ink-soft); }
+
+/* Contatos de cobrança e promessas de pagamento */
+.contatos-cobranca { margin-top: 1.5rem; scroll-margin-top: calc(var(--topo-h, 60px) + 1rem); }
+.contato-form { display: grid; gap: .75rem; margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.contato-form-linha { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .75rem; }
+.contato-form [hidden] { display: none; }
+.promessas-card h2 .icone { vertical-align: -3px; margin-right: .4rem; }
+.promessas-lista { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .6rem; }
+.promessas-lista li { display: flex; flex-wrap: wrap; gap: .4rem .75rem; align-items: center; }
+.promessas-lista small { color: var(--ink-soft); flex-basis: 100%; }
+a.pill { text-decoration: none; }

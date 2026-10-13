@@ -30,6 +30,7 @@
                   {% if l.bloqueado %}<span class="pill bloqueado">{% include "_icone.html" with nome="bloqueio" %} bloqueado</span>{% elif l.situacao.alertar_bloqueio %}<a class="pill alerta-bloqueio" href="{% url 'aparelhos:bloqueios' %}">⚠ bloquear aparelho</a>{% endif %}
                 </span>
                 <span class="atraso-dias">{{ l.situacao.dias_atraso }} dia{{ l.situacao.dias_atraso|pluralize }} de atraso</span>
+                {% if l.promessa %}<a class="pill {% if l.promessa.estado == 'quebrada' %}inadimplente{% else %}aberto{% endif %}" href="{% url 'contratos:detalhe' l.contrato.pk %}#contatos">{% if l.promessa.estado == 'quebrada' %}promessa de {{ l.promessa.contato.promessa_para|date:"d/m" }} não cumprida{% else %}prometeu pagar {{ l.promessa.contato.promessa_para|date:"d/m" }}{% endif %}</a>{% endif %}
               {% endif %}
             </td>
             <td class="num cobrar-cell" data-label="A cobrar">

@@ -9,6 +9,7 @@ class AparelhosConfig(AppConfig):
     def ready(self):
         from auditlog.registry import auditlog
 
-        from .models import Aparelho
+        from .models import Aparelho, BloqueioAparelho
 
         auditlog.register(Aparelho)
+        auditlog.register(BloqueioAparelho)

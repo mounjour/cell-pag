@@ -29,7 +29,9 @@ def shell(request):
         return {}
     from django.utils.functional import SimpleLazyObject
 
-    from apps.pagamentos.badge import contagem_a_bloquear, contagem_a_desbloquear, contagem_cobrar_hoje
+    from apps.pagamentos.badge import (
+        contagem_a_bloquear, contagem_a_desbloquear, contagem_cobrar_hoje, contagem_promessas,
+    )
 
     def pix_alertas():
         from apps.pagamentos.models import CobrancaCora, ComprovanteRecebido
@@ -58,6 +60,12 @@ def shell(request):
     def aparelhos_a_bloquear_rotulo():
         return "aparelho para bloquear" if contagem_a_bloquear() == 1 else "aparelhos para bloquear"
 
+    def promessas_a_retornar():
+        return contagem_promessas()
+
+    def promessas_a_retornar_rotulo():
+        return "promessa de pagamento" if contagem_promessas() == 1 else "promessas de pagamento"
+
     def aparelhos_a_desbloquear():
         return contagem_a_desbloquear()
 
@@ -79,6 +87,7 @@ def shell(request):
             + (1 if cobrancas_pausadas() else 0)
             + (1 if aparelhos_a_bloquear() else 0)
             + (1 if aparelhos_a_desbloquear() else 0)
+            + (1 if promessas_a_retornar() else 0)
         )
 
     def rotulo_importacoes_pendentes():
@@ -92,6 +101,8 @@ def shell(request):
         "cobrancas_pausadas": SimpleLazyObject(cobrancas_pausadas),
         "aparelhos_a_bloquear_n": SimpleLazyObject(aparelhos_a_bloquear),
         "aparelhos_a_bloquear_rotulo": SimpleLazyObject(aparelhos_a_bloquear_rotulo),
+        "promessas_a_retornar_n": SimpleLazyObject(promessas_a_retornar),
+        "promessas_a_retornar_rotulo": SimpleLazyObject(promessas_a_retornar_rotulo),
         "aparelhos_a_desbloquear_n": SimpleLazyObject(aparelhos_a_desbloquear),
         "aparelhos_a_desbloquear_rotulo": SimpleLazyObject(aparelhos_a_desbloquear_rotulo),
         "bloqueios_pendentes_n": SimpleLazyObject(aparelhos_bloqueio_pendente),

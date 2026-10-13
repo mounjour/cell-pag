@@ -10,6 +10,8 @@ urlpatterns = [
     path("contrato/<int:contrato_pk>/previsao/", views.PagamentoPrevisaoView.as_view(), name="previsao"),
     path("cobrar-hoje/", views.CobrarHojeView.as_view(), name="cobrar_hoje"),
     path("cobrar-hoje/pausa/", views.CobrancasPausaView.as_view(), name="cobrancas_pausa"),
+    path("contrato/<int:contrato_pk>/contatos/novo/", views.ContatoCriarView.as_view(), name="contato_novo"),
+    path("contatos/<int:pk>/excluir/", views.ContatoExcluirView.as_view(), name="contato_excluir"),
     path("pix/", views.PixPainelView.as_view(), name="pix_painel"),
     path("pix/<int:pk>/cancelar/", views.PixCancelarView.as_view(), name="pix_cancelar"),
     path(

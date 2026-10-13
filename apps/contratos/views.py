@@ -317,6 +317,12 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
         from apps.pagamentos.agenda import resumo_cobranca
         ctx["resumo_cobranca"] = resumo_cobranca(contrato)
         ctx["bloqueio_ativo"] = contrato.bloqueios.filter(desbloqueado_em__isnull=True).first()
+        from apps.pagamentos.contatos import promessas_em_aberto
+        from apps.pagamentos.forms import ContatoDeCobrancaForm
+
+        ctx["form_contato"] = ContatoDeCobrancaForm()
+        ctx["contatos"] = contrato.contatos_de_cobranca.select_related("autor")[:10]
+        ctx["promessa"] = promessas_em_aberto(contrato_ids=[contrato.pk]).get(contrato.pk)
         # Entrada: Pagamento sem parcela vinculada (ver _registrar_entrada) —
         # já veio no prefetch de "pagamentos", sem consulta extra.
         ctx["entradas"] = [p for p in contrato.pagamentos.all() if p.vencimento_id is None]

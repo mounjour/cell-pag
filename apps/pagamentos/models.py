@@ -535,3 +535,47 @@ class ConfiguracaoCobranca(models.Model):
                 config.iniciada_em = timezone.now()
         config.save()
         return config
+
+
+class ContatoDeCobranca(models.Model):
+    """Anotação de um contato feito com o cliente para cobrar (ligação, conversa, mensagem à mão).
+
+    Guarda o que foi combinado — principalmente a **promessa de pagamento** (``promessa_para``) —
+    para a equipe não depender da memória: a promessa aparece no "Cobrar hoje" e avisa quando
+    vence sem pagamento. Não envia nada ao cliente.
+    """
+
+    class Tipo(models.TextChoices):
+        LIGACAO = "ligacao", "Ligação"
+        WHATSAPP = "whatsapp", "WhatsApp"
+        PESSOALMENTE = "pessoalmente", "Pessoalmente"
+        OUTRO = "outro", "Outro"
+
+    class Resultado(models.TextChoices):
+        PROMESSA = "promessa", "Prometeu pagar"
+        SEM_RESPOSTA = "sem_resposta", "Não atendeu / não respondeu"
+        CONTESTOU = "contestou", "Contestou o valor"
+        OUTRO = "outro", "Outro"
+
+    contrato = models.ForeignKey(
+        "contratos.Contrato", on_delete=models.PROTECT, related_name="contatos_de_cobranca", verbose_name="contrato"
+    )
+    tipo = models.CharField("como foi o contato", max_length=14, choices=Tipo.choices, default=Tipo.WHATSAPP)
+    resultado = models.CharField("resultado", max_length=14, choices=Resultado.choices, default=Resultado.PROMESSA)
+    promessa_para = models.DateField(
+        "prometeu pagar até", null=True, blank=True, help_text="Só para quem prometeu pagar."
+    )
+    nota = models.TextField("anotação", blank=True, max_length=500)
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="registrado por",
+    )
+    criado_em = models.DateTimeField("registrado em", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "contato de cobrança"
+        verbose_name_plural = "contatos de cobrança"
+        ordering = ["-criado_em"]
+
+    def __str__(self) -> str:
+        return f"{self.contrato} — {self.get_resultado_display()} ({self.criado_em:%d/%m/%Y})"

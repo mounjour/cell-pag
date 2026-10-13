@@ -59,7 +59,20 @@ def contagem_a_desbloquear() -> int:
     return n
 
 
+def contagem_promessas() -> int:
+    """Promessas de pagamento para hoje ou já vencidas sem pagamento."""
+    chave = f"promessas_a_retornar_n:{timezone.localdate().isoformat()}"
+    n = cache.get(chave)
+    if n is None:
+        from .contatos import promessas_a_retornar
+
+        n = len(promessas_a_retornar())
+        cache.set(chave, n, TTL_SEGUNDOS)
+    return n
+
+
 def invalidar(**_kwargs) -> None:
+    cache.delete(f"promessas_a_retornar_n:{timezone.localdate().isoformat()}")
     cache.delete(_chave())
     cache.delete(_chave_bloqueio())
     cache.delete(f"aparelhos_a_desbloquear_n:{timezone.localdate().isoformat()}")
