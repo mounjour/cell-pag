@@ -12,6 +12,8 @@ urlpatterns = [
     path("cobrar-hoje/pausa/", views.CobrancasPausaView.as_view(), name="cobrancas_pausa"),
     path("contrato/<int:contrato_pk>/contatos/novo/", views.ContatoCriarView.as_view(), name="contato_novo"),
     path("contatos/<int:pk>/excluir/", views.ContatoExcluirView.as_view(), name="contato_excluir"),
+    path("parcela/<int:pk>/acordo/", views.AcordoView.as_view(), name="acordo"),
+    path("acordos/<int:pk>/desfazer/", views.AcordoDesfazerView.as_view(), name="acordo_desfazer"),
     path("pix/", views.PixPainelView.as_view(), name="pix_painel"),
     path("pix/<int:pk>/cancelar/", views.PixCancelarView.as_view(), name="pix_cancelar"),
     path(

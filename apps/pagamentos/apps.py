@@ -9,7 +9,7 @@ class PagamentosConfig(AppConfig):
     def ready(self):
         from auditlog.registry import auditlog
 
-        from .models import Cobranca, CobrancaCora, ContatoDeCobranca, EventoCora, Pagamento, Vencimento
+        from .models import Acordo, Cobranca, CobrancaCora, ContatoDeCobranca, EventoCora, Pagamento, Vencimento
 
         auditlog.register(Vencimento)
         auditlog.register(Pagamento)
@@ -17,6 +17,7 @@ class PagamentosConfig(AppConfig):
         auditlog.register(CobrancaCora)
         auditlog.register(EventoCora)
         auditlog.register(ContatoDeCobranca)
+        auditlog.register(Acordo)
 
         # O contador de "Cobrar hoje" no menu depende destes dados.
         from django.db.models.signals import post_delete, post_save

@@ -1378,3 +1378,10 @@ a.pill.alerta-bloqueio:hover { filter: brightness(.95); }
 .promessas-lista li { display: flex; flex-wrap: wrap; gap: .4rem .75rem; align-items: center; }
 .promessas-lista small { color: var(--ink-soft); flex-basis: 100%; }
 a.pill { text-decoration: none; }
+
+/* Acordos */
+.acordo-opcoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; align-items: start; }
+.acordo-resumo { margin: 1rem 0; }
+.acordos-contrato { scroll-margin-top: calc(var(--topo-h, 60px) + 1rem); }
+.acordo-desfeito td { color: var(--ink-soft); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--ink-soft) 40%, transparent); }
+.acordo-desfeito td .pill, .acordo-desfeito td small { text-decoration: none; }

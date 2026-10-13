@@ -87,13 +87,13 @@ def situacoes_dos_clientes(cliente_ids, hoje: datetime.date | None = None) -> di
             continue
         for venc in parcelas:
             dias = atraso.dias_de_atraso(venc.data_vencimento, hoje, contrato.estrutura)
-            _acumula(sit, contrato, venc.data_vencimento, venc.saldo, dias, hoje)
+            _acumula(sit, contrato, venc.data_vencimento, venc.saldo, dias, hoje, venc.juros_abonado)
     return resultado
 
 
-def _acumula(sit: Situacao, contrato, vencimento, valor, dias, hoje) -> None:
+def _acumula(sit: Situacao, contrato, vencimento, valor, dias, hoje, juros_abonado=ZERO) -> None:
     if dias > 0:
-        juros = atraso.juros_acumulados(dias, contrato.juros_diario)
+        juros = max(ZERO, atraso.juros_acumulados(dias, contrato.juros_diario) - juros_abonado)
         sit.devido += valor + juros
         sit.juros += juros
         sit.dias_atraso = max(sit.dias_atraso, dias)
