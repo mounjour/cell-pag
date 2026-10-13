@@ -17,6 +17,7 @@ from apps.arquivos import servir_anexo
 from apps.clientes.models import Cliente
 
 from .forms import ContratoForm, DocumentoContratoForm, PlanilhaPreviaForm, PrevisaoContratoForm, ResolverImportacaoForm, moeda_para_decimal
+from . import importacao as importacao_contratos
 from .models import Contrato, DocumentoContrato, ImportacaoContratoPendente
 from .resumo import resumo_do_cadastro
 
@@ -534,6 +535,15 @@ class ContratoCreateView(LoginRequiredMixin, CreateView):
             entrada = form.cleaned_data.get("entrada")
             if entrada:
                 _registrar_entrada(self.request, self.object, entrada, form.cleaned_data.get("entrada_forma"))
+            resolvidas = importacao_contratos.resolver_pendencias_do_contrato(self.object)
+        if resolvidas:
+            linhas = ", ".join(str(p.linha_origem) for p in resolvidas)
+            messages.info(
+                self.request,
+                f"Pendência de importação resolvida: linha {linhas} da planilha saiu da lista de pendências."
+                if len(resolvidas) == 1 else
+                f"{len(resolvidas)} pendências de importação resolvidas (linhas {linhas} da planilha).",
+            )
         messages.success(self.request, "Cadastro confirmado. A cobrança seguirá as datas do contrato na rotina automática.")
         return response
 
