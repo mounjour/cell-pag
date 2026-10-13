@@ -300,7 +300,7 @@ Todos os contratos, ordenados por nome do cliente, **20 por página**.
 **Elementos da tela:**
 - **Filtro por status** — lista suspensa: Todos / Em dia / Atrasado / Inadimplente / Quitado. Muda a lista na hora. O filtro usa o status **calculado hoje** (o mesmo que a tela mostra).
 - **Novo contrato** — botão à direita.
-- **Tabela:** Contrato (link para o detalhe), Cliente (link para a ficha), Frequência, Valor total, Compra e Status.
+- **Tabela:** Contrato (link para o detalhe), Cliente (link para a ficha), Frequência, Valor da parcela, Compra e Status.
 - **Paginação** no rodapé.
 
 ---
