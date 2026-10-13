@@ -265,7 +265,8 @@ def test_get_preseleciona_parcela_aberta_e_valor(auth_client, cliente):
     assert resp.status_code == 200
     v1 = ct.vencimentos.get(numero=1)
     assert resp.context["form"].initial["vencimento"] == v1.pk
-    assert resp.context["form"].initial["valor_pago"] == "40,00"
+    # as parcelas do exemplo estão todas vencidas: a baixa sugere o total delas somadas (10 × R$ 40)
+    assert resp.context["form"].initial["valor_pago"] == "400,00"
 
 
 @pytest.mark.django_db
