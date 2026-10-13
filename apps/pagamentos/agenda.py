@@ -161,7 +161,12 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
     # Expõe no painel o estado da mensagem do dia sem misturar a regra da
     # agenda com o mecanismo de envio.
     if linhas:
+        from apps.pagamentos.contatos import promessas_em_aberto
         from apps.pagamentos.models import Cobranca, CobrancaCora
+
+        promessas = promessas_em_aberto(hoje, contrato_ids=[linha["contrato"].pk for linha in linhas])
+        for linha in linhas:
+            linha["promessa"] = promessas.get(linha["contrato"].pk)
 
         por_contrato = {
             cobranca.contrato_id: cobranca

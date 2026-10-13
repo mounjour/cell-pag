@@ -15,7 +15,7 @@
   <script src="{% static 'js/formularios.js' %}?v=1" defer></script>
   <script src="{% static 'js/mascaras.js' %}?v=1" defer></script>
   {% if user.is_authenticated %}<script src="{% static 'js/conexoes_vivo.js' %}?v=6" defer></script>{% endif %}
-  <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261013-bloqueios">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261013-contatos">
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}?v=20260928-ux">
   <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261013-bloqueios">
   {% block extra_styles %}{% endblock %}
@@ -98,8 +98,9 @@
           <a class="menu-item menu-item--erro" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-notificacao{% if not whatsapp_desconectado %} hidden{% endif %}>{% include "_icone.html" with nome="conexoes" %}<span>WhatsApp desconectado</span></a>
           {% if aparelhos_a_bloquear_n %}<a class="menu-item menu-item--erro" href="{% url 'aparelhos:bloqueios' %}">{% include "_icone.html" with nome="bloqueio" %}<span>{{ aparelhos_a_bloquear_n }} {{ aparelhos_a_bloquear_rotulo }} (7+ dias de atraso)</span></a>{% endif %}
           {% if aparelhos_a_desbloquear_n %}<a class="menu-item menu-item--aviso" href="{% url 'aparelhos:bloqueios' %}">{% include "_icone.html" with nome="bloqueio" %}<span>{{ aparelhos_a_desbloquear_n }} {{ aparelhos_a_desbloquear_rotulo }} (cliente regularizou)</span></a>{% endif %}
+          {% if promessas_a_retornar_n %}<a class="menu-item menu-item--aviso" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="cobrar" %}<span>{{ promessas_a_retornar_n }} {{ promessas_a_retornar_rotulo }} para hoje ou vencida{{ promessas_a_retornar_n|pluralize }}</span></a>{% endif %}
           {% if cobrancas_pausadas %}<a class="menu-item menu-item--aviso" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="cobrar" %}<span>Cobranças automáticas desligadas</span></a>{% endif %}
-          <p class="menu-quem" data-notificacoes-vazio{% if importacoes_pendentes_n or pix_alertas_n or whatsapp_desconectado or cobrancas_pausadas or aparelhos_a_bloquear_n or aparelhos_a_desbloquear_n %} hidden{% endif %}>Nenhuma notificação pendente.</p>
+          <p class="menu-quem" data-notificacoes-vazio{% if importacoes_pendentes_n or pix_alertas_n or whatsapp_desconectado or cobrancas_pausadas or aparelhos_a_bloquear_n or aparelhos_a_desbloquear_n or promessas_a_retornar_n %} hidden{% endif %}>Nenhuma notificação pendente.</p>
         </div>
       </details>
       <details class="menu-pop menu-usuario menu-usuario--topo">

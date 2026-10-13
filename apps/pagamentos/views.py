@@ -27,7 +27,8 @@ from apps.contratos.models import Contrato
 
 from . import cora_api
 from .agenda import montar_agenda_do_dia
-from .forms import PagamentoForm
+from .contatos import promessas_a_retornar
+from .forms import ContatoDeCobrancaForm, PagamentoForm
 from .comprovantes import conferir_na_cora
 from .limpeza import encerrar_cobranca_automatica
 from .models import (
@@ -72,7 +73,50 @@ class CobrarHojeView(LoginRequiredMixin, TemplateView):
         ctx["estrutura_atual"] = estrutura
         ctx["estrutura_opcoes"] = Contrato.ESTRUTURAS_ATIVAS
         ctx["config_cobranca"] = ConfiguracaoCobranca.obter()
+        ctx["promessas"] = promessas_a_retornar(ctx["hoje"])
+        if ctx["promessas"]:
+            n = len(ctx["promessas"])
+            messages.warning(
+                self.request,
+                f"{n} promessa{'s' if n != 1 else ''} de pagamento para hoje ou vencida{'s' if n != 1 else ''}: "
+                "vale falar com o cliente de novo.",
+            )
         return ctx
+
+
+class ContatoCriarView(LoginRequiredMixin, View):
+    """Anota um contato de cobrança no contrato (POST)."""
+
+    def post(self, request, contrato_pk):
+        contrato = get_object_or_404(Contrato, pk=contrato_pk)
+        form = ContatoDeCobrancaForm(request.POST)
+        if form.is_valid():
+            contato = form.save(commit=False)
+            contato.contrato = contrato
+            contato.autor = request.user
+            contato.save()
+            if contato.promessa_para:
+                messages.success(request, f"Promessa registrada: pagamento até {contato.promessa_para:%d/%m/%Y}.")
+            else:
+                messages.success(request, "Contato registrado.")
+        else:
+            for erros in form.errors.values():
+                for erro in erros:
+                    messages.error(request, erro)
+        return redirect(reverse("contratos:detalhe", args=[contrato.pk]) + "#contatos")
+
+
+class ContatoExcluirView(LoginRequiredMixin, View):
+    """Apaga uma anotação registrada por engano (POST)."""
+
+    def post(self, request, pk):
+        from .models import ContatoDeCobranca
+
+        contato = get_object_or_404(ContatoDeCobranca, pk=pk)
+        contrato_pk = contato.contrato_id
+        contato.delete()
+        messages.success(request, "Anotação apagada.")
+        return redirect(reverse("contratos:detalhe", args=[contrato_pk]) + "#contatos")
 
 
 class CobrancasPausaView(LoginRequiredMixin, View):

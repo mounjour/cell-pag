@@ -93,6 +93,28 @@
   <p class="empty">Nenhum contrato para este cliente.</p>
 {% endfor %}
 
+<h2>Contatos de cobrança</h2>
+{% if contatos %}
+  <div class="tbl-wrap cards">
+    <table>
+      <thead><tr><th class="num">Data</th><th>Contrato</th><th>Contato</th><th>Resultado</th><th>Anotação</th></tr></thead>
+      <tbody>
+        {% for c in contatos %}
+          <tr>
+            <td class="num">{{ c.criado_em|date:"d/m/Y" }}</td>
+            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' c.contrato.pk %}#contatos">{{ c.contrato.apelido }}</a></td>
+            <td data-label="Contato">{{ c.get_tipo_display }}{% if c.autor %} · {{ c.autor.nome_curto }}{% endif %}</td>
+            <td data-label="Resultado">{{ c.get_resultado_display }}{% if c.promessa_para %} até {{ c.promessa_para|date:"d/m" }}{% endif %}</td>
+            <td data-label="Anotação" class="wrap-cell">{{ c.nota|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="empty">Nenhum contato de cobrança anotado. Registre pela tela de cada contrato.</p>
+{% endif %}
+
 <h2>Mensagens de cobrança</h2>
 {% if mensagens %}
   <div class="tbl-wrap cards">

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ contrato }}{% endblock %}
 
 {% block content %}
@@ -176,6 +177,8 @@
   {% endif %}
 {% endwith %}
 
+{% include "pagamentos/_contatos_do_contrato.html" %}
+
 <h2>Documentos</h2>
 {% if contrato.documentos.all %}
   <div class="tbl-wrap cards">
@@ -203,4 +206,7 @@
   {% include "_form.html" with form=form_documento %}
   <div class="form-actions"><button type="submit" class="btn">{% include "_icone.html" with nome="anexo" %}Anexar documento</button></div>
 </form>
+{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/contato_cobranca.js' %}" defer></script>
 {% endblock %}

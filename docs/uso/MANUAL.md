@@ -105,6 +105,16 @@ Tela que controla o que a equipe já fez com os aparelhos atrasados:
 
 O registro guarda quem bloqueou/liberou e quando; os desbloqueios recentes ficam no histórico da tela. O botão também existe na tela do contrato. Quem já está bloqueado aparece como "bloqueado" no **Cobrar hoje** (em vez de pedir o bloqueio de novo). Há avisos no sino e um contador no menu para "para bloquear" e "para desbloquear".
 
+### Contatos de cobrança e promessas de pagamento
+
+Na tela de cada **contrato** (seção **Contatos de cobrança**) você anota o que falou com o cliente: **como** foi (ligação, WhatsApp, pessoalmente), o **resultado** (prometeu pagar, não atendeu, contestou o valor, outro) e uma observação. Quem **prometeu pagar** informa até quando.
+
+- A promessa aparece no **Cobrar hoje**, na linha do cliente ("prometeu pagar 15/10"). Vale só a promessa **mais recente** do contrato.
+- No dia prometido, e depois dele, se o cliente ainda não pagou, ela entra no cartão **Promessas de pagamento** do Cobrar hoje, no sino de notificações e num aviso (toast) — é hora de falar com ele de novo.
+- A promessa é dada como **cumprida sozinha** quando entra qualquer pagamento do contrato depois dela (ou quando o contrato é quitado). Ninguém precisa marcar.
+- O histórico dos contatos também aparece na ficha do **cliente**. Uma anotação feita por engano pode ser apagada.
+- Anotar contato **não envia nada** ao cliente e não pausa a cobrança automática.
+
 ### Parcela (Vencimento) × Pagamento (baixa)
 
 - **Parcela / Vencimento**: o que o cliente *deve* pagar numa data (nº, data, valor previsto). O sistema gera automaticamente.

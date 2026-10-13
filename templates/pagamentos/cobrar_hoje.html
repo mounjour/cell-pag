@@ -27,6 +27,22 @@
   </form>
 </section>
 
+{% if promessas %}
+<section class="card promessas-card">
+  <h2>{% include "_icone.html" with nome="historico" %}Promessas de pagamento <span class="count">{{ promessas|length }}</span></h2>
+  <p class="helptext">Clientes que prometeram pagar até hoje (ou antes) e ainda não pagaram. Fale com eles de novo e anote o resultado.</p>
+  <ul class="promessas-lista">
+    {% for p in promessas %}
+      <li>
+        <a href="{% url 'contratos:detalhe' p.contato.contrato.pk %}#contatos"><strong>{{ p.contato.contrato.cliente.nome }}</strong> · {{ p.contato.contrato.apelido }}</a>
+        {% if p.estado == "hoje" %}<span class="pill aberto">prometeu pagar hoje</span>{% else %}<span class="pill inadimplente">prometeu {{ p.contato.promessa_para|date:"d/m" }} e não pagou</span>{% endif %}
+        {% if p.contato.nota %}<small>{{ p.contato.nota }}</small>{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
 <div class="filtro-pills">
   <a class="filtro-pill{% if not estrutura_atual %} ativo{% endif %}" href="?">Todas as frequências</a>
   {% for valor, rotulo in estrutura_opcoes %}

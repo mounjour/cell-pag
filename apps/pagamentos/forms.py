@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from apps.contratos.forms import moeda_para_decimal
 
-from .models import Pagamento, Vencimento
+from .models import ContatoDeCobranca, Pagamento, Vencimento
 
 
 class PagamentoForm(forms.ModelForm):
@@ -120,3 +120,35 @@ class PagamentoForm(forms.ModelForm):
 
 def _formata_moeda(valor) -> str:
     return f"{valor:.2f}".replace(".", ",")
+
+
+class ContatoDeCobrancaForm(forms.ModelForm):
+    """Anota um contato de cobrança; quem prometeu pagar informa até quando."""
+
+    class Meta:
+        model = ContatoDeCobranca
+        fields = ["tipo", "resultado", "promessa_para", "nota"]
+        widgets = {
+            "promessa_para": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "nota": forms.Textarea(attrs={"rows": 2, "maxlength": "500", "placeholder": "O que foi combinado? (opcional)"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["promessa_para"].input_formats = ["%Y-%m-%d"]
+        self.fields["promessa_para"].widget.attrs["min"] = timezone.localdate().isoformat()
+
+    def clean(self):
+        dados = super().clean()
+        resultado = dados.get("resultado")
+        data = dados.get("promessa_para")
+        if resultado == ContatoDeCobranca.Resultado.PROMESSA:
+            if not data:
+                self.add_error("promessa_para", "Informe até quando o cliente prometeu pagar.")
+            elif data < timezone.localdate():
+                self.add_error("promessa_para", "A data prometida não pode estar no passado.")
+        else:
+            dados["promessa_para"] = None  # só a promessa tem data
+            if resultado == ContatoDeCobranca.Resultado.OUTRO and not (dados.get("nota") or "").strip():
+                self.add_error("nota", "Escreva o que aconteceu neste contato.")
+        return dados
