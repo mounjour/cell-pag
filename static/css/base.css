@@ -1393,3 +1393,7 @@ a.pill { text-decoration: none; }
 .contrato-dados .lista-dados > div:last-child { border-bottom: 0; }
 .contrato-dados .lista-dados dt { max-width: 50%; }
 .contrato-dados .lista-dados dd .zap { margin-left: .5rem; font-size: .8rem; }
+
+/* Linha/cartão inteiro clicável (data-href, ver js/linha_clicavel.js) */
+[data-href] { cursor: pointer; }
+tr[data-href]:hover td, section.painel-contrato[data-href]:hover { background: var(--surface-2); }

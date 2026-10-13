@@ -4,7 +4,7 @@
   apps/clientes/views.py).
 {% endcomment %}
 {% with ct=p.contrato %}
-<section class="painel-contrato row-acento--{{ ct.status_efetivo }}">
+<section class="painel-contrato row-acento--{{ ct.status_efetivo }}" data-href="{% url 'contratos:detalhe' ct.pk %}">
   <header class="painel-contrato__topo">
     <div>
       <h3><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></h3>
