@@ -49,7 +49,17 @@
     if (rotulo) rotulo.textContent = m.doisDias ? 'Primeiro dia do mês:' : 'Dia do mês da cobrança:';
   }
 
+  // Contrato que já estava rodando: a data de partida não sai da compra; o servidor usa o
+  // próximo dia de cobrança escolhido, a partir de hoje.
+  function emAndamento() {
+    if (!el.parcelas_ja_pagas) return false;
+    var pagas = parseInt(el.parcelas_ja_pagas.value, 10) || 0;
+    var total = parseInt(el.num_parcelas.value, 10) || 0;
+    return pagas > 0 && pagas < total;
+  }
+
   function sugerir() {
+    if (emAndamento()) return '';
     var compra = lerData(el.data_inicio.value);
     var m = modo();
     if (!compra || !m.estrutura) return '';
@@ -81,7 +91,7 @@
     mostrarGrupos();
     if (manual) return;
     var sugestao = sugerir();
-    if (sugestao && sugestao !== el.primeira_cobranca.value) {
+    if (sugestao !== el.primeira_cobranca.value && (sugestao || emAndamento())) {
       el.primeira_cobranca.value = sugestao;
       avisar();
     }
@@ -118,6 +128,9 @@
   ['data_inicio'].forEach(function (nome) {
     el[nome].addEventListener('change', aoMudarEscolha);
     el[nome].addEventListener('input', aoMudarEscolha);
+  });
+  ['parcelas_ja_pagas', 'num_parcelas'].forEach(function (nome) {
+    if (el[nome]) el[nome].addEventListener('input', aoMudarEscolha);
   });
   el.primeira_cobranca.addEventListener('input', aoEditarData);
   el.primeira_cobranca.addEventListener('change', function (evento) {

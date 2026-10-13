@@ -153,7 +153,8 @@ class ContratoForm(forms.ModelForm):
         self.fields["primeira_cobranca"].required = False
         self.fields["primeira_cobranca"].help_text = (
             "Dia em que vence a parcela 1. O sistema sugere a data a partir do dia de cobrança; "
-            "altere se a primeira cobrança foi combinada em outra data."
+            "altere se a primeira cobrança foi combinada em outra data. Em contrato que já tem parcelas "
+            "pagas, deixe em branco: as próximas cobranças caem nos dias escolhidos, a partir de hoje."
         )
         self.fields["dia_semana"].help_text = "Dia da semana em que a parcela vence."
         self.fields["dia_mes"].help_text = "Em meses mais curtos, a cobrança cai no último dia do mês."
@@ -305,6 +306,7 @@ class ContratoForm(forms.ModelForm):
                 dados["estrutura"], dados["data_inicio"], primeira_cobranca=dados.get("primeira_cobranca"),
                 quinzena=dados.get("quinzena") or "semana", dia_semana=dados.get("dia_semana"),
                 dia_mes=dados.get("dia_mes"), dia_mes_2=dados.get("dia_mes_2"),
+                parcelas_pagas=dados.get("parcelas_ja_pagas") or 0,
             )
         except ValueError as erro:
             campo = {"Informe o dia": "dia_mes", "Informe os dois": "dia_mes", "Escolha o dia da": "dia_semana"}
@@ -375,6 +377,7 @@ class PrevisaoContratoForm(forms.Form):
                 dados["primeira_cobranca"], dados["dias_cobranca_mes"] = interpretar_dia_de_cobranca(
                     dados["estrutura"], dados["data_inicio"], primeira_cobranca=dados.get("primeira_cobranca"),
                     quinzena=quinzena or "semana", dia_semana=dia_semana, dia_mes=dia_mes, dia_mes_2=dia_mes_2,
+                    parcelas_pagas=dados.get("parcelas_ja_pagas") or 0,
                 )
             except ValueError as erro:
                 raise forms.ValidationError(str(erro)) from erro
