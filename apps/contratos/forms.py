@@ -204,9 +204,15 @@ class ContratoForm(forms.ModelForm):
             # No cadastro o valor da parcela sai do cálculo; só na edição dá para fixar outro valor.
             del self.fields["valor_parcela"]
         if self.instance and self.instance.pk:
-            # "Parcelas já pagas" só faz sentido ao cadastrar: num contrato existente as parcelas
-            # se registram pela tela de pagamento, uma a uma.
-            del self.fields["parcelas_ja_pagas"]
+            # Na edição o campo serve para dar baixa de uma vez nas primeiras parcelas que já
+            # foram pagas fora do sistema; as que já estão pagas são ignoradas.
+            self.fields["parcelas_ja_pagas"].label = "Marcar como pagas as parcelas até a nº"
+            self.fields["parcelas_ja_pagas"].help_text = (
+                "Dá baixa nas parcelas de 1 até este número que ainda estão em aberto, usando o "
+                "vencimento como data do pagamento. Parcelas já pagas são ignoradas. "
+                "Deixe em branco para não mexer."
+            )
+            self.initial.setdefault("parcelas_ja_pagas", "")
             # A entrada é um pagamento sem parcela. Com 0 ou 1 lançamento dá para editar aqui
             # (esvaziar o valor remove a entrada); com vários, só pelo Admin, para não adivinhar qual mexer.
             self.entradas_existentes = list(self.instance.pagamentos.filter(vencimento__isnull=True))

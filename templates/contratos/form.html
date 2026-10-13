@@ -71,9 +71,9 @@
     {% include "_field.html" with field=form.primeira_cobranca %}
   </div>
 
-  {% if not form.instance.pk %}
+  {% if form.fields.parcelas_ja_pagas %}
   <div class="form-section">
-    <p class="form-section-title">Contrato já em andamento?</p>
+    <p class="form-section-title">{% if form.instance.pk %}Parcelas pagas fora do sistema{% else %}Contrato já em andamento?{% endif %}</p>
     {% include "_field.html" with field=form.parcelas_ja_pagas %}
   </div>
   {% endif %}
