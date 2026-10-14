@@ -72,7 +72,7 @@ def montar_texto(agenda: dict) -> str:
         contrato = linha["contrato"]
         situacao = linha["situacao"]
         if linha["vence_hoje"]:
-            tag = "vence hoje"
+            tag = "cobrança hoje"
         else:
             tag = f"{situacao.dias_atraso}d de atraso"
             if situacao.alertar_bloqueio:

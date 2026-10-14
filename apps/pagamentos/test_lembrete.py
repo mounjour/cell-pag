@@ -87,7 +87,7 @@ def test_texto_vence_hoje_sem_valor_de_parcela(cliente):
     )
     agenda = montar_agenda_do_dia(hoje=hoje)
     texto = lembrete.montar_texto(agenda)
-    assert "vence hoje" in texto
+    assert "cobrança hoje" in texto
     assert "—" in texto  # sem valor_parcela
 
 
@@ -156,7 +156,7 @@ def test_comando_mostra_o_texto_do_lembrete(cliente):
     saida = out.getvalue()
     assert "Lembrete montado" in saida
     assert "Fulano de Tal" in saida
-    assert "vence hoje" in saida
+    assert "cobrança hoje" in saida
 
 
 @pytest.mark.django_db

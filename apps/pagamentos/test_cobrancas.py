@@ -58,7 +58,7 @@ def test_mensagem_de_vencimento(cliente_cobranca):
 
     dados = dados_da_mensagem(montar_agenda_do_dia(hoje)["linhas"][0])
     assert "template" not in dados
-    assert "vence a parcela 1" in dados["mensagem"]
+    assert "é a cobrança da parcela 1" in dados["mensagem"]
 
 
 @pytest.mark.django_db
@@ -97,7 +97,7 @@ def test_mensagem_lista_cada_parcela_com_o_atraso_dela(cliente_cobranca):
     assert "3 parcelas em aberto" in msg
     assert "*Parcela 1* (venceu 26/09, 2 dias de atraso): R$ 100,00 + R$ 10,00 de juros" in msg
     assert "*Parcela 2* (venceu 27/09, 1 dia de atraso): R$ 100,00 + R$ 5,00 de juros" in msg
-    assert "*Parcela 3* (vence hoje): R$ 100,00" in msg
+    assert "*Parcela 3* (cobrança hoje): R$ 100,00" in msg
     assert "Total das parcelas: R$ 300,00" in msg
     assert "Juros pelo atraso: R$ 15,00" in msg
     assert "Total a pagar: R$ 315,00" in msg

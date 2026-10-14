@@ -29,7 +29,7 @@ def _linha_da_parcela(p) -> str:
     if p.dias_atraso:
         situacao = f"venceu {data}, {_dias(p.dias_atraso)} de atraso"
     else:
-        situacao = "vence hoje"
+        situacao = "cobrança hoje"
     linha = f"• *Parcela {p.numero}* ({situacao}): R$ {_moeda(p.saldo)}"
     if p.juros:
         linha += f" + R$ {_moeda(p.juros)} de juros"
@@ -141,7 +141,7 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
         base.update(
             mensagem=(
                 f"Oi, {base['nome']}! 👋\n\n"
-                f"Passando pra lembrar que hoje ({base['data']}) vence a parcela {numero} "
+                f"Passando pra lembrar que hoje ({base['data']}) é a cobrança da parcela {numero} "
                 f"do seu {base['aparelho']}.\n\n"
                 f"{linha_valor}\n\n"
                 f"{bloco_pix}\n\n"
