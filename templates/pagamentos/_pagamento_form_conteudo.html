@@ -7,6 +7,10 @@
   <div><dt>A cobrar hoje</dt><dd class="num">R$ {{ resumo_cobranca.total|floatformat:2 }}{% include "pagamentos/_composicao.html" with resumo=resumo_cobranca %}</dd></div>
 </dl>
 
+{% if recebimento_cora %}
+  <p class="note"><strong>Pix recebido na Cora:</strong> R$ {{ recebimento_cora.valor }} de {{ recebimento_cora.nome|default:"remetente desconhecido" }} em {{ recebimento_cora.recebido_em|date:"d/m/Y H:i" }}.
+    Valor, data e forma já vêm preenchidos; confira a parcela e o juros (o valor recebido inclui o juros, se houver).</p>
+{% endif %}
 {% if pode_registrar %}
   {% if juros_ate_hoje %}
     <p class="note">
