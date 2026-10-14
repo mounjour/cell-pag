@@ -103,7 +103,7 @@ def test_nova_data_zera_o_perdao_anterior(parcela):
 
 
 @pytest.mark.parametrize("dias, trecho", [
-    (-11, "depois do vencimento atual"),   # antes do vencimento atual
+    (-11, "depois da data de cobrança atual"),   # antes do vencimento atual
     (-5, "passado"),                       # depois do vencimento, mas já passou
     (21, "parcela seguinte"),              # além da parcela 2
 ])
@@ -217,7 +217,7 @@ def test_falha_da_cora_no_cancelamento_vira_aviso_sem_perder_o_acordo(parcela, m
 
 def test_tela_do_acordo_mostra_a_situacao_da_parcela(auth_client, parcela):
     html = auth_client.get(reverse("pagamentos:acordo", args=[parcela.pk])).content.decode()
-    assert "Negociar parcela 1" in html and "Perdoar juros" in html and "Nova data de vencimento" in html
+    assert "Negociar parcela 1" in html and "Perdoar juros" in html and "Nova data de cobrança" in html
     assert "10 dias" in html and "R$ 50,00" in html and "R$ 350,00" in html
 
 

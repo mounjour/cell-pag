@@ -7,7 +7,7 @@
 <p class="note">{{ contrato.cliente.nome }} · {{ contrato.apelido }}. A mensagem de cobrança, o Pix e as telas passam a usar o valor e a data daqui. Se a parcela já tiver um Pix aberto, ele é cancelado e a próxima rotina gera outro com o valor novo.</p>
 
 <dl class="meta meta--4col">
-  <div><dt>Vencimento</dt><dd class="num">{{ vencimento.data_vencimento|date:"d/m/Y" }}{% if vencimento.data_original %} <small>(era {{ vencimento.data_original|date:"d/m/Y" }})</small>{% endif %}</dd></div>
+  <div><dt>Data de cobrança</dt><dd class="num">{{ vencimento.data_vencimento|date:"d/m/Y" }}{% if vencimento.data_original %} <small>(era {{ vencimento.data_original|date:"d/m/Y" }})</small>{% endif %}</dd></div>
   <div><dt>Previsto</dt><dd class="num">R$ {{ vencimento.valor_previsto }}</dd></div>
   <div><dt>Já pago</dt><dd class="num">R$ {{ vencimento.valor_pago }}</dd></div>
   <div><dt>Saldo</dt><dd class="num">R$ {{ vencimento.saldo }}</dd></div>

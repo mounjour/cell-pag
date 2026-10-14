@@ -52,7 +52,7 @@
               {% if s.estado == "atraso" %}
                 <span class="pill {% if s.inadimplente %}inadimplente{% else %}atrasado{% endif %}">{% if s.inadimplente %}Inadimplente · {% else %}Atrasado · {% endif %}{{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }}</span>
                 {% if s.alertar_bloqueio %}<span class="pill alerta-bloqueio">⚠ bloquear aparelho</span>{% endif %}
-              {% elif s.estado == "hoje" %}<span class="pill parcial">Vence hoje</span>
+              {% elif s.estado == "hoje" %}<span class="pill parcial">Cobrança hoje</span>
               {% elif s.estado == "em_dia" %}<span class="pill em_dia">Em dia</span>
               {% elif s.estado == "quitado" %}<span class="pill quitado">Quitado</span>
               {% else %}<span class="pill aberto">Sem contrato</span>{% endif %}
@@ -63,7 +63,7 @@
                 <small>inclui R$ {{ s.juros|floatformat:2 }} de juros</small>
               {% elif s.proximo_vencimento %}
                 <strong>R$ {{ s.proximo_valor|floatformat:2 }}</strong>
-                <small>{% if s.estado == "hoje" %}vence hoje{% else %}vence {{ s.proximo_vencimento|date:"d/m" }}{% endif %}</small>
+                <small>{% if s.estado == "hoje" %}cobrança hoje{% else %}cobrança {{ s.proximo_vencimento|date:"d/m" }}{% endif %}</small>
               {% else %}<span class="nada">—</span>{% endif %}
             </td>
             <td data-label="Contato">{% include "_contato_icones.html" with cliente=c %}</td>

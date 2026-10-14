@@ -7,7 +7,7 @@
 <p class="note">{{ contrato.cliente.nome }} · {{ contrato.apelido }}. O acordo muda o que é cobrado desta parcela (mensagem, Pix e telas já passam a usar o valor combinado) e pode ser desfeito enquanto ela não for paga.</p>
 
 <dl class="meta meta--4col acordo-resumo">
-  <div><dt>Vencimento</dt><dd class="num">{{ vencimento.data_vencimento|date:"d/m/Y" }}{% if vencimento.data_original %} <small>(era {{ vencimento.data_original|date:"d/m/Y" }})</small>{% endif %}</dd></div>
+  <div><dt>Data de cobrança</dt><dd class="num">{{ vencimento.data_vencimento|date:"d/m/Y" }}{% if vencimento.data_original %} <small>(era {{ vencimento.data_original|date:"d/m/Y" }})</small>{% endif %}</dd></div>
   <div><dt>Atraso</dt><dd>{% if dias_atraso %}{{ dias_atraso }} dia{{ dias_atraso|pluralize }}{% else %}Em dia{% endif %}</dd></div>
   <div><dt>Parcela</dt><dd class="num">R$ {{ vencimento.saldo }}</dd></div>
   <div><dt>Juros hoje</dt><dd class="num">R$ {{ juros_hoje }}{% if juros_perdoados %} <small>(já perdoado R$ {{ juros_perdoados }})</small>{% endif %}</dd></div>
@@ -35,8 +35,8 @@
   </section>
 
   <section class="card">
-    <h2>Nova data de vencimento</h2>
-    <p class="helptext">A parcela passa a vencer na nova data e o juros recomeça a contar a partir dela. Só pode ir até o vencimento da parcela seguinte.</p>
+    <h2>Nova data de cobrança</h2>
+    <p class="helptext">A parcela passa a vencer na nova data e o juros recomeça a contar a partir dela. Só pode ir até a data de cobrança da parcela seguinte.</p>
     <form method="post" class="form-grid">
       {% csrf_token %}<input type="hidden" name="tipo" value="nova_data">
       {% if form_data.non_field_errors %}<ul class="errorlist">{% for e in form_data.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}

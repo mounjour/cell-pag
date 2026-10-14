@@ -122,7 +122,7 @@ Na tela do contrato, na lista de **Parcelas**, o link **negociar** (parcela em a
 | Acordo | O que muda | Detalhes |
 |---|---|---|
 | **Perdoar juros** | o juros cobrado cai pelo valor perdoado | pode perdoar tudo ou só parte (nunca mais que o juros de hoje). **O juros dos dias seguintes continua correndo** |
-| **Nova data de vencimento** | a parcela passa a vencer na nova data e o juros recomeça a contar dela | a data nova precisa ser depois do vencimento atual, não pode estar no passado e não passa do vencimento da parcela seguinte. A data antiga fica visível ("era 03/10/2026") |
+| **Nova data de cobrança** | a parcela passa a vencer na nova data e o juros recomeça a contar dela | a data nova precisa ser depois da data de cobrança atual, não pode estar no passado e não passa do data de cobrança da parcela seguinte. A data antiga fica visível ("era 03/10/2026") |
 
 O acordo vale para tudo de uma vez: a **mensagem de WhatsApp**, o **Pix** e as telas (Cobrar hoje, contrato, cliente) já cobram o valor combinado. Se já existia um QR de Pix aberto, o sistema o cancela na Cora e a próxima rotina gera outro com o valor novo (se não conseguir cancelar, avisa para cancelar no painel Pix).
 
@@ -361,7 +361,7 @@ Ao **editar o contrato** os campos de entrada aparecem preenchidos: corrija o va
 ### Outras datas
 | Campo | Obrigatório | Observação |
 |---|---|---|
-| **Próximo vencimento** | Não | data manual da próxima parcela. Só é usada para medir atraso/juros **enquanto o contrato ainda não tem parcelas geradas**. Depois disso quem manda é a parcela em aberto mais antiga |
+| **Próxima cobrança** | Não | data manual da próxima parcela. Só é usada para medir atraso/juros **enquanto o contrato ainda não tem parcelas geradas**. Depois disso quem manda é a parcela em aberto mais antiga |
 | **Data prevista de quitação** | Não | normalmente **calculada pelo sistema** (data da última parcela). Só preencha à mão em casos especiais |
 
 ### Outros
@@ -405,13 +405,13 @@ compra, Dia de cobrança, Próxima cobrança, Última parcela prevista.
 
 ### "Situação hoje"
 Cartão com o retrato do dia:
-- **Em dia** — "Sem atraso. Parcela nº X vence em dd/mm/aaaa."
+- **Em dia** — "Sem atraso. Parcela nº X é cobrada em dd/mm/aaaa."
 - **Atrasado / Inadimplente** — "N dias de atraso (parcela nº X) · juros
   acumulados R$ Y".
 - Aos 7+ dias: faixa vermelha **"⚠ N dias — hora de bloquear o aparelho (ação
   manual do vendedor)"**.
-- Se não há como medir atraso (sem parcelas geradas e sem "próximo vencimento"),
-  aparece o aviso para preencher o **próximo vencimento** no contrato.
+- Se não há como medir atraso (sem parcelas geradas e sem "próxima cobrança"),
+  aparece o aviso para preencher a **próxima cobrança** no contrato.
 
 ### Parcelas
 Tabela das parcelas geradas (mostra as **24 primeiras**): Nº, Vencimento,
@@ -466,7 +466,7 @@ Se o contrato estiver **quitado**, o sistema recusa e volta para o detalhe.
 **Formulário:**
 | Campo | Preenchimento | Regras |
 |---|---|---|
-| **Parcela** | já vem selecionada a **mais antiga em aberto**; a lista mostra "Parcela N · vence dd/mm/aaaa · falta R$ X" | só aparece parcelas não pagas; se a parcela escolhida já tiver baixa, o sistema recusa e manda estornar a anterior |
+| **Parcela** | já vem selecionada a **mais antiga em aberto**; a lista mostra "Parcela N · cobrança dd/mm/aaaa · falta R$ X" | só aparece parcelas não pagas; se a parcela escolhida já tiver baixa, o sistema recusa e manda estornar a anterior |
 | **Data do pagamento** | vem com **hoje** | **não pode ser no futuro** |
 | **Valor pago** | vem com o **saldo da parcela** | tem que ser **maior que zero** |
 | **Forma** | Pix / Dinheiro / Outro | padrão: Pix |
@@ -508,7 +508,7 @@ estrutura) **ou** com **vencimento hoje**. Contratos quitados nunca aparecem.
 |---|---|
 | **Cliente** | nome (link para a ficha) |
 | **Contrato** | apelido (link) + estrutura |
-| **Situação** | "Vence hoje" (verde) **ou** selo do status + selo "⚠ bloquear aparelho" (lado a lado, quando for o caso) + "N dias de atraso" em destaque numa linha própria |
+| **Situação** | "Cobrança hoje" (verde) **ou** selo do status + selo "⚠ bloquear aparelho" (lado a lado, quando for o caso) + "N dias de atraso" em destaque numa linha própria |
 | **A cobrar** | valor da parcela + juros; a linha de baixo detalha "parcela R$ X + juros R$ Y". Se não houver valor de parcela no contrato, mostra "só juros R$ Y · defina o valor da parcela no contrato" |
 | **Envio** | dois selos: **Pix** (estado da cobrança Cora da parcela) e **Msg** (estado da mensagem de WhatsApp do dia). "não gerado / não preparada" quando ainda não existem. Passe o mouse para ver o detalhe |
 | **Contato** | ícone de telefone (link de ligação), ícone de WhatsApp, e o botão **Registrar** (baixa) |

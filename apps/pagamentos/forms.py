@@ -121,7 +121,7 @@ class PagamentoForm(forms.ModelForm):
     @staticmethod
     def _rotulo_parcela(venc: Vencimento) -> str:
         return (
-            f"Parcela {venc.numero} · vence {venc.data_vencimento:%d/%m/%Y} · "
+            f"Parcela {venc.numero} · cobrança {venc.data_vencimento:%d/%m/%Y} · "
             f"falta R$ {venc.saldo:.2f}".replace(".", ",")
         )
 
@@ -198,7 +198,7 @@ class ParcelaEditarForm(forms.Form):
     """Editar data, valor e "valor a mais" de uma parcela."""
 
     data_vencimento = forms.DateField(
-        label="Data de vencimento", input_formats=["%Y-%m-%d"],
+        label="Data de cobrança", input_formats=["%Y-%m-%d"],
         widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
     )
     valor_base = forms.CharField(
@@ -256,10 +256,10 @@ class AcordoPerdaoForm(forms.Form):
 
 
 class AcordoNovaDataForm(forms.Form):
-    """Marcar uma nova data de vencimento para a parcela."""
+    """Marcar uma nova data de cobrança para a parcela."""
 
     nova_data = forms.DateField(
-        label="Nova data de vencimento", input_formats=["%Y-%m-%d"],
+        label="Nova data de cobrança", input_formats=["%Y-%m-%d"],
         widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
     )
     nota = forms.CharField(

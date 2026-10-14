@@ -27,7 +27,7 @@
       </div>
       <div>
         <dt>Parcela em aberto</dt>
-        <dd class="num">{% if p.parcela %}nº {{ p.parcela.numero }} · vence {{ p.parcela.data_vencimento|date:"d/m/Y" }}{% else %}—{% endif %}</dd>
+        <dd class="num">{% if p.parcela %}nº {{ p.parcela.numero }} · cobrança {{ p.parcela.data_vencimento|date:"d/m/Y" }}{% else %}—{% endif %}</dd>
       </div>
       <div>
         <dt>A cobrar</dt>

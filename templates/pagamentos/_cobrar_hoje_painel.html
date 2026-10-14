@@ -23,7 +23,7 @@
             </td>
             <td class="situacao-cell" data-label="Situação">
               {% if l.vence_hoje %}
-                <span class="pill em_dia">Vence hoje</span>
+                <span class="pill em_dia">Cobrança hoje</span>
               {% else %}
                 <span class="situacao-selos">
                   <span class="pill {{ l.situacao.status }}">{{ l.contrato.status_efetivo_label }}</span>
@@ -90,7 +90,7 @@
 {% else %}
   <div class="empty">
     <p>Nada para cobrar hoje.</p>
-    <p class="helptext">Aparecem aqui os contratos atrasados ou com vencimento no dia.</p>
+    <p class="helptext">Aparecem aqui os contratos atrasados ou com cobrança no dia.</p>
   </div>
 {% endif %}
 </div>
