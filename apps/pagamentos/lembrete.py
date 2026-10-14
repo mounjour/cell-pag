@@ -25,6 +25,33 @@ def _moeda(valor) -> str:
     return f"R$ {valor:.2f}".replace(".", ",")
 
 
+def _extras(agenda: dict) -> str:
+    """Promessas do dia, aparelhos a bloquear e as cobranças dos próximos 3 dias (só o que existir)."""
+    from .contatos import promessas_a_retornar
+    from .proximas import proximas_cobrancas
+
+    hoje, partes = agenda["hoje"], []
+    promessas = promessas_a_retornar(hoje)
+    if promessas:
+        partes += ["", "🤝 Promessas de pagamento (hoje ou vencidas):"]
+        partes += [f"• {p.contato.contrato.cliente.nome} — prometeu até {p.contato.promessa_para:%d/%m}" for p in promessas]
+    if agenda.get("n_bloqueio"):
+        n = agenda["n_bloqueio"]
+        partes += ["", f"🔒 {n} aparelho{'s' if n != 1 else ''} para bloquear (7+ dias de atraso)."]
+    proximas = proximas_cobrancas(3, hoje)
+    if proximas["quantidade"]:
+        partes += ["", f"📅 Próximos 3 dias: {proximas['quantidade']} cobrança(s), {_moeda(proximas['total'])}."]
+        partes += [f"• {g['data']:%d/%m}: {len(g['itens'])} — {_moeda(g['total'])}" for g in proximas["grupos"]]
+    return "\n".join(partes)
+
+
+def montar_texto_completo(agenda: dict) -> str:
+    """O resumo do dia (`montar_texto`) mais os avisos: promessas, aparelhos a bloquear e próximos 3 dias."""
+    texto = montar_texto(agenda)
+    extras = _extras(agenda)
+    return f"{texto}\n{extras}" if extras else texto
+
+
 def montar_texto(agenda: dict) -> str:
     """Texto do resumo diário a partir de `agenda.montar_agenda_do_dia()`."""
     hoje = agenda["hoje"]
@@ -90,6 +117,6 @@ def enviar(texto: str, numero: str | None = None) -> bool:
 def enviar_lembrete_diario(hoje: datetime.date | None = None) -> str:
     """Monta a agenda do dia, gera o texto e chama `enviar`. Devolve o texto."""
     agenda = montar_agenda_do_dia(hoje=hoje)
-    texto = montar_texto(agenda)
+    texto = montar_texto_completo(agenda)
     enviar(texto)
     return texto

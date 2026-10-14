@@ -97,6 +97,10 @@ O sistema **só avisa** — o bloqueio em si é ação manual do vendedor (Aliss
 
 Mostra o que a rotina das 8h30 vai cobrar **de amanhã em diante**, agrupado por data de cobrança, com o total de cada dia e o valor das parcelas previstas. Filtros: próximos 7, 14 ou 30 dias. Entram parcelas em aberto, sem pagamento, de contratos não quitados; as atrasadas e as de hoje ficam no **Cobrar hoje**. Parcela com a cobrança automática suspensa aparece marcada. Se as cobranças automáticas estiverem desligadas ou pausadas, a página avisa que nada será enviado até ligá-las.
 
+Cada linha tem os atalhos **editar** e **negociar** a parcela e mostra a **promessa de pagamento** do cliente, se houver. Se algum contrato tiver parcelas ainda não geradas dentro da janela, um aviso no alto lista os clientes (as cobranças deles não aparecem até você gerar as parcelas, no contrato).
+
+**Resumo diário da Yslane (WhatsApp, 8h30):** além da lista de quem cobrar hoje, traz as **promessas de pagamento** do dia ou vencidas, quantos aparelhos estão para **bloquear** e as **cobranças dos próximos 3 dias** (só os blocos que tiverem conteúdo).
+
 ### Bloqueios (menu **Bloqueios**)
 
 Tela que controla o que a equipe já fez com os aparelhos atrasados:
