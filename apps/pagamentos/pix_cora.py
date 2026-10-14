@@ -68,6 +68,15 @@ def valor_do_pix(vencimento: Vencimento, hoje) -> Decimal:
     return principal + juros
 
 
+def _registrar_cancelamento(cobranca: CobrancaCora, motivo: str, autor=None) -> None:
+    from .models import PixCancelado
+
+    PixCancelado.objects.create(
+        contrato=cobranca.vencimento.contrato, vencimento=cobranca.vencimento, cora_id=cobranca.cora_id or "",
+        valor=cobranca.valor, motivo=(motivo or "Cancelado")[:120], autor=autor,
+    )
+
+
 def _substituir_fatura(cobranca: CobrancaCora, valor: Decimal, juros: Decimal = Decimal("0.00")) -> bool:
     """Troca a fatura aberta por outra de ``valor`` diferente (total que mudou).
 
@@ -93,6 +102,7 @@ def _substituir_fatura(cobranca: CobrancaCora, valor: Decimal, juros: Decimal = 
         cobranca.save(update_fields=["erro", "atualizado_em"])
         logger.warning("Pix %s não substituído: %s", cobranca.cora_id, exc)
         return False
+    _registrar_cancelamento(cobranca, "O total do Pix mudou (juros do dia)")
     cobranca.status = CobrancaCora.Status.PENDENTE
     cobranca.cora_id = None
     cobranca.idempotency_key = uuid.uuid4()
@@ -196,7 +206,7 @@ class CancelamentoRecusado(Exception):
     """A fatura não pode ser cancelada (ex.: já foi paga)."""
 
 
-def cancelar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
+def cancelar_cobranca(cobranca: CobrancaCora, motivo: str = "", autor=None) -> CobrancaCora:
     """Cancela o Pix de uma parcela — na Cora e no nosso banco.
 
     Serve para quando o cliente vai pagar por outro meio, a parcela é renegociada
@@ -215,7 +225,8 @@ def cancelar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
     if cobranca.status == CobrancaCora.Status.PAGO:
         raise CancelamentoRecusado("Este Pix já foi pago e não pode ser cancelado.")
 
-    if cobranca.cora_id and settings.CORA_PROVIDER == "cora":
+    fatura_viva = bool(cobranca.cora_id and settings.CORA_PROVIDER == "cora")
+    if fatura_viva:
         sincronizar_cobranca(cobranca)  # pode descobrir que já foi paga (e dar a baixa)
         if cobranca.status == CobrancaCora.Status.PAGO:
             raise CancelamentoRecusado("Este Pix acabou de ser pago e não pode ser cancelado.")
@@ -231,6 +242,8 @@ def cancelar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:
     cobranca.qr_code_url = ""
     cobranca.erro = ""
     cobranca.save(update_fields=["status", "pix_copia_e_cola", "qr_code_url", "erro", "atualizado_em"])
+    if fatura_viva:
+        _registrar_cancelamento(cobranca, motivo, autor)
     return cobranca
 
 
@@ -250,7 +263,7 @@ def suspender_cobranca(vencimento: Vencimento) -> CobrancaCora:
             "data_vencimento": vencimento.data_vencimento,
         },
     )
-    return cancelar_cobranca(cobranca)
+    return cancelar_cobranca(cobranca, motivo="Cobrança automática suspensa")
 
 
 def retomar_cobranca(cobranca: CobrancaCora) -> CobrancaCora:

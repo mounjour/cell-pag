@@ -51,7 +51,7 @@ def motivo_para_nao_negociar(vencimento: Vencimento) -> str:
     return ""
 
 
-def _renovar_pix(vencimento: Vencimento) -> list[Aviso]:
+def _renovar_pix(vencimento: Vencimento, motivo: str = "Acordo na parcela", autor=None) -> list[Aviso]:
     """Cancela o Pix aberto da parcela para a próxima rotina gerar outro com o valor combinado."""
     from . import cora_api
     from .pix_cora import CancelamentoRecusado, cancelar_cobranca, retomar_cobranca
@@ -61,7 +61,7 @@ def _renovar_pix(vencimento: Vencimento) -> list[Aviso]:
         return []  # sem QR vivo: a próxima rotina já usa os valores novos
     numero = vencimento.numero
     try:
-        cancelar_cobranca(pix)
+        cancelar_cobranca(pix, motivo=motivo, autor=autor)
         retomar_cobranca(pix)
     except CancelamentoRecusado:
         return [("warning", f"O cliente já pagou o Pix da parcela {numero}: confira no painel Pix antes de seguir com o acordo.")]
@@ -123,7 +123,7 @@ def aplicar_acordo(
         nova_data=nova_data if tipo == Acordo.Tipo.NOVA_DATA else None,
         abono_anterior=abono_anterior, nota=nota.strip()[:200], autor=autor,
     )
-    return acordo, _renovar_pix(vencimento)
+    return acordo, _renovar_pix(vencimento, "Acordo na parcela", autor)
 
 
 @transaction.atomic
@@ -153,7 +153,7 @@ def desfazer_acordo(acordo: Acordo, *, autor=None) -> list[Aviso]:
     acordo.desfeito_em = timezone.now()
     acordo.desfeito_por = autor
     acordo.save(update_fields=["desfeito_em", "desfeito_por"])
-    return _renovar_pix(vencimento)
+    return _renovar_pix(vencimento, "Acordo desfeito", autor)
 
 
 def pode_desfazer(acordo: Acordo) -> bool:

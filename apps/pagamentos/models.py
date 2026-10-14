@@ -646,3 +646,34 @@ class Acordo(models.Model):
     @property
     def ativo(self) -> bool:
         return self.desfeito_em is None
+
+
+class PixCancelado(models.Model):
+    """Registro de um Pix (fatura da Cora) cancelado: quando, por quê e por quem.
+
+    A Cora cobra uma taxa por fatura cancelada via API, e o registro da cobrança é reaproveitado quando o
+    Pix é refeito, então sem esta linha o cancelamento só aparece no extrato da Cora.
+    """
+
+    contrato = models.ForeignKey(
+        "contratos.Contrato", on_delete=models.CASCADE, related_name="pix_cancelados", verbose_name="contrato"
+    )
+    vencimento = models.ForeignKey(
+        Vencimento, on_delete=models.CASCADE, related_name="pix_cancelados", verbose_name="parcela"
+    )
+    cora_id = models.CharField("fatura na Cora", max_length=60, blank=True)
+    valor = models.DecimalField("valor do Pix", max_digits=10, decimal_places=2)
+    motivo = models.CharField("motivo", max_length=120)
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="feito por",
+    )
+    criado_em = models.DateTimeField("cancelado em", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Pix cancelado"
+        verbose_name_plural = "Pix cancelados"
+        ordering = ["-criado_em"]
+
+    def __str__(self) -> str:
+        return f"Pix de R$ {self.valor} cancelado ({self.motivo})"
