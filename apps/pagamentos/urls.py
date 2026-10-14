@@ -9,6 +9,7 @@ app_name = "pagamentos"
 urlpatterns = [
     path("contrato/<int:contrato_pk>/previsao/", views.PagamentoPrevisaoView.as_view(), name="previsao"),
     path("cobrar-hoje/", views.CobrarHojeView.as_view(), name="cobrar_hoje"),
+    path("proximas-cobrancas/", views.ProximasCobrancasView.as_view(), name="proximas_cobrancas"),
     path("cobrar-hoje/pausa/", views.CobrancasPausaView.as_view(), name="cobrancas_pausa"),
     path("contrato/<int:contrato_pk>/contatos/novo/", views.ContatoCriarView.as_view(), name="contato_novo"),
     path("contatos/<int:pk>/excluir/", views.ContatoExcluirView.as_view(), name="contato_excluir"),

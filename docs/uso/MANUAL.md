@@ -93,6 +93,10 @@ aberto mais antiga do contrato.
 Aos **7 dias de atraso** o sistema mostra **"⚠ hora de bloquear o aparelho"**.
 O sistema **só avisa** — o bloqueio em si é ação manual do vendedor (Alisson).
 
+### Próximas cobranças (menu **Próximas cobranças**)
+
+Mostra o que a rotina das 8h30 vai cobrar **de amanhã em diante**, agrupado por data de cobrança, com o total de cada dia e o valor das parcelas previstas. Filtros: próximos 7, 14 ou 30 dias. Entram parcelas em aberto, sem pagamento, de contratos não quitados; as atrasadas e as de hoje ficam no **Cobrar hoje**. Parcela com a cobrança automática suspensa aparece marcada. Se as cobranças automáticas estiverem desligadas ou pausadas, a página avisa que nada será enviado até ligá-las.
+
 ### Bloqueios (menu **Bloqueios**)
 
 Tela que controla o que a equipe já fez com os aparelhos atrasados:

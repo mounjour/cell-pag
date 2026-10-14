@@ -28,6 +28,7 @@ from apps.contratos.models import Contrato
 from . import cora_api
 from .agenda import montar_agenda_do_dia
 from .contatos import promessas_a_retornar
+from .proximas import JANELAS, proximas_cobrancas
 from . import acordos, parcelas
 from .forms import AcordoNovaDataForm, AcordoPerdaoForm, ContatoDeCobrancaForm, PagamentoForm, ParcelaEditarForm
 from .comprovantes import conferir_na_cora
@@ -243,6 +244,23 @@ class ContatoExcluirView(LoginRequiredMixin, View):
         contato.delete()
         messages.success(request, "Anotação apagada.")
         return redirect(reverse("contratos:detalhe", args=[contrato_pk]) + "#contatos")
+
+
+class ProximasCobrancasView(LoginRequiredMixin, TemplateView):
+    """O que será cobrado nos próximos dias (a partir de amanhã), agrupado por data de cobrança."""
+
+    template_name = "pagamentos/proximas_cobrancas.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        try:
+            dias = int(self.request.GET.get("dias", 14))
+        except ValueError:
+            dias = 14
+        dias = dias if dias in JANELAS else 14
+        ctx.update(proximas_cobrancas(dias), janelas=JANELAS, hoje=timezone.localdate())
+        ctx["config_cobranca"] = ConfiguracaoCobranca.obter()
+        return ctx
 
 
 class CobrancasPausaView(LoginRequiredMixin, View):
