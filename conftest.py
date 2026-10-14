@@ -6,6 +6,7 @@ def _sem_provedores_externos_reais(settings):
     """Testes nunca devem chamar Evolution/Cora de verdade, seja qual for o .env."""
     settings.WHATSAPP_PROVIDER = "log"
     settings.CORA_PROVIDER = "log"
+    settings.PIX_MODO = "fatura"  # os testes de fatura da Cora seguem valendo; o modo estático liga em test_pix_estatico.py
     settings.ROTINA_HEALTHCHECK_URL = ""
     settings.TERMOS_EXIGIR_ACEITE = False  # o aceite só é exigido nos testes de termos
     settings.COBRANCAS_EXIGEM_INICIO = False  # nos testes as cobranças já nascem ativas; test_pausa.py liga

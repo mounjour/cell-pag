@@ -254,6 +254,12 @@ WHATSAPP_PROVIDER = env("WHATSAPP_PROVIDER", default="log")
 WHATSAPP_APAGAR_AO_BAIXAR = env.bool("WHATSAPP_APAGAR_AO_BAIXAR", default=True)
 WHATSAPP_APAGAR_JANELA_HORAS = env.int("WHATSAPP_APAGAR_JANELA_HORAS", default=48)
 WHATSAPP_PIX_CHAVE = env("WHATSAPP_PIX_CHAVE", default="")
+# Como o Pix é cobrado: "estatico" = código copia e cola montado aqui (chave Pix + valor), sem criar nada na Cora
+# (a Cora só informa os pagamentos pelo extrato); "fatura" = fatura Pix criada na Cora (modo antigo).
+PIX_MODO = env("PIX_MODO", default="fatura")
+PIX_CHAVE = env("PIX_CHAVE", default="") or WHATSAPP_PIX_CHAVE
+PIX_RECEBEDOR_NOME = env("PIX_RECEBEDOR_NOME", default="ALISSON ERLLEN SANTOS")
+PIX_RECEBEDOR_CIDADE = env("PIX_RECEBEDOR_CIDADE", default="FORTALEZA")
 EVOLUTION_API_URL = env("EVOLUTION_API_URL", default="")
 EVOLUTION_API_KEY = env("EVOLUTION_API_KEY", default="")
 EVOLUTION_INSTANCE = env("EVOLUTION_INSTANCE", default="")

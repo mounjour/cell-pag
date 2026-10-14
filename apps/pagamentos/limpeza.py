@@ -58,6 +58,13 @@ def _cancelar_pix(vencimento) -> list[Aviso]:
     pix = CobrancaCora.objects.filter(vencimento=vencimento).first()
     if pix is None or pix.status not in _PIX_ABERTOS:
         return []
+    if not pix.cora_id:
+        # Código estático: não existe fatura para cancelar. Parcela quitada fecha o registro como pago;
+        # parcela só parcial continua aberta (o valor é refeito na próxima rotina).
+        if vencimento.status == vencimento.Status.PAGO:
+            pix.status, pix.total_pago, pix.pago_em = CobrancaCora.Status.PAGO, pix.valor, timezone.now()
+            pix.save(update_fields=["status", "total_pago", "pago_em", "atualizado_em"])
+        return []
     numero = vencimento.numero
     try:
         cancelar_cobranca(pix, motivo="Parcela paga por outro meio")
