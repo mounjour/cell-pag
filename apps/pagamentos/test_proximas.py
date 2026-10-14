@@ -45,3 +45,24 @@ def test_pagina_exige_login():
     from django.test import Client
 
     assert Client().get(reverse("pagamentos:proximas_cobrancas")).status_code == 302
+
+
+def test_resumo_da_yslane_traz_promessas_e_os_proximos_3_dias(cliente):
+    from apps.pagamentos.lembrete import montar_texto_completo as montar_texto
+    from apps.pagamentos.models import ContatoDeCobranca
+
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="300.00", num_parcelas=9)
+    _parcela(ct, 1, 2)
+    ContatoDeCobranca.objects.create(contrato=ct, resultado="promessa", promessa_para=timezone.localdate())
+    hoje = timezone.localdate()
+    texto = montar_texto({"hoje": hoje, "linhas": [], "total_previsto": Decimal("0"), "n_atraso": 0, "n_bloqueio": 2})
+    assert "não tem ninguém pra cobrar" in texto
+    assert "Promessas de pagamento" in texto and cliente.nome in texto
+    assert "2 aparelhos para bloquear" in texto and "Próximos 3 dias: 1 cobrança(s), R$ 300,00" in texto
+
+
+def test_pagina_avisa_contrato_sem_parcelas_geradas_e_tem_atalhos(auth_client, cliente):
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="300.00", num_parcelas=9)
+    _parcela(ct, 1, 3)  # só 1 de 9 geradas e a última acaba dentro da janela
+    html = auth_client.get(reverse("pagamentos:proximas_cobrancas")).content.decode()
+    assert "parcelas ainda não geradas" in html and "editar" in html and "negociar" in html

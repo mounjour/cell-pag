@@ -12,6 +12,12 @@
   <p class="msg warning">As cobranças automáticas estão <strong>{% if config_cobranca.nunca_iniciada %}desligadas (ainda não começaram){% else %}pausadas{% endif %}</strong>: nada abaixo será enviado até você ligá-las em <a href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar hoje</a>.</p>
 {% endif %}
 
+{% if sem_parcelas %}
+  <p class="msg warning"><strong>{{ sem_parcelas|length }} contrato{{ sem_parcelas|length|pluralize }}</strong> com parcelas ainda não geradas dentro desta janela; por isso as cobranças não aparecem aqui:
+    {% for c in sem_parcelas|slice:":6" %}<a href="{% url 'contratos:detalhe' c.pk %}">{{ c.cliente.nome }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% if sem_parcelas|length > 6 %}…{% endif %}.
+    Abra o contrato e clique em <em>Gerar parcelas seguintes</em>.</p>
+{% endif %}
+
 <div class="filtro-pills">
   {% for n in janelas %}
     <a class="filtro-pill{% if n == dias %} ativo{% endif %}" href="?dias={{ n }}">Próximos {{ n }} dias</a>
@@ -28,7 +34,7 @@
       <h2>{{ g.data|date:"l, d/m/Y"|capfirst }} <span class="count">{{ g.itens|length }}</span>
         <small class="num" style="float:right">R$ {{ g.total|floatformat:2 }}</small></h2>
       <div class="tbl-wrap cards"><table>
-        <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Frequência</th><th class="num">Valor</th></tr></thead>
+        <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Frequência</th><th class="num">Valor</th><th></th></tr></thead>
         <tbody>
         {% for item in g.itens %}
           {% with v=item.parcela %}
@@ -38,6 +44,10 @@
             <td data-label="Parcela">nº {{ v.numero }}{% if item.suspensa %} <span class="pill aberto">cobrança suspensa</span>{% endif %}</td>
             <td data-label="Frequência">{{ v.contrato.get_estrutura_display }}</td>
             <td class="num" data-label="Valor">R$ {{ v.saldo }}</td>
+            <td class="num">
+              {% if item.promessa %}<span class="pill aberto">prometeu pagar {{ item.promessa.contato.promessa_para|date:"d/m" }}</span><br>{% endif %}
+              <a href="{% url 'pagamentos:parcela_editar' v.pk %}">editar</a> · <a href="{% url 'pagamentos:acordo' v.pk %}">negociar</a>
+            </td>
           </tr>
           {% endwith %}
         {% endfor %}
