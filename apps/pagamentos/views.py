@@ -130,7 +130,7 @@ class AcordoView(LoginRequiredMixin, View):
                 if usa_data:
                     messages.success(
                         request,
-                        f"Acordo registrado: parcela {vencimento.numero} agora vence em {acordo.nova_data:%d/%m/%Y}.",
+                        f"Acordo registrado: parcela {vencimento.numero} agora é cobrada em {acordo.nova_data:%d/%m/%Y}.",
                     )
                 else:
                     messages.success(

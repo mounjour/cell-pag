@@ -95,12 +95,12 @@
       {% else %}
         <p>
           <span class="pill em_dia">Em dia</span> Sem atraso.
-          {% if p %}Parcela nº {{ p.numero }} vence em {{ ref|date:"d/m/Y" }}.{% else %}Próximo vencimento em {{ ref|date:"d/m/Y" }}.{% endif %}
+          {% if p %}Parcela nº {{ p.numero }} é cobrada em {{ ref|date:"d/m/Y" }}.{% else %}Próxima cobrança em {{ ref|date:"d/m/Y" }}.{% endif %}
         </p>
       {% endif %}
     </div>
   {% else %}
-    <p class="note">Informe o <strong>próximo vencimento</strong> no contrato para acompanhar atraso e juros.</p>
+    <p class="note">Informe a <strong>próxima cobrança</strong> no contrato para acompanhar atraso e juros.</p>
   {% endif %}
 {% endwith %}
 
@@ -118,12 +118,12 @@
     {% endif %}
     <div class="tbl-wrap cards">
       <table>
-        <thead><tr><th>Nº</th><th class="num">Vencimento</th><th class="num">Previsto</th><th class="num">Pago</th><th class="num">Saldo</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Nº</th><th class="num">Data de cobrança</th><th class="num">Previsto</th><th class="num">Pago</th><th class="num">Saldo</th><th>Status</th><th></th></tr></thead>
         <tbody>
           {% for v in vencimentos_exibidos %}
             <tr{% if request.GET.pago == v.numero|stringformat:"s" %} class="linha-pagamento-confirmado"{% endif %}>
               <td>{{ v.numero }}</td>
-              <td class="num" data-label="Vencimento">{{ v.data_vencimento|date:"d/m/Y" }}{% if v.data_original %}<br><small>era {{ v.data_original|date:"d/m/Y" }}</small>{% endif %}</td>
+              <td class="num" data-label="Data de cobrança">{{ v.data_vencimento|date:"d/m/Y" }}{% if v.data_original %}<br><small>era {{ v.data_original|date:"d/m/Y" }}</small>{% endif %}</td>
               <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}{% if v.acrescimo %}<br><small>inclui {% if v.acrescimo > 0 %}+{% endif %}R$ {{ v.acrescimo }}{% if v.acrescimo_motivo %} · {{ v.acrescimo_motivo }}{% endif %}</small>{% endif %}</td>
               <td class="num" data-label="Pago">R$ {{ v.valor_pago }}</td>
               <td class="num" data-label="Saldo">R$ {{ v.saldo }}</td>
@@ -153,7 +153,7 @@
           {% csrf_token %}
           <button type="submit" class="btn">{% include "_icone.html" with nome="gerar" %}Gerar parcelas</button>
         </form>
-        <p class="helptext">Cria as parcelas com vencimento até 60 dias à frente, a partir da primeira cobrança e da frequência ({{ contrato.get_estrutura_display|lower }}). Pode gerar de novo mais tarde para as parcelas seguintes.</p>
+        <p class="helptext">Cria as parcelas com data de cobrança até 60 dias à frente, a partir da primeira cobrança e da frequência ({{ contrato.get_estrutura_display|lower }}). Pode gerar de novo mais tarde para as parcelas seguintes.</p>
       {% endif %}
     </div>
   {% endif %}

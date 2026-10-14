@@ -55,8 +55,8 @@
 
   <h2>Parcelas em atraso até o fim do período</h2>
   {% if relatorio.atrasados %}
-    <div class="tbl-wrap cards"><table><thead><tr><th>Cliente</th><th>Contrato</th><th>Vencimento</th><th>Parcela</th><th class="num">Em aberto</th></tr></thead><tbody>
-    {% for v in relatorio.atrasados %}<tr><td data-label="Cliente"><a href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a></td><td data-label="Contrato"><a href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }}</a></td><td data-label="Vencimento" class="num">{{ v.data_vencimento|date:"d/m/Y" }}</td><td data-label="Parcela" class="num">{{ v.numero }}</td><td data-label="Em aberto" class="num critical-text">R$ {{ v.valor_em_aberto|floatformat:2 }}</td></tr>{% endfor %}
+    <div class="tbl-wrap cards"><table><thead><tr><th>Cliente</th><th>Contrato</th><th>Data de cobrança</th><th>Parcela</th><th class="num">Em aberto</th></tr></thead><tbody>
+    {% for v in relatorio.atrasados %}<tr><td data-label="Cliente"><a href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a></td><td data-label="Contrato"><a href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }}</a></td><td data-label="Data de cobrança" class="num">{{ v.data_vencimento|date:"d/m/Y" }}</td><td data-label="Parcela" class="num">{{ v.numero }}</td><td data-label="Em aberto" class="num critical-text">R$ {{ v.valor_em_aberto|floatformat:2 }}</td></tr>{% endfor %}
     </tbody></table></div>
   {% else %}<p class="empty">Nenhuma parcela em atraso.</p>{% endif %}
 {% endif %}

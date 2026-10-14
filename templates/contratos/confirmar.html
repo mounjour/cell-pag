@@ -66,7 +66,7 @@
   {% if not contrato.valor_parcela %}
     <p class="note"><strong>Falta o valor da parcela.</strong> O cadastro poderá ser confirmado, mas não serão geradas parcelas automáticas até você preencher esse valor.</p>
   {% elif primeira <= hoje and not todas_pagas and not contrato.quitado %}
-    <p class="note"><strong>Há uma parcela vencida ou com vencimento hoje.</strong> Ela poderá entrar na próxima rotina de cobrança. Confira a data de início e as parcelas já pagas.</p>
+    <p class="note"><strong>Há uma parcela vencida ou com cobrança hoje.</strong> Ela poderá entrar na próxima rotina de cobrança. Confira a data de início e as parcelas já pagas.</p>
   {% endif %}
   {% if contrato.quitado %}<p class="note">Contrato informado como quitado: não haverá cobrança automática.</p>{% endif %}
       <p>A confirmação libera a rotina automática nas datas do contrato. Ela não envia uma mensagem agora.</p>

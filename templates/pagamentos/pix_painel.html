@@ -67,14 +67,14 @@
 {% if cobrancas_cora %}
 <div class="tbl-wrap cards">
   <table>
-    <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Vencimento</th><th class="num">Valor</th><th>Status</th><th>Pix</th></tr></thead>
+    <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Data de cobrança</th><th class="num">Valor</th><th>Status</th><th>Pix</th></tr></thead>
     <tbody>
     {% for c in cobrancas_cora %}
       <tr>
         <td><a href="{% url 'clientes:detalhe' c.contrato.cliente.pk %}">{{ c.contrato.cliente.nome }}</a></td>
         <td data-label="Contrato"><a href="{% url 'contratos:detalhe' c.contrato.pk %}">{{ c.contrato.apelido }}</a></td>
         <td data-label="Parcela" class="num">{{ c.rotulo_parcelas }}</td>
-        <td data-label="Vencimento" class="num">{{ c.data_vencimento|date:"d/m/Y" }}</td>
+        <td data-label="Data de cobrança" class="num">{{ c.data_vencimento|date:"d/m/Y" }}</td>
         <td data-label="Valor" class="num">R$ {{ c.valor|floatformat:2 }}</td>
         <td data-label="Status">
           <span class="pill pill-pix {{ c.status }}">{% if c.status == 'pago' %}✅{% elif c.status == 'vencido' %}❌{% endif %} {{ c.get_status_display }}</span>

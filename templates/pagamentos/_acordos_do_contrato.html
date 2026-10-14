@@ -11,7 +11,7 @@
             <td class="num" data-label="Data">{{ a.criado_em|date:"d/m/Y" }}{% if a.autor %}<br><small>{{ a.autor.nome_curto }}</small>{% endif %}</td>
             <td data-label="Parcela">nº {{ a.vencimento.numero }}</td>
             <td data-label="Acordo">
-              {% if a.tipo == "perdao_juros" %}R$ {{ a.juros_perdoados }} de juros perdoados{% else %}Vencimento de {{ a.data_anterior|date:"d/m/Y" }} para {{ a.nova_data|date:"d/m/Y" }}{% endif %}
+              {% if a.tipo == "perdao_juros" %}R$ {{ a.juros_perdoados }} de juros perdoados{% else %}Data de cobrança de {{ a.data_anterior|date:"d/m/Y" }} para {{ a.nova_data|date:"d/m/Y" }}{% endif %}
               {% if not a.ativo %}<br><span class="pill aberto">desfeito em {{ a.desfeito_em|date:"d/m/Y" }}</span>{% endif %}
             </td>
             <td data-label="Anotação" class="wrap-cell">{{ a.nota|default:"—" }}</td>

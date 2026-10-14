@@ -5,7 +5,7 @@ combinado, sem nenhum caminho paralelo:
 
 * **Perdoar juros** — ``juros_abonado`` sobe; o juros cobrado é o do atraso **menos** o perdoado
   (o juros dos dias seguintes continua correndo).
-* **Nova data** — a data de vencimento da parcela muda e o juros passa a contar a partir dela; a
+* **Nova data** — a data de cobrança da parcela muda e o juros passa a contar a partir dela; a
   data antiga fica em ``data_original``.
 
 Um acordo só vale para parcela em aberto e sem baixa, e pode ser **desfeito** enquanto ela não for paga.
@@ -99,15 +99,15 @@ def aplicar_acordo(
         campos = ["juros_abonado", "atualizado_em"]
     elif tipo == Acordo.Tipo.NOVA_DATA:
         if nova_data is None:
-            raise AcordoInvalido("Informe a nova data de vencimento.")
+            raise AcordoInvalido("Informe a nova data de cobrança.")
         if nova_data <= vencimento.data_vencimento:
-            raise AcordoInvalido("A nova data precisa ser depois do vencimento atual da parcela.")
+            raise AcordoInvalido("A nova data precisa ser depois da data de cobrança atual da parcela.")
         if nova_data < hoje:
             raise AcordoInvalido("A nova data não pode estar no passado.")
         seguinte = vencimento.contrato.vencimentos.filter(numero__gt=vencimento.numero).order_by("numero").first()
         if seguinte and nova_data > seguinte.data_vencimento:
             raise AcordoInvalido(
-                f"A nova data não pode passar do vencimento da parcela seguinte ({seguinte.data_vencimento:%d/%m/%Y})."
+                f"A nova data não pode passar do data de cobrança da parcela seguinte ({seguinte.data_vencimento:%d/%m/%Y})."
             )
         vencimento.data_original = vencimento.data_original or data_anterior
         vencimento.data_vencimento = nova_data

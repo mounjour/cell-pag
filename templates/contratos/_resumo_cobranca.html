@@ -34,9 +34,9 @@
       <div><dt>Já recebido</dt><dd>R$ {% if entrada %}{{ resumo.ja_pago_em_parcelas|add:entrada|floatformat:2 }} <small>(parcelas pagas + entrada de R$ {{ entrada|floatformat:2 }})</small>{% else %}{{ resumo.ja_pago_em_parcelas|floatformat:2 }} <small>(parcelas pagas, sem entrada)</small>{% endif %}</dd></div>
       <div><dt>Maior atraso hoje</dt><dd>{% if resumo.maior_atraso_dias %}{{ resumo.maior_atraso_dias }} dia{{ resumo.maior_atraso_dias|pluralize }} · ficará {% if resumo.status_esperado == "inadimplente" %}inadimplente{% else %}atrasado{% endif %}{% else %}Nenhum · ficará em dia{% endif %}</dd></div>
       <div class="opcional"><dt>Juros por dia de atraso</dt><dd>R$ {{ resumo.juros_por_dia|floatformat:2 }}</dd></div>
-      <div><dt>Último vencimento</dt><dd>{{ resumo.ultimo_vencimento|date:"d/m/Y" }}</dd></div>
+      <div><dt>Última cobrança</dt><dd>{{ resumo.ultimo_vencimento|date:"d/m/Y" }}</dd></div>
       <div class="opcional"><dt>Cobrança enviada para</dt><dd>WhatsApp {{ contrato.cliente.telefone_exibicao }}, com Pix</dd></div>
-      {% if resumo.proximas %}<div class="opcional"><dt>Depois disso, vencem em</dt><dd>{% for d in resumo.proximas %}{{ d|date:"d/m" }}{% if not forloop.last %} · {% endif %}{% endfor %}…</dd></div>{% endif %}
+      {% if resumo.proximas %}<div class="opcional"><dt>Depois disso, são cobradas em</dt><dd>{% for d in resumo.proximas %}{{ d|date:"d/m" }}{% if not forloop.last %} · {% endif %}{% endfor %}…</dd></div>{% endif %}
     </dl>
     {% if resumo.alerta_bloqueio %}
       <p class="resumo-alerta"><strong>Alerta de bloqueio:</strong> há parcela com {{ resumo.maior_atraso_dias }} dias de atraso (7 ou mais). O sistema só sinaliza; o bloqueio do aparelho é manual.</p>
