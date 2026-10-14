@@ -128,7 +128,7 @@ Documentação oficial:
 
 ## Modo atual: Pix estático (a Cora só informa os pagamentos)
 
-A partir de outubro/2026 o sistema **não cria faturas na Cora** (`PIX_MODO=estatico`, padrão). Cada cobrança leva um código
+A partir de outubro/2026 o sistema **não cria faturas na Cora** (`PIX_MODO=estatico`; o padrão é `fatura` até ser ligado no servidor depois do teste com `pix_teste`). Cada cobrança leva um código
 Pix copia e cola montado localmente (`apps/pagamentos/brcode.py`: chave + valor + referência `CP<id da parcela>`), e a baixa
 vem do **extrato** (`GET /bank-statement/statement`, só leitura): `apps/pagamentos/recebidos.py` reconhece o cliente pelo CPF
 de quem pagou. Motivo: a Cora cobra R$ 0,30 por fatura cancelada via API e o juros diário obrigava a cancelar e recriar a

@@ -256,7 +256,7 @@ WHATSAPP_APAGAR_JANELA_HORAS = env.int("WHATSAPP_APAGAR_JANELA_HORAS", default=4
 WHATSAPP_PIX_CHAVE = env("WHATSAPP_PIX_CHAVE", default="")
 # Como o Pix é cobrado: "estatico" = código copia e cola montado aqui (chave Pix + valor), sem criar nada na Cora
 # (a Cora só informa os pagamentos pelo extrato); "fatura" = fatura Pix criada na Cora (modo antigo).
-PIX_MODO = env("PIX_MODO", default="estatico")
+PIX_MODO = env("PIX_MODO", default="fatura")
 PIX_CHAVE = env("PIX_CHAVE", default="") or WHATSAPP_PIX_CHAVE
 PIX_RECEBEDOR_NOME = env("PIX_RECEBEDOR_NOME", default="ALISSON ERLLEN SANTOS")
 PIX_RECEBEDOR_CIDADE = env("PIX_RECEBEDOR_CIDADE", default="FORTALEZA")
