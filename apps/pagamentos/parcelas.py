@@ -33,7 +33,7 @@ def motivo_para_nao_editar(vencimento: Vencimento) -> str:
 @transaction.atomic
 def editar_parcela(
     vencimento: Vencimento, *, data_vencimento: datetime.date, valor_base: Decimal,
-    acrescimo: Decimal = Decimal("0.00"), motivo: str = "",
+    acrescimo: Decimal = Decimal("0.00"), motivo: str = "", autor=None,
 ) -> list[Aviso]:
     """Aplica data, valor base e ajuste. Levanta ``ParcelaInvalida``. Devolve avisos sobre o Pix."""
     vencimento = Vencimento.objects.select_for_update().select_related("contrato").get(pk=vencimento.pk)
@@ -61,7 +61,7 @@ def editar_parcela(
     vencimento.aplicar_valor_pago(vencimento.valor_pago, salvar=False)
     vencimento.save()
     if mudou_valor or mudou_data:
-        return _renovar_pix(vencimento)
+        return _renovar_pix(vencimento, "Parcela editada", autor)
     return []
 
 
@@ -82,6 +82,6 @@ def ressincronizar_parcelas_em_aberto(contrato) -> int:
         venc.valor_previsto = novo_valor
         venc.data_vencimento = nova_data
         venc.save(update_fields=["valor_previsto", "data_vencimento", "atualizado_em"])
-        _renovar_pix(venc)
+        _renovar_pix(venc, "Contrato editado")
         mudadas += 1
     return mudadas

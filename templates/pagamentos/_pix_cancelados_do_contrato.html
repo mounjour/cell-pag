@@ -1,0 +1,23 @@
+{# Pix cancelados deste contrato. Espera `pix_cancelados`. #}
+{% if pix_cancelados %}
+<section id="pix-cancelados" class="pix-cancelados-contrato">
+  <h2>Pix cancelados</h2>
+  <p class="helptext">Cada cancelamento de Pix na Cora custa R$ 0,30. O sistema gera outro Pix com o valor atualizado na próxima rotina.</p>
+  <div class="tbl-wrap cards">
+    <table>
+      <thead><tr><th class="num">Quando</th><th>Parcela</th><th class="num">Valor</th><th>Motivo</th><th>Feito por</th></tr></thead>
+      <tbody>
+        {% for c in pix_cancelados %}
+          <tr>
+            <td class="num" data-label="Quando">{{ c.criado_em|date:"d/m/Y H:i" }}</td>
+            <td data-label="Parcela">nº {{ c.vencimento.numero }}</td>
+            <td class="num" data-label="Valor">R$ {{ c.valor }}</td>
+            <td data-label="Motivo">{{ c.motivo }}</td>
+            <td data-label="Feito por">{% if c.autor %}{{ c.autor.nome_curto }}{% else %}Sistema{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}

@@ -327,6 +327,7 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
         for item in lista_acordos:
             item.pode_desfazer = servico_acordos.pode_desfazer(item)
         ctx["acordos"] = lista_acordos
+        ctx["pix_cancelados"] = list(contrato.pix_cancelados.select_related("vencimento", "autor")[:10])
         ctx["form_contato"] = ContatoDeCobrancaForm()
         ctx["contatos"] = contrato.contatos_de_cobranca.select_related("autor")[:10]
         ctx["promessa"] = promessas_em_aberto(contrato_ids=[contrato.pk]).get(contrato.pk)

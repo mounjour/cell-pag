@@ -37,7 +37,7 @@ class Command(BaseCommand):
         for cobranca in cobrancas:
             rotulo = f"parcela {cobranca.vencimento.numero} do contrato {cobranca.vencimento.contrato_id}"
             try:
-                cancelar_cobranca(cobranca)
+                cancelar_cobranca(cobranca, motivo="Comando cancelar_pix")
             except (CancelamentoRecusado, cora_api.CoraErro) as exc:
                 falhas += 1
                 self.stdout.write(self.style.ERROR(f"{rotulo}: {exc}"))

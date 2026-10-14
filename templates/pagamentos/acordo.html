@@ -4,7 +4,7 @@
 {% block content %}
 {% url 'contratos:detalhe' contrato.pk as volta_url %}{% include "_voltar.html" with url=volta_url %}
 <h1>Negociar parcela {{ vencimento.numero }}</h1>
-<p class="note">{{ contrato.cliente.nome }} · {{ contrato.apelido }}. O acordo muda o que é cobrado desta parcela (mensagem, Pix e telas já passam a usar o valor combinado) e pode ser desfeito enquanto ela não for paga.</p>
+<p class="note">{{ contrato.cliente.nome }} · {{ contrato.apelido }}. O acordo muda o que é cobrado desta parcela (mensagem, Pix e telas já passam a usar o valor combinado) e pode ser desfeito enquanto ela não for paga. Se houver Pix aberto, ele é cancelado (a Cora cobra R$ 0,30 por cancelamento).</p>
 
 <dl class="meta meta--4col acordo-resumo">
   <div><dt>Data de cobrança</dt><dd class="num">{{ vencimento.data_vencimento|date:"d/m/Y" }}{% if vencimento.data_original %} <small>(era {{ vencimento.data_original|date:"d/m/Y" }})</small>{% endif %}</dd></div>

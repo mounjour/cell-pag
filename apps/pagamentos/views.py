@@ -181,7 +181,7 @@ class ParcelaEditarView(LoginRequiredMixin, View):
                 avisos = parcelas.editar_parcela(
                     vencimento, data_vencimento=form.cleaned_data["data_vencimento"],
                     valor_base=form.cleaned_data["valor_base"], acrescimo=form.cleaned_data["acrescimo"],
-                    motivo=form.cleaned_data["motivo"],
+                    motivo=form.cleaned_data["motivo"], autor=request.user,
                 )
             except parcelas.ParcelaInvalida as exc:
                 form.add_error(None, str(exc))
@@ -357,7 +357,7 @@ class PixCancelarView(LoginRequiredMixin, View):
         )
         parcela = f"parcela {cobranca.vencimento.numero} de {cobranca.vencimento.contrato.cliente.nome}"
         try:
-            cancelar_cobranca(cobranca)
+            cancelar_cobranca(cobranca, motivo="Cancelado no painel Pix", autor=request.user)
         except CancelamentoRecusado as exc:
             messages.error(request, f"{exc} ({parcela})")
         except cora_api.CoraErro as exc:

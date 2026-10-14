@@ -4,7 +4,7 @@
 {% block content %}
 {% url 'contratos:detalhe' contrato.pk as volta_url %}{% include "_voltar.html" with url=volta_url %}
 <h1>Editar parcela {{ vencimento.numero }}</h1>
-<p class="note">{{ contrato.cliente.nome }} · {{ contrato.apelido }}. A mensagem de cobrança, o Pix e as telas passam a usar o valor e a data daqui. Se a parcela já tiver um Pix aberto, ele é cancelado e a próxima rotina gera outro com o valor novo.</p>
+<p class="note">{{ contrato.cliente.nome }} · {{ contrato.apelido }}. A mensagem de cobrança, o Pix e as telas passam a usar o valor e a data daqui. Se a parcela já tiver um Pix aberto, ele é cancelado (a Cora cobra R$ 0,30 por cancelamento) e a próxima rotina gera outro com o valor novo.</p>
 
 <dl class="meta meta--4col">
   <div><dt>Data de cobrança</dt><dd class="num">{{ vencimento.data_vencimento|date:"d/m/Y" }}{% if vencimento.data_original %} <small>(era {{ vencimento.data_original|date:"d/m/Y" }})</small>{% endif %}</dd></div>

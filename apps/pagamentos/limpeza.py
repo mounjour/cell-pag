@@ -60,7 +60,7 @@ def _cancelar_pix(vencimento) -> list[Aviso]:
         return []
     numero = vencimento.numero
     try:
-        cancelar_cobranca(pix)
+        cancelar_cobranca(pix, motivo="Parcela paga por outro meio")
     except CancelamentoRecusado:
         # A Cora informou que o cliente JÁ pagou o Pix: ele pagou duas vezes.
         pix.refresh_from_db()

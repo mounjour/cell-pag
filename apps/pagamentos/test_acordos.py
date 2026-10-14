@@ -182,7 +182,7 @@ def test_pix_aberto_e_cancelado_e_liberado_para_gerar_outro(parcela, monkeypatch
         vencimento=parcela, valor=Decimal("350.00"), juros=Decimal("50.00"), data_vencimento=parcela.data_vencimento,
         cora_id="fatura-1", status=CobrancaCora.Status.ABERTO)
     chamadas = []
-    monkeypatch.setattr("apps.pagamentos.pix_cora.cancelar_cobranca", lambda p: chamadas.append(("cancelar", p.pk)))
+    monkeypatch.setattr("apps.pagamentos.pix_cora.cancelar_cobranca", lambda p, **_: chamadas.append(("cancelar", p.pk)))
     monkeypatch.setattr("apps.pagamentos.pix_cora.retomar_cobranca", lambda p: chamadas.append(("retomar", p.pk)))
     _, avisos = acordos.aplicar_acordo(parcela, tipo=Acordo.Tipo.PERDAO_JUROS)
     assert chamadas == [("cancelar", pix.pk), ("retomar", pix.pk)]
@@ -204,7 +204,7 @@ def test_falha_da_cora_no_cancelamento_vira_aviso_sem_perder_o_acordo(parcela, m
         vencimento=parcela, valor=Decimal("350.00"), data_vencimento=parcela.data_vencimento,
         cora_id="fatura-1", status=CobrancaCora.Status.ABERTO)
 
-    def _falha(_pix):
+    def _falha(_pix, **_):
         raise cora_api.CoraErro("fora do ar")
 
     monkeypatch.setattr("apps.pagamentos.pix_cora.cancelar_cobranca", _falha)
