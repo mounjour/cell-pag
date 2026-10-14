@@ -38,7 +38,8 @@ class PagamentoForm(forms.ModelForm):
     quantidade = forms.TypedChoiceField(
         label="Quantas parcelas este pagamento quita?", required=False, coerce=int, empty_value=None, choices=[],
     )
-    field_order = ["vencimento", "quantidade", "data_pagamento", "valor_pago", "juros_pago", "forma", "comprovante", "observacao"]
+    recebido = forms.IntegerField(required=False, widget=forms.HiddenInput)  # entrada do extrato da Cora que originou o pagamento
+    field_order = ["recebido", "vencimento", "quantidade", "data_pagamento", "valor_pago", "juros_pago", "forma", "comprovante", "observacao"]
 
     class Meta:
         model = Pagamento

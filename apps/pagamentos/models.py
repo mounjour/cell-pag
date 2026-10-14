@@ -677,3 +677,42 @@ class PixCancelado(models.Model):
 
     def __str__(self) -> str:
         return f"Pix de R$ {self.valor} cancelado ({self.motivo})"
+
+
+class RecebimentoCora(models.Model):
+    """Entrada (Pix recebido) vista no extrato da Cora, para ligar à parcela certa ou ignorar.
+
+    O webhook só avisa dos QR codes que o sistema gerou; quem paga por transferência normal (chave Pix)
+    cai aqui, e a equipe precisa registrar o pagamento à mão. Esta tabela lembra quais entradas já foram
+    tratadas (ligadas a um pagamento ou ignoradas).
+    """
+
+    class Situacao(models.TextChoices):
+        NOVO = "novo", "A registrar"
+        VINCULADO = "vinculado", "Registrado"
+        IGNORADO = "ignorado", "Ignorado"
+
+    entrada_id = models.CharField("entrada no extrato", max_length=60, unique=True)
+    valor = models.DecimalField("valor", max_digits=10, decimal_places=2)
+    recebido_em = models.DateTimeField("recebido em")
+    tipo = models.CharField("tipo", max_length=20, blank=True)
+    nome = models.CharField("nome de quem pagou", max_length=160, blank=True)
+    documento = models.CharField("CPF/CNPJ de quem pagou", max_length=14, blank=True)
+    situacao = models.CharField("situação", max_length=10, choices=Situacao.choices, default=Situacao.NOVO)
+    pagamento = models.ForeignKey(
+        Pagamento, on_delete=models.SET_NULL, null=True, blank=True, related_name="recebimentos_cora",
+        verbose_name="pagamento registrado",
+    )
+    tratado_em = models.DateTimeField("tratado em", null=True, blank=True)
+    tratado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="tratado por",
+    )
+
+    class Meta:
+        verbose_name = "recebimento na Cora"
+        verbose_name_plural = "recebimentos na Cora"
+        ordering = ["-recebido_em"]
+
+    def __str__(self) -> str:
+        return f"R$ {self.valor} de {self.nome or 'desconhecido'} em {self.recebido_em:%d/%m/%Y}"

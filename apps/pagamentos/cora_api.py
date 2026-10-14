@@ -193,3 +193,37 @@ def _abrir(requisicao, *, contexto, autenticada, tentativas=None):
             if ultima:
                 raise CoraErro("Falha de comunicação com a Cora.") from exc
         time.sleep(espera_base * (2 ** (tentativa - 1)))
+
+
+def listar_extrato(inicio, fim, *, por_pagina: int = 100, max_paginas: int = 10) -> list[dict]:
+    """Entradas (créditos) do extrato entre duas datas, já normalizadas. Só leitura.
+
+    Cada item: ``id``, ``valor`` (Decimal em reais), ``recebido_em`` (datetime UTC), ``tipo`` da transação,
+    ``nome`` e ``documento`` de quem pagou.
+    """
+    from datetime import datetime
+    from decimal import Decimal
+
+    entradas: list[dict] = []
+    for pagina in range(1, max_paginas + 1):
+        caminho = (
+            f"/bank-statement/statement?start={inicio:%Y-%m-%d}&end={fim:%Y-%m-%d}"
+            f"&perPage={por_pagina}&page={pagina}"
+        )
+        itens = (_requisicao_api(caminho, metodo="GET") or {}).get("entries") or []
+        for item in itens:
+            if item.get("type") != "CREDIT":
+                continue
+            transacao = item.get("transaction") or {}
+            parte = transacao.get("counterParty") or {}
+            entradas.append({
+                "id": item["id"],
+                "valor": Decimal(str(item.get("amount") or 0)) / 100,
+                "recebido_em": datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00")),
+                "tipo": transacao.get("type", ""),
+                "nome": parte.get("name", ""),
+                "documento": "".join(ch for ch in str(parte.get("identity", "")) if ch.isdigit()),
+            })
+        if len(itens) < por_pagina:
+            break
+    return entradas

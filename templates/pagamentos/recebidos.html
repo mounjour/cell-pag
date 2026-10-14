@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Pix recebidos na Cora{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+
+{% block content %}
+{% url 'pagamentos:pix_painel' as pix_url %}{% include "_voltar.html" with url=pix_url %}
+<div class="toolbar">
+  <h1>{% include "_icone.html" with nome="dinheiro" %}Pix recebidos direto na Cora</h1>
+  <span class="spacer"></span>
+  <a class="btn secondary" href="?atualizar=1">{% include "_icone.html" with nome="gerar" %}Atualizar agora</a>
+</div>
+<p class="note">Clientes que pagam pela <strong>chave Pix</strong> (sem usar o QR code do sistema) não geram baixa sozinha. Aqui estão as entradas dos últimos 30 dias no extrato da Cora; registre o pagamento na parcela certa ou ignore a que não é de parcela. O sistema sugere o cliente pelo CPF de quem pagou ou pelo nome.</p>
+{% if erro_cora %}<p class="msg warning">{{ erro_cora }}</p>{% endif %}
+
+<section class="card">
+  <h2>A registrar <span class="count">{{ a_registrar|length }}</span></h2>
+  {% if a_registrar %}
+    <div class="tbl-wrap cards"><table>
+      <thead><tr><th class="num">Recebido</th><th>Quem pagou</th><th class="num">Valor</th><th>Registrar em</th><th></th></tr></thead>
+      <tbody>
+      {% for r in a_registrar %}
+        <tr>
+          <td class="num" data-label="Recebido">{{ r.recebido_em|date:"d/m H:i" }}</td>
+          <td data-label="Quem pagou">{{ r.nome|default:"—" }}</td>
+          <td class="num" data-label="Valor">R$ {{ r.valor }}</td>
+          <td data-label="Registrar em">
+            {% for s in r.sugestoes %}
+              <div><strong>{{ s.cliente.nome }}</strong> <small>({{ s.motivo }})</small></div>
+              {% for contrato, parcela in s.contratos %}
+                <a class="btn secondary" href="{% url 'pagamentos:novo' contrato.pk %}?recebido={{ r.pk }}">{{ contrato.apelido }} · parcela {{ parcela.numero }}</a>
+              {% empty %}<small>Sem parcela em aberto.</small>{% endfor %}
+            {% empty %}
+              <small>Cliente não identificado. Procure em <a href="{% url 'clientes:lista' %}">Clientes</a> e registre pelo contrato.</small>
+            {% endfor %}
+          </td>
+          <td>
+            <form method="post" action="{% url 'pagamentos:recebido_ignorar' r.pk %}" data-confirmar="Ignorar esta entrada? Ela some da lista.">
+              {% csrf_token %}<button type="submit" class="btn-cancelar-pix">Ignorar</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  {% else %}<p class="empty">Nenhum Pix recebido esperando registro.</p>{% endif %}
+</section>
+
+{% if tratados %}
+<section class="card">
+  <h2>Últimos tratados</h2>
+  <div class="tbl-wrap cards"><table>
+    <thead><tr><th class="num">Recebido</th><th>Quem pagou</th><th class="num">Valor</th><th>Situação</th></tr></thead>
+    <tbody>
+    {% for r in tratados %}
+      <tr>
+        <td class="num" data-label="Recebido">{{ r.recebido_em|date:"d/m H:i" }}</td>
+        <td data-label="Quem pagou">{{ r.nome|default:"—" }}</td>
+        <td class="num" data-label="Valor">R$ {{ r.valor }}</td>
+        <td data-label="Situação">{{ r.get_situacao_display }}{% if r.tratado_por %} · {{ r.tratado_por.nome_curto }}{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/contato_cobranca.js' %}" defer></script>{% endblock %}

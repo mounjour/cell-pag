@@ -29,7 +29,7 @@ from . import cora_api
 from .agenda import montar_agenda_do_dia
 from .contatos import promessas_a_retornar
 from .proximas import JANELAS, proximas_cobrancas
-from . import acordos, parcelas
+from . import acordos, parcelas, recebidos
 from .forms import AcordoNovaDataForm, AcordoPerdaoForm, ContatoDeCobrancaForm, PagamentoForm, ParcelaEditarForm
 from .comprovantes import conferir_na_cora
 from .limpeza import encerrar_cobranca_automatica
@@ -261,6 +261,33 @@ class ProximasCobrancasView(LoginRequiredMixin, TemplateView):
         ctx.update(proximas_cobrancas(dias), janelas=JANELAS, hoje=timezone.localdate())
         ctx["config_cobranca"] = ConfiguracaoCobranca.obter()
         return ctx
+
+
+class RecebidosView(LoginRequiredMixin, TemplateView):
+    """Pix recebidos direto na Cora (transferência comum) que ainda não viraram baixa no sistema."""
+
+    template_name = "pagamentos/recebidos.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        erro = recebidos.sincronizar(forcar=bool(self.request.GET.get("atualizar")))
+        ctx.update(recebidos.painel(), erro_cora=erro)
+        if ctx["a_registrar"]:
+            n = len(ctx["a_registrar"])
+            messages.warning(
+                self.request,
+                f"{n} Pix recebido{'s' if n != 1 else ''} na Cora ainda sem pagamento registrado.",
+            )
+        return ctx
+
+
+class RecebidoIgnorarView(LoginRequiredMixin, View):
+    """Marca uma entrada do extrato como "não é pagamento de parcela" (POST)."""
+
+    def post(self, request, pk):
+        if recebidos.ignorar(pk, request.user):
+            messages.success(request, "Entrada ignorada.")
+        return redirect("pagamentos:recebidos")
 
 
 class CobrancasPausaView(LoginRequiredMixin, View):
@@ -519,8 +546,26 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         kwargs["contrato"] = self.contrato
         return kwargs
 
+    def get_initial(self):
+        """Veio de "Recebidos na Cora": já traz a data, a forma (Pix) e liga a entrada ao pagamento."""
+        initial = super().get_initial()
+        from .models import RecebimentoCora
+
+        recebimento = RecebimentoCora.objects.filter(
+            pk=self.request.GET.get("recebido") or 0, situacao=RecebimentoCora.Situacao.NOVO
+        ).first()
+        if recebimento:
+            initial["recebido"] = recebimento.pk
+            initial["forma"] = Pagamento.Forma.PIX
+            initial["data_pagamento"] = timezone.localtime(recebimento.recebido_em).date()
+            initial["valor_pago"] = f"{recebimento.valor:.2f}".replace(".", ",")
+            initial["juros_pago"] = "0,00"
+            self.recebimento_cora = recebimento
+        return initial
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        ctx["recebimento_cora"] = getattr(self, "recebimento_cora", None)
         ctx["contrato"] = self.contrato
         from .agenda import resumo_cobranca
         ctx["resumo_cobranca"] = resumo_cobranca(self.contrato)
@@ -541,6 +586,7 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         pagamento.usuario_baixa = self.request.user
         pagamento.registrar()
         self.object = pagamento
+        recebidos.vincular(form.cleaned_data.get("recebido"), pagamento, self.request.user)
         self._encerrar_cobranca_automatica(pagamento)
 
         if pagamento.juros_pago:

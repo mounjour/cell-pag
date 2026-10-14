@@ -93,6 +93,15 @@ aberto mais antiga do contrato.
 Aos **7 dias de atraso** o sistema mostra **"⚠ hora de bloquear o aparelho"**.
 O sistema **só avisa** — o bloqueio em si é ação manual do vendedor (Alisson).
 
+### Pix recebidos direto na Cora (botão no painel **Pix**)
+
+Quem paga pela **chave Pix** em vez do QR code do sistema não gera baixa sozinha. A página **Pix recebidos direto na Cora** lê o extrato da Cora (só leitura, últimos 30 dias, atualizado no máximo a cada 5 minutos ou em **Atualizar agora**) e lista as entradas que ainda não viraram pagamento:
+
+- O sistema sugere o **cliente** pelo CPF de quem pagou e, se não bater, pelo nome. Cada contrato do cliente com parcela em aberto tem um botão que abre **Registrar pagamento** já com valor, data e forma (Pix) preenchidos; confira a parcela e o juros (o valor recebido inclui o juros, se houver).
+- Ao salvar o pagamento, a entrada sai da lista e fica ligada a ele.
+- **Ignorar** tira da lista uma entrada que não é de parcela (ex.: dinheiro de outra origem).
+- Pagamentos de QR gerados pelo sistema, que já têm baixa automática, não entram na lista.
+
 ### Próximas cobranças (menu **Próximas cobranças**)
 
 Mostra o que a rotina das 8h30 vai cobrar **de amanhã em diante**, agrupado por data de cobrança, com o total de cada dia e o valor das parcelas previstas. Filtros: próximos 7, 14 ou 30 dias. Entram parcelas em aberto, sem pagamento, de contratos não quitados; as atrasadas e as de hoje ficam no **Cobrar hoje**. Parcela com a cobrança automática suspensa aparece marcada. Se as cobranças automáticas estiverem desligadas ou pausadas, a página avisa que nada será enviado até ligá-las.
