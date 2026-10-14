@@ -116,6 +116,26 @@ def _substituir_fatura(cobranca: CobrancaCora, valor: Decimal, juros: Decimal = 
     return True
 
 
+def _atualizar_pix_estatico(cobranca: CobrancaCora, vencimento: Vencimento, valor: Decimal, juros: Decimal) -> CobrancaCora:
+    """Modo estático: o código Pix é montado aqui (chave + valor + referência), sem nenhuma chamada à Cora."""
+    from . import brcode
+
+    try:
+        codigo = brcode.copia_e_cola(
+            chave=settings.PIX_CHAVE, valor=valor, nome=settings.PIX_RECEBEDOR_NOME,
+            cidade=settings.PIX_RECEBEDOR_CIDADE, referencia=f"CP{vencimento.pk}",
+        )
+        erro = ""
+    except ValueError as exc:
+        codigo, erro = "", f"Não foi possível montar o código Pix: {exc}"
+    cobranca.valor, cobranca.juros = valor, juros
+    cobranca.data_vencimento = vencimento.data_vencimento
+    cobranca.pix_copia_e_cola, cobranca.qr_code_url, cobranca.erro = codigo, "", erro
+    cobranca.status = CobrancaCora.Status.ERRO if erro else CobrancaCora.Status.ABERTO
+    cobranca.save()
+    return cobranca
+
+
 def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
     hoje = hoje or timezone.localdate()
     principal, juros = composicao_do_pix(vencimento, hoje)
@@ -134,6 +154,8 @@ def obter_ou_criar_cobranca(vencimento: Vencimento, hoje=None) -> CobrancaCora:
         return cobranca
     if cobranca.status == CobrancaCora.Status.PAGO:
         return cobranca
+    if settings.PIX_MODO == "estatico":
+        return _atualizar_pix_estatico(cobranca, vencimento, valor, juros)
     if cobranca.valor != valor:
         # O total a cobrar mudou (entrou outra parcela vencida, ou saiu uma, ou o juros
         # de mais um dia de atraso entrou): o QR passa a refletir o novo total.

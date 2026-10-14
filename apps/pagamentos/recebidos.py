@@ -6,15 +6,23 @@ sugere de quem é (pelo CPF e, na falta dele, pelo nome) para a equipe registrar
 """
 
 import datetime
+import logging
 import re
 import unicodedata
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
 from django.utils import timezone
 
 from . import cora_api
-from .models import CobrancaCora, RecebimentoCora
+from .models import CobrancaCora, Pagamento, RecebimentoCora
+
+logger = logging.getLogger("pagamentos.recebidos")
+
+PREFIXO_BAIXA_EXTRATO = "Baixa automática pelo extrato da Cora"
+#: Só entradas recentes recebem baixa sozinhas; as mais antigas ficam para a equipe conferir.
+JANELA_BAIXA_AUTOMATICA = datetime.timedelta(hours=36)
 
 _CHAVE_SINCRONIA = "recebidos_cora_sincronizado"
 _TTL_SINCRONIA = 300  # no máximo uma consulta ao extrato a cada 5 minutos
@@ -43,14 +51,88 @@ def sincronizar(dias: int = 30, forcar: bool = False) -> str:
             total == entrada["valor"] and abs((pago_em - entrada["recebido_em"]).total_seconds()) < 2 * 86400
             for total, pago_em in pagos
         )
-        RecebimentoCora.objects.create(
+        recebimento = RecebimentoCora.objects.create(
             entrada_id=entrada["id"], valor=entrada["valor"], recebido_em=entrada["recebido_em"],
             tipo=entrada["tipo"], nome=entrada["nome"], documento=entrada["documento"],
             situacao=RecebimentoCora.Situacao.VINCULADO if de_fatura else RecebimentoCora.Situacao.NOVO,
             tratado_em=timezone.now() if de_fatura else None,
         )
+        if not de_fatura:
+            _tratar_entrada_nova(recebimento)
     cache.set(_CHAVE_SINCRONIA, True, _TTL_SINCRONIA)
     return ""
+
+
+def _tratar_entrada_nova(recebimento: RecebimentoCora) -> None:
+    """Entrada nova: se já foi registrada à mão, só liga; se for recente e clara, dá a baixa sozinha."""
+    try:
+        registrado = _pagamento_ja_registrado(recebimento)
+        if registrado is not None:
+            vincular(recebimento.pk, registrado, None)
+        elif timezone.now() - recebimento.recebido_em <= JANELA_BAIXA_AUTOMATICA:
+            baixar_automaticamente(recebimento)
+    except Exception:  # uma entrada com problema não pode travar as outras
+        logger.exception("Falha ao tratar a entrada %s do extrato", recebimento.entrada_id)
+
+
+def _pagamento_ja_registrado(recebimento: RecebimentoCora):
+    """Pagamento Pix do mesmo CPF, no mesmo dia e com o mesmo total (parcela + juros): foi registrado à mão."""
+    if not recebimento.documento:
+        return None
+    dia = timezone.localtime(recebimento.recebido_em).date()
+    candidatos = Pagamento.objects.filter(
+        contrato__cliente__cpf=recebimento.documento, data_pagamento=dia, forma=Pagamento.Forma.PIX,
+    ).exclude(recebimentos_cora__isnull=False)
+    return next((p for p in candidatos if p.valor_pago + p.juros_pago == recebimento.valor), None)
+
+
+def baixar_automaticamente(recebimento: RecebimentoCora) -> Pagamento | None:
+    """Dá a baixa quando o CPF de quem pagou é de um cliente e o valor cabe em **uma só** parcela em aberto.
+
+    O valor precisa estar entre a parcela (principal) e parcela + juros do dia do pagamento: assim quem pagou o
+    código de ontem (juros menor) também é reconhecido. Se mais de um contrato casar, ou nenhum, a entrada fica
+    na lista para a equipe decidir.
+    """
+    from apps.clientes.models import Cliente
+
+    from .comprovantes import ao_confirmar_pix
+    from .limpeza import encerrar_cobranca_automatica
+    from .pix_cora import composicao_do_pix
+
+    if not recebimento.documento:
+        return None
+    dia = timezone.localtime(recebimento.recebido_em).date()
+    candidatos = []
+    for cliente in Cliente.objects.filter(cpf=recebimento.documento, ativo=True):
+        for contrato in cliente.contratos.exclude(status="quitado"):
+            parcela = (
+                contrato.vencimentos.exclude(status="pago").exclude(pagamentos__isnull=False).order_by("numero").first()
+            )
+            if parcela is None:
+                continue
+            principal, juros = composicao_do_pix(parcela, dia)
+            if principal > 0 and principal <= recebimento.valor <= principal + juros:
+                candidatos.append((contrato, parcela, principal))
+    if len(candidatos) != 1:
+        return None
+
+    contrato, parcela, principal = candidatos[0]
+    with transaction.atomic():
+        pagamento = Pagamento(
+            contrato=contrato, vencimento=parcela, data_pagamento=dia, valor_pago=principal,
+            juros_pago=recebimento.valor - principal, forma=Pagamento.Forma.PIX,
+            observacao=f"{PREFIXO_BAIXA_EXTRATO} ({recebimento.entrada_id}).",
+        )
+        pagamento.registrar()
+        vincular(recebimento.pk, pagamento, None)
+        encerrar_cobranca_automatica(pagamento)
+        pix = CobrancaCora.objects.filter(vencimento=parcela).first()
+        if pix is not None:
+            pix.total_pago, pix.pago_em, pix.status = recebimento.valor, recebimento.recebido_em, CobrancaCora.Status.PAGO
+            pix.juros = min(pix.juros, recebimento.valor)
+            pix.save()
+            ao_confirmar_pix(pix, pagamento)
+    return pagamento
 
 
 def _normaliza(texto: str) -> list[str]:

@@ -3,6 +3,9 @@ import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.pagamentos.cobranca import processar_cobrancas
+from django.conf import settings
+
+from apps.pagamentos import recebidos
 from apps.pagamentos.pix_cora import reconciliar_abertas
 
 
@@ -22,6 +25,11 @@ class Command(BaseCommand):
             hoje = datetime.date.fromisoformat(options["hoje"]) if options["hoje"] else None
         except ValueError as exc:
             raise CommandError("--hoje precisa estar no formato AAAA-MM-DD.") from exc
+        if settings.PIX_MODO == "estatico":
+            # Quem já pagou (pelo extrato da Cora) não pode ser cobrado de novo hoje.
+            erro_extrato = recebidos.sincronizar(forcar=True)
+            if erro_extrato:
+                self.stdout.write(self.style.WARNING(erro_extrato))
         conciliacao = reconciliar_abertas()
         resultado = processar_cobrancas(
             hoje=hoje,

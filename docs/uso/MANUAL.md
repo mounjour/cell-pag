@@ -93,6 +93,16 @@ aberto mais antiga do contrato.
 Aos **7 dias de atraso** o sistema mostra **"⚠ hora de bloquear o aparelho"**.
 O sistema **só avisa** — o bloqueio em si é ação manual do vendedor (Alisson).
 
+### Como o Pix funciona (modo estático)
+
+O sistema **não cria nem cancela nada na Cora**. Para cada parcela ele monta, ele mesmo, o código Pix **copia e cola** com a sua chave, o valor (parcela + juros do dia) e uma referência da parcela. Esse código vai na mensagem de WhatsApp. Como o juros sobe todo dia, a cada dia sai um código novo com o valor atualizado, sem taxa de cancelamento.
+
+A Cora serve só para **avisar que o dinheiro entrou**: o sistema lê o extrato (somente leitura), reconhece o cliente pelo **CPF de quem pagou** e dá a **baixa sozinho** quando o valor cabe em **uma só** parcela em aberto (entre o valor da parcela e parcela + juros do dia do pagamento, o que também reconhece quem pagou o código de ontem). O cliente recebe a confirmação por WhatsApp. O que o sistema não consegue ter certeza (pagamento por outra pessoa, valor diferente, dois contratos com o mesmo valor, entrada com mais de 36 horas) fica na página **Pix recebidos direto na Cora**, para a equipe registrar.
+
+- **Atenção:** o código antigo continua valendo depois de enviado (não existe cancelar). Quem paga o valor de ontem paga um pouco menos de juros; o sistema registra o que entrou.
+- **Configuração no servidor:** `PIX_CHAVE` (a chave Pix da conta; se vazio, usa `WHATSAPP_PIX_CHAVE`), `PIX_RECEBEDOR_NOME` e `PIX_RECEBEDOR_CIDADE` (aparecem para quem paga). `PIX_MODO=fatura` volta ao modo antigo de fatura na Cora.
+- **Conferência do extrato:** acontece sozinha antes das cobranças das 8h30 e ao abrir a página de recebidos. Para a baixa sair em minutos, agende no servidor a cada 10 minutos: `python manage.py conferir_recebidos`.
+
 ### Pix recebidos direto na Cora (botão no painel **Pix**)
 
 Quem paga pela **chave Pix** em vez do QR code do sistema não gera baixa sozinha. A página **Pix recebidos direto na Cora** lê o extrato da Cora (só leitura, últimos 30 dias, atualizado no máximo a cada 5 minutos ou em **Atualizar agora**) e lista as entradas que ainda não viraram pagamento:
