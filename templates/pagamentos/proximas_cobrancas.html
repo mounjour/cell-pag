@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Próximas cobranças{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <h1>{% include "_icone.html" with nome="proximas" %}Próximas cobranças</h1>
+</div>
+<p class="note">O que a rotina das 8h30 vai cobrar nos próximos dias, por data de cobrança. Parcelas atrasadas e as de hoje ficam em <a href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar hoje</a>.</p>
+
+{% if config_cobranca.pausada %}
+  <p class="msg warning">As cobranças automáticas estão <strong>{% if config_cobranca.nunca_iniciada %}desligadas (ainda não começaram){% else %}pausadas{% endif %}</strong>: nada abaixo será enviado até você ligá-las em <a href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar hoje</a>.</p>
+{% endif %}
+
+<div class="filtro-pills">
+  {% for n in janelas %}
+    <a class="filtro-pill{% if n == dias %} ativo{% endif %}" href="?dias={{ n }}">Próximos {{ n }} dias</a>
+  {% endfor %}
+</div>
+
+{% if grupos %}
+  <dl class="meta meta--4col">
+    <div><dt>Cobranças previstas</dt><dd class="num">{{ quantidade }}</dd></div>
+    <div><dt>Valor das parcelas</dt><dd class="num">R$ {{ total|floatformat:2 }}</dd></div>
+  </dl>
+  {% for g in grupos %}
+    <section class="card">
+      <h2>{{ g.data|date:"l, d/m/Y"|capfirst }} <span class="count">{{ g.itens|length }}</span>
+        <small class="num" style="float:right">R$ {{ g.total|floatformat:2 }}</small></h2>
+      <div class="tbl-wrap cards"><table>
+        <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Frequência</th><th class="num">Valor</th></tr></thead>
+        <tbody>
+        {% for item in g.itens %}
+          {% with v=item.parcela %}
+          <tr>
+            <td data-label="Cliente"><a href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a></td>
+            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }}</a></td>
+            <td data-label="Parcela">nº {{ v.numero }}{% if item.suspensa %} <span class="pill aberto">cobrança suspensa</span>{% endif %}</td>
+            <td data-label="Frequência">{{ v.contrato.get_estrutura_display }}</td>
+            <td class="num" data-label="Valor">R$ {{ v.saldo }}</td>
+          </tr>
+          {% endwith %}
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+  {% endfor %}
+{% else %}
+  <p class="empty">Nenhuma cobrança prevista nos próximos {{ dias }} dias.</p>
+{% endif %}
+{% endblock %}
