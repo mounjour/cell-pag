@@ -99,6 +99,12 @@ class Vencimento(models.Model):
         return self.valor_previsto - self.valor_pago
 
     @property
+    def diferenca_do_original(self) -> Decimal:
+        """Quanto o previsto está acima (+) ou abaixo (-) da parcela original do contrato."""
+        original = self.contrato.valor_parcela
+        return self.valor_previsto - original if original else Decimal("0.00")
+
+    @property
     def quitada(self) -> bool:
         return self.status == self.Status.PAGO
 

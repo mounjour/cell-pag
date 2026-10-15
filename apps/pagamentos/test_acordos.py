@@ -292,3 +292,10 @@ def test_baixa_deixa_escolher_quantas_parcelas_quita(auth_client, cliente):
     campo = auth_client.get(reverse("pagamentos:novo", args=[ct.pk])).context["form"].fields["quantidade"]
     assert [valor for valor, _ in campo.choices] == [1, 2]
     assert [p["juros"] for p in json.loads(campo.widget.attrs["data-parcelas"])] == ["50.00", "10.00"]
+
+
+def test_diferenca_do_original_aparece_na_parcela_reduzida(parcela):
+    parcela.valor_previsto = Decimal("250.00")
+    parcela.save()
+    parcela = _recarrega(parcela)
+    assert parcela.diferenca_do_original == Decimal("-50.00")
