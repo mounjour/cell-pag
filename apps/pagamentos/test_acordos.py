@@ -248,7 +248,7 @@ def test_erro_do_acordo_volta_para_a_tela_sem_gravar(auth_client, parcela):
 def test_detalhe_do_contrato_oferece_negociar_e_lista_os_acordos(auth_client, parcela):
     url = reverse("contratos:detalhe", args=[parcela.contrato.pk])
     html = auth_client.get(url).content.decode()
-    assert reverse("pagamentos:acordo", args=[parcela.pk]) in html and "negociar" in html
+    assert reverse("pagamentos:acordo", args=[parcela.pk]) in html and "Negociar" in html
 
     auth_client.post(reverse("pagamentos:acordo", args=[parcela.pk]), {"tipo": "perdao_juros", "juros": "50,00"})
     html = auth_client.get(url).content.decode()

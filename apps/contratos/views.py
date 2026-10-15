@@ -345,6 +345,8 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
         ctx["ver_todas"] = ver_todas
         ctx["total_venc"] = len(vencimentos)
         ctx["vencimentos_exibidos"] = _parcelas_relevantes(vencimentos, todas=ver_todas)
+        ctx["parcela_proxima"] = contrato.parcela_em_aberto()  # a próxima a pagar: ganha destaque na tabela
+        ctx["hoje"] = timezone.localdate()
         pagamentos = list(contrato.pagamentos.all())
         ctx["total_pagamentos"] = len(pagamentos)
         ctx["pagamentos_exibidos"] = (
