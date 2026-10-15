@@ -1404,8 +1404,7 @@ tr[data-href]:hover td, section.painel-contrato[data-href]:hover { background: v
 .parcelas-tabela small { color: var(--ink-faint); font-weight: 400; }
 .parcelas-tabela tr.parcela-paga td { color: var(--ink-soft); }
 .parcelas-tabela tr.parcela-paga .parcela-saldo { color: var(--ink-faint); }
-.parcelas-tabela tr.parcela-proxima td { background: var(--accent-wash); }
-.parcelas-tabela tr.parcela-proxima td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.parcelas-tabela tr.parcela-proxima td { background: color-mix(in srgb, var(--ink) 4%, var(--surface)); }
 .parcelas-tabela tr.parcela-atrasada td:first-child { box-shadow: inset 3px 0 0 var(--critical); }
 .parcelas-tabela tr.parcela-atrasada .pill { background: var(--critical-wash); color: var(--critical-ink); }
 .parcelas-tabela .parcela-saldo--devido { font-weight: 700; color: var(--ink); }
