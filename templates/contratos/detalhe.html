@@ -131,7 +131,7 @@
               <td data-label="" class="parcela-acoes-celula">
                 {% if not contrato.quitado and v.status != 'pago' %}
                   <div class="parcela-acoes">
-                    <a class="btn-mini btn-mini--primario" href="{% url 'pagamentos:novo' contrato.pk %}">Registrar pagamento</a>
+                    <a class="btn-mini{% if parcela_proxima and v.pk == parcela_proxima.pk %} btn-mini--primario{% endif %}" href="{% url 'pagamentos:novo' contrato.pk %}">Registrar pagamento</a>
                     <a class="btn-mini" href="{% url 'pagamentos:parcela_editar' v.pk %}">Editar</a>
                     {% if v.status == 'aberto' %}<a class="btn-mini" href="{% url 'pagamentos:acordo' v.pk %}">Negociar</a>{% endif %}
                   </div>
