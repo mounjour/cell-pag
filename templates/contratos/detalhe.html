@@ -189,9 +189,9 @@
               <td data-label="Comprovante">{% if p.comprovante %}<a href="{% url 'pagamentos:comprovante' p.pk %}">baixar</a>{% else %}—{% endif %}</td>
               <td data-label="" class="num">
                 <form method="post" action="{% url 'pagamentos:estornar' contrato.pk p.pk %}"
-                      onsubmit="return confirm('Estornar esta baixa da parcela {{ p.vencimento.numero|default:'' }}?')">
+                      data-confirmar="Estornar esta baixa da parcela {{ p.vencimento.numero|default:'' }}?">
                   {% csrf_token %}
-                  <button type="submit" class="linkish">estornar</button>
+                  <button type="submit" class="btn-mini">Estornar</button>
                 </form>
               </td>
             </tr>
