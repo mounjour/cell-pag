@@ -121,3 +121,28 @@ def test_pagamento_ja_registrado_a_mao_nao_e_duplicado(auth_client, cliente, ext
     auth_client.get(reverse("pagamentos:recebidos"))
     assert Pagamento.objects.count() == 1  # a entrada foi ligada ao pagamento existente, sem baixar a outra parcela
     assert RecebimentoCora.objects.get().situacao == RecebimentoCora.Situacao.VINCULADO
+
+
+@pytest.mark.django_db
+def test_conferir_recebidos_pode_ignorar_as_entradas_anteriores_a_uma_data(monkeypatch):
+    import datetime
+    from decimal import Decimal
+    from io import StringIO
+
+    from django.core.management import call_command
+    from django.utils import timezone
+
+    from apps.pagamentos import recebidos
+    from apps.pagamentos.models import RecebimentoCora
+
+    monkeypatch.setattr(recebidos, "sincronizar", lambda forcar=False: "")
+    for numero, dia in enumerate((10, 12, 14), start=1):
+        RecebimentoCora.objects.create(
+            entrada_id=f"ent_{numero}", valor=Decimal("20.00"), tipo="PIX", nome="Fulano", documento="",
+            recebido_em=timezone.make_aware(datetime.datetime(2026, 10, dia, 12, 0)),
+        )
+    saida = StringIO()
+    call_command("conferir_recebidos", "--ignorar-antes", "2026-10-13", stdout=saida)
+    assert "2 entrada(s) anteriores a 13/10/2026" in saida.getvalue()
+    assert RecebimentoCora.objects.filter(situacao=RecebimentoCora.Situacao.NOVO).count() == 1
+    assert RecebimentoCora.objects.filter(situacao=RecebimentoCora.Situacao.IGNORADO).count() == 2
