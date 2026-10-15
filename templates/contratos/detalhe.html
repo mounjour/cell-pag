@@ -124,7 +124,7 @@
             <tr class="{% if v.status == 'pago' %}parcela-paga{% elif parcela_proxima and v.pk == parcela_proxima.pk %}parcela-proxima{% endif %}{% if v.status != 'pago' and v.data_vencimento < hoje %} parcela-atrasada{% endif %}{% if request.GET.pago == v.numero|stringformat:"s" %} linha-pagamento-confirmado{% endif %}">
               <td class="parcela-numero">{{ v.numero }}</td>
               <td class="num" data-label="Data de cobrança">{{ v.data_vencimento|date:"d/m/Y" }}{% if v.data_original %}<br><small>era {{ v.data_original|date:"d/m/Y" }}</small>{% endif %}</td>
-              <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}{% if v.acrescimo %}<br><small>inclui {% if v.acrescimo > 0 %}+{% endif %}R$ {{ v.acrescimo }}{% if v.acrescimo_motivo %} · {{ v.acrescimo_motivo }}{% endif %}</small>{% endif %}</td>
+              <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}{% with dif=v.diferenca_do_original %}{% if dif %}<br><small class="parcela-diferenca{% if dif < 0 %} parcela-diferenca--menos{% endif %}">R$ {{ dif|stringformat:"+.2f"|cut:"+"|cut:"-" }} {% if dif < 0 %}abaixo{% else %}acima{% endif %} do original (R$ {{ contrato.valor_parcela }}){% if v.acrescimo_motivo %} · {{ v.acrescimo_motivo }}{% endif %}</small>{% endif %}{% endwith %}</td>
               <td class="num" data-label="Pago">R$ {{ v.valor_pago }}</td>
               <td class="num parcela-saldo{% if v.saldo > 0 %} parcela-saldo--devido{% endif %}" data-label="Saldo">R$ {{ v.saldo }}</td>
               <td data-label="Status"><span class="pill {{ v.status }}">{{ v.get_status_display }}</span>{% if v.juros_abonado %}<br><small>juros perdoados: R$ {{ v.juros_abonado }}</small>{% endif %}</td>

@@ -1434,3 +1434,4 @@ tr[data-href]:hover td, section.painel-contrato[data-href]:hover { background: v
 .parcela-acoes .btn-mini:first-child { grid-column: 1 / -1; }
 .parcela-acoes .btn-mini:nth-child(2):last-child { grid-column: 1 / -1; }
 @media (max-width: 720px) { .parcela-acoes { margin-left: 0; width: 100%; max-width: 16rem; } }
+.parcela-diferenca { color: var(--ink-soft, var(--ink-faint)); font-weight: 500; }
