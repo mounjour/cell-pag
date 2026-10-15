@@ -90,7 +90,7 @@
           juros da parcela mais antiga <strong class="num">R$ {{ s.juros }}</strong>
         </p>
         {% if s.alertar_bloqueio and not bloqueio_ativo %}
-          <p class="pill inadimplente">⚠ {{ s.dias_atraso }} dias — hora de bloquear o aparelho (ação manual do vendedor).</p>
+          <p class="pill pill--icone inadimplente">{% include "_icone.html" with nome="bloqueio" %}{{ s.dias_atraso }} dias — hora de bloquear o aparelho (ação manual do vendedor).</p>
         {% endif %}
       {% else %}
         <p>
@@ -124,16 +124,16 @@
             <tr class="{% if v.status == 'pago' %}parcela-paga{% elif parcela_proxima and v.pk == parcela_proxima.pk %}parcela-proxima{% endif %}{% if v.status != 'pago' and v.data_vencimento < hoje %} parcela-atrasada{% endif %}{% if request.GET.pago == v.numero|stringformat:"s" %} linha-pagamento-confirmado{% endif %}">
               <td class="parcela-numero">{{ v.numero }}</td>
               <td class="num" data-label="Data de cobrança">{{ v.data_vencimento|date:"d/m/Y" }}{% if v.data_original %}<br><small>era {{ v.data_original|date:"d/m/Y" }}</small>{% endif %}</td>
-              <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}{% with dif=v.diferenca_do_original %}{% if dif %}<br><small class="parcela-diferenca{% if dif < 0 %} parcela-diferenca--menos{% endif %}">R$ {{ dif|stringformat:"+.2f"|cut:"+"|cut:"-" }} {% if dif < 0 %}abaixo{% else %}acima{% endif %} do original (R$ {{ contrato.valor_parcela }}){% if v.acrescimo_motivo %} · {{ v.acrescimo_motivo }}{% endif %}</small>{% endif %}{% endwith %}</td>
+              <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}{% with dif=v.diferenca_do_original %}{% if dif %}<br><small title="Valor original da parcela: R$ {{ contrato.valor_parcela }}" class="parcela-diferenca{% if dif < 0 %} parcela-diferenca--menos{% endif %}">R$ {{ dif|floatformat:2|cut:"-" }} {% if dif < 0 %}abaixo{% else %}acima{% endif %} do original{% if v.acrescimo_motivo %} · {{ v.acrescimo_motivo }}{% endif %}</small>{% endif %}{% endwith %}</td>
               <td class="num" data-label="Pago">R$ {{ v.valor_pago }}</td>
               <td class="num parcela-saldo{% if v.saldo > 0 %} parcela-saldo--devido{% endif %}" data-label="Saldo">R$ {{ v.saldo }}</td>
-              <td data-label="Status"><span class="pill {{ v.status }}">{{ v.get_status_display }}</span>{% if v.juros_abonado %}<br><small>juros perdoados: R$ {{ v.juros_abonado }}</small>{% endif %}</td>
+              <td data-label="Status">{% with atraso=v.dias_em_atraso %}{% if atraso %}<span class="pill pill--icone atrasado">{% include "_icone.html" with nome="alerta" %}Atrasada · {{ atraso }} dia{{ atraso|pluralize }}</span>{% else %}<span class="pill pill--icone {{ v.status }}">{% if v.status == "pago" %}{% include "_icone.html" with nome="quitar" %}{% elif v.status == "parcial" %}{% include "_icone.html" with nome="parcial" %}{% else %}{% include "_icone.html" with nome="historico" %}{% endif %}{{ v.get_status_display }}</span>{% endif %}{% endwith %}{% if v.juros_abonado %}<br><small>juros perdoados: R$ {{ v.juros_abonado }}</small>{% endif %}</td>
               <td data-label="" class="parcela-acoes-celula">
                 {% if not contrato.quitado and v.status != 'pago' %}
                   <div class="parcela-acoes">
-                    <a class="btn-mini{% if parcela_proxima and v.pk == parcela_proxima.pk %} btn-mini--primario{% endif %}" href="{% url 'pagamentos:novo' contrato.pk %}">Registrar pagamento</a>
-                    <a class="btn-mini" href="{% url 'pagamentos:parcela_editar' v.pk %}">Editar</a>
-                    {% if v.status == 'aberto' %}<a class="btn-mini" href="{% url 'pagamentos:acordo' v.pk %}">Negociar</a>{% endif %}
+                    <a class="btn-mini btn-mini--pagar{% if parcela_proxima and v.pk == parcela_proxima.pk %} btn-mini--primario{% endif %}" href="{% url 'pagamentos:novo' contrato.pk %}">{% include "_icone.html" with nome="quitar" %}Registrar pagamento</a>
+                    <a class="btn-mini btn-mini--editar" href="{% url 'pagamentos:parcela_editar' v.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
+                    {% if v.status == 'aberto' %}<a class="btn-mini btn-mini--negociar" href="{% url 'pagamentos:acordo' v.pk %}">{% include "_icone.html" with nome="negociar" %}Negociar</a>{% endif %}
                   </div>
                 {% endif %}
               </td>

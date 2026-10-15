@@ -105,6 +105,14 @@ class Vencimento(models.Model):
         return self.valor_previsto - original if original else Decimal("0.00")
 
     @property
+    def dias_em_atraso(self) -> int:
+        """Dias corridos desde a data de cobrança, para parcela não paga; 0 se ainda não venceu."""
+        if self.status == self.Status.PAGO:
+            return 0
+        from django.utils import timezone
+        return max(0, (timezone.localdate() - self.data_vencimento).days)
+
+    @property
     def quitada(self) -> bool:
         return self.status == self.Status.PAGO
 

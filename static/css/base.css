@@ -1229,7 +1229,7 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--raise);
 }
 .fila-item {
-  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) auto auto;
+  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) 7.5rem auto;
   align-items: center; gap: 0.75rem 1rem; padding: 0.8rem 1rem; border-bottom: 1px solid var(--line);
 }
 .fila-item:last-child { border-bottom: 0; }
@@ -1434,4 +1434,33 @@ tr[data-href]:hover td, section.painel-contrato[data-href]:hover { background: v
 .parcela-acoes .btn-mini:first-child { grid-column: 1 / -1; }
 .parcela-acoes .btn-mini:nth-child(2):last-child { grid-column: 1 / -1; }
 @media (max-width: 720px) { .parcela-acoes { margin-left: 0; width: 100%; max-width: 16rem; } }
-.parcela-diferenca { color: var(--ink-soft, var(--ink-faint)); font-weight: 500; }
+.parcela-diferenca { display: inline-block; white-space: nowrap; font-size: .8rem; color: var(--ink-soft, var(--ink-faint)); font-weight: 500; }
+.pill--icone { display: inline-flex; align-items: center; gap: .35rem; }
+.pill--icone::before { content: none; }
+.pill--icone .icone { width: 14px; height: 14px; }
+.btn-mini { gap: .35rem; }
+.btn-mini .icone { width: 14px; height: 14px; flex: none; }
+/* Cor por ação: pagar (verde), editar (azul suave), negociar (âmbar). */
+.btn-mini--pagar { background: var(--ok-wash); border-color: color-mix(in srgb, var(--ok-ink) 35%, transparent); color: var(--ok-ink); }
+.btn-mini--pagar:hover { background: color-mix(in srgb, var(--ok-ink) 16%, var(--ok-wash)); border-color: var(--ok-ink); color: var(--ok-ink); }
+.btn-mini--pagar.btn-mini--primario { background: var(--ok-ink); border-color: var(--ok-ink); color: #fff; }
+.btn-mini--pagar.btn-mini--primario:hover { background: color-mix(in srgb, var(--ok-ink) 85%, #000); border-color: var(--ok-ink); color: #fff; }
+.btn-mini--editar { background: var(--accent-wash); border-color: color-mix(in srgb, var(--accent-ink) 30%, transparent); color: var(--accent-ink); }
+.btn-mini--editar:hover { background: color-mix(in srgb, var(--accent-ink) 14%, var(--accent-wash)); border-color: var(--accent-ink); color: var(--accent-ink); }
+.btn-mini--negociar { background: var(--amber-wash); border-color: color-mix(in srgb, var(--amber-ink) 35%, transparent); color: var(--amber-ink); }
+.btn-mini--negociar:hover { background: color-mix(in srgb, var(--amber-ink) 16%, var(--amber-wash)); border-color: var(--amber-ink); color: var(--amber-ink); }
+/* Ícone no lugar da bolinha do selo (máscara; a cor vem do texto). */
+.pill { --ic-alerta: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3 2.5 20h19z'/><path d='M12 10v4.5M12 17.5v.01'/></svg>"); --ic-ok: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='m8.5 12.5 2.5 2.5 5-5'/></svg>"); --ic-relogio: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>"); --ic-parcial: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 3a9 9 0 0 1 0 18z' fill='black'/></svg>"); --ic-cancel: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='m9 9 6 6m0-6-6 6'/></svg>"); --ic-aparelho: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><rect x='7' y='2' width='10' height='20' rx='2'/><path d='M11 18h2'/></svg>"); }
+.pill.atrasado:not(.pill--icone)::before, .pill.inadimplente:not(.pill--icone)::before, .pill.vencido:not(.pill--icone)::before, .pill.erro:not(.pill--icone)::before, .pill.alerta-bloqueio:not(.pill--icone)::before { --ic: var(--ic-alerta); }
+.pill.pago:not(.pill--icone)::before, .pill.em_dia:not(.pill--icone)::before, .pill.vendido:not(.pill--icone)::before, .pill.entregue:not(.pill--icone)::before, .pill.lido:not(.pill--icone)::before, .pill.quitado:not(.pill--icone)::before, .pill.disponivel:not(.pill--icone)::before { --ic: var(--ic-ok); }
+.pill.aberto:not(.pill--icone)::before, .pill.pendente:not(.pill--icone)::before { --ic: var(--ic-relogio); }
+.pill.parcial:not(.pill--icone)::before, .pill.enviado:not(.pill--icone)::before { --ic: var(--ic-parcial); }
+.pill.cancelado:not(.pill--icone)::before { --ic: var(--ic-cancel); }
+.pill.alocado:not(.pill--icone)::before { --ic: var(--ic-aparelho); }
+.pill.atrasado:not(.pill--icone)::before, .pill.inadimplente:not(.pill--icone)::before, .pill.vencido:not(.pill--icone)::before, .pill.erro:not(.pill--icone)::before, .pill.alerta-bloqueio:not(.pill--icone)::before, .pill.pago:not(.pill--icone)::before, .pill.em_dia:not(.pill--icone)::before, .pill.vendido:not(.pill--icone)::before, .pill.entregue:not(.pill--icone)::before, .pill.lido:not(.pill--icone)::before, .pill.quitado:not(.pill--icone)::before, .pill.disponivel:not(.pill--icone)::before, .pill.aberto:not(.pill--icone)::before, .pill.pendente:not(.pill--icone)::before, .pill.parcial:not(.pill--icone)::before, .pill.enviado:not(.pill--icone)::before, .pill.cancelado:not(.pill--icone)::before, .pill.alocado:not(.pill--icone)::before { width: 1.1em; height: 1.1em; border-radius: 0; box-shadow: none; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
+.pill.alerta-bloqueio { display: inline-flex; align-items: center; gap: .35rem; }
+.pill.alerta-bloqueio .icone { width: 14px; height: 14px; }
+/* Selos de atraso: mesma largura mínima e centralizados na linha, para as bordas alinharem entre linhas. */
+td[data-label="Situação"] { align-items: center; }
+td[data-label="Situação"] .pill.atrasado, td[data-label="Situação"] .pill.inadimplente,
+.fila-situacao .pill.atrasado, .fila-situacao .pill.inadimplente { min-width: 10.5rem; justify-content: center; }
