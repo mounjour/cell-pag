@@ -296,4 +296,6 @@ def test_baixa_deixa_escolher_quantas_parcelas_quita(auth_client, cliente):
 
 def test_diferenca_do_original_aparece_na_parcela_reduzida(parcela):
     parcela.valor_previsto = Decimal("250.00")
+    parcela.save()
+    parcela = _recarrega(parcela)
     assert parcela.diferenca_do_original == Decimal("-50.00")
