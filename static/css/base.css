@@ -1532,3 +1532,23 @@ td[data-label="Situação"] .pill.atrasado, td[data-label="Situação"] .pill.in
 }
 .semana-lista { margin: 0 0 .75rem; }
 .semana-lista[hidden] { display: none; }
+/* PainÃ©is de lista (Bloqueios, Pix recebidos): mesmo desenho das PrÃ³ximas cobranÃ§as. */
+.painel-lista { margin: 0 0 1rem; }
+.painel-vazio { margin: 0; padding: .9rem 1rem; }
+.proximas-item__nota { font-size: .8rem; color: var(--ink-faint); }
+.proximas-item__meio { display: grid; gap: .3rem; min-width: 0; font-size: .85rem; }
+.proximas-item__acoes--solto { justify-content: flex-start; flex-wrap: wrap; }
+.proximas-item--leve { padding-block: .5rem; }
+.proximas-item--leve .proximas-item__cliente { font-weight: 500; }
+.proximas-item--recebido { align-items: start; }
+.proximas-item .bloqueio-form { display: flex; gap: .4rem; align-items: center; justify-content: flex-end; margin: 0; }
+.proximas-item .bloqueio-form input { width: 11rem; min-height: 0; padding: .3rem .55rem; font-size: .8rem; }
+.btn-mini--bloquear { background: var(--critical-wash); border-color: color-mix(in srgb, var(--critical-ink) 35%, transparent); color: var(--critical-ink); }
+.btn-mini--bloquear:hover { background: color-mix(in srgb, var(--critical-ink) 14%, var(--critical-wash)); border-color: var(--critical-ink); color: var(--critical-ink); }
+button.btn-mini { cursor: pointer; font-family: inherit; }
+
+.proximas-item--auto { grid-template-columns: minmax(0, 1fr) auto 6.5rem auto; }
+.proximas-item__selos .pill { white-space: nowrap; }
+.proximas-item .bloqueio-form input { height: 2rem; width: 9rem; }
+.proximas-item .bloqueio-form { flex-wrap: nowrap; }
+.proximas-item .bloqueio-form input { width: 7.5rem; min-width: 0; }
