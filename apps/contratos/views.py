@@ -335,6 +335,14 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
         # já veio no prefetch de "pagamentos", sem consulta extra.
         ctx["entradas"] = [p for p in contrato.pagamentos.all() if p.vencimento_id is None]
         vencimentos = list(contrato.vencimentos.all())
+        # Última baixa de cada parcela (como e quando foi paga), sem consulta extra: usa o prefetch.
+        ultimas_baixas = {}
+        for pg in contrato.pagamentos.all():
+            if pg.vencimento_id and (pg.vencimento_id not in ultimas_baixas
+                                     or (pg.data_pagamento, pg.pk) > (ultimas_baixas[pg.vencimento_id].data_pagamento, ultimas_baixas[pg.vencimento_id].pk)):
+                ultimas_baixas[pg.vencimento_id] = pg
+        for v in vencimentos:
+            v.ultima_baixa = ultimas_baixas.get(v.pk)
         pagas = sum(1 for v in vencimentos if v.status == v.Status.PAGO)
         ctx["pode_quitar"] = (
             not contrato.quitado
