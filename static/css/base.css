@@ -1465,3 +1465,27 @@ td[data-label="Situação"] { align-items: center; }
 td[data-label="Situação"] .pill.atrasado, td[data-label="Situação"] .pill.inadimplente,
 .fila-situacao .pill.atrasado, .fila-situacao .pill.inadimplente { min-width: 10.5rem; justify-content: center; }
 .parcela-baixa { display: inline-block; margin-top: .2rem; font-size: .8rem; color: var(--ink-faint); white-space: nowrap; }
+/* Próximas cobranças: uma lista só, dia a dia, sem tabela dentro de cartão. */
+.proximas-lista { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--raise); overflow: hidden; }
+.proximas-dia + .proximas-dia { border-top: 1px solid var(--line-strong); }
+.proximas-dia__topo { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .55rem 1rem; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.proximas-dia__topo h2 { margin: 0; font-size: .95rem; }
+.proximas-dia__quando { margin-left: .6rem; font-size: .78rem; font-weight: 500; color: var(--ink-faint); }
+.proximas-dia__soma { font-size: .8rem; color: var(--ink-faint); white-space: nowrap; }
+.proximas-dia__soma strong { color: var(--ink); }
+.proximas-item { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) 7rem auto; align-items: center; gap: .5rem 1rem; padding: .7rem 1rem; }
+.proximas-item + .proximas-item { border-top: 1px solid var(--line); }
+.proximas-item:hover { background: var(--surface-2); }
+.proximas-item__quem { display: grid; min-width: 0; }
+.proximas-item__cliente { font-weight: 600; color: var(--ink); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proximas-item__detalhe { font-size: .82rem; color: var(--ink-faint); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proximas-item__cliente:hover, .proximas-item__detalhe:hover { text-decoration: underline; }
+.proximas-item__selos { display: flex; flex-wrap: wrap; gap: .35rem; }
+.proximas-item__valor { text-align: right; white-space: nowrap; }
+.proximas-item__acoes { display: flex; gap: .4rem; justify-content: flex-end; }
+@media (max-width: 719px) {
+  .proximas-item { grid-template-columns: minmax(0, 1fr) auto; }
+  .proximas-item__selos { grid-column: 1 / -1; }
+  .proximas-item__valor { grid-column: 2; grid-row: 1; }
+  .proximas-item__acoes { grid-column: 1 / -1; justify-content: flex-start; }
+}

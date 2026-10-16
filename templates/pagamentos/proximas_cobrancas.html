@@ -29,32 +29,35 @@
     <div><dt>Cobranças previstas</dt><dd class="num">{{ quantidade }}</dd></div>
     <div><dt>Valor das parcelas</dt><dd class="num">R$ {{ total|floatformat:2 }}</dd></div>
   </dl>
-  {% for g in grupos %}
-    <section class="card">
-      <h2>{{ g.data|date:"l, d/m/Y"|capfirst }} <span class="count">{{ g.itens|length }}</span>
-        <small class="num" style="float:right">R$ {{ g.total|floatformat:2 }}</small></h2>
-      <div class="tbl-wrap cards"><table>
-        <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Frequência</th><th class="num">Valor</th><th></th></tr></thead>
-        <tbody>
+  <div class="proximas-lista">
+    {% for g in grupos %}
+      <section class="proximas-dia">
+        <header class="proximas-dia__topo">
+          <h2>{{ g.data|date:"D, d/m"|capfirst }}<span class="proximas-dia__quando">{% if g.em_dias == 1 %}amanhã{% else %}em {{ g.em_dias }} dias{% endif %}</span></h2>
+          <span class="proximas-dia__soma">{{ g.itens|length }} cobrança{{ g.itens|length|pluralize }} · <strong class="num">R$ {{ g.total|floatformat:2 }}</strong></span>
+        </header>
         {% for item in g.itens %}
           {% with v=item.parcela %}
-          <tr>
-            <td data-label="Cliente"><a href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a></td>
-            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }}</a></td>
-            <td data-label="Parcela">nº {{ v.numero }}{% if item.suspensa %} <span class="pill aberto">cobrança suspensa</span>{% endif %}</td>
-            <td data-label="Frequência">{{ v.contrato.get_estrutura_display }}</td>
-            <td class="num" data-label="Valor">R$ {{ v.saldo }}</td>
-            <td class="num">
-              {% if item.promessa %}<span class="pill aberto">prometeu pagar {{ item.promessa.contato.promessa_para|date:"d/m" }}</span><br>{% endif %}
-              <a href="{% url 'pagamentos:parcela_editar' v.pk %}">editar</a> · <a href="{% url 'pagamentos:acordo' v.pk %}">negociar</a>
-            </td>
-          </tr>
+          <div class="proximas-item">
+            <div class="proximas-item__quem">
+              <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a>
+              <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }} · parcela {{ v.numero }} · {{ v.contrato.get_estrutura_display }}</a>
+            </div>
+            <div class="proximas-item__selos">
+              {% if item.suspensa %}<span class="pill aberto">cobrança suspensa</span>{% endif %}
+              {% if item.promessa %}<span class="pill aberto">prometeu pagar {{ item.promessa.contato.promessa_para|date:"d/m" }}</span>{% endif %}
+            </div>
+            <strong class="proximas-item__valor num">R$ {{ v.saldo }}</strong>
+            <div class="proximas-item__acoes">
+              <a class="btn-mini btn-mini--editar" href="{% url 'pagamentos:parcela_editar' v.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
+              <a class="btn-mini btn-mini--negociar" href="{% url 'pagamentos:acordo' v.pk %}">{% include "_icone.html" with nome="negociar" %}Negociar</a>
+            </div>
+          </div>
           {% endwith %}
         {% endfor %}
-        </tbody>
-      </table></div>
-    </section>
-  {% endfor %}
+      </section>
+    {% endfor %}
+  </div>
 {% else %}
   <p class="empty">Nenhuma cobrança prevista nos próximos {{ dias }} dias.</p>
 {% endif %}
