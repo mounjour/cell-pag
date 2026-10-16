@@ -1532,7 +1532,7 @@ td[data-label="Situação"] .pill.atrasado, td[data-label="Situação"] .pill.in
 }
 .semana-lista { margin: 0 0 .75rem; }
 .semana-lista[hidden] { display: none; }
-/* PainÃ©is de lista (Bloqueios, Pix recebidos): mesmo desenho das PrÃ³ximas cobranÃ§as. */
+/* Painéis de lista (Bloqueios, Pix recebidos): mesmo desenho das Próximas cobranças. */
 .painel-lista { margin: 0 0 1rem; }
 .painel-vazio { margin: 0; padding: .9rem 1rem; }
 .proximas-item__nota { font-size: .8rem; color: var(--ink-faint); }
