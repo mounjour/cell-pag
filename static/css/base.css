@@ -1464,3 +1464,4 @@ tr[data-href]:hover td, section.painel-contrato[data-href]:hover { background: v
 td[data-label="Situação"] { align-items: center; }
 td[data-label="Situação"] .pill.atrasado, td[data-label="Situação"] .pill.inadimplente,
 .fila-situacao .pill.atrasado, .fila-situacao .pill.inadimplente { min-width: 10.5rem; justify-content: center; }
+.parcela-baixa { display: inline-block; margin-top: .2rem; font-size: .8rem; color: var(--ink-faint); white-space: nowrap; }
