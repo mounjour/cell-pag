@@ -40,7 +40,10 @@ def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None) -> dic
     grupos: list[dict] = []
     for parcela in parcelas:
         if not grupos or grupos[-1]["data"] != parcela.data_vencimento:
-            grupos.append({"data": parcela.data_vencimento, "itens": [], "total": Decimal("0.00")})
+            grupos.append({
+                "data": parcela.data_vencimento, "itens": [], "total": Decimal("0.00"),
+                "em_dias": (parcela.data_vencimento - hoje).days,
+            })
         grupos[-1]["itens"].append(
             {"parcela": parcela, "suspensa": parcela.pk in suspensas, "promessa": promessas.get(parcela.contrato_id)}
         )
