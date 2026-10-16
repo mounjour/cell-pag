@@ -1489,3 +1489,46 @@ td[data-label="Situação"] .pill.atrasado, td[data-label="Situação"] .pill.in
   .proximas-item__valor { grid-column: 2; grid-row: 1; }
   .proximas-item__acoes { grid-column: 1 / -1; justify-content: flex-start; }
 }
+/* Próximas cobranças: faixa de dias na horizontal; "Todos" mostra tudo, um dia filtra. */
+.semana-topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin: 0 0 .75rem; }
+.semana-topo .filtro-pills { margin: 0; }
+.semana-resumo { margin: 0; font-size: .85rem; color: var(--ink-faint); }
+.semana-resumo strong { color: var(--ink); }
+.faixa { display: flex; align-items: center; gap: .6rem; min-height: 6.3rem; overflow-x: auto; padding: .35rem .2rem .6rem; margin: 0 0 .5rem; scrollbar-width: thin; scroll-behavior: smooth; }
+.faixa-dia, .faixa-todos {
+  flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem;
+  width: 5.2rem; height: 3.9rem; padding: .3rem .5rem; font: inherit; line-height: 1.15;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--ink-faint); cursor: default;
+  transition: width .28s ease, height .28s ease, background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .28s ease;
+}
+.faixa-dia small { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; transition: font-size .28s ease; }
+.faixa-dia b { font-size: 1.1rem; font-weight: 600; transition: font-size .28s ease; }
+.faixa-dia i { font-style: normal; font-size: .72rem; font-weight: 700; transition: font-size .28s ease; }
+.faixa-dia.tem { background: var(--ok-wash); border-color: color-mix(in srgb, var(--ok-ink) 40%, transparent); color: var(--ok-ink); cursor: pointer; }
+.faixa-dia.tem:hover { background: color-mix(in srgb, var(--ok-ink) 14%, var(--ok-wash)); }
+.faixa-dia.fim-de-semana:not(.tem) { opacity: .75; }
+.faixa-todos { width: 5.6rem; cursor: pointer; color: var(--ink); border-color: var(--line-strong); font-weight: 600; font-size: .9rem; }
+.faixa-todos small { font-size: .7rem; font-weight: 500; color: var(--ink-faint); }
+.faixa-mes { flex: none; align-self: center; padding: 0 .1rem; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); writing-mode: vertical-rl; transform: rotate(180deg); }
+.faixa-dia.ativo, .faixa-todos.ativo { width: 8.2rem; height: 5.7rem; background: var(--ok-ink); border-color: var(--ok-ink); color: #fff; box-shadow: 0 4px 12px color-mix(in srgb, var(--ok-ink) 35%, transparent); }
+.faixa-dia.ativo small { font-size: .82rem; }
+.faixa-dia.ativo b { font-size: 1.75rem; }
+.faixa-dia.ativo i { font-size: .95rem; }
+.faixa-todos.ativo { font-size: 1.05rem; }
+.faixa-todos.ativo small { color: #fff; font-size: .8rem; }
+.faixa-dia:focus-visible, .faixa-todos:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.faixa-seta { flex: none; display: grid; place-items: center; width: 1.9rem; height: 3rem; padding: 0; background: transparent; border: 0; border-radius: var(--radius-sm); color: var(--ok-ink); cursor: pointer; animation: semana-entra .25s ease both; transition: background-color .2s ease, transform .15s ease; }
+.faixa-seta:hover { background: color-mix(in srgb, var(--ok-ink) 12%, transparent); }
+.faixa-seta:active { transform: scale(.92); }
+.faixa-seta:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.faixa-seta svg { width: 22px; height: 22px; }
+.faixa-dia.tem.ativo:hover, .faixa-todos.ativo:hover { background: color-mix(in srgb, #000 12%, var(--ok-ink)); color: #fff; }
+.semana-lista.entrando { animation: semana-entra .32s ease both; animation-delay: calc(var(--i, 0) * 45ms); }
+@keyframes semana-entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .faixa-dia, .faixa-todos, .faixa-dia small, .faixa-dia b, .faixa-dia i { transition: none; }
+  .semana-lista.entrando, .faixa-seta { animation: none; }
+  .faixa { scroll-behavior: auto; }
+}
+.semana-lista { margin: 0 0 .75rem; }
+.semana-lista[hidden] { display: none; }
