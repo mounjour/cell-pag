@@ -6,101 +6,81 @@
 <h1>{% include "_icone.html" with nome="bloqueio" %}Bloqueios</h1>
 <p class="note">Com <strong>7 dias de atraso</strong> o sistema avisa para bloquear o aparelho. Quem bloqueia é você, no próprio celular (iCloud, MDM…): aqui você registra que bloqueou, e quando o cliente pagar o sistema avisa para liberar.</p>
 
-<section class="card">
-  <h2>Para bloquear <span class="count">{{ a_bloquear|length }}</span></h2>
-  {% if a_bloquear %}
-    <div class="tbl-wrap cards"><table>
-      <thead><tr><th>Cliente</th><th>Aparelho</th><th class="num">Atraso</th><th class="num">A cobrar</th><th>Registrar bloqueio</th></tr></thead>
-      <tbody>
-      {% for l in a_bloquear %}
-        <tr>
-          <td data-label="Cliente"><a href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a></td>
-          <td data-label="Aparelho"><a href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a><br><small class="num">IMEI {{ l.contrato.imei|default:"—" }}</small></td>
-          <td class="num" data-label="Atraso"><span class="pill inadimplente">{{ l.situacao.dias_atraso }} dias</span></td>
-          <td class="num" data-label="A cobrar">R$ {{ l.a_cobrar|floatformat:2 }}</td>
-          <td data-label="Registrar bloqueio">
-            <form method="post" action="{% url 'aparelhos:bloquear' l.contrato.pk %}" class="bloqueio-form">
-              {% csrf_token %}
-              <input type="text" name="observacao" maxlength="200" placeholder="Como? (opcional)" aria-label="Como foi bloqueado">
-              <button type="submit" class="btn">{% include "_icone.html" with nome="bloqueio" %}Bloqueei</button>
-            </form>
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table></div>
-  {% else %}<p class="empty">Nenhum aparelho esperando bloqueio.</p>{% endif %}
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Para bloquear <span class="count">{{ a_bloquear|length }}</span></h2></header>
+  {% for l in a_bloquear %}
+    <div class="proximas-item proximas-item--auto">
+      <div class="proximas-item__quem">
+        <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a>
+        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }} · IMEI {{ l.contrato.imei|default:"—" }}</a>
+      </div>
+      <div class="proximas-item__selos"><span class="pill inadimplente">{{ l.situacao.dias_atraso }} dias de atraso</span></div>
+      <strong class="proximas-item__valor num" title="A cobrar">R$ {{ l.a_cobrar|floatformat:2 }}</strong>
+      <form method="post" action="{% url 'aparelhos:bloquear' l.contrato.pk %}" class="proximas-item__acoes bloqueio-form">
+        {% csrf_token %}
+        <input type="text" name="observacao" maxlength="200" placeholder="Como? (opcional)" aria-label="Como foi bloqueado">
+        <button type="submit" class="btn-mini btn-mini--bloquear">{% include "_icone.html" with nome="bloqueio" %}Bloqueei</button>
+      </form>
+    </div>
+  {% empty %}<p class="empty painel-vazio">Nenhum aparelho esperando bloqueio.</p>{% endfor %}
 </section>
 
-<section class="card">
-  <h2>Para desbloquear <span class="count">{{ para_desbloquear|length }}</span></h2>
-  {% if para_desbloquear %}
-    <p class="helptext">O cliente regularizou (sem atraso ou contrato quitado): libere o aparelho e registre aqui.</p>
-    <div class="tbl-wrap cards"><table>
-      <thead><tr><th>Cliente</th><th>Aparelho</th><th>Bloqueado desde</th><th></th></tr></thead>
-      <tbody>
-      {% for item in para_desbloquear %}
-        {% with b=item.bloqueio %}
-        <tr>
-          <td data-label="Cliente"><a href="{% url 'clientes:detalhe' b.contrato.cliente.pk %}">{{ b.contrato.cliente.nome }}</a></td>
-          <td data-label="Aparelho"><a href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a>{% if item.quitado %} <span class="pill quitado">quitado</span>{% endif %}</td>
-          <td data-label="Bloqueado desde" class="num">{{ b.bloqueado_em|date:"d/m/Y" }}</td>
-          <td>
-            <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}">{% csrf_token %}
-              <button type="submit" class="btn">{% include "_icone.html" with nome="bloqueio" %}Desbloqueei</button>
-            </form>
-          </td>
-        </tr>
-        {% endwith %}
-      {% endfor %}
-      </tbody>
-    </table></div>
-  {% else %}<p class="empty">Nenhum cliente esperando liberação.</p>{% endif %}
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Para desbloquear <span class="count">{{ para_desbloquear|length }}</span></h2>
+    {% if para_desbloquear %}<span class="proximas-dia__soma">O cliente regularizou: libere o aparelho e registre aqui.</span>{% endif %}</header>
+  {% for item in para_desbloquear %}
+    {% with b=item.bloqueio %}
+    <div class="proximas-item proximas-item--auto">
+      <div class="proximas-item__quem">
+        <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' b.contrato.cliente.pk %}">{{ b.contrato.cliente.nome }}</a>
+        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a>
+      </div>
+      <div class="proximas-item__selos">{% if item.quitado %}<span class="pill quitado">quitado</span>{% endif %}<span class="proximas-item__nota">bloqueado desde {{ b.bloqueado_em|date:"d/m/Y" }}</span></div>
+      <span></span>
+      <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}" class="proximas-item__acoes">{% csrf_token %}
+        <button type="submit" class="btn-mini btn-mini--pagar">{% include "_icone.html" with nome="bloqueio" %}Desbloqueei</button>
+      </form>
+    </div>
+    {% endwith %}
+  {% empty %}<p class="empty painel-vazio">Nenhum cliente esperando liberação.</p>{% endfor %}
 </section>
 
-<section class="card">
-  <h2>Bloqueados agora <span class="count">{{ bloqueados|length }}</span></h2>
-  {% if bloqueados %}
-    <div class="tbl-wrap cards"><table>
-      <thead><tr><th>Cliente</th><th>Aparelho</th><th>Bloqueado desde</th><th class="num">Atraso</th><th class="num">Para liberar</th><th></th></tr></thead>
-      <tbody>
-      {% for item in bloqueados %}
-        {% with b=item.bloqueio %}
-        <tr>
-          <td data-label="Cliente"><a href="{% url 'clientes:detalhe' b.contrato.cliente.pk %}">{{ b.contrato.cliente.nome }}</a></td>
-          <td data-label="Aparelho"><a href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a>{% if b.observacao %}<br><small>{{ b.observacao }}</small>{% endif %}</td>
-          <td data-label="Bloqueado desde" class="num">{{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %}<br><small>{{ b.bloqueado_por.nome_curto }}</small>{% endif %}</td>
-          <td class="num" data-label="Atraso">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize }}</td>
-          <td class="num" data-label="Para liberar">R$ {{ item.a_cobrar|floatformat:2 }}</td>
-          <td>
-            <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}">{% csrf_token %}
-              <button type="submit" class="btn secondary">Desbloqueei</button>
-            </form>
-          </td>
-        </tr>
-        {% endwith %}
-      {% endfor %}
-      </tbody>
-    </table></div>
-  {% else %}<p class="empty">Nenhum aparelho bloqueado no momento.</p>{% endif %}
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Bloqueados agora <span class="count">{{ bloqueados|length }}</span></h2></header>
+  {% for item in bloqueados %}
+    {% with b=item.bloqueio %}
+    <div class="proximas-item proximas-item--auto">
+      <div class="proximas-item__quem">
+        <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' b.contrato.cliente.pk %}">{{ b.contrato.cliente.nome }}</a>
+        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}{% if b.observacao %} · {{ b.observacao }}{% endif %}</a>
+      </div>
+      <div class="proximas-item__selos">
+        <span class="pill inadimplente">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize }} de atraso</span>
+        <span class="proximas-item__nota">desde {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %} · {{ b.bloqueado_por.nome_curto }}{% endif %}</span>
+      </div>
+      <strong class="proximas-item__valor num" title="Para liberar">R$ {{ item.a_cobrar|floatformat:2 }}</strong>
+      <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}" class="proximas-item__acoes">{% csrf_token %}
+        <button type="submit" class="btn-mini">{% include "_icone.html" with nome="bloqueio" %}Desbloqueei</button>
+      </form>
+    </div>
+    {% endwith %}
+  {% empty %}<p class="empty painel-vazio">Nenhum aparelho bloqueado no momento.</p>{% endfor %}
 </section>
 
 {% if historico %}
-<section class="card">
-  <h2>Últimos desbloqueios</h2>
-  <div class="tbl-wrap cards"><table>
-    <thead><tr><th>Cliente</th><th>Aparelho</th><th>Bloqueado</th><th>Liberado</th></tr></thead>
-    <tbody>
-    {% for b in historico %}
-      <tr>
-        <td data-label="Cliente">{{ b.contrato.cliente.nome }}</td>
-        <td data-label="Aparelho"><a href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a></td>
-        <td data-label="Bloqueado" class="num">{{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %} · {{ b.bloqueado_por.nome_curto }}{% endif %}</td>
-        <td data-label="Liberado" class="num">{{ b.desbloqueado_em|date:"d/m/Y" }}{% if b.desbloqueado_por %} · {{ b.desbloqueado_por.nome_curto }}{% endif %}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table></div>
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Últimos desbloqueios</h2></header>
+  {% for b in historico %}
+    <div class="proximas-item proximas-item--leve">
+      <div class="proximas-item__quem">
+        <span class="proximas-item__cliente">{{ b.contrato.cliente.nome }}</span>
+        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a>
+      </div>
+      <div class="proximas-item__selos"><span class="proximas-item__nota">bloqueado {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %} · {{ b.bloqueado_por.nome_curto }}{% endif %}</span></div>
+      <span></span>
+      <div class="proximas-item__selos"><span class="proximas-item__nota">liberado {{ b.desbloqueado_em|date:"d/m/Y" }}{% if b.desbloqueado_por %} · {{ b.desbloqueado_por.nome_curto }}{% endif %}</span></div>
+    </div>
+  {% endfor %}
 </section>
 {% endif %}
 {% endblock %}
