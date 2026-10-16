@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Próximas cobranças{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
 
@@ -18,22 +19,30 @@
     Abra o contrato e clique em <em>Gerar parcelas seguintes</em>.</p>
 {% endif %}
 
-<div class="filtro-pills">
+<div class="semana-topo">
+  <div class="filtro-pills">
   {% for n in janelas %}
     <a class="filtro-pill{% if n == dias %} ativo{% endif %}" href="?dias={{ n }}">Próximos {{ n }} dias</a>
   {% endfor %}
 </div>
+  {% if grupos %}<p class="semana-resumo"><strong>{{ quantidade }}</strong> cobrança{{ quantidade|pluralize }} · <strong class="num">R$ {{ total|floatformat:2 }}</strong></p>{% endif %}
+</div>
 
 {% if grupos %}
-  <dl class="meta meta--4col">
-    <div><dt>Cobranças previstas</dt><dd class="num">{{ quantidade }}</dd></div>
-    <div><dt>Valor das parcelas</dt><dd class="num">R$ {{ total|floatformat:2 }}</dd></div>
-  </dl>
-  <div class="proximas-lista">
+  <div class="semana" id="semana">
+    <div class="faixa" role="group" aria-label="Filtrar por dia">
+      <button type="button" class="faixa-todos ativo" data-dia="todos" aria-pressed="true">Todos<small>{{ quantidade }}</small></button>
+      {% for c in calendario %}
+        {% if c.mes and not forloop.first %}<span class="faixa-mes">{{ c.mes }}</span>{% endif %}
+        <button type="button" class="faixa-dia{% if c.qtd %} tem{% endif %}{% if c.data.weekday > 4 %} fim-de-semana{% endif %}" data-dia="{{ c.data|date:'Y-m-d' }}"{% if not c.qtd %} disabled{% endif %} aria-pressed="false" title="{{ c.data|date:'l, d/m' }}{% if c.qtd %} · {{ c.qtd }} cobrança{{ c.qtd|pluralize }}{% endif %}">
+          <small>{{ c.data|date:"D"|lower }}</small><b>{{ c.data|date:"d" }}</b>{% if c.qtd %}<i>R$ {{ c.total|floatformat:0 }}</i>{% endif %}
+        </button>
+      {% endfor %}
+    </div>
     {% for g in grupos %}
-      <section class="proximas-dia">
+      <section class="proximas-lista semana-lista" data-dia="{{ g.data|date:'Y-m-d' }}">
         <header class="proximas-dia__topo">
-          <h2>{{ g.data|date:"D, d/m"|capfirst }}<span class="proximas-dia__quando">{% if g.em_dias == 1 %}amanhã{% else %}em {{ g.em_dias }} dias{% endif %}</span></h2>
+          <h2>{{ g.data|date:"l, d/m"|capfirst }}<span class="proximas-dia__quando">{% if g.em_dias == 1 %}amanhã{% else %}em {{ g.em_dias }} dias{% endif %}</span></h2>
           <span class="proximas-dia__soma">{{ g.itens|length }} cobrança{{ g.itens|length|pluralize }} · <strong class="num">R$ {{ g.total|floatformat:2 }}</strong></span>
         </header>
         {% for item in g.itens %}
@@ -62,3 +71,4 @@
   <p class="empty">Nenhuma cobrança prevista nos próximos {{ dias }} dias.</p>
 {% endif %}
 {% endblock %}
+{% block scripts %}<script src="{% static 'js/semana_cobrancas.js' %}" defer></script>{% endblock %}

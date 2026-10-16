@@ -20,6 +20,9 @@ from .models import CobrancaCora, Vencimento
 JANELAS = (7, 14, 30)
 
 
+MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+
+
 def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None) -> dict:
     """``{"dias", "grupos": [{"data", "itens", "total"}], "total", "quantidade"}`` agrupado por data."""
     hoje = hoje or timezone.localdate()
@@ -48,8 +51,21 @@ def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None) -> dic
             {"parcela": parcela, "suspensa": parcela.pk in suspensas, "promessa": promessas.get(parcela.contrato_id)}
         )
         grupos[-1]["total"] += parcela.saldo
+    por_data = {g["data"]: g for g in grupos}
+    calendario = []
+    for n in range(1, dias + 1):
+        dia = hoje + datetime.timedelta(days=n)
+        g = por_data.get(dia)
+        item = {"data": dia, "qtd": len(g["itens"]) if g else 0, "total": g["total"] if g else Decimal("0.00")}
+        if dia.month != (calendario[-1]["data"].month if calendario else None):
+            # Início de mês: o calendário ganha um título ("Novembro") e recomeça alinhado ao dia da semana.
+            item["mes"] = MESES[dia.month - 1]
+            item["vazios_antes"] = range((dia.weekday() + 1) % 7)
+        calendario.append(item)
     return {
         "dias": dias, "grupos": grupos, "quantidade": len(parcelas), "sem_parcelas": contratos_sem_parcelas(fim),
+        "calendario": calendario,
+        "primeiro_dia": grupos[0]["data"] if grupos else None,
         "total": sum((g["total"] for g in grupos), Decimal("0.00")),
     }
 
