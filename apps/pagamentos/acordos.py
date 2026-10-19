@@ -14,6 +14,7 @@ Um acordo só vale para parcela em aberto e sem baixa, e pode ser **desfeito** e
 import datetime
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
@@ -57,6 +58,12 @@ def _renovar_pix(vencimento: Vencimento, motivo: str = "Acordo na parcela", auto
     from .pix_cora import CancelamentoRecusado, cancelar_cobranca, retomar_cobranca
 
     pix = CobrancaCora.objects.filter(vencimento=vencimento).first()
+    if pix is not None and settings.PIX_MODO == "estatico" and pix.status not in (CobrancaCora.Status.PAGO, CobrancaCora.Status.CANCELADO):
+        # Pix estático não tem fatura na Cora: remonta o código na hora com o valor novo, senão o cliente
+        # pagaria o valor antigo até a próxima rotina (8h30).
+        from .pix_cora import obter_ou_criar_cobranca
+        obter_ou_criar_cobranca(vencimento)
+        return []
     if pix is None or not pix.cora_id or pix.status in (CobrancaCora.Status.PAGO, CobrancaCora.Status.CANCELADO):
         return []  # sem QR vivo: a próxima rotina já usa os valores novos
     numero = vencimento.numero
