@@ -77,3 +77,22 @@ def test_editar_parcela_remonta_o_pix_estatico_na_hora(cliente, settings, monkey
 
     pix.refresh_from_db()
     assert pix.valor == Decimal("450.00") and "450.00" in pix.pix_copia_e_cola and pix.cora_id is None
+
+
+def test_painel_pix_mostra_horario_do_codigo_e_se_a_mensagem_foi_enviada(cliente, auth_client, settings):
+    from django.urls import reverse
+
+    settings.PIX_MODO, settings.CORA_PROVIDER, settings.PIX_CHAVE = "estatico", "cora", "12345678000190"
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="300.00", num_parcelas=3)
+    hoje = timezone.localdate()
+    v1 = Vencimento.objects.create(contrato=ct, numero=1, valor_previsto=Decimal("300.00"), data_vencimento=hoje)
+    v2 = Vencimento.objects.create(contrato=ct, numero=2, valor_previsto=Decimal("300.00"), data_vencimento=hoje)
+    pix_cora.obter_ou_criar_cobranca(v1)
+    pix_cora.obter_ou_criar_cobranca(v2)
+    from apps.pagamentos.models import Cobranca
+    Cobranca.objects.create(
+        contrato=ct, vencimento=v1, data_alvo=hoje, destinatario="5588999990000", mensagem="oi",
+        status=Cobranca.Status.ENTREGUE, enviado_em=timezone.now(),
+    )
+    html = auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
+    assert "código atualizado" in html and "Entregue" in html and "Não enviada" in html and "enviada " in html

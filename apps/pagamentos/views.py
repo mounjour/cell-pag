@@ -34,6 +34,7 @@ from .forms import AcordoNovaDataForm, AcordoPerdaoForm, ContatoDeCobrancaForm, 
 from .comprovantes import conferir_na_cora
 from .limpeza import encerrar_cobranca_automatica
 from .models import (
+    Cobranca,
     CobrancaCora,
     ComprovanteRecebido,
     ConfiguracaoCobranca,
@@ -353,8 +354,14 @@ class PixPainelView(LoginRequiredMixin, TemplateView):
             .order_by("status", "data_vencimento", "vencimento__contrato__cliente__nome")
         )
         pagina = paginar(self.request, cobrancas, POR_PAGINA_PIX)
-        for c in pagina["page_obj"].object_list:
+        visiveis = list(pagina["page_obj"].object_list)
+        # Última mensagem de WhatsApp de cada parcela da página (uma consulta só).
+        mensagens = {}
+        for m in Cobranca.objects.filter(vencimento_id__in=[c.vencimento_id for c in visiveis]).order_by("criado_em"):
+            mensagens[m.vencimento_id] = m
+        for c in visiveis:
             c.rotulo_parcelas = _rotulo_parcelas(c, hoje)
+            c.mensagem_cobranca = mensagens.get(c.vencimento_id)
         ctx.update(pagina)
         ctx.update(
             hoje=hoje,
