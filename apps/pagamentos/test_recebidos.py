@@ -146,3 +146,15 @@ def test_conferir_recebidos_pode_ignorar_as_entradas_anteriores_a_uma_data(monke
     assert "2 entrada(s) anteriores a 13/10/2026" in saida.getvalue()
     assert RecebimentoCora.objects.filter(situacao=RecebimentoCora.Situacao.NOVO).count() == 1
     assert RecebimentoCora.objects.filter(situacao=RecebimentoCora.Situacao.IGNORADO).count() == 2
+
+
+def test_pix_com_juros_abre_a_baixa_com_o_juros_separado(auth_client, cliente):
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="300.00", num_parcelas=3,
+                       juros_diario=Decimal("5.00"))
+    Vencimento.objects.create(contrato=ct, numero=1, valor_previsto=Decimal("300.00"),
+                              data_vencimento=timezone.localdate() - datetime.timedelta(days=1))
+    entrada = RecebimentoCora.objects.create(entrada_id="ent_j", valor=Decimal("305.00"), recebido_em=timezone.now(),
+                                             tipo="PIX", nome="Cliente", documento=cliente.cpf)
+
+    inicial = auth_client.get(reverse("pagamentos:novo", args=[ct.pk]) + f"?recebido={entrada.pk}").context["form"].initial
+    assert inicial["valor_pago"] == "300,00" and inicial["juros_pago"] == "5,00"
