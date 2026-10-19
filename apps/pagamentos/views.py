@@ -1,3 +1,4 @@
+from decimal import Decimal
 """Painel "Cobrar hoje" (Fase 2 — Modalidade A, base da v1).
 
 A lista de contratos a cobrar no dia mora em `apps.pagamentos.agenda` (usada
@@ -565,8 +566,17 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
             initial["recebido"] = recebimento.pk
             initial["forma"] = Pagamento.Forma.PIX
             initial["data_pagamento"] = timezone.localtime(recebimento.recebido_em).date()
-            initial["valor_pago"] = f"{recebimento.valor:.2f}".replace(".", ",")
-            initial["juros_pago"] = "0,00"
+            valor, juros = recebimento.valor, Decimal("0.00")
+            parcela = self.contrato.parcela_em_aberto()
+            if parcela is not None:
+                # Pagou parcela + juros do atraso: separa o juros, senão o excedente abateria a parcela seguinte.
+                from .pix_cora import composicao_do_pix
+
+                principal, juros_do_dia = composicao_do_pix(parcela, initial["data_pagamento"])
+                if principal > 0 and principal < recebimento.valor <= principal + juros_do_dia:
+                    valor, juros = principal, recebimento.valor - principal
+            initial["valor_pago"] = f"{valor:.2f}".replace(".", ",")
+            initial["juros_pago"] = f"{juros:.2f}".replace(".", ",")
             self.recebimento_cora = recebimento
         return initial
 
