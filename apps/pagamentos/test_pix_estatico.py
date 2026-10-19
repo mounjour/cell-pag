@@ -58,3 +58,22 @@ def test_sem_chave_pix_o_erro_aparece_em_vez_de_cobrar_sem_codigo(cliente, setti
     venc = Vencimento.objects.create(contrato=ct, numero=1, valor_previsto=Decimal("300.00"), data_vencimento=timezone.localdate())
     pix = pix_cora.obter_ou_criar_cobranca(venc)
     assert pix.status == CobrancaCora.Status.ERRO and "chave Pix" in pix.erro and not pix.pix_copia_e_cola
+
+
+def test_editar_parcela_remonta_o_pix_estatico_na_hora(cliente, settings, monkeypatch):
+    from apps.pagamentos import acordos
+
+    settings.PIX_MODO, settings.CORA_PROVIDER, settings.PIX_CHAVE = "estatico", "cora", "12345678000190"
+    monkeypatch.setattr(cora_api, "cancelar_fatura", lambda *a, **k: pytest.fail("não pode cancelar nada na Cora"))
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="300.00", num_parcelas=3)
+    venc = Vencimento.objects.create(contrato=ct, numero=1, valor_previsto=Decimal("300.00"),
+                                     data_vencimento=timezone.localdate() + __import__("datetime").timedelta(days=5))
+    pix = pix_cora.obter_ou_criar_cobranca(venc)
+    assert "300.00" in pix.pix_copia_e_cola
+
+    venc.valor_previsto = Decimal("450.00")
+    venc.save()
+    assert acordos._renovar_pix(venc) == []
+
+    pix.refresh_from_db()
+    assert pix.valor == Decimal("450.00") and "450.00" in pix.pix_copia_e_cola and pix.cora_id is None
