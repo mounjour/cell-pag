@@ -51,6 +51,11 @@ urlpatterns = [
         name="novo",
     ),
     path(
+        "contrato/<int:contrato_pk>/<int:pk>/editar/",
+        views.PagamentoEditarView.as_view(),
+        name="pagamento_editar",
+    ),
+    path(
         "contrato/<int:contrato_pk>/<int:pk>/estornar/",
         views.PagamentoEstornarView.as_view(),
         name="estornar",

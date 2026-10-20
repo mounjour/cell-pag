@@ -96,3 +96,31 @@ def test_painel_pix_mostra_horario_do_codigo_e_se_a_mensagem_foi_enviada(cliente
     )
     html = auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
     assert "código atualizado" in html and "Entregue" in html and "Não enviada" in html and "enviada " in html
+
+
+def test_editar_pagamento_corrige_data_e_juros_sem_mexer_na_parcela(cliente, auth_client):
+    import datetime
+
+    from django.urls import reverse
+
+    from apps.pagamentos.models import Pagamento
+
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="300.00", num_parcelas=3)
+    venc = Vencimento.objects.create(contrato=ct, numero=1, valor_previsto=Decimal("300.00"),
+                                     data_vencimento=timezone.localdate() - datetime.timedelta(days=3))
+    pg = Pagamento(contrato=ct, vencimento=venc, data_pagamento=timezone.localdate(), valor_pago=Decimal("300.00"),
+                   juros_pago=Decimal("0.00"), forma=Pagamento.Forma.OUTRO)
+    pg.registrar()
+    url = reverse("pagamentos:pagamento_editar", args=[ct.pk, pg.pk])
+    assert auth_client.get(url).status_code == 200
+
+    ontem = timezone.localdate() - datetime.timedelta(days=2)
+    resposta = auth_client.post(url, {"data_pagamento": ontem.isoformat(), "juros_pago": "5,00", "forma": "pix", "observacao": "x"})
+    assert resposta.status_code == 302
+    pg.refresh_from_db(); venc.refresh_from_db()
+    assert pg.data_pagamento == ontem and pg.juros_pago == Decimal("5.00") and pg.forma == "pix"
+    assert pg.valor_pago == Decimal("300.00") and venc.valor_pago == Decimal("300.00") and venc.status == "pago"
+
+    futuro = timezone.localdate() + datetime.timedelta(days=1)
+    ruim = auth_client.post(url, {"data_pagamento": futuro.isoformat(), "juros_pago": "0", "forma": "pix"})
+    assert ruim.status_code == 200 and "futuro" in ruim.content.decode()

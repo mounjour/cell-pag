@@ -267,3 +267,24 @@ class AcordoNovaDataForm(forms.Form):
         label="Anotação (opcional)", required=False, max_length=200,
         widget=forms.TextInput(attrs={"placeholder": "Ex.: recebe o salário dia 20"}),
     )
+
+
+class PagamentoEdicaoForm(forms.ModelForm):
+    """Corrige uma baixa já lançada: data, juros, forma e observação (o valor da parcela não muda aqui)."""
+
+    juros_pago = forms.CharField(
+        label="Juros recebidos", required=False,
+        widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "0,00", "class": "money"}),
+        help_text="Fica registrado à parte; não altera o valor da parcela nem o da próxima.",
+    )
+
+    class Meta:
+        model = Pagamento
+        fields = ["data_pagamento", "juros_pago", "forma", "observacao"]
+        widgets = {
+            "data_pagamento": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "observacao": forms.Textarea(attrs={"rows": 2, "placeholder": "Opcional"}),
+        }
+
+    clean_juros_pago = PagamentoForm.clean_juros_pago
+    clean_data_pagamento = PagamentoForm.clean_data_pagamento
