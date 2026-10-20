@@ -267,6 +267,25 @@ class ProximasCobrancasView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+class ConferenciaCoraView(LoginRequiredMixin, TemplateView):
+    """Confere o extrato da Cora contra o que o sistema registrou (só leitura)."""
+
+    template_name = "pagamentos/conferencia_cora.html"
+    JANELAS = (7, 30, 60)
+
+    def get_context_data(self, **kwargs):
+        from . import conferencia_cora
+
+        ctx = super().get_context_data(**kwargs)
+        try:
+            dias = int(self.request.GET.get("dias", 30))
+        except ValueError:
+            dias = 30
+        dias = dias if dias in self.JANELAS else 30
+        ctx.update(conferencia_cora.conferir(dias, forcar=bool(self.request.GET.get("atualizar"))), janelas=self.JANELAS)
+        return ctx
+
+
 class RecebidosView(LoginRequiredMixin, TemplateView):
     """Pix recebidos direto na Cora (transferência comum) que ainda não viraram baixa no sistema."""
 

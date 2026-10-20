@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Conferência com a Cora{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+
+{% block content %}
+{% url 'pagamentos:pix_painel' as pix_url %}{% include "_voltar.html" with url=pix_url %}
+<div class="toolbar">
+  <h1>{% include "_icone.html" with nome="quitar" %}Conferência com a Cora</h1>
+  <span class="spacer"></span>
+  <a class="btn secondary" href="?dias={{ dias }}&atualizar=1">{% include "_icone.html" with nome="gerar" %}Atualizar agora</a>
+</div>
+
+<div class="note">
+  <p><strong>Para que serve:</strong> esta tela compara o extrato da Cora (o que realmente entrou e saiu da conta) com o que o sistema registrou. Ela só lê: não baixa, não cancela e não altera nada. Use quando quiser ter certeza de que o dinheiro e o sistema batem.</p>
+  <ul>
+    <li><strong>Dinheiro que entrou e ainda não foi registrado:</strong> alguém pagou, mas a parcela continua em aberto.</li>
+    <li><strong>Baixa sem dinheiro na Cora:</strong> uma baixa Pix no sistema sem o crédito correspondente no extrato. Pode ser engano de lançamento.</li>
+    <li><strong>Taxas e mensalidade:</strong> o que a Cora debitou. Cada fatura cancelada custa R$ 0,30.</li>
+    <li><strong>Faturas reais abertas:</strong> no modo Pix estático não deveria haver nenhuma.</li>
+    <li><strong>Pix com valor errado:</strong> o código Pix guardado é diferente do que a parcela cobra hoje (o cliente pagaria o valor errado).</li>
+  </ul>
+</div>
+
+<div class="filtro-pills">
+  {% for n in janelas %}<a class="filtro-pill{% if n == dias %} ativo{% endif %}" href="?dias={{ n }}">Últimos {{ n }} dias</a>{% endfor %}
+</div>
+
+{% if erro %}<p class="msg warning">{{ erro }}</p>{% endif %}
+
+<p class="msg {% if problemas %}warning{% else %}success{% endif %}">
+  {% if erro %}Sem o extrato da Cora não dá para conferir tudo; abaixo está só o que o sistema sabe.
+  {% elif problemas %}<strong>{{ problemas }} ponto{{ problemas|pluralize:"s" }} pede{{ problemas|pluralize:"m" }} atenção.</strong> Veja os blocos marcados abaixo.
+  {% else %}<strong>Tudo certo:</strong> o sistema e a Cora batem nos últimos {{ dias }} dias.{% endif %}
+  <small class="proximas-item__nota"> · lido em {{ gerado_em|date:"d/m H:i" }}</small>
+</p>
+
+<dl class="meta meta--4col">
+  <div><dt>Pix recebidos na Cora</dt><dd class="num">R$ {{ total_creditos|floatformat:2 }} <small>({{ qtd_creditos }})</small></dd></div>
+  <div><dt>Já ligados a uma baixa</dt><dd class="num">{{ qtd_vinculados }}</dd></div>
+  <div><dt>Para conferir</dt><dd class="num">R$ {{ total_para_conferir|floatformat:2 }} <small>({{ para_conferir|length }})</small></dd></div>
+  <div><dt>Taxas + mensalidade</dt><dd class="num">R$ {{ total_taxas|add:total_assinaturas|floatformat:2 }}</dd></div>
+</dl>
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Dinheiro que entrou e ainda não foi registrado <span class="count">{{ para_conferir|length }}</span></h2>
+    <span class="proximas-dia__soma"><a href="{% url 'pagamentos:recebidos' %}">Abrir Pix recebidos</a></span></header>
+  {% for r in para_conferir|slice:":15" %}
+    <div class="proximas-item proximas-item--leve">
+      <div class="proximas-item__quem"><span class="proximas-item__cliente">{{ r.nome|default:"Quem pagou não informado" }}</span>
+        <span class="proximas-item__detalhe">recebido em {{ r.recebido_em|date:"d/m H:i" }}</span></div>
+      <div class="proximas-item__selos"><span class="pill aberto">para conferir</span></div>
+      <strong class="proximas-item__valor num">R$ {{ r.valor }}</strong><span></span>
+    </div>
+  {% empty %}<p class="empty painel-vazio">Todo Pix recebido já foi registrado ou ignorado.</p>{% endfor %}
+  {% if para_conferir|length > 15 %}<p class="painel-vazio proximas-item__nota">Mostrando 15 de {{ para_conferir|length }}. Veja o resto em Pix recebidos.</p>{% endif %}
+  {% if sem_registro %}<p class="painel-vazio proximas-item__nota">{{ sem_registro|length }} entrada{{ sem_registro|length|pluralize }} nova{{ sem_registro|length|pluralize }} no extrato ainda não lida{{ sem_registro|length|pluralize }} pelo sistema (entram na próxima leitura).</p>{% endif %}
+</section>
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Baixas de Pix sem dinheiro na Cora <span class="count">{{ baixas_sem_credito|length }}</span></h2></header>
+  {% for p in baixas_sem_credito %}
+    <div class="proximas-item proximas-item--leve">
+      <div class="proximas-item__quem"><a class="proximas-item__cliente" href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.cliente.nome }}</a>
+        <span class="proximas-item__detalhe">{{ p.contrato.apelido }} · parcela {{ p.vencimento.numero }} · baixa em {{ p.data_pagamento|date:"d/m/Y" }}</span></div>
+      <div class="proximas-item__selos"><span class="pill inadimplente">sem crédito no extrato</span></div>
+      <strong class="proximas-item__valor num">R$ {{ p.valor_pago }}</strong><span></span>
+    </div>
+  {% empty %}<p class="empty painel-vazio">Toda baixa Pix do período tem o crédito correspondente na Cora.</p>{% endfor %}
+</section>
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Pix com valor diferente da parcela <span class="count">{{ pix_desatualizados|length }}</span></h2>
+    <span class="proximas-dia__soma">{{ pix_abertos }} Pix aberto{{ pix_abertos|pluralize }}</span></header>
+  {% for d in pix_desatualizados %}
+    <div class="proximas-item proximas-item--leve">
+      <div class="proximas-item__quem"><a class="proximas-item__cliente" href="{% url 'contratos:detalhe' d.pix.vencimento.contrato.pk %}">{{ d.pix.vencimento.contrato.cliente.nome }}</a>
+        <span class="proximas-item__detalhe">{{ d.pix.vencimento.contrato.apelido }} · parcela {{ d.pix.vencimento.numero }}</span></div>
+      <div class="proximas-item__selos"><span class="proximas-item__nota">Pix guardado R$ {{ d.pix.valor }} · hoje a parcela cobra R$ {{ d.esperado }}</span></div>
+      <strong class="proximas-item__valor num">R$ {{ d.esperado }}</strong>
+      <a class="btn-mini btn-mini--editar proximas-item__acoes" href="{% url 'pagamentos:parcela_editar' d.pix.vencimento.pk %}">{% include "_icone.html" with nome="editar" %}Abrir parcela</a>
+    </div>
+  {% empty %}<p class="empty painel-vazio">Todos os códigos Pix abertos estão com o valor atual da parcela.</p>{% endfor %}
+  {% if pix_desatualizados %}<p class="painel-vazio proximas-item__nota">O código é remontado sozinho na rotina da manhã; abrir e salvar a parcela remonta na hora.</p>{% endif %}
+</section>
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Taxas, mensalidade e faturas</h2></header>
+  <div class="proximas-item proximas-item--leve">
+    <div class="proximas-item__quem"><span class="proximas-item__cliente">Taxas debitadas</span>
+      <span class="proximas-item__detalhe">{{ taxas|length }} no período{% if taxas_de_cancelamento %} · {{ taxas_de_cancelamento }} de R$ 0,30 (cancelamento de fatura){% endif %}</span></div>
+    <div class="proximas-item__selos"></div><strong class="proximas-item__valor num">R$ {{ total_taxas|floatformat:2 }}</strong><span></span>
+  </div>
+  <div class="proximas-item proximas-item--leve">
+    <div class="proximas-item__quem"><span class="proximas-item__cliente">Mensalidade da Cora</span>
+      <span class="proximas-item__detalhe">{{ assinaturas|length }} cobrança{{ assinaturas|length|pluralize }} no período</span></div>
+    <div class="proximas-item__selos"></div><strong class="proximas-item__valor num">R$ {{ total_assinaturas|floatformat:2 }}</strong><span></span>
+  </div>
+  <div class="proximas-item proximas-item--leve">
+    <div class="proximas-item__quem"><span class="proximas-item__cliente">Faturas reais abertas na Cora</span>
+      <span class="proximas-item__detalhe">{% if modo_pix == "estatico" %}No modo Pix estático o esperado é zero.{% else %}Modo Pix: {{ modo_pix }}.{% endif %}</span></div>
+    <div class="proximas-item__selos">{% if faturas_reais_abertas and modo_pix == "estatico" %}<span class="pill inadimplente">atenção</span>{% else %}<span class="pill pago">ok</span>{% endif %}</div>
+    <strong class="proximas-item__valor num">{{ faturas_reais_abertas|length }}</strong><span></span>
+  </div>
+</section>
+{% endblock %}

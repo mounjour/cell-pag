@@ -227,3 +227,35 @@ def listar_extrato(inicio, fim, *, por_pagina: int = 100, max_paginas: int = 10)
         if len(itens) < por_pagina:
             break
     return entradas
+
+
+def listar_movimentos(inicio, fim, *, por_pagina: int = 100, max_paginas: int = 10) -> list[dict]:
+    """Todas as movimentações do extrato (créditos **e** débitos) entre duas datas, normalizadas. Só leitura.
+
+    Cada item: ``id``, ``sentido`` (``CREDIT``/``DEBIT``), ``valor`` (Decimal em reais), ``quando`` (datetime UTC),
+    ``tipo`` da transação (``PIX``, ``FEE``, ``SUBSCRIPTION``…) e ``nome`` da outra parte, quando houver.
+    """
+    from datetime import datetime
+    from decimal import Decimal
+
+    movimentos: list[dict] = []
+    for pagina in range(1, max_paginas + 1):
+        caminho = (
+            f"/bank-statement/statement?start={inicio:%Y-%m-%d}&end={fim:%Y-%m-%d}"
+            f"&perPage={por_pagina}&page={pagina}"
+        )
+        itens = (_requisicao_api(caminho, metodo="GET") or {}).get("entries") or []
+        for item in itens:
+            transacao = item.get("transaction") or {}
+            parte = transacao.get("counterParty") or {}
+            movimentos.append({
+                "id": item["id"],
+                "sentido": item.get("type", ""),
+                "valor": Decimal(str(item.get("amount") or 0)) / 100,
+                "quando": datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00")),
+                "tipo": transacao.get("type", ""),
+                "nome": parte.get("name", ""),
+            })
+        if len(itens) < por_pagina:
+            break
+    return movimentos
