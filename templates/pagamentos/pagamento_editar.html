@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Editar pagamento{% endblock %}
+
+{% block content %}
+{% url 'contratos:detalhe' contrato.pk as volta_url %}{% include "_voltar.html" with url=volta_url %}
+<h1>Editar pagamento</h1>
+<p class="note">{{ contrato.cliente.nome }} · {{ contrato.apelido }}. Aqui você corrige a data, o juros, a forma e a observação. O valor da parcela recebido não muda por aqui: se ele estiver errado, estorne a baixa e lance de novo.</p>
+
+<dl class="meta meta--4col">
+  <div><dt>Parcela</dt><dd class="num">{% if pagamento.vencimento %}nº {{ pagamento.vencimento.numero }}{% else %}Entrada{% endif %}</dd></div>
+  <div><dt>Valor da parcela recebido</dt><dd class="num">R$ {{ pagamento.valor_pago }}</dd></div>
+  <div><dt>Lançado por</dt><dd>{{ pagamento.usuario_baixa|default:"—" }}</dd></div>
+  <div><dt>Lançado em</dt><dd class="num">{{ pagamento.criado_em|date:"d/m/Y H:i" }}</dd></div>
+</dl>
+
+<form method="post" class="form-grid form-page">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  {% include "_field.html" with field=form.data_pagamento %}
+  {% include "_field.html" with field=form.juros_pago %}
+  {% include "_field.html" with field=form.forma %}
+  {% include "_field.html" with field=form.observacao %}
+  <div class="form-actions">
+    <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Salvar pagamento</button>
+    <a class="btn cancelar" href="{{ volta_url }}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
+  </div>
+</form>
+{% endblock %}

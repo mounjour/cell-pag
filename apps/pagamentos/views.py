@@ -31,7 +31,9 @@ from .agenda import montar_agenda_do_dia
 from .contatos import promessas_a_retornar
 from .proximas import JANELAS, proximas_cobrancas
 from . import acordos, parcelas, recebidos
-from .forms import AcordoNovaDataForm, AcordoPerdaoForm, ContatoDeCobrancaForm, PagamentoForm, ParcelaEditarForm
+from .forms import (
+    AcordoNovaDataForm, AcordoPerdaoForm, ContatoDeCobrancaForm, PagamentoEdicaoForm, PagamentoForm, ParcelaEditarForm,
+)
 from .comprovantes import conferir_na_cora
 from .limpeza import encerrar_cobranca_automatica
 from .models import (
@@ -655,6 +657,33 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
                 f"Todas as {ct.num_parcelas} parcelas estão pagas. Use o botão "
                 "“Marcar como quitado” no detalhe do contrato.",
             )
+
+
+class PagamentoEditarView(LoginRequiredMixin, View):
+    """Corrige data, juros, forma e observação de uma baixa (o valor da parcela só muda estornando)."""
+
+    template_name = "pagamentos/pagamento_editar.html"
+
+    def _pagamento(self, contrato_pk, pk):
+        return get_object_or_404(
+            Pagamento.objects.select_related("contrato__cliente", "vencimento"), pk=pk, contrato_id=contrato_pk,
+        )
+
+    def get(self, request, contrato_pk, pk):
+        pagamento = self._pagamento(contrato_pk, pk)
+        form = PagamentoEdicaoForm(instance=pagamento, initial={
+            "juros_pago": f"{pagamento.juros_pago:.2f}".replace(".", ","),
+        })
+        return render(request, self.template_name, {"pagamento": pagamento, "contrato": pagamento.contrato, "form": form})
+
+    def post(self, request, contrato_pk, pk):
+        pagamento = self._pagamento(contrato_pk, pk)
+        form = PagamentoEdicaoForm(request.POST, instance=pagamento)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Pagamento atualizado.")
+            return redirect("contratos:detalhe", pk=contrato_pk)
+        return render(request, self.template_name, {"pagamento": pagamento, "contrato": pagamento.contrato, "form": form})
 
 
 class PagamentoEstornarView(LoginRequiredMixin, View):

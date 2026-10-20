@@ -188,6 +188,7 @@
               <td data-label="Baixa">{{ p.usuario_baixa|default:"—" }} · {{ p.criado_em|date:"d/m/Y H:i" }}</td>
               <td data-label="Comprovante">{% if p.comprovante %}<a href="{% url 'pagamentos:comprovante' p.pk %}">baixar</a>{% else %}—{% endif %}</td>
               <td data-label="" class="num">
+                <a class="btn-mini btn-mini--editar" href="{% url 'pagamentos:pagamento_editar' contrato.pk p.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
                 <form method="post" action="{% url 'pagamentos:estornar' contrato.pk p.pk %}"
                       data-confirmar="Estornar esta baixa da parcela {{ p.vencimento.numero|default:'' }}?">
                   {% csrf_token %}
