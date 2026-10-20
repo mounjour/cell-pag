@@ -17,12 +17,16 @@ desatualizado). Os dois entram no cron do provedor / `Django-Q2` no deploy
 
 import datetime
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
+
+from apps.pagamentos.rotinas import ComandoRegistrado
 
 from apps.pagamentos.lembrete import enviar_lembrete_diario
 
 
-class Command(BaseCommand):
+class Command(ComandoRegistrado):
+    nome_rotina = "enviar_lembrete_diario"
+
     help = "Monta e 'envia' (stub, sem conta WhatsApp Business ainda) o lembrete diário da Yslane."
 
     def add_arguments(self, parser):

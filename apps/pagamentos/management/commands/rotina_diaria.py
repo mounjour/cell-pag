@@ -25,11 +25,15 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from django.conf import settings
+
+from apps.pagamentos.rotinas import ComandoRegistrado
 from django.core.management import call_command
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
 
 
-class Command(BaseCommand):
+class Command(ComandoRegistrado):
+    nome_rotina = "rotina_diaria"
+
     help = "Roda a rotina diária: gera vencimentos, lembra a Yslane e dispara as cobranças."
 
     def add_arguments(self, parser):

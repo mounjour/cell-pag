@@ -18,13 +18,17 @@ Roda hoje como *management command* + cron do provedor. Vira tarefa do
 
 import datetime
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
+
+from apps.pagamentos.rotinas import ComandoRegistrado
 from django.db import transaction
 
 from apps.contratos.models import Contrato
 
 
-class Command(BaseCommand):
+class Command(ComandoRegistrado):
+    nome_rotina = "gerar_vencimentos"
+
     help = "Gera vencimentos ~60 dias à frente e sincroniza status e data de quitação."
 
     def add_arguments(self, parser):

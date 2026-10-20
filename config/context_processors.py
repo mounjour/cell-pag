@@ -79,9 +79,14 @@ def shell(request):
         from apps.contratos.models import ImportacaoContratoPendente
         return ImportacaoContratoPendente.objects.filter(resolvida_em__isnull=True).count()
 
+    def rotinas_com_problema_n():
+        from apps.pagamentos.rotinas import rotinas_com_problema
+        return rotinas_com_problema()
+
     def notificacoes_n():
         return (
             pix_alertas()
+            + (1 if rotinas_com_problema_n() else 0)
             + importacoes_pendentes()
             + (1 if whatsapp_desconectado() else 0)
             + (1 if cobrancas_pausadas() else 0)
@@ -107,6 +112,7 @@ def shell(request):
         "aparelhos_a_desbloquear_rotulo": SimpleLazyObject(aparelhos_a_desbloquear_rotulo),
         "bloqueios_pendentes_n": SimpleLazyObject(aparelhos_bloqueio_pendente),
         "importacoes_pendentes_n": SimpleLazyObject(importacoes_pendentes),
+        "rotinas_com_problema_n": SimpleLazyObject(rotinas_com_problema_n),
         "notificacoes_n": SimpleLazyObject(notificacoes_n),
         "importacoes_pendentes_rotulo": SimpleLazyObject(rotulo_importacoes_pendentes),
     }

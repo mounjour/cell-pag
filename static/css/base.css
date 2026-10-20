@@ -1552,3 +1552,5 @@ button.btn-mini { cursor: pointer; font-family: inherit; }
 .proximas-item .bloqueio-form input { height: 2rem; width: 9rem; }
 .proximas-item .bloqueio-form { flex-wrap: nowrap; }
 .proximas-item .bloqueio-form input { width: 7.5rem; min-width: 0; }
+.proximas-item--rotina .proximas-item__cliente, .proximas-item--rotina .proximas-item__detalhe { white-space: normal; overflow: visible; text-overflow: clip; }
+@media (max-width: 719px) { .proximas-item--rotina { grid-template-columns: minmax(0, 1fr); } .proximas-item--rotina > * { grid-column: 1; grid-row: auto; } }

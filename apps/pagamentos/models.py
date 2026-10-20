@@ -730,3 +730,21 @@ class RecebimentoCora(models.Model):
 
     def __str__(self) -> str:
         return f"R$ {self.valor} de {self.nome or 'desconhecido'} em {self.recebido_em:%d/%m/%Y}"
+
+
+class ExecucaoRotina(models.Model):
+    """Registro de cada vez que uma rotina agendada (cobranças, leitura do extrato…) rodou, e se deu certo."""
+
+    nome = models.CharField("rotina", max_length=40, db_index=True)
+    iniciada_em = models.DateTimeField("iniciada em", default=timezone.now)
+    terminada_em = models.DateTimeField("terminada em", null=True, blank=True)
+    sucesso = models.BooleanField("deu certo", null=True, blank=True)  # vazio = ainda rodando (ou travou)
+    erro = models.TextField("erro", blank=True)
+
+    class Meta:
+        ordering = ["-iniciada_em"]
+        verbose_name = "execução de rotina"
+        verbose_name_plural = "execuções de rotinas"
+
+    def __str__(self) -> str:
+        return f"{self.nome} · {self.iniciada_em:%d/%m %H:%M}"

@@ -19,6 +19,10 @@ COPY . .
 # no build (o settings.py exige SECRET_KEY real quando DEBUG=False).
 RUN SECRET_KEY=somente-para-o-build DEBUG=False python manage.py collectstatic --noinput
 
+# O Coolify informa o commit publicado em SOURCE_COMMIT; a tela "Saúde das rotinas" compara com a main do GitHub.
+ARG SOURCE_COMMIT=""
+ENV VERSAO_PUBLICADA=$SOURCE_COMMIT
+
 # Roda sem privilégio de root. /app/media é o volume dos anexos (comprovantes,
 # documentos) — precisa ser gravável pelo usuário do site.
 RUN useradd --create-home --uid 1000 app \
