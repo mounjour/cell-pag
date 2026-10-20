@@ -267,6 +267,27 @@ class ProximasCobrancasView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+class RotinasView(LoginRequiredMixin, TemplateView):
+    """Saúde das rotinas agendadas e da versão publicada (só leitura)."""
+
+    template_name = "pagamentos/rotinas.html"
+
+    def get_context_data(self, **kwargs):
+        from . import rotinas
+
+        ctx = super().get_context_data(**kwargs)
+        linhas = rotinas.situacao_das_rotinas()
+        problemas = [linha for linha in linhas if linha["estado"] in {"falhou", "atrasada", "travada"}]
+        ctx.update(linhas=linhas, versao=rotinas.versao_publicada(), problemas=problemas, agora=timezone.now())
+        if problemas:
+            messages.warning(
+                self.request,
+                f"{len(problemas)} rotina{'s' if len(problemas) != 1 else ''} com problema: "
+                + ", ".join(linha["rotulo"] for linha in problemas) + ".",
+            )
+        return ctx
+
+
 class ConferenciaCoraView(LoginRequiredMixin, TemplateView):
     """Confere o extrato da Cora contra o que o sistema registrou (só leitura)."""
 

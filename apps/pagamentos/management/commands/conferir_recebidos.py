@@ -6,14 +6,18 @@ antes das cobranças do dia e quando a página "Pix recebidos direto" é aberta.
 
 import datetime
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
+
+from apps.pagamentos.rotinas import ComandoRegistrado
 from django.utils import timezone
 
 from apps.pagamentos import recebidos
 from apps.pagamentos.models import RecebimentoCora
 
 
-class Command(BaseCommand):
+class Command(ComandoRegistrado):
+    nome_rotina = "conferir_recebidos"
+
     help = "Lê o extrato da Cora e registra os pagamentos Pix recebidos (só leitura na Cora)."
 
     def add_arguments(self, parser):

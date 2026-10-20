@@ -1,6 +1,8 @@
 import datetime
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
+
+from apps.pagamentos.rotinas import ComandoRegistrado
 
 from apps.pagamentos.cobranca import processar_cobrancas
 from django.conf import settings
@@ -9,7 +11,9 @@ from apps.pagamentos import recebidos
 from apps.pagamentos.pix_cora import reconciliar_abertas
 
 
-class Command(BaseCommand):
+class Command(ComandoRegistrado):
+    nome_rotina = "enviar_cobrancas_clientes"
+
     help = "Prepara e envia as cobranças WhatsApp de vencimento/atraso do dia."
 
     def add_arguments(self, parser):

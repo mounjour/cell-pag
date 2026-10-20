@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Saúde das rotinas{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+
+{% block content %}
+{% url 'pagamentos:conexoes' as conexoes_url %}{% include "_voltar.html" with url=conexoes_url %}
+<h1>{% include "_icone.html" with nome="conexoes" %}Saúde das rotinas</h1>
+
+<div class="note">
+  <p><strong>Para que serve:</strong> várias coisas do sistema acontecem sozinhas, sem ninguém clicar: as cobranças da manhã, a leitura do extrato da Cora e a geração das parcelas. Se uma delas para de rodar ou começa a falhar, ninguém percebe até um cliente deixar de ser cobrado ou um Pix ficar sem baixa. Esta tela mostra a última vez que cada uma rodou e avisa quando alguma parou, falhou ou travou. Mostra também se o que está no ar é a versão mais recente do sistema.</p>
+  <p>Só lê: não roda nada nem muda nada.</p>
+</div>
+
+{% if problemas %}
+  <p class="msg warning"><strong>{{ problemas|length }} rotina{{ problemas|length|pluralize }} com problema.</strong> Veja os itens marcados abaixo.</p>
+{% else %}
+  <p class="msg success"><strong>Tudo certo:</strong> as rotinas que já registraram execução estão rodando como esperado.</p>
+{% endif %}
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Rotinas agendadas</h2></header>
+  {% for l in linhas %}
+    <div class="proximas-item proximas-item--auto proximas-item--rotina">
+      <div class="proximas-item__quem">
+        <span class="proximas-item__cliente">{{ l.rotulo }}</span>
+        <span class="proximas-item__detalhe">{{ l.descricao }}</span>
+      </div>
+      <div class="proximas-item__selos">
+        {% if l.estado == "ok" %}<span class="pill pago">Em dia</span>
+        {% elif l.estado == "falhou" %}<span class="pill inadimplente">Falhou</span>
+        {% elif l.estado == "atrasada" %}<span class="pill atrasado">Parou de rodar</span>
+        {% elif l.estado == "travada" %}<span class="pill atrasado">Travada</span>
+        {% else %}<span class="pill aberto">Sem registro ainda</span>{% endif %}
+      </div>
+      <span class="proximas-item__nota">
+        {% if l.ultima %}última vez {{ l.ultima.iniciada_em|timesince:agora }} atrás ({{ l.ultima.iniciada_em|date:"d/m H:i" }}){% else %}ainda não rodou desde que o registro foi ligado{% endif %}
+      </span>
+      <span class="proximas-item__nota">esperado a cada {{ l.max_horas }}h no máximo</span>
+    </div>
+    {% if l.estado == "falhou" and l.ultima.erro %}
+      <p class="painel-vazio proximas-item__nota">Erro da última execução: {{ l.ultima.erro }}</p>
+    {% endif %}
+    {% if l.estado == "atrasada" and l.ultima_ok %}
+      <p class="painel-vazio proximas-item__nota">Última execução que deu certo: {{ l.ultima_ok.terminada_em|date:"d/m H:i" }}.</p>
+    {% endif %}
+  {% endfor %}
+  <p class="painel-vazio proximas-item__nota">As rotinas só aparecem como "Em dia" depois de rodarem pelo menos uma vez com o registro ligado (a partir do próximo deploy).</p>
+</section>
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Versão publicada</h2></header>
+  <div class="proximas-item proximas-item--auto proximas-item--rotina">
+    <div class="proximas-item__quem">
+      <span class="proximas-item__cliente">Sistema no ar</span>
+      <span class="proximas-item__detalhe">{% if versao.publicada %}commit {{ versao.publicada|slice:":7" }}{% else %}commit desconhecido{% endif %}</span>
+    </div>
+    <div class="proximas-item__selos">
+      {% if versao.estado == "ok" %}<span class="pill pago">Atualizado</span>
+      {% elif versao.estado == "atrasada" %}<span class="pill atrasado">Atrás da main</span>
+      {% else %}<span class="pill aberto">Não confirmado</span>{% endif %}
+    </div>
+    <span class="proximas-item__nota">{% if versao.ultima %}última da main: {{ versao.ultima|slice:":7" }}{% endif %}</span>
+    <span></span>
+  </div>
+  {% if versao.estado == "atrasada" %}
+    <p class="painel-vazio proximas-item__nota">Há uma versão mais nova no GitHub que ainda não foi publicada. Logo após um merge isso é normal por 1 a 2 minutos; se continuar, o aviso de deploy do GitHub pode ter falhado (confira o webhook e a aba Deployments do Coolify).</p>
+  {% elif versao.motivo %}
+    <p class="painel-vazio proximas-item__nota">{{ versao.motivo }}</p>
+  {% endif %}
+</section>
+{% endblock %}
