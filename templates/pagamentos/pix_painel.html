@@ -4,7 +4,8 @@
 
 {% block content %}
 <h1>{% include "_icone.html" with nome="pix" %}Acompanhamento Pix · {{ hoje|date:"d/m/Y" }}</h1>
-<p><a class="btn secondary" href="{% url 'pagamentos:recebidos' %}">{% include "_icone.html" with nome="dinheiro" %}Pix recebidos direto na Cora</a></p>
+<p class="acoes-linha"><a class="btn secondary" href="{% url 'pagamentos:recebidos' %}">{% include "_icone.html" with nome="dinheiro" %}Pix recebidos direto na Cora</a>
+<a class="btn secondary" href="{% url 'pagamentos:conferencia_cora' %}">{% include "_icone.html" with nome="quitar" %}Conferência com a Cora</a></p>
 <p class="note">Uma cobrança Pix pode reunir várias parcelas vencidas e a de hoje, sem juros. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
 
 {% if comprovantes %}
