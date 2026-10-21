@@ -2,7 +2,8 @@ import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.views import View
 
 from . import ferramentas, servico
@@ -10,23 +11,29 @@ from .models import Acao, Conversa
 
 
 def _conversa_ativa(usuario) -> Conversa:
-    return usuario.conversas_assistente.first() or Conversa.objects.create(usuario=usuario)
+    return usuario.conversas_assistente.order_by("-pk").first() or Conversa.objects.create(usuario=usuario)
 
 
 def _acao_json(acao: Acao) -> dict:
-    return {"id": acao.pk, "resumo": acao.resumo, "avisos": acao.avisos, "estado": acao.estado,
-            "estado_rotulo": acao.get_estado_display(), "resultado": acao.resultado}
+    return {
+        "id": acao.pk, "resumo": acao.resumo, "avisos": acao.avisos, "estado": acao.estado,
+        "estado_rotulo": acao.get_estado_display(), "resultado": acao.resultado,
+        "confirmar_url": reverse("assistente:confirmar", args=[acao.pk]),
+        "cancelar_url": reverse("assistente:cancelar", args=[acao.pk]),
+    }
 
 
-class ChatView(LoginRequiredMixin, View):
+class HistoricoView(LoginRequiredMixin, View):
+    """Conversa atual (mensagens e propostas) para o balão preencher ao abrir."""
+
     def get(self, request):
         conversa = _conversa_ativa(request.user)
         acoes = list(conversa.acoes.all())
-        return render(request, "assistente/chat.html", {
+        return JsonResponse({
             "configurado": servico.configurado(),
             "mensagens": servico.texto_das_mensagens(conversa),
-            "pendentes": [a for a in acoes if a.estado == Acao.Estado.PENDENTE],
-            "decididas": [a for a in acoes if a.estado != Acao.Estado.PENDENTE][-8:],
+            "pendentes": [_acao_json(a) for a in acoes if a.estado == Acao.Estado.PENDENTE],
+            "decididas": [_acao_json(a) for a in acoes if a.estado != Acao.Estado.PENDENTE][-6:],
         })
 
 
@@ -78,4 +85,4 @@ class NovaConversaView(LoginRequiredMixin, View):
         for acao in Acao.objects.filter(conversa__usuario=request.user, estado=Acao.Estado.PENDENTE):
             servico.cancelar(acao, request.user)
         Conversa.objects.create(usuario=request.user)
-        return redirect("assistente:chat")
+        return JsonResponse({"ok": True})

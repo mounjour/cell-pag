@@ -140,6 +140,27 @@ def test_acao_de_outro_usuario_nao_e_acessivel(auth_client, parcela, monkeypatch
     assert auth_client.post(reverse("assistente:confirmar", args=[alheia.pk])).status_code == 404
 
 
-def test_pagina_do_chat_abre(auth_client):
-    html = auth_client.get(reverse("assistente:chat")).content.decode()
-    assert "Só grava quando você clica em Confirmar" in html
+def test_historico_traz_conversa_e_propostas_pendentes(auth_client, parcela, monkeypatch):
+    _enviar(auth_client, monkeypatch, [
+        _resposta(_ferramenta("registrar_pagamento", contrato_id=parcela.contrato.pk, valor_pago="157.50"), parou="tool_use"),
+        _resposta(_texto("Proposta pronta.")),
+    ], "Roberto pagou 157,50")
+    dados = auth_client.get(reverse("assistente:historico")).json()
+    assert dados["configurado"] is True
+    assert [m["papel"] for m in dados["mensagens"]] == ["usuario", "assistente"]
+    assert len(dados["pendentes"]) == 1 and dados["pendentes"][0]["confirmar_url"].endswith("/confirmar/")
+
+
+def test_balao_aparece_nas_telas_para_quem_esta_logado(auth_client):
+    html = auth_client.get(reverse("pagamentos:conexoes")).content.decode()
+    assert 'id="assistente-abrir"' in html and "assistente.js" in html
+
+
+def test_nova_conversa_cancela_propostas_pendentes(auth_client, parcela, monkeypatch):
+    _enviar(auth_client, monkeypatch, [
+        _resposta(_ferramenta("registrar_bloqueio", contrato_id=parcela.contrato.pk), parou="tool_use"),
+        _resposta(_texto("ok")),
+    ])
+    assert auth_client.post(reverse("assistente:nova")).json() == {"ok": True}
+    assert Acao.objects.get().estado == "cancelada"
+    assert auth_client.get(reverse("assistente:historico")).json()["mensagens"] == []
