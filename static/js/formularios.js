@@ -2,6 +2,7 @@
   document.addEventListener("submit", (evento) => {
     const formulario = evento.target;
     if (!(formulario instanceof HTMLFormElement) || formulario.dataset.enviando) return;
+    if (formulario.hasAttribute("data-ajax")) return; // enviado por fetch (ex.: balão do assistente): sem "Salvando…"
     if (!formulario.checkValidity()) return;
     formulario.dataset.enviando = "1";
     // Um botão desabilitado não envia o seu name/value. Muitos formulários dependem do botão

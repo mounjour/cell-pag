@@ -12,7 +12,7 @@
       <button type="button" class="assistente-painel__botao" id="assistente-fechar" aria-label="Fechar o assistente">{% include "_icone.html" with nome="cancelar" %}</button>
     </header>
     <div class="assistente__lista" id="assistente-lista" aria-live="polite"></div>
-    <form class="assistente__form" id="assistente-form">
+    <form class="assistente__form" id="assistente-form" data-ajax>
       <textarea id="assistente-texto" rows="2" maxlength="2000" placeholder="Pergunte ou peça para registrar…" aria-label="Mensagem para o assistente"></textarea>
       <button type="submit" class="btn" id="assistente-enviar" aria-label="Enviar">{% include "_icone.html" with nome="proximo" %}</button>
     </form>

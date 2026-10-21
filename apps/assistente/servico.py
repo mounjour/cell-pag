@@ -93,6 +93,25 @@ def _executar_ferramenta(conversa: Conversa, usuario, bloco) -> tuple[str, bool,
         return "Erro interno ao executar esta ferramenta.", True, None
 
 
+def _explicar_erro_da_api(exc) -> str:
+    """Texto claro para a equipe sobre por que a API recusou (saldo, chave, modelo, limite)."""
+    detalhe = str(getattr(exc, "message", "") or "").lower()
+    codigo = exc.status_code
+    if "credit balance" in detalhe or "billing" in detalhe:
+        return "A conta da Anthropic está sem saldo. Adicione saldo no Console (Billing) e tente de novo."
+    if codigo == 401:
+        return "A chave da API foi recusada (inválida ou revogada). Crie outra no Console e atualize ANTHROPIC_API_KEY no Coolify."
+    if codigo == 403:
+        return "A chave da API não tem permissão para isso. Confira o escopo da chave no Console."
+    if codigo == 404:
+        return f"O modelo {settings.ASSISTENTE_MODELO} não está disponível para esta conta. Troque ASSISTENTE_MODELO no Coolify (ex.: claude-sonnet-5-5)."
+    if codigo == 429:
+        return "Limite de uso da API atingido agora. Espere um minuto e tente de novo."
+    if codigo >= 500:
+        return "O serviço da Anthropic está com problema agora. Tente de novo em instantes."
+    return f"O serviço do assistente recusou o pedido (erro {codigo}). Avise quem cuida do sistema."
+
+
 def responder(conversa: Conversa, texto: str, usuario) -> dict:
     """Envia a mensagem ao Claude e devolve ``{"resposta": str, "acoes": [Acao, ...]}``."""
     import anthropic
@@ -140,8 +159,8 @@ def responder(conversa: Conversa, texto: str, usuario) -> dict:
         else:
             resposta = "Não consegui concluir. Tente reformular o pedido."
     except anthropic.APIStatusError as exc:
-        logger.warning("Assistente: erro %s da API (%s)", exc.status_code, getattr(exc, "request_id", ""))
-        raise AssistenteIndisponivel("O serviço do assistente recusou o pedido agora. Tente de novo em instantes.") from exc
+        logger.warning("Assistente: erro %s da API (%s): %s", exc.status_code, getattr(exc, "request_id", ""), exc.message)
+        raise AssistenteIndisponivel(_explicar_erro_da_api(exc)) from exc
     except anthropic.APIError as exc:
         logger.warning("Assistente: falha de conexão com a API: %s", exc)
         raise AssistenteIndisponivel("Não consegui falar com o serviço do assistente agora. Tente de novo em instantes.") from exc
