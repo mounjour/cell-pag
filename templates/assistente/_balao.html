@@ -1,5 +1,5 @@
 {# Balão flutuante do assistente: aparece em todas as telas para quem está logado. #}
-<div class="assistente-raiz" id="assistente" data-historico="{% url 'assistente:historico' %}" data-enviar="{% url 'assistente:enviar' %}" data-nova="{% url 'assistente:nova' %}">
+<div class="assistente-raiz" id="assistente" data-historico="{% url 'assistente:historico' %}" data-enviar="{% url 'assistente:enviar' %}" data-nova="{% url 'assistente:nova' %}" data-nome="{{ user.nome_curto }}">
   <button type="button" class="assistente-fab" id="assistente-abrir" aria-label="Abrir o assistente" aria-expanded="false" aria-controls="assistente-painel">
     {% include "_icone.html" with nome="assistente" %}
     <span class="assistente-fab__ponto" id="assistente-ponto" hidden></span>

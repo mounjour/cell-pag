@@ -95,11 +95,62 @@
     return c;
   }
 
+  var SUGESTOES = [
+    { rotulo: "Quem está atrasado hoje?", texto: "Quem está atrasado hoje?", enviar: true },
+    { rotulo: "Cobranças dos próximos dias", texto: "Quais são as cobranças dos próximos 7 dias?", enviar: true },
+    { rotulo: "Ver o status de um cliente", texto: "Status do cliente ", enviar: false },
+    { rotulo: "Registrar um pagamento", texto: "Registrar pagamento: ", enviar: false },
+    { rotulo: "Anotar uma promessa", texto: "Anotar que o cliente prometeu pagar dia ", enviar: false },
+  ];
+
+  function enviarTexto(conteudo) { texto.value = conteudo; form.requestSubmit(); }
+
   function dica() {
-    var d = document.createElement("p");
-    d.className = "assistente__vazio";
-    d.textContent = "Eu consulto o sistema e proponho registros (pagamento, contato, bloqueio). Só gravo quando você clicar em Confirmar. Ex.: “quem está atrasado?”, “Roberto pagou 157,50 no Pix hoje”.";
-    return d;
+    var c = document.createElement("div");
+    c.className = "assistente__boasvindas";
+    var t = document.createElement("h3");
+    var nome = raiz.getAttribute("data-nome");
+    t.textContent = "Olá" + (nome ? ", " + nome : "") + "! Sou o assistente do sistema.";
+    c.appendChild(t);
+    var p = document.createElement("p");
+    p.textContent = "Converse comigo em português. Eu consulto clientes, parcelas, atrasos e próximas cobranças, e preparo registros para você.";
+    c.appendChild(p);
+    var ul = document.createElement("ul");
+    [
+      "Pagamentos: eu monto o registro com parcela, valor e juros.",
+      "Contatos e promessas de pagamento.",
+      "Bloqueio e liberação de aparelhos.",
+    ].forEach(function (item) {
+      var li = document.createElement("li");
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+    c.appendChild(ul);
+    var seguro = document.createElement("p");
+    seguro.className = "assistente__boasvindas-seguro";
+    seguro.textContent = "Nada é gravado sem você clicar em Confirmar. Não apago nem estorno nada, e não envio mensagens a clientes.";
+    c.appendChild(seguro);
+    var rotulo = document.createElement("p");
+    rotulo.className = "assistente__boasvindas-rotulo";
+    rotulo.textContent = "Experimente:";
+    c.appendChild(rotulo);
+    var chips = document.createElement("div");
+    chips.className = "assistente__chips";
+    SUGESTOES.forEach(function (sug) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "assistente__chip";
+      b.textContent = sug.rotulo;
+      b.addEventListener("click", function () {
+        if (sug.enviar) { enviarTexto(sug.texto); return; }
+        texto.value = sug.texto;
+        texto.focus();
+        texto.setSelectionRange(texto.value.length, texto.value.length);
+      });
+      chips.appendChild(b);
+    });
+    c.appendChild(chips);
+    return c;
   }
 
   function carregar() {
@@ -116,7 +167,7 @@
       d.pendentes.forEach(function (a) { lista.appendChild(cartaoPendente(a)); });
       texto.disabled = enviar.disabled = !pronto;
       atualizarPonto();
-      rolar();
+      if (lista.querySelector(".assistente__boasvindas")) lista.scrollTop = 0; else rolar();
     }).catch(function () { balao("erro", "Sem conexão com o servidor."); });
   }
 
@@ -149,7 +200,7 @@
     e.preventDefault();
     var conteudo = texto.value.trim();
     if (!conteudo || !pronto) return;
-    var vazio = lista.querySelector(".assistente__vazio");
+    var vazio = lista.querySelector(".assistente__boasvindas");
     if (vazio) vazio.remove();
     balao("usuario", conteudo);
     texto.value = "";
