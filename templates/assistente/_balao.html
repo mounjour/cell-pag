@@ -1,0 +1,20 @@
+{# Balão flutuante do assistente: aparece em todas as telas para quem está logado. #}
+<div class="assistente-raiz" id="assistente" data-historico="{% url 'assistente:historico' %}" data-enviar="{% url 'assistente:enviar' %}" data-nova="{% url 'assistente:nova' %}">
+  <button type="button" class="assistente-fab" id="assistente-abrir" aria-label="Abrir o assistente" aria-expanded="false" aria-controls="assistente-painel">
+    {% include "_icone.html" with nome="assistente" %}
+    <span class="assistente-fab__ponto" id="assistente-ponto" hidden></span>
+  </button>
+  <section class="assistente-painel" id="assistente-painel" role="dialog" aria-label="Assistente" hidden>
+    <header class="assistente-painel__topo">
+      <strong>Assistente</strong>
+      <span class="assistente-painel__espaco"></span>
+      <button type="button" class="assistente-painel__botao" id="assistente-nova" title="Começar uma nova conversa">{% include "_icone.html" with nome="adicionar" %}<span>Nova</span></button>
+      <button type="button" class="assistente-painel__botao" id="assistente-fechar" aria-label="Fechar o assistente">{% include "_icone.html" with nome="cancelar" %}</button>
+    </header>
+    <div class="assistente__lista" id="assistente-lista" aria-live="polite"></div>
+    <form class="assistente__form" id="assistente-form">
+      <textarea id="assistente-texto" rows="2" maxlength="2000" placeholder="Pergunte ou peça para registrar…" aria-label="Mensagem para o assistente"></textarea>
+      <button type="submit" class="btn" id="assistente-enviar" aria-label="Enviar">{% include "_icone.html" with nome="proximo" %}</button>
+    </form>
+  </section>
+</div>
