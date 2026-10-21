@@ -167,7 +167,7 @@ class BloqueiosView(LoginRequiredMixin, TemplateView):
             n = len(painel["a_bloquear"])
             messages.warning(
                 self.request,
-                f"{n} aparelho{'s' if n != 1 else ''} com 7 dias ou mais de atraso "
+                f"{n} aparelho{'s' if n != 1 else ''} com 8 dias ou mais de atraso "
                 f"{'esperam' if n != 1 else 'espera'} bloqueio.",
             )
         if painel["para_desbloquear"]:

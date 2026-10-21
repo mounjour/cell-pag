@@ -42,7 +42,7 @@ class Situacao:
 
     @property
     def alertar_bloqueio(self) -> bool:
-        """7 dias ou mais de atraso: hora de bloquear o aparelho (ação manual do vendedor)."""
+        """8 dias ou mais de atraso: hora de bloquear o aparelho (ação manual do vendedor)."""
         return atraso.precisa_alertar_bloqueio(self.dias_atraso)
 
     @property

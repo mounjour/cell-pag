@@ -119,7 +119,7 @@ def test_cor_do_status(status, cor):
 
 # ── alerta de bloqueio ───────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("dias,esperado", [(0, False), (6, False), (7, True), (20, True)])
+@pytest.mark.parametrize("dias,esperado", [(0, False), (7, False), (8, True), (20, True)])
 def test_precisa_alertar_bloqueio(dias, esperado):
     assert atraso.precisa_alertar_bloqueio(dias) is esperado
 

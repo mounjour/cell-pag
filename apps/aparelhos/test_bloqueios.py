@@ -40,7 +40,7 @@ def _em_dia(cliente):
 
 
 def test_atraso_de_7_dias_entra_em_para_bloquear(cliente):
-    ct = _atrasado(cliente, dias=7)
+    ct = _atrasado(cliente, dias=8)
     painel = bloqueios.montar_painel()
     assert [l["contrato"].pk for l in painel["a_bloquear"]] == [ct.pk]
 
