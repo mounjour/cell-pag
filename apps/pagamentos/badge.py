@@ -40,7 +40,7 @@ def contagem_cobrar_hoje() -> int:
 
 
 def contagem_a_bloquear() -> int:
-    """Contratos com 7 dias ou mais de atraso: hora de bloquear o aparelho (ação manual)."""
+    """Contratos com 8 dias ou mais de atraso: hora de bloquear o aparelho (ação manual)."""
     n = cache.get(_chave_bloqueio())
     if n is None:
         n = _calcular_e_guardar()[1]

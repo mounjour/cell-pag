@@ -3,7 +3,7 @@
 Regras fixadas (PLANO-DO-PROJETO.md, seções 4.6 e 10):
 
 * Juros: **R$ 5,00 fixos por dia de atraso** (valor/dia × dias de atraso).
-* **7 dias de atraso → alerta de bloqueio** do aparelho. O sistema só sinaliza;
+* **8 dias de atraso (o 8º dia) → alerta de bloqueio** do aparelho. O sistema só sinaliza;
   o bloqueio em si é ação manual do vendedor.
 * No atraso, a cobrança continua todos os dias.
 * Status visual: verde = em dia · vermelho = atrasado/inadimplente · cinza = quitado.
@@ -16,7 +16,7 @@ Não gera ``Vencimento`` nem calcula valor de parcela (isso é Fase 2 e depende 
 regras ainda em aberto com o Alisson).
 
 * **Fronteira dos status** (Alisson, 18/09, WhatsApp): 1 dia de atraso já é
-  "atrasado"; a partir de **3 dias** vira "inadimplente"; aos 7 dias soma-se o
+  "atrasado"; a partir de **3 dias** vira "inadimplente"; aos 8 dias soma-se o
   alerta de bloqueio. Vale para todas as estruturas (diária, quinzenal, etc.).
 """
 
@@ -46,7 +46,7 @@ __all__ = [
 VALOR_JUROS_DIA = Decimal("5.00")
 
 #: Dias de atraso a partir dos quais o sistema alerta para bloquear o aparelho.
-DIAS_PARA_BLOQUEIO = 7
+DIAS_PARA_BLOQUEIO = 8
 
 #: Dias de atraso a partir dos quais o contrato é considerado inadimplente
 #: (confirmado com o Alisson em 18/09).
@@ -127,7 +127,7 @@ def cor_do_status(status: str) -> str:
 
 
 def precisa_alertar_bloqueio(dias_atraso: int) -> bool:
-    """True quando o atraso atinge o gatilho de bloqueio do aparelho (7 dias)."""
+    """True quando o atraso atinge o gatilho de bloqueio do aparelho (8 dias)."""
     return dias_atraso >= DIAS_PARA_BLOQUEIO
 
 

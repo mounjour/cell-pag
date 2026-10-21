@@ -1,9 +1,9 @@
 """Bloqueio de aparelhos por atraso: o que bloquear, o que já está bloqueado e o que liberar.
 
-O sistema só **sinaliza** (7 dias de atraso, ver ``apps.pagamentos.atraso``); bloquear o
+O sistema só **sinaliza** (8 dias de atraso, ver ``apps.pagamentos.atraso``); bloquear o
 celular é ação manual. Aqui fica o controle do que a equipe já fez:
 
-* **Para bloquear** — atraso de 7+ dias e sem bloqueio registrado.
+* **Para bloquear** — atraso de 8+ dias e sem bloqueio registrado.
 * **Bloqueados** — bloqueio ativo e o cliente ainda deve.
 * **Para desbloquear** — bloqueio ativo, mas o cliente regularizou (sem atraso) ou quitou.
 """

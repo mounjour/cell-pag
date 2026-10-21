@@ -73,7 +73,7 @@ aberto mais antiga do contrato.
 |---|---|---|
 | **Em dia** | verde | sem parcela vencida |
 | **Atrasado** | vermelho | 1 a 6 dias de atraso |
-| **Inadimplente** | vermelho | 7 dias de atraso ou mais |
+| **Inadimplente** | vermelho | 3 dias de atraso ou mais |
 | **Quitado** | cinza | contrato encerrado; parou de cobrar |
 
 ### Juros
@@ -90,7 +90,7 @@ aberto mais antiga do contrato.
 
 ### Alerta de bloqueio
 
-Aos **7 dias de atraso** o sistema mostra **"⚠ hora de bloquear o aparelho"**.
+No **8º dia de atraso** o sistema mostra **"⚠ hora de bloquear o aparelho"**.
 O sistema **só avisa** — o bloqueio em si é ação manual do vendedor (Alisson).
 
 ### Como o Pix funciona (modo estático)
@@ -126,7 +126,7 @@ Tela que controla o que a equipe já fez com os aparelhos atrasados:
 
 | Lista | Quando o contrato aparece | O que fazer |
 |---|---|---|
-| **Para bloquear** | 7+ dias de atraso e sem bloqueio registrado | bloqueie o celular (iCloud, MDM…) e clique em **Bloqueei** (dá para anotar como foi) |
+| **Para bloquear** | 8+ dias de atraso e sem bloqueio registrado | bloqueie o celular (iCloud, MDM…) e clique em **Bloqueei** (dá para anotar como foi) |
 | **Bloqueados agora** | bloqueio registrado e o cliente ainda deve | mostra desde quando, por quem, o atraso e o valor para liberar |
 | **Para desbloquear** | bloqueio registrado, mas o cliente **regularizou** (sem atraso) ou **quitou** | libere o celular e clique em **Desbloqueei** |
 

@@ -37,7 +37,7 @@ def _extras(agenda: dict) -> str:
         partes += [f"• {p.contato.contrato.cliente.nome} — prometeu até {p.contato.promessa_para:%d/%m}" for p in promessas]
     if agenda.get("n_bloqueio"):
         n = agenda["n_bloqueio"]
-        partes += ["", f"🔒 {n} aparelho{'s' if n != 1 else ''} para bloquear (7+ dias de atraso)."]
+        partes += ["", f"🔒 {n} aparelho{'s' if n != 1 else ''} para bloquear (8+ dias de atraso)."]
     proximas = proximas_cobrancas(3, hoje)
     if proximas["quantidade"]:
         partes += ["", f"📅 Próximos 3 dias: {proximas['quantidade']} cobrança(s), {_moeda(proximas['total'])}."]

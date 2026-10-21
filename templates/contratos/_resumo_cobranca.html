@@ -39,6 +39,6 @@
       {% if resumo.proximas %}<div class="opcional"><dt>Depois disso, são cobradas em</dt><dd>{% for d in resumo.proximas %}{{ d|date:"d/m" }}{% if not forloop.last %} · {% endif %}{% endfor %}…</dd></div>{% endif %}
     </dl>
     {% if resumo.alerta_bloqueio %}
-      <p class="resumo-alerta"><strong>Alerta de bloqueio:</strong> há parcela com {{ resumo.maior_atraso_dias }} dias de atraso (7 ou mais). O sistema só sinaliza; o bloqueio do aparelho é manual.</p>
+      <p class="resumo-alerta"><strong>Alerta de bloqueio:</strong> há parcela com {{ resumo.maior_atraso_dias }} dias de atraso (8 ou mais). O sistema só sinaliza; o bloqueio do aparelho é manual.</p>
     {% endif %}
   </section>

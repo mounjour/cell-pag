@@ -6,7 +6,7 @@ pagamento e situações variadas:
 
 - em dia (vencimento no futuro) e vence exatamente hoje;
 - atrasado leve (2 dias) — com juros de R$ 5/dia;
-- inadimplente (5 e 10 dias) e no limite do alerta de bloqueio (7 dias);
+- inadimplente (5 e 10 dias) e no limite do alerta de bloqueio (8 dias);
 - semanal dentro da janela (venceu nesta semana, ainda não conta atraso);
 - quitado (para de cobrar);
 - contrato recém-cadastrado sem `proximo_vencimento` (sem base de cálculo).
@@ -185,7 +185,7 @@ def contratos_demo(hoje: datetime.date) -> list[dict]:
             "data_prevista_quitacao": None,
             "observacoes": "Prometeu pagar e não apareceu. Cobrar de novo.",
         },
-        # Francisco — quinzenal, no limite do alerta de bloqueio (7 dias).
+        # Francisco — quinzenal, no limite do alerta de bloqueio (8 dias).
         {
             "cpf": "02654235114",
             "apelido": "Galaxy A05",
@@ -196,7 +196,7 @@ def contratos_demo(hoje: datetime.date) -> list[dict]:
             "valor_parcela": None,
             "num_parcelas": 10,
             "data_inicio": hoje - d(days=40),
-            "proximo_vencimento": hoje - d(days=7),
+            "proximo_vencimento": hoje - d(days=8),
             "status": S.INADIMPLENTE,
             "data_prevista_quitacao": None,
             "observacoes": "Mora na zona rural — combinar visita.",
