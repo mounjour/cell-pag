@@ -26,6 +26,7 @@ Como trabalhar:
 - Consulte antes de afirmar: use as ferramentas para achar o cliente e o contrato. Nunca invente valores, datas, ids ou nomes. Se faltar uma informação essencial (cliente, valor, qual aparelho), pergunte só o que falta, em uma mensagem. Se houver mais de um cliente ou contrato possível (nomes parecidos, cliente com dois aparelhos), pergunte qual é antes de continuar.
 - Para gravar algo (registrar pagamento, anotar contato ou promessa, registrar bloqueio ou liberação de aparelho) use a ferramenta correspondente. Ela só PROPÕE: nada é gravado até a pessoa clicar em Confirmar na tela. Nunca diga que algo foi registrado antes dessa confirmação; diga que deixou a proposta pronta para confirmar.
 - Pagamento: valor_pago é o valor da parcela (sem os juros do atraso) e os juros vão em juros_pago. Não existe multa por atraso: só os juros diários que o sistema calcula. Consulte o contrato para usar o saldo e os juros de hoje; não calcule juros por conta própria. Se a pessoa informar só um total, separe: parcela primeiro e o resto como juros, se o contrato mostrar juros de hoje para essa parcela. Quando o valor não bater com o previsto, avise a diferença e pergunte antes de propor. Pagamento "a confirmar" (ainda não caiu na conta) não deve ser proposto: avise que só se registra quando o dinheiro cair.
+- Anexos: a pessoa pode enviar imagens (por exemplo, comprovante de Pix ou print de conversa), PDFs e arquivos de texto. Leia o anexo com cuidado e diga o que entendeu (valor, data, nome de quem pagou). Com um comprovante, procure o cliente, consulte o contrato e proponha o pagamento; se algo estiver ilegível, incompleto ou não bater com o sistema, pergunte antes de propor. Nunca assuma dados que não estejam visíveis. Dados pessoais de terceiros no anexo (CPF, chave Pix) não devem ser repetidos além do necessário.
 - Lista de pagamentos: se a pessoa mandar várias linhas (por exemplo "PAGAMENTOS 21/10" seguido de "Cliente – valor – forma"), trate cada linha, faça uma proposta por pagamento e confira no fim se a soma das propostas bate com o total informado.
 
 Atalhos que a equipe costuma usar (entenda variações e erros de digitação):
@@ -112,7 +113,7 @@ def _explicar_erro_da_api(exc) -> str:
     return f"O serviço do assistente recusou o pedido (erro {codigo}). Avise quem cuida do sistema."
 
 
-def responder(conversa: Conversa, texto: str, usuario) -> dict:
+def responder(conversa: Conversa, texto: str, usuario, anexos: list[dict] | None = None) -> dict:
     """Envia a mensagem ao Claude e devolve ``{"resposta": str, "acoes": [Acao, ...]}``."""
     import anthropic
 
@@ -122,7 +123,9 @@ def responder(conversa: Conversa, texto: str, usuario) -> dict:
         raise AssistenteIndisponivel("Esta conversa ficou longa. Comece uma nova para continuar.")
     _limite(usuario)
 
-    mensagens = list(conversa.mensagens) + [{"role": "user", "content": texto}]
+    # Com anexos, o conteúdo vira uma lista de blocos: arquivos primeiro e o texto da pessoa por último.
+    conteudo = (list(anexos) + [{"type": "text", "text": texto or "Veja o anexo."}]) if anexos else texto
+    mensagens = list(conversa.mensagens) + [{"role": "user", "content": conteudo}]
     cliente = _cliente_api()
     sistema = SISTEMA.format(usuario=usuario.nome_curto or usuario.nome_completo, hoje=timezone.localdate().strftime("%d/%m/%Y (%A)"))
     propostas: list[Acao] = []
@@ -210,16 +213,20 @@ def cancelar(acao: Acao, usuario) -> Acao:
 
 
 def texto_das_mensagens(conversa: Conversa) -> list[dict]:
-    """Histórico para mostrar na tela: só o que a pessoa disse e o que o assistente respondeu em texto."""
+    """Histórico para mostrar na tela: o que a pessoa disse (com os nomes dos anexos) e as respostas em texto."""
     itens = []
     for m in conversa.mensagens:
         conteudo = m.get("content")
         if m["role"] == "user":
             if isinstance(conteudo, str):
                 itens.append({"papel": "sistema" if conteudo.startswith("[Sistema]") else "usuario",
-                              "texto": conteudo.removeprefix("[Sistema] ")})
+                              "texto": conteudo.removeprefix("[Sistema] "), "anexos": []})
+            elif isinstance(conteudo, list) and any(b.get("type") in {"image", "document"} or str(b.get("text", "")).startswith("[Anexo:") for b in conteudo):
+                anexos = [b["text"][len("[Anexo: "):-1] for b in conteudo if b.get("type") == "text" and b["text"].startswith("[Anexo: ")]
+                falas = [b["text"] for b in conteudo if b.get("type") == "text" and not b["text"].startswith(("[Anexo: ", "Conteúdo do arquivo "))]
+                itens.append({"papel": "usuario", "texto": falas[-1] if falas else "", "anexos": anexos})
         elif isinstance(conteudo, list):
             texto = "".join(b.get("text", "") for b in conteudo if b.get("type") == "text").strip()
             if texto:
-                itens.append({"papel": "assistente", "texto": texto})
+                itens.append({"papel": "assistente", "texto": texto, "anexos": []})
     return itens

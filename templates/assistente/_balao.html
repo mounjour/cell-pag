@@ -13,8 +13,13 @@
     </header>
     <div class="assistente__lista" id="assistente-lista" aria-live="polite"></div>
     <form class="assistente__form" id="assistente-form" data-ajax>
-      <textarea id="assistente-texto" rows="2" maxlength="2000" placeholder="Pergunte ou peça para registrar…" aria-label="Mensagem para o assistente"></textarea>
-      <button type="submit" class="btn" id="assistente-enviar" aria-label="Enviar">{% include "_icone.html" with nome="proximo" %}</button>
+      <div class="assistente__anexos" id="assistente-anexos" hidden></div>
+      <div class="assistente__linha">
+        <input type="file" id="assistente-arquivo" multiple accept="image/png,image/jpeg,image/webp,image/gif,application/pdf,.txt,.csv" hidden>
+        <button type="button" class="assistente__anexar" id="assistente-anexar" aria-label="Anexar imagem ou arquivo" title="Anexar imagem, PDF ou arquivo de texto">{% include "_icone.html" with nome="anexo" %}</button>
+        <textarea id="assistente-texto" rows="1" maxlength="2000" placeholder="Pergunte ou peça para registrar…" aria-label="Mensagem para o assistente"></textarea>
+        <button type="submit" class="btn assistente__enviar" id="assistente-enviar" aria-label="Enviar">{% include "_icone.html" with nome="proximo" %}</button>
+      </div>
     </form>
   </section>
 </div>

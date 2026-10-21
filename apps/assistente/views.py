@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views import View
 
-from . import ferramentas, servico
+from . import anexos, ferramentas, servico
 from .models import Acao, Conversa
 
 
@@ -39,17 +39,26 @@ class HistoricoView(LoginRequiredMixin, View):
 
 class EnviarView(LoginRequiredMixin, View):
     def post(self, request):
-        try:
-            texto = str(json.loads(request.body or b"{}").get("texto", "")).strip()
-        except ValueError:
-            texto = ""
-        if not texto:
-            return JsonResponse({"erro": "Escreva uma mensagem."}, status=400)
+        arquivos = []
+        if request.content_type and request.content_type.startswith("multipart/"):
+            texto = str(request.POST.get("texto", "")).strip()
+            arquivos = request.FILES.getlist("arquivos")
+        else:
+            try:
+                texto = str(json.loads(request.body or b"{}").get("texto", "")).strip()
+            except ValueError:
+                texto = ""
+        if not texto and not arquivos:
+            return JsonResponse({"erro": "Escreva uma mensagem ou anexe um arquivo."}, status=400)
         if len(texto) > 2000:
             return JsonResponse({"erro": "Mensagem longa demais (máximo 2.000 letras)."}, status=400)
+        try:
+            blocos, nomes = anexos.preparar(arquivos) if arquivos else ([], [])
+        except anexos.AnexoInvalido as exc:
+            return JsonResponse({"erro": str(exc)}, status=400)
         conversa = _conversa_ativa(request.user)
         try:
-            resultado = servico.responder(conversa, texto, request.user)
+            resultado = servico.responder(conversa, texto, request.user, blocos)
         except servico.AssistenteIndisponivel as exc:
             return JsonResponse({"erro": str(exc)}, status=503)
         return JsonResponse({"resposta": resultado["resposta"], "acoes": [_acao_json(a) for a in resultado["acoes"]]})
