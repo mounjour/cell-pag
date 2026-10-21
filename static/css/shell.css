@@ -319,19 +319,20 @@
    "Mais") e no título das páginas; botões e o resto do sistema seguem com a
    cor do texto. Vermelho fica reservado a alertas. */
 .app-shell {
-  --ic-inicio: #2563eb; --ic-cobrar: #2563eb; --ic-proximas: #2563eb; --ic-bloqueio: #2563eb; --ic-pix: #2563eb; --ic-historico: #2563eb;
+  --ic-assistente: #2563eb; --ic-inicio: #2563eb; --ic-cobrar: #2563eb; --ic-proximas: #2563eb; --ic-bloqueio: #2563eb; --ic-pix: #2563eb; --ic-historico: #2563eb;
   --ic-clientes: #7c3aed; --ic-contratos: #7c3aed; --ic-aparelhos: #7c3aed;
   --ic-conexoes: #059669;
   --ic-relatorios: #ea580c; --ic-juros: #ea580c;
 }
 :root[data-tema="escuro"] .app-shell {
-  --ic-inicio: #60a5fa; --ic-cobrar: #60a5fa; --ic-proximas: #60a5fa; --ic-bloqueio: #60a5fa; --ic-pix: #60a5fa; --ic-historico: #60a5fa;
+  --ic-assistente: #60a5fa; --ic-inicio: #60a5fa; --ic-cobrar: #60a5fa; --ic-proximas: #60a5fa; --ic-bloqueio: #60a5fa; --ic-pix: #60a5fa; --ic-historico: #60a5fa;
   --ic-clientes: #a78bfa; --ic-contratos: #a78bfa; --ic-aparelhos: #a78bfa;
   --ic-conexoes: #34d399;
   --ic-relatorios: #fb923c; --ic-juros: #fb923c;
 }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="inicio"] { color: var(--ic-inicio); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="cobrar"] { color: var(--ic-cobrar); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="assistente"] { color: var(--ic-assistente); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="proximas"] { color: var(--ic-proximas); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="bloqueio"] { color: var(--ic-bloqueio); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="pix"] { color: var(--ic-pix); }
