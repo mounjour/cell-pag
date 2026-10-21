@@ -23,6 +23,7 @@ sqlparse==0.6.0
 tzdata==2026.4
 tablib==3.10.0
 diff-match-patch==20241021
+anthropic==2.0.0                # assistente (Claude)
 six==1.17.0                    # dependência do python-dateutil
 
 # ── Próximas fases (ver PLANO-DO-PROJETO.md, seção 13) ────────────────────────

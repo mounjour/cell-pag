@@ -1554,3 +1554,22 @@ button.btn-mini { cursor: pointer; font-family: inherit; }
 .proximas-item .bloqueio-form input { width: 7.5rem; min-width: 0; }
 .proximas-item--rotina .proximas-item__cliente, .proximas-item--rotina .proximas-item__detalhe { white-space: normal; overflow: visible; text-overflow: clip; }
 @media (max-width: 719px) { .proximas-item--rotina { grid-template-columns: minmax(0, 1fr); } .proximas-item--rotina > * { grid-column: 1; grid-row: auto; } }
+
+/* Assistente (chat) */
+.assistente { display: grid; gap: .75rem; }
+.assistente__lista { display: flex; flex-direction: column; gap: .5rem; min-height: 14rem; max-height: 60vh; overflow-y: auto; padding: .75rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--raise); }
+.assistente__vazio { margin: auto; color: var(--ink-faint); text-align: center; max-width: 34rem; }
+.assistente__msg { max-width: 85%; padding: .55rem .8rem; border-radius: var(--radius); white-space: pre-wrap; line-height: 1.45; }
+.assistente__msg--usuario { align-self: flex-end; background: var(--ink); color: var(--surface); }
+.assistente__msg--assistente { align-self: flex-start; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+.assistente__msg--sistema { align-self: center; font-size: .8rem; color: var(--ink-faint); background: none; }
+.assistente__msg--erro { align-self: flex-start; background: var(--critical-wash); color: var(--critical-ink); }
+.assistente__msg--pensando { color: var(--ink-faint); font-style: italic; }
+.assistente__acao { align-self: stretch; padding: .65rem .8rem; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); }
+.assistente__acao--pendente { border-color: var(--amber-ink); background: var(--amber-wash); }
+.assistente__acao p { margin: 0 0 .35rem; }
+.assistente__aviso { font-size: .85rem; color: var(--amber-ink); }
+.assistente__botoes { display: flex; gap: .5rem; margin-top: .4rem; }
+.assistente__form { display: flex; gap: .5rem; align-items: flex-end; }
+.assistente__form textarea { flex: 1; resize: vertical; min-height: 2.8rem; }
+.assistente__form .btn { flex: none; }

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Assistente{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <h1>{% include "_icone.html" with nome="assistente" %}Assistente</h1>
+  <span class="spacer"></span>
+  <form method="post" action="{% url 'assistente:nova' %}">{% csrf_token %}
+    <button type="submit" class="btn secondary">{% include "_icone.html" with nome="adicionar" %}Nova conversa</button>
+  </form>
+</div>
+
+<div class="note">
+  <p><strong>O que ele faz:</strong> você conversa em português e ele consulta o sistema (clientes, parcelas, atrasos, próximas cobranças). Quando você pede para registrar algo — um pagamento, um contato com promessa, um bloqueio ou liberação de aparelho — ele monta a <strong>proposta</strong> e mostra o que vai gravar. <strong>Só grava quando você clica em Confirmar.</strong></p>
+  <p><strong>O que ele não faz:</strong> não apaga nem estorna nada, não envia mensagens a clientes e não muda valores de parcelas. Isso continua pelas telas do sistema.</p>
+</div>
+
+{% if not configurado %}
+  <p class="msg warning">O assistente ainda não foi ligado: falta a chave da API no servidor (variável <code>ANTHROPIC_API_KEY</code> no Coolify).</p>
+{% endif %}
+
+<section class="assistente" id="assistente" data-enviar="{% url 'assistente:enviar' %}" data-pronto="{{ configurado|yesno:'1,0' }}">
+  <div class="assistente__lista" id="assistente-lista" aria-live="polite">
+    {% if not mensagens %}
+      <p class="assistente__vazio">Exemplos: “Roberto Lucas pagou 157,50 no Pix hoje”, “quem está atrasado?”, “Ricardo prometeu pagar até sexta”.</p>
+    {% endif %}
+    {% for m in mensagens %}
+      <div class="assistente__msg assistente__msg--{{ m.papel }}">{{ m.texto }}</div>
+    {% endfor %}
+    {% for a in decididas %}
+      <div class="assistente__acao assistente__acao--{{ a.estado }}">
+        <span class="pill {% if a.estado == 'confirmada' %}pago{% elif a.estado == 'cancelada' %}cancelado{% else %}inadimplente{% endif %}">{{ a.get_estado_display }}</span>
+        {{ a.resumo }}{% if a.resultado %} <small>{{ a.resultado }}</small>{% endif %}
+      </div>
+    {% endfor %}
+    {% for a in pendentes %}
+      <div class="assistente__acao assistente__acao--pendente" data-acao="{{ a.pk }}">
+        <p>{{ a.resumo }}</p>
+        {% for aviso in a.avisos %}<p class="assistente__aviso">{{ aviso }}</p>{% endfor %}
+        <div class="assistente__botoes">
+          <button type="button" class="btn-mini btn-mini--pagar" data-decisao="confirmar" data-url="{% url 'assistente:confirmar' a.pk %}">{% include "_icone.html" with nome="quitar" %}Confirmar</button>
+          <button type="button" class="btn-mini" data-decisao="cancelar" data-url="{% url 'assistente:cancelar' a.pk %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <form class="assistente__form" id="assistente-form">
+    <textarea id="assistente-texto" rows="2" maxlength="2000" placeholder="Escreva aqui…" aria-label="Mensagem para o assistente"{% if not configurado %} disabled{% endif %}></textarea>
+    <button type="submit" class="btn" id="assistente-enviar"{% if not configurado %} disabled{% endif %}>{% include "_icone.html" with nome="proximo" %}Enviar</button>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/assistente.js' %}?v=1" defer></script>{% endblock %}
