@@ -164,3 +164,25 @@ def test_nova_conversa_cancela_propostas_pendentes(auth_client, parcela, monkeyp
     assert auth_client.post(reverse("assistente:nova")).json() == {"ok": True}
     assert Acao.objects.get().estado == "cancelada"
     assert auth_client.get(reverse("assistente:historico")).json()["mensagens"] == []
+
+
+@pytest.mark.parametrize("codigo, mensagem, esperado", [
+    (400, "Your credit balance is too low to access the Anthropic API.", "sem saldo"),
+    (401, "invalid x-api-key", "chave da API foi recusada"),
+    (404, "model: nao-existe", "não está disponível"),
+])
+def test_erro_da_api_vira_mensagem_clara(auth_client, monkeypatch, codigo, mensagem, esperado):
+    import anthropic
+    import httpx2 as httpx
+
+    class _Quebrado:
+        def __init__(self):
+            self.messages = SimpleNamespace(create=self._criar)
+
+        def _criar(self, **kwargs):
+            requisicao = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+            raise anthropic.APIStatusError(mensagem, response=httpx.Response(codigo, request=requisicao), body=None)
+
+    monkeypatch.setattr(servico, "_cliente_api", lambda: _Quebrado())
+    resposta = auth_client.post(reverse("assistente:enviar"), json.dumps({"texto": "oi"}), content_type="application/json")
+    assert resposta.status_code == 503 and esperado in resposta.json()["erro"]
