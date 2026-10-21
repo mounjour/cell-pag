@@ -1,5 +1,6 @@
 """Assistente: o Claude propõe e só a confirmação da pessoa grava. O Claude é substituído por um roteiro fixo."""
 
+import base64
 import datetime
 import json
 from decimal import Decimal
@@ -186,3 +187,41 @@ def test_erro_da_api_vira_mensagem_clara(auth_client, monkeypatch, codigo, mensa
     monkeypatch.setattr(servico, "_cliente_api", lambda: _Quebrado())
     resposta = auth_client.post(reverse("assistente:enviar"), json.dumps({"texto": "oi"}), content_type="application/json")
     assert resposta.status_code == 503 and esperado in resposta.json()["erro"]
+
+
+PNG_MINIMO = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
+
+
+def _enviar_arquivos(auth_client, monkeypatch, roteiro, arquivos, texto="veja o comprovante"):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    falso = _FalsoClaude(roteiro)
+    monkeypatch.setattr(servico, "_cliente_api", lambda: falso)
+    dados = {"texto": texto, "arquivos": [SimpleUploadedFile(n, c, content_type=tipo) for n, c, tipo in arquivos]}
+    return auth_client.post(reverse("assistente:enviar"), dados), falso
+
+
+def test_imagem_anexada_chega_ao_claude_e_aparece_no_historico(auth_client, monkeypatch):
+    resposta, falso = _enviar_arquivos(auth_client, monkeypatch, [_resposta(_texto("Li o comprovante."))],
+                                       [("pix.png", PNG_MINIMO, "image/png")])
+    assert resposta.status_code == 200
+    conteudo = falso.chamadas[0][-1]["content"]
+    tipos = [b["type"] for b in conteudo]
+    assert tipos == ["text", "image", "text"] and conteudo[0]["text"] == "[Anexo: pix.png]"
+    assert conteudo[1]["source"]["media_type"] == "image/png" and conteudo[2]["text"] == "veja o comprovante"
+    historico = auth_client.get(reverse("assistente:historico")).json()["mensagens"]
+    assert historico[0] == {"papel": "usuario", "texto": "veja o comprovante", "anexos": ["pix.png"]}
+
+
+def test_arquivo_disfarçado_e_recusado_pelo_conteudo(auth_client, monkeypatch):
+    resposta, _ = _enviar_arquivos(auth_client, monkeypatch, [], [("foto.png", b"isto nao e uma imagem", "image/png")])
+    assert resposta.status_code == 400 and "só aceito imagens" in resposta.json()["erro"]
+
+
+def test_texto_csv_vira_bloco_de_texto_e_limite_de_arquivos(auth_client, monkeypatch):
+    resposta, falso = _enviar_arquivos(auth_client, monkeypatch, [_resposta(_texto("ok"))],
+                                       [("lista.csv", ("nome;valor" + chr(10) + "Ana;10").encode(), "text/csv")])
+    assert resposta.status_code == 200 and "nome;valor" in falso.chamadas[0][-1]["content"][1]["text"]
+    muitos = [(f"a{i}.png", PNG_MINIMO, "image/png") for i in range(5)]
+    resposta, _ = _enviar_arquivos(auth_client, monkeypatch, [], muitos)
+    assert resposta.status_code == 400 and "no máximo" in resposta.json()["erro"].lower()
