@@ -119,7 +119,7 @@ def test_tela_cria_a_chave_e_so_entrega_o_instalador_dela(auth_client, operador,
     assert auth_client.post(reverse("assistente:instalador"), {"chave": chave_alheia}).status_code == 400
 
     depois = auth_client.get(reverse("assistente:desktop")).content.decode()
-    assert "Baixar o instalador" not in depois and "cp_" not in depois  # a chave não aparece de novo
+    assert 'name="chave"' not in depois and "cp_" not in depois  # a chave não aparece de novo (o botão passa a gerar uma nova)
 
 
 def test_tela_avisa_com_destaque_para_nunca_usar_sempre_permitir(auth_client):
@@ -165,3 +165,48 @@ def test_revogar_so_a_propria_chave(auth_client, operador, django_user_model):
 def test_baixar_o_conector(auth_client):
     resposta = auth_client.get(reverse("assistente:conector"))
     assert resposta.status_code == 200 and b"CELULARES_CHAVE" in resposta.content
+
+
+def test_andamento_fica_salvo_ao_recarregar_e_o_instalador_pode_ser_gerado_de_novo(auth_client, operador):
+    # 1) cria a chave, mas "fecha a página" sem baixar o instalador
+    auth_client.post(reverse("assistente:desktop"), {"nome": "Meu notebook"})
+    html = auth_client.get(reverse("assistente:desktop")).content.decode()
+    assert "lt-passo--feito" in html and "Chave criada" in html           # passo 1 continua feito após recarregar
+    assert "ainda não foi baixado" in html                                # passo 2 oferece baixar, sem refazer tudo
+    antigo = AcessoApi.objects.get()
+
+    # 2) baixa pelo botão salvo: troca a chave (a antiga é revogada) e marca o passo como feito
+    arquivo = auth_client.post(reverse("assistente:instalador_novo", args=[antigo.pk]))
+    assert arquivo.status_code == 200 and "Instalar-Claude-Desktop.cmd" in arquivo["Content-Disposition"]
+    antigo.refresh_from_db()
+    assert not antigo.ativo
+    novo = AcessoApi.objects.get(revogado_em__isnull=True)
+    assert novo.pk != antigo.pk and novo.nome == "Meu notebook" and novo.instalador_baixado_em is not None
+    assert f'set "CHAVE=' in arquivo.content.decode() and AcessoApi.por_chave(arquivo.content.decode().split('set "CHAVE=')[1].split('"')[0]) == novo
+
+    # 3) recarrega: passo 2 feito, só uma chave ativa
+    html = auth_client.get(reverse("assistente:desktop")).content.decode()
+    assert "Instalador baixado" in html and "Baixar o instalador de novo" in html
+    assert AcessoApi.objects.filter(revogado_em__isnull=True).count() == 1
+
+    # 4) o uso pelo Claude Desktop conclui o passo 3
+    chave = arquivo.content.decode().split('set "CHAVE=')[1].split('"')[0]
+    assert auth_client.get(reverse("assistente:api_ferramentas"), HTTP_AUTHORIZATION=f"Bearer {chave}").status_code == 200
+    assert "Claude Desktop conectado" in auth_client.get(reverse("assistente:desktop")).content.decode()
+
+    # 5) marcar as instruções coladas e ver "Tudo pronto"; desmarcar volta atrás
+    auth_client.post(reverse("assistente:instrucoes_coladas"), {"feito": "1"})
+    assert "Tudo pronto!" in auth_client.get(reverse("assistente:desktop")).content.decode()
+    auth_client.post(reverse("assistente:instrucoes_coladas"), {"feito": "0"})
+    assert "Tudo pronto!" not in auth_client.get(reverse("assistente:desktop")).content.decode()
+
+
+def test_renovar_so_a_propria_chave_e_a_marcacao_das_instrucoes_acompanha_a_nova(auth_client, operador, django_user_model):
+    outro = django_user_model.objects.create_user("outro4")
+    alheia = AcessoApi.criar(outro, "dele")[0]
+    assert auth_client.post(reverse("assistente:instalador_novo", args=[alheia.pk])).status_code == 404
+    propria = AcessoApi.criar(operador, "minha")[0]
+    auth_client.post(reverse("assistente:instrucoes_coladas"), {"feito": "1"})
+    auth_client.post(reverse("assistente:instalador_novo", args=[propria.pk]))
+    nova = AcessoApi.objects.get(usuario=operador, revogado_em__isnull=True)
+    assert nova.instrucoes_coladas_em is not None  # não precisa colar as instruções de novo

@@ -21,6 +21,8 @@ class AcessoApi(models.Model):
     final_da_chave = models.CharField(max_length=6, editable=False)
     criado_em = models.DateTimeField(auto_now_add=True)
     ultimo_uso = models.DateTimeField(null=True, blank=True)
+    instalador_baixado_em = models.DateTimeField(null=True, blank=True)  # passo 2 feito
+    instrucoes_coladas_em = models.DateTimeField(null=True, blank=True)  # passo 4 feito (marcado pela pessoa)
     revogado_em = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -47,6 +49,15 @@ class AcessoApi(models.Model):
         if not chave:
             return None
         return cls.objects.select_related("usuario").filter(chave_hash=_hash(chave), revogado_em__isnull=True, usuario__is_active=True).first()
+
+    def renovar(self) -> tuple["AcessoApi", str]:
+        """Troca esta chave por uma nova do mesmo computador (mesmo nome) e revoga esta, para não ficarem duas ativas.
+        O andamento das instruções do Projeto é herdado: elas não dependem da chave."""
+        novo, chave = AcessoApi.criar(self.usuario, self.nome)
+        novo.instrucoes_coladas_em = self.instrucoes_coladas_em
+        novo.save(update_fields=["instrucoes_coladas_em"])
+        self.revogar()
+        return novo, chave
 
     def revogar(self) -> None:
         self.revogado_em = timezone.now()
