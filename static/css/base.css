@@ -1611,4 +1611,5 @@ button.btn-mini { cursor: pointer; font-family: inherit; }
 .lt-lista__texto { flex: 1; min-width: 0; display: grid; gap: .1rem; }
 .lt-lista__texto span { font-size: .82rem; color: var(--ink-faint); }
 .lt-lista__vazio { color: var(--ink-faint); }
-.lt-manual { margin: .6rem 0 0; padding-left: 1.2rem; line-height: 1.6; max-width: 46rem; }
+.lt-manual { margin: .6rem 0 0; padding-left: 1.2rem; line-height: 1.6; max-width: 46rem; }.lt-form--outra { margin-top: .9rem; }
+.lt-form--outra input[type=text] { max-width: 26rem; }

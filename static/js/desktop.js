@@ -22,3 +22,12 @@
     });
   });
 })();
+
+// Depois de baixar o instalador, recarrega a página para o andamento salvo aparecer (o download não troca de página).
+(function () {
+  document.querySelectorAll("form[data-recarregar]").forEach(function (form) {
+    form.addEventListener("submit", function () {
+      window.setTimeout(function () { window.location.reload(); }, 1800);
+    });
+  });
+})();

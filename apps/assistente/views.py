@@ -122,10 +122,24 @@ class AcessoDesktopView(LoginRequiredMixin, View):
     def _contexto(self, request, chave):
         acessos = list(request.user.acessos_api.all())
         ativos = [a for a in acessos if a.ativo]
+        atual = ativos[0] if ativos else None  # a chave mais recente em uso
         usos = [a.ultimo_uso for a in ativos if a.ultimo_uso]
+        # Andamento guardado no banco: sobrevive a recarregar a página e a trocar de computador.
+        feitos = [
+            bool(atual),
+            bool(atual and (atual.instalador_baixado_em or atual.ultimo_uso)),
+            bool(atual and atual.ultimo_uso),
+            bool(atual and atual.instrucoes_coladas_em),
+        ]
+        primeiro_pendente = feitos.index(False) if False in feitos else None
+        passos = [
+            {"feito": f, "estado": "feito" if f else ("atual" if i == primeiro_pendente else "espera")}
+            for i, f in enumerate(feitos)
+        ]
         return {
-            "acessos": acessos, "chave": chave,
-            "tem_chave": bool(ativos), "ultimo_uso": max(usos) if usos else None,  # alguma chave já foi usada = conectado
+            "acessos": acessos, "chave": chave, "atual": atual, "passos": passos,
+            "tudo_pronto": primeiro_pendente is None,
+            "tem_chave": bool(ativos), "ultimo_uso": max(usos) if usos else None,
             "url": request.build_absolute_uri("/").rstrip("/"),
             "instrucoes": (CONECTOR / "instrucoes.md").read_text(encoding="utf-8"),
             "operacoes": list(OperacaoApi.objects.filter(usuario=request.user, grava=True)[:8]),
@@ -147,6 +161,16 @@ class ConectorDownloadView(LoginRequiredMixin, View):
         return resposta
 
 
+def _arquivo_do_instalador(request, chave: str) -> HttpResponse:
+    modelo = (CONECTOR / "instalador.cmd.modelo").read_text(encoding="utf-8")
+    texto = modelo.replace("@@URL@@", request.build_absolute_uri("/").rstrip("/")).replace("@@CHAVE@@", chave)
+    fim_de_linha = chr(13) + chr(10)  # o Windows espera CRLF nos arquivos .cmd
+    resposta = HttpResponse(fim_de_linha.join(texto.splitlines()) + fim_de_linha, content_type="application/octet-stream")
+    resposta["Content-Disposition"] = 'attachment; filename="Instalar-Claude-Desktop.cmd"'
+    resposta["Cache-Control"] = "no-store"
+    return resposta
+
+
 class InstaladorDownloadView(LoginRequiredMixin, View):
     """Baixa o instalador (.cmd) já com a chave da pessoa dentro. Só aceita uma chave que seja dela."""
 
@@ -155,9 +179,26 @@ class InstaladorDownloadView(LoginRequiredMixin, View):
         acesso = AcessoApi.por_chave(chave)
         if acesso is None or acesso.usuario_id != request.user.pk:
             return JsonResponse({"erro": "Chave inválida. Crie uma chave nova na tela."}, status=400)
-        modelo = (CONECTOR / "instalador.cmd.modelo").read_text(encoding="utf-8")
-        texto = modelo.replace("@@URL@@", request.build_absolute_uri("/").rstrip("/")).replace("@@CHAVE@@", chave)
-        resposta = HttpResponse("\r\n".join(texto.splitlines()) + "\r\n", content_type="application/octet-stream")
-        resposta["Content-Disposition"] = 'attachment; filename="Instalar-Claude-Desktop.cmd"'
-        resposta["Cache-Control"] = "no-store"
-        return resposta
+        acesso.instalador_baixado_em = timezone.now()
+        acesso.save(update_fields=["instalador_baixado_em"])
+        return _arquivo_do_instalador(request, chave)
+
+
+class RenovarInstaladorView(LoginRequiredMixin, View):
+    """Gera um instalador novo para um computador que já tem chave: cria uma chave nova e revoga a antiga."""
+
+    def post(self, request, pk):
+        antigo = get_object_or_404(AcessoApi, pk=pk, usuario=request.user, revogado_em__isnull=True)
+        novo, chave = antigo.renovar()
+        novo.instalador_baixado_em = timezone.now()
+        novo.save(update_fields=["instalador_baixado_em"])
+        return _arquivo_do_instalador(request, chave)
+
+
+class InstrucoesColadasView(LoginRequiredMixin, View):
+    """Marca (ou desmarca) que as instruções já foram coladas no Projeto do Claude Desktop."""
+
+    def post(self, request):
+        valor = timezone.now() if request.POST.get("feito") == "1" else None
+        request.user.acessos_api.filter(revogado_em__isnull=True).update(instrucoes_coladas_em=valor)
+        return redirect("assistente:desktop")
