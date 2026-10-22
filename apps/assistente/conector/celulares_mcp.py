@@ -34,7 +34,10 @@ def _chamar(caminho: str, corpo: dict | None = None) -> tuple[int, dict]:
     requisicao = urllib.request.Request(
         URL + caminho,
         data=json.dumps(corpo).encode() if corpo is not None else None,
-        headers={"Authorization": f"Bearer {CHAVE}", "Content-Type": "application/json", "User-Agent": "celulares-mcp"},
+        headers={
+            "Authorization": f"Bearer {CHAVE}", "Content-Type": "application/json", "User-Agent": "celulares-mcp",
+            **({"X-Teste": "1"} if os.environ.get("CELULARES_TESTE") == "1" else {}),  # teste do instalador: não conta como uso
+        },
         method="POST" if corpo is not None else "GET",
     )
     try:
