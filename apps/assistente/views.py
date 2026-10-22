@@ -53,6 +53,17 @@ class _ApiView(View):
         return super().dispatch(request, *args, **kwargs)
 
 
+class ArquivoApiView(_ApiView):
+    """GET dos dois arquivos que o instalador baixa (só quem tem chave válida)."""
+
+    ARQUIVOS = {"conector.py": "celulares_mcp.py", "instalador.py": "instalar_claude_desktop.py"}
+
+    def get(self, request, arquivo):
+        if arquivo not in self.ARQUIVOS:
+            return JsonResponse({"erro": "Arquivo desconhecido."}, status=404)
+        return HttpResponse((CONECTOR / self.ARQUIVOS[arquivo]).read_bytes(), content_type="text/x-python; charset=utf-8")
+
+
 class FerramentasApiView(_ApiView):
     """GET: lista as ferramentas (o conector monta o que o Claude vê a partir daqui)."""
 
@@ -129,4 +140,20 @@ class ConectorDownloadView(LoginRequiredMixin, View):
     def get(self, request):
         resposta = HttpResponse((CONECTOR / "celulares_mcp.py").read_bytes(), content_type="text/x-python; charset=utf-8")
         resposta["Content-Disposition"] = 'attachment; filename="celulares_mcp.py"'
+        return resposta
+
+
+class InstaladorDownloadView(LoginRequiredMixin, View):
+    """Baixa o instalador (.cmd) já com a chave da pessoa dentro. Só aceita uma chave que seja dela."""
+
+    def post(self, request):
+        chave = request.POST.get("chave", "").strip()
+        acesso = AcessoApi.por_chave(chave)
+        if acesso is None or acesso.usuario_id != request.user.pk:
+            return JsonResponse({"erro": "Chave inválida. Crie uma chave nova na tela."}, status=400)
+        modelo = (CONECTOR / "instalador.cmd.modelo").read_text(encoding="utf-8")
+        texto = modelo.replace("@@URL@@", request.build_absolute_uri("/").rstrip("/")).replace("@@CHAVE@@", chave)
+        resposta = HttpResponse("\r\n".join(texto.splitlines()) + "\r\n", content_type="application/octet-stream")
+        resposta["Content-Disposition"] = 'attachment; filename="Instalar-Claude-Desktop.cmd"'
+        resposta["Cache-Control"] = "no-store"
         return resposta

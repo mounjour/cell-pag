@@ -1561,3 +1561,19 @@ button.btn-mini { cursor: pointer; font-family: inherit; }
 .painel-vazio pre { overflow-x: auto; padding: .75rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: .8rem; }
 .painel-vazio ol { margin: 0; padding-left: 1.2rem; line-height: 1.6; }
 .painel-vazio ol li + li { margin-top: .4rem; }
+/* Claude Desktop: passo a passo */
+.desktop-passos { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: .75rem; }
+.desktop-passo { display: flex; gap: 1rem; padding: 1rem 1.1rem; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); }
+.desktop-passo--atual { border-color: var(--ok-ink); background: var(--ok-wash); box-shadow: var(--raise); }
+.desktop-passo--espera { opacity: .92; }
+.desktop-passo__numero { flex: none; display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--ink); color: var(--surface); font-weight: 700; }
+.desktop-passo--atual .desktop-passo__numero { background: var(--ok-ink); color: #fff; }
+.desktop-passo__corpo { min-width: 0; flex: 1; }
+.desktop-passo__corpo h2 { margin: 0 0 .35rem; font-size: 1.1rem; }
+.desktop-passo__corpo p { margin: 0 0 .6rem; line-height: 1.5; }
+.desktop-passo__form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.desktop-passo__form input[type=text] { flex: 1; min-width: 12rem; }
+.desktop-botao-grande { padding: .8rem 1.4rem; font-size: 1.05rem; }
+.desktop-passo__aviso { font-size: .85rem; color: var(--ink-soft); }
+.desktop-avancado { margin: 1rem 0 2rem; }
+.desktop-avancado summary { cursor: pointer; color: var(--ink-soft); font-size: .9rem; padding: .4rem 0; }
