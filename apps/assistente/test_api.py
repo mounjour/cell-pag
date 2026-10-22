@@ -129,11 +129,13 @@ def test_tela_avisa_com_destaque_para_nunca_usar_sempre_permitir(auth_client):
 
 
 def test_arquivos_do_instalador_so_com_chave_valida(client, chave):
+    assert AcessoApi.objects.get().ultimo_uso is None
     assert client.get("/assistente/api/conector.py").status_code == 401
     conector = client.get("/assistente/api/conector.py", HTTP_AUTHORIZATION=f"Bearer {chave}")
     instalador = client.get("/assistente/api/instalador.py", HTTP_AUTHORIZATION=f"Bearer {chave}")
     assert conector.status_code == 200 and b"CELULARES_CHAVE" in conector.content
     assert instalador.status_code == 200 and b"def mesclar" in instalador.content
+    assert AcessoApi.objects.get().ultimo_uso is None  # baixar o instalador não conta como Claude Desktop conectado
 
 
 def test_instalador_mescla_a_configuracao_sem_apagar_o_que_ja_existe():
@@ -210,3 +212,13 @@ def test_renovar_so_a_propria_chave_e_a_marcacao_das_instrucoes_acompanha_a_nova
     auth_client.post(reverse("assistente:instalador_novo", args=[propria.pk]))
     nova = AcessoApi.objects.get(usuario=operador, revogado_em__isnull=True)
     assert nova.instrucoes_coladas_em is not None  # não precisa colar as instruções de novo
+
+
+def test_chamada_de_teste_do_instalador_nao_conta_como_claude_conectado(client, chave):
+    acesso = AcessoApi.objects.get()
+    ok = client.get(reverse("assistente:api_ferramentas"), HTTP_AUTHORIZATION=f"Bearer {chave}", HTTP_X_TESTE="1")
+    acesso.refresh_from_db()
+    assert ok.status_code == 200 and acesso.ultimo_uso is None
+    client.get(reverse("assistente:api_ferramentas"), HTTP_AUTHORIZATION=f"Bearer {chave}")
+    acesso.refresh_from_db()
+    assert acesso.ultimo_uso is not None

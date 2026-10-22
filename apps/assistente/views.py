@@ -41,6 +41,8 @@ def _dentro_do_limite(acesso: AcessoApi) -> bool:
 class _ApiView(View):
     """Base: exige a chave, aplica o limite e marca o último uso."""
 
+    marca_uso = True  # baixar arquivos do instalador não é o Claude Desktop usando o sistema
+
     def dispatch(self, request, *args, **kwargs):
         acesso = _acesso_da_requisicao(request)
         if acesso is None:
@@ -48,8 +50,9 @@ class _ApiView(View):
         if not _dentro_do_limite(acesso):
             return JsonResponse({"erro": "Muitas chamadas na última hora. Tente de novo daqui a pouco."}, status=429)
         request.acesso = acesso
-        acesso.ultimo_uso = timezone.now()
-        acesso.save(update_fields=["ultimo_uso"])
+        if self.marca_uso and request.headers.get("X-Teste") != "1":  # instalador e testes não contam como "Claude Desktop conectado"
+            acesso.ultimo_uso = timezone.now()
+            acesso.save(update_fields=["ultimo_uso"])
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -57,6 +60,7 @@ class ArquivoApiView(_ApiView):
     """GET dos dois arquivos que o instalador baixa (só quem tem chave válida)."""
 
     ARQUIVOS = {"conector.py": "celulares_mcp.py", "instalador.py": "instalar_claude_desktop.py"}
+    marca_uso = False
 
     def get(self, request, arquivo):
         if arquivo not in self.ARQUIVOS:

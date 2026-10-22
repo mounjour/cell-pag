@@ -85,6 +85,15 @@
         <p class="lt-detalhe">O Claude Desktop já falou com o sistema (último uso em {{ ultimo_uso|date:"d/m/Y H:i" }}).</p>
       {% else %}
         <p class="lt-detalhe">Feche por completo (se ficar perto do relógio, botão direito e <strong>Sair</strong>) e abra de novo. Na caixa de mensagem aparece um ícone de ferramentas com o nome <strong>celulares</strong>. Quando ele conectar, este passo vira verde sozinho (recarregue a página).</p>
+        <details class="lt-instrucoes">
+          <summary>Fechei, abri e nada aconteceu</summary>
+          <ol class="lt-manual">
+            <li>Na janela preta do instalador, a última parte deve dizer <strong>“OK: o conector falou com o sistema”</strong>. Se disse “FALHOU”, tire uma foto da janela e mande para quem cuida do sistema.</li>
+            <li>Confira que o Claude Desktop foi fechado <strong>de verdade</strong>: ele costuma ficar escondido perto do relógio (setinha ^ ao lado dele). Clique com o botão direito no ícone dele e escolha <strong>Sair</strong>; depois abra de novo.</li>
+            <li>Ele só aparece “conectado” aqui depois que você <strong>abrir uma conversa nova</strong> no Claude Desktop (é nela que ele carrega as ferramentas). Abra uma conversa e recarregue esta página.</li>
+            <li>Se continuar sem o ícone “celulares”, o Claude Desktop guarda um registro do que deu errado na pasta <code>%APPDATA%\Claude\logs</code> (arquivo <code>mcp-server-celulares.log</code>). Mande o final desse arquivo para quem cuida do sistema.</li>
+          </ol>
+        </details>
       {% endif %}
     </div>
   </li>
@@ -113,6 +122,19 @@
     </div>
   </li>
 </ol>
+
+<section class="lt-secao">
+  <h2>Como usar no dia a dia: escolher a conversa</h2>
+  <p class="lt-detalhe">O sistema funciona em <strong>qualquer conversa</strong> do Claude Desktop onde o conector “celulares” estiver ligado. Mas é <strong>dentro do Projeto</strong> que o Claude segue as instruções da empresa. Por isso, sempre assim:</p>
+  <ol class="lt-manual">
+    <li>Abra o Claude Desktop e clique em <strong>Projetos</strong> (menu do lado esquerdo).</li>
+    <li>Clique no projeto que você criou no passo 4 (por exemplo, “Financeiro LA Iphones”).</li>
+    <li>Clique em <strong>Nova conversa</strong> <u>dentro</u> do projeto. Cada conversa ali já nasce com as instruções. Para continuar uma conversa antiga, abra-a pela lista de conversas do próprio projeto.</li>
+    <li>Perto da caixa de mensagem, confira que <strong>celulares</strong> está ligado no ícone de ferramentas.</li>
+    <li>Escreva o pedido, por exemplo <em>“quem está atrasado hoje?”</em>. Quando o Claude for registrar algo, clique em <strong>Permitir uma vez</strong>.</li>
+  </ol>
+  <p class="lt-nota">Os nomes dos menus podem variar um pouco conforme a versão do Claude Desktop. Conversas abertas <strong>fora</strong> do Projeto não seguem as instruções, então evite usá-las para o financeiro.</p>
+</section>
 
 <section class="lt-secao">
   <h2>Suas chaves</h2>

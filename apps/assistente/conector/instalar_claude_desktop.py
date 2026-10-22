@@ -55,6 +55,29 @@ def baixar(url: str, chave: str, destino: Path) -> None:
         destino.write_bytes(resposta.read())
 
 
+def testar_conector(script: Path, url: str, chave: str) -> tuple[bool, str]:
+    """Roda o conector uma vez no modo de teste (com o mesmo Python da configuração) e confere a ligação com o sistema."""
+    ambiente = {**os.environ, "CELULARES_URL": url, "CELULARES_CHAVE": chave, "CELULARES_TESTE": "1"}
+    try:
+        resultado = subprocess.run([sys.executable, str(script), "--testar"], env=ambiente, capture_output=True, text=True, timeout=90)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return False, f"não consegui rodar o conector ({exc})"
+    linhas = [l for l in resultado.stdout.splitlines() if l.startswith(("le ", "grava "))]
+    if resultado.returncode == 0 and linhas:
+        return True, f"o conector falou com o sistema e encontrou {len(linhas)} ferramentas."
+    erro = (resultado.stderr or resultado.stdout).strip().splitlines()
+    return False, (erro[-1] if erro else "sem resposta do conector")
+
+
+def claude_desktop_aberto() -> bool:
+    """O Claude Desktop só lê a configuração ao abrir; avisar se ele já está rodando."""
+    try:
+        saida = subprocess.run(["tasklist", "/FI", "IMAGENAME eq Claude.exe"], capture_output=True, text=True, timeout=15).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return "Claude.exe" in saida
+
+
 def garantir_mcp() -> None:
     try:
         import mcp  # noqa: F401
@@ -94,9 +117,24 @@ def principal(url: str, chave: str) -> int:
     if not escritos:
         print("Não consegui ajustar a configuração do Claude Desktop. Avise quem cuida do sistema.")
         return 1
+    for caminho in escritos:
+        print(f"Configuração gravada em: {caminho}")
+
     print()
+    print("Testando a ligação com o sistema...")
+    ok, detalhe = testar_conector(script, url, chave)
+    print(("OK: " if ok else "FALHOU: ") + detalhe)
+    if not ok:
+        print("A instalação não ficou completa. Mande uma foto desta janela para quem cuida do sistema.")
+        return 1
+
+    print()
+    if claude_desktop_aberto():
+        print("ATENÇÃO: o Claude Desktop está ABERTO agora. Ele só lê a configuração nova depois de fechado.")
     print("Pronto! Falta só uma coisa: FECHE O CLAUDE DESKTOP POR COMPLETO e abra de novo.")
     print("(Se ele ficar na bandeja perto do relógio, clique com o botão direito e escolha Sair.)")
+    print("Se depois de abrir o ícone de ferramentas não mostrar 'celulares', veja o arquivo de registro em:")
+    print(f"  {Path(os.environ.get('APPDATA', '')) / 'Claude' / 'logs'}  (arquivo mcp-server-celulares.log)")
     return 0
 
 
