@@ -41,7 +41,7 @@
       {% else %}
         <p class="lt-detalhe">A chave é a sua “identidade” no sistema: tudo o que o Claude gravar fica no seu nome.</p>
         <form method="post" class="lt-form">{% csrf_token %}
-          <input type="text" name="nome" maxlength="60" value="Meu computador" aria-label="Nome da chave">
+          <input type="text" name="nome" maxlength="60" value="{{ request.user.nome_curto }}" aria-label="Nome da chave">
           <button type="submit" class="btn">{% include "_icone.html" with nome="adicionar" %}Criar minha chave</button>
         </form>
       {% endif %}
