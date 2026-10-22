@@ -8,6 +8,19 @@
 
 <p class="note">Aqui você liga o <strong>Claude Desktop</strong> ao sistema. Depois disso, em uma conversa do Claude você pede coisas como <em>“Roberto pagou 157,50 no Pix hoje”</em> ou <em>“quem está atrasado?”</em>, e ele consulta e registra no sistema. <strong>Antes de gravar, o Claude sempre pergunta se pode</strong>, e você clica em Permitir.</p>
 
+<aside class="desktop-alerta" role="note" aria-label="Aviso importante">
+  <span class="desktop-alerta__icone">{% include "_icone.html" with nome="alerta" %}</span>
+  <div class="desktop-alerta__corpo">
+    <h2>Muito importante: sempre “Permitir uma vez”</h2>
+    <p>Quando o Claude for <strong>registrar</strong> algo (um pagamento, um bloqueio…), o Claude Desktop abre uma pergunta com botões. Clique em <strong>Permitir uma vez</strong>, todas as vezes.</p>
+    <div class="desktop-alerta__botoes">
+      <span class="desktop-alerta__botao desktop-alerta__botao--certo">{% include "_icone.html" with nome="salvar" %}Permitir uma vez<small>use este</small></span>
+      <span class="desktop-alerta__botao desktop-alerta__botao--errado">{% include "_icone.html" with nome="cancelar" %}Sempre permitir<small>nunca use</small></span>
+    </div>
+    <p>Se você clicar em “Sempre permitir”, o Claude passa a registrar <strong>sem perguntar</strong> e você perde a chance de conferir antes. Se clicar sem querer, <strong>revogue a sua chave</strong> aqui embaixo (“Suas chaves”) e crie outra.</p>
+  </div>
+</aside>
+
 <ol class="desktop-passos">
   <li class="desktop-passo{% if not chave %} desktop-passo--atual{% endif %}">
     <span class="desktop-passo__numero">1</span>
@@ -59,9 +72,9 @@
   <li class="desktop-passo desktop-passo--espera">
     <span class="desktop-passo__numero">5</span>
     <div class="desktop-passo__corpo">
-      <h2>Na primeira gravação, escolha “Permitir uma vez”</h2>
-      <p>Quando o Claude for <strong>registrar</strong> algo (um pagamento, por exemplo), o Claude Desktop mostra o que ele vai fazer e pergunta se permite. Leia e escolha <strong>Permitir uma vez</strong>.</p>
-      <p class="desktop-passo__aviso"><strong>Nunca escolha “Sempre permitir”</strong> nas ações de registrar: é essa pergunta que garante que nada é gravado sem você ver.</p>
+      <h2>Em toda gravação: “Permitir uma vez”</h2>
+      <p>O Claude Desktop mostra o que ele vai registrar. Leia e clique em <strong>Permitir uma vez</strong>.</p>
+      <p class="desktop-passo__alerta"><strong>Nunca clique em “Sempre permitir”.</strong> É essa pergunta que garante que nada é gravado sem você ver. O Claude também vai te lembrar disso antes de cada gravação.</p>
     </div>
   </li>
 </ol>
