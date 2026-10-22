@@ -122,6 +122,12 @@ def test_tela_cria_a_chave_e_so_entrega_o_instalador_dela(auth_client, operador,
     assert "Baixar o instalador" not in depois and "cp_" not in depois  # a chave não aparece de novo
 
 
+def test_tela_avisa_com_destaque_para_nunca_usar_sempre_permitir(auth_client):
+    html = auth_client.get(reverse("assistente:desktop")).content.decode()
+    assert "desktop-alerta" in html and "Permitir uma vez" in html and "Sempre permitir" in html
+    assert "revogue a sua chave" in html
+
+
 def test_arquivos_do_instalador_so_com_chave_valida(client, chave):
     assert client.get("/assistente/api/conector.py").status_code == 401
     conector = client.get("/assistente/api/conector.py", HTTP_AUTHORIZATION=f"Bearer {chave}")

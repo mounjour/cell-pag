@@ -1577,3 +1577,20 @@ button.btn-mini { cursor: pointer; font-family: inherit; }
 .desktop-passo__aviso { font-size: .85rem; color: var(--ink-soft); }
 .desktop-avancado { margin: 1rem 0 2rem; }
 .desktop-avancado summary { cursor: pointer; color: var(--ink-soft); font-size: .9rem; padding: .4rem 0; }
+
+/* Claude Desktop: aviso "Permitir uma vez" bem visível */
+.desktop-alerta { display: flex; gap: 1rem; margin: 1rem 0; padding: 1.1rem 1.25rem; border: 2px solid var(--critical-ink); border-radius: 14px; background: var(--critical-wash); }
+.desktop-alerta__icone { flex: none; display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: var(--critical-ink); color: #fff; }
+.desktop-alerta__icone .icone { width: 1.5rem; height: 1.5rem; color: #fff !important; }
+.desktop-alerta__corpo { min-width: 0; }
+.desktop-alerta__corpo h2 { margin: 0 0 .4rem; font-size: 1.25rem; color: var(--critical-ink); }
+.desktop-alerta__corpo p { margin: 0 0 .6rem; font-size: 1rem; line-height: 1.5; color: var(--ink); }
+.desktop-alerta__botoes { display: flex; flex-wrap: wrap; gap: .75rem; margin: .5rem 0 .8rem; }
+.desktop-alerta__botao { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1rem; border-radius: var(--radius); font-weight: 700; font-size: 1rem; }
+.desktop-alerta__botao small { margin-left: .3rem; padding: .1rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.desktop-alerta__botao .icone { width: 1.2rem; height: 1.2rem; color: inherit !important; }
+.desktop-alerta__botao--certo { background: var(--ok-ink); color: #fff; }
+.desktop-alerta__botao--certo small { background: #fff; color: var(--ok-ink); }
+.desktop-alerta__botao--errado { background: var(--surface); color: var(--critical-ink); border: 2px solid var(--critical-ink); }
+.desktop-alerta__botao--errado small { background: var(--critical-ink); color: #fff; }
+.desktop-passo__alerta { padding: .6rem .8rem; border-left: 4px solid var(--critical-ink); border-radius: var(--radius-sm); background: var(--critical-wash); color: var(--ink) !important; font-size: .95rem; }
