@@ -6,7 +6,13 @@
 {% url 'pagamentos:conexoes' as volta_url %}{% include "_voltar.html" with url=volta_url %}
 <h1>{% include "_icone.html" with nome="assistente" %}Claude Desktop</h1>
 
-<p class="note">Aqui você liga o <strong>Claude Desktop</strong> ao sistema. Depois disso, em uma conversa do Claude você pede coisas como <em>“Roberto pagou 157,50 no Pix hoje”</em> ou <em>“quem está atrasado?”</em>, e ele consulta e registra no sistema. <strong>Antes de gravar, o Claude sempre pergunta se pode</strong>, e você clica em Permitir.</p>
+<p class="lt-estado">
+  {% if ultimo_uso %}<span class="pill pago">Conectado</span> último uso em {{ ultimo_uso|date:"d/m/Y H:i" }}
+  {% elif tem_chave %}<span class="pill aberto">Chave criada</span> ainda não usada pelo Claude Desktop
+  {% else %}<span class="pill aberto">Ainda não conectado</span>{% endif %}
+</p>
+
+<p class="note">Aqui você liga o <strong>Claude Desktop</strong> ao sistema. Depois, em uma conversa do Claude você pede coisas como <em>“Roberto pagou 157,50 no Pix hoje”</em> ou <em>“quem está atrasado?”</em>, e ele consulta e registra no sistema. <strong>Antes de gravar, o Claude sempre pergunta se pode.</strong></p>
 
 <aside class="desktop-alerta" role="note" aria-label="Aviso importante">
   <span class="desktop-alerta__icone">{% include "_icone.html" with nome="alerta" %}</span>
@@ -17,106 +23,106 @@
       <span class="desktop-alerta__botao desktop-alerta__botao--certo">{% include "_icone.html" with nome="salvar" %}Permitir uma vez<small>use este</small></span>
       <span class="desktop-alerta__botao desktop-alerta__botao--errado">{% include "_icone.html" with nome="cancelar" %}Sempre permitir<small>nunca use</small></span>
     </div>
-    <p>Se você clicar em “Sempre permitir”, o Claude passa a registrar <strong>sem perguntar</strong> e você perde a chance de conferir antes. Se clicar sem querer, <strong>revogue a sua chave</strong> aqui embaixo (“Suas chaves”) e crie outra.</p>
+    <p>Se você clicar em “Sempre permitir”, o Claude passa a registrar <strong>sem perguntar</strong> e você perde a chance de conferir antes. Se clicar sem querer, <strong>revogue a sua chave</strong> mais abaixo (“Suas chaves”) e crie outra.</p>
   </div>
 </aside>
 
-<ol class="desktop-passos">
-  <li class="desktop-passo{% if not chave %} desktop-passo--atual{% endif %}">
-    <span class="desktop-passo__numero">1</span>
-    <div class="desktop-passo__corpo">
-      <h2>Crie a sua chave</h2>
-      <p>A chave é a sua “identidade” no sistema. Tudo o que o Claude gravar fica no seu nome.</p>
-      <form method="post" class="desktop-passo__form">{% csrf_token %}
-        <input type="text" name="nome" maxlength="60" value="Meu computador" aria-label="Nome da chave">
-        <button type="submit" class="btn">{% include "_icone.html" with nome="adicionar" %}Criar minha chave</button>
-      </form>
-    </div>
-  </li>
-
-  <li class="desktop-passo{% if chave %} desktop-passo--atual{% else %} desktop-passo--espera{% endif %}">
-    <span class="desktop-passo__numero">2</span>
-    <div class="desktop-passo__corpo">
-      <h2>Baixe e abra o instalador</h2>
+<ol class="linha-tempo">
+  <li class="lt-passo {% if tem_chave or chave %}lt-passo--feito{% else %}lt-passo--atual{% endif %}">
+    <span class="lt-marcador">{% if tem_chave or chave %}{% include "_icone.html" with nome="salvar" %}{% else %}1{% endif %}</span>
+    <div class="lt-corpo">
+      <h2>{% if tem_chave or chave %}Chave criada{% else %}Crie a sua chave{% endif %}</h2>
       {% if chave %}
-        <p>Clique no botão abaixo. Quando o arquivo <strong>Instalar-Claude-Desktop.cmd</strong> terminar de baixar, <strong>dê dois cliques nele</strong>. Uma janela preta vai aparecer, fazer tudo sozinha e avisar quando terminar.</p>
-        <form method="post" action="{% url 'assistente:instalador' %}" class="desktop-passo__form">{% csrf_token %}
-          <input type="hidden" name="chave" value="{{ chave }}">
-          <button type="submit" class="btn desktop-botao-grande">{% include "_icone.html" with nome="baixar" %}Baixar o instalador</button>
-        </form>
-        <p class="desktop-passo__aviso">O arquivo tem a sua chave dentro e só funciona no seu computador. Depois de usar, pode apagá-lo. Esta página só mostra o botão agora: se fechar sem baixar, crie outra chave.</p>
+        <p class="lt-detalhe">Pronto: a chave foi criada e já vai dentro do instalador abaixo.</p>
+      {% elif tem_chave %}
+        <p class="lt-detalhe">Você já tem uma chave. Para instalar em <strong>outro computador</strong>, crie outra:</p>
       {% else %}
-        <p>Depois de criar a chave, o botão para baixar o instalador aparece aqui.</p>
+        <p class="lt-detalhe">A chave é a sua “identidade” no sistema: tudo o que o Claude gravar fica no seu nome.</p>
+      {% endif %}
+      {% if not chave %}
+        <form method="post" class="lt-form">{% csrf_token %}
+          <input type="text" name="nome" maxlength="60" value="Meu computador" aria-label="Nome da chave">
+          <button type="submit" class="btn{% if tem_chave %} secondary{% endif %}">{% include "_icone.html" with nome="adicionar" %}Criar {% if tem_chave %}outra chave{% else %}minha chave{% endif %}</button>
+        </form>
       {% endif %}
     </div>
   </li>
 
-  <li class="desktop-passo desktop-passo--espera">
-    <span class="desktop-passo__numero">3</span>
-    <div class="desktop-passo__corpo">
+  <li class="lt-passo {% if chave %}lt-passo--atual{% elif ultimo_uso %}lt-passo--feito{% else %}lt-passo--espera{% endif %}">
+    <span class="lt-marcador">{% if ultimo_uso and not chave %}{% include "_icone.html" with nome="salvar" %}{% else %}2{% endif %}</span>
+    <div class="lt-corpo">
+      <h2>Baixe e abra o instalador</h2>
+      {% if chave %}
+        <p class="lt-detalhe">Clique no botão. Quando o arquivo <strong>Instalar-Claude-Desktop.cmd</strong> terminar de baixar, <strong>dê dois cliques nele</strong>. Uma janela preta faz tudo sozinha e avisa quando terminar.</p>
+        <form method="post" action="{% url 'assistente:instalador' %}" class="lt-form">{% csrf_token %}
+          <input type="hidden" name="chave" value="{{ chave }}">
+          <button type="submit" class="btn desktop-botao-grande">{% include "_icone.html" with nome="baixar" %}Baixar o instalador</button>
+        </form>
+        <p class="lt-nota">O arquivo tem a sua chave dentro e só funciona no seu computador; depois de usar, pode apagá-lo. Este botão só aparece agora: se fechar a página sem baixar, crie outra chave.</p>
+      {% else %}
+        <p class="lt-detalhe">O botão para baixar o instalador aparece aqui logo depois de você criar a chave.</p>
+      {% endif %}
+    </div>
+  </li>
+
+  <li class="lt-passo {% if ultimo_uso %}lt-passo--feito{% else %}lt-passo--espera{% endif %}">
+    <span class="lt-marcador">{% if ultimo_uso %}{% include "_icone.html" with nome="salvar" %}{% else %}3{% endif %}</span>
+    <div class="lt-corpo">
       <h2>Feche e abra o Claude Desktop</h2>
-      <p>Feche o Claude Desktop <strong>por completo</strong> (se ele ficar perto do relógio, clique com o botão direito nele e escolha <strong>Sair</strong>) e abra de novo. Na caixa de mensagem aparece um ícone de ferramentas com o nome <strong>celulares</strong>.</p>
+      <p class="lt-detalhe">Feche por completo (se ficar perto do relógio, botão direito e <strong>Sair</strong>) e abra de novo. Na caixa de mensagem aparece um ícone de ferramentas com o nome <strong>celulares</strong>.</p>
     </div>
   </li>
 
-  <li class="desktop-passo desktop-passo--espera">
-    <span class="desktop-passo__numero">4</span>
-    <div class="desktop-passo__corpo">
+  <li class="lt-passo lt-passo--espera">
+    <span class="lt-marcador">4</span>
+    <div class="lt-corpo">
       <h2>Crie um Projeto com as instruções</h2>
-      <p>No Claude Desktop, crie um <strong>Projeto</strong> (por exemplo, “Financeiro LA Iphones”) e cole o texto abaixo nas instruções do Projeto. Converse sempre dentro dele.</p>
+      <p class="lt-detalhe">No Claude Desktop, crie um <strong>Projeto</strong> (por exemplo, “Financeiro LA Iphones”), cole o texto abaixo nas instruções do Projeto e converse sempre dentro dele.</p>
       <button type="button" class="btn secondary" data-copiar="#instrucoes-projeto">{% include "_icone.html" with nome="copiar" %}Copiar as instruções</button>
-      <pre class="assistente-desktop__instrucoes" id="instrucoes-projeto">{{ instrucoes }}</pre>
-    </div>
-  </li>
-
-  <li class="desktop-passo desktop-passo--espera">
-    <span class="desktop-passo__numero">5</span>
-    <div class="desktop-passo__corpo">
-      <h2>Em toda gravação: “Permitir uma vez”</h2>
-      <p>O Claude Desktop mostra o que ele vai registrar. Leia e clique em <strong>Permitir uma vez</strong>.</p>
-      <p class="desktop-passo__alerta"><strong>Nunca clique em “Sempre permitir”.</strong> É essa pergunta que garante que nada é gravado sem você ver. O Claude também vai te lembrar disso antes de cada gravação.</p>
+      <details class="lt-instrucoes">
+        <summary>Ver o texto das instruções</summary>
+        <pre id="instrucoes-projeto">{{ instrucoes }}</pre>
+      </details>
     </div>
   </li>
 </ol>
 
-<section class="proximas-lista painel-lista">
-  <header class="proximas-dia__topo"><h2>Suas chaves</h2></header>
-  {% for a in acessos %}
-    <div class="proximas-item proximas-item--leve">
-      <div class="proximas-item__quem">
-        <span class="proximas-item__cliente">{{ a.nome }}</span>
-        <span class="proximas-item__detalhe">termina em …{{ a.final_da_chave }} · criada em {{ a.criado_em|date:"d/m/Y" }}{% if a.ultimo_uso %} · último uso {{ a.ultimo_uso|date:"d/m H:i" }}{% else %} · ainda não usada{% endif %}</span>
-      </div>
-      <div class="proximas-item__selos">{% if a.ativo %}<span class="pill pago">ativa</span>{% else %}<span class="pill cancelado">revogada</span>{% endif %}</div>
-      <span></span>
-      <div class="proximas-item__acoes">
-        {% if a.ativo %}<form method="post" action="{% url 'assistente:revogar' a.pk %}" data-confirmar="Revogar esta chave? O Claude Desktop que a usa deixa de funcionar.">{% csrf_token %}<button type="submit" class="btn-mini">{% include "_icone.html" with nome="cancelar" %}Revogar</button></form>{% endif %}
-      </div>
-    </div>
-  {% empty %}<p class="empty painel-vazio">Você ainda não criou nenhuma chave.</p>{% endfor %}
+<section class="lt-secao">
+  <h2>Suas chaves</h2>
+  <ul class="lt-lista">
+    {% for a in acessos %}
+      <li>
+        <div class="lt-lista__texto">
+          <strong>{{ a.nome }}</strong>
+          <span>termina em …{{ a.final_da_chave }} · criada em {{ a.criado_em|date:"d/m/Y" }}{% if a.ultimo_uso %} · último uso {{ a.ultimo_uso|date:"d/m H:i" }}{% else %} · ainda não usada{% endif %}</span>
+        </div>
+        {% if a.ativo %}<span class="pill pago">ativa</span>
+          <form method="post" action="{% url 'assistente:revogar' a.pk %}" data-confirmar="Revogar esta chave? O Claude Desktop que a usa deixa de funcionar.">{% csrf_token %}<button type="submit" class="btn-mini">{% include "_icone.html" with nome="cancelar" %}Revogar</button></form>
+        {% else %}<span class="pill cancelado">revogada</span>{% endif %}
+      </li>
+    {% empty %}<li class="lt-lista__vazio">Você ainda não criou nenhuma chave.</li>{% endfor %}
+  </ul>
 </section>
 
-<section class="proximas-lista painel-lista">
-  <header class="proximas-dia__topo"><h2>O que o Claude gravou por você</h2></header>
-  {% for o in operacoes %}
-    <div class="proximas-item proximas-item--leve">
-      <div class="proximas-item__quem"><span class="proximas-item__cliente">{{ o.resumo|default:o.ferramenta }}</span>
-        <span class="proximas-item__detalhe">{{ o.criada_em|date:"d/m/Y H:i" }}</span></div>
-      <div class="proximas-item__selos">{% if o.ok %}<span class="pill pago">gravado</span>{% else %}<span class="pill inadimplente">recusado</span>{% endif %}</div>
-      <span></span><span></span>
-    </div>
-  {% empty %}<p class="empty painel-vazio">Ainda não houve registros feitos pelo Claude Desktop.</p>{% endfor %}
+<section class="lt-secao">
+  <h2>O que o Claude gravou por você</h2>
+  <ul class="lt-lista">
+    {% for o in operacoes %}
+      <li>
+        <div class="lt-lista__texto"><strong>{{ o.resumo|default:o.ferramenta }}</strong><span>{{ o.criada_em|date:"d/m/Y H:i" }}</span></div>
+        {% if o.ok %}<span class="pill pago">gravado</span>{% else %}<span class="pill inadimplente">recusado</span>{% endif %}
+      </li>
+    {% empty %}<li class="lt-lista__vazio">Ainda não houve registros feitos pelo Claude Desktop.</li>{% endfor %}
+  </ul>
 </section>
 
 <details class="desktop-avancado">
   <summary>Não funcionou? Instalação manual (para quem entende de computador)</summary>
-  <div class="painel-vazio">
-    <ol>
-      <li><a href="{% url 'assistente:conector' %}">Baixe o conector</a> (<code>celulares_mcp.py</code>) e guarde numa pasta sua.</li>
-      <li>No Prompt de Comando: <code>pip install "mcp&lt;2"</code> (Python 3.10 ou mais novo).</li>
-      <li>No Claude Desktop: Configurações → Desenvolvedor → Editar configuração. Adicione em <code>mcpServers</code> um item chamado <code>celulares</code> com <code>command</code> igual ao caminho completo do <code>python.exe</code> (descubra com <code>where python</code>), <code>args</code> com o caminho do arquivo e <code>env</code> com <code>CELULARES_URL</code> = <code>{{ url }}</code> e <code>CELULARES_CHAVE</code> = a sua chave.</li>
-    </ol>
-  </div>
+  <ol class="lt-manual">
+    <li><a href="{% url 'assistente:conector' %}">Baixe o conector</a> (<code>celulares_mcp.py</code>) e guarde numa pasta sua.</li>
+    <li>No Prompt de Comando: <code>pip install "mcp&lt;2"</code> (Python 3.10 ou mais novo).</li>
+    <li>No Claude Desktop: Configurações → Desenvolvedor → Editar configuração. Adicione em <code>mcpServers</code> um item chamado <code>celulares</code> com <code>command</code> igual ao caminho completo do <code>python.exe</code> (descubra com <code>where python</code>), <code>args</code> com o caminho do arquivo e <code>env</code> com <code>CELULARES_URL</code> = <code>{{ url }}</code> e <code>CELULARES_CHAVE</code> = a sua chave.</li>
+  </ol>
 </details>
 {% endblock %}
 
