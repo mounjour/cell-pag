@@ -99,13 +99,51 @@ def test_ferramenta_desconhecida_e_pedido_invalido(client, chave):
     assert ruim.status_code == 400
 
 
-def test_tela_cria_a_chave_e_mostra_so_uma_vez(auth_client, operador):
+def test_tela_cria_a_chave_e_so_entrega_o_instalador_dela(auth_client, operador, django_user_model):
     resposta = auth_client.post(reverse("assistente:desktop"), {"nome": "Notebook da Yslane"})
     html = resposta.content.decode()
-    chave = AcessoApi.objects.get().final_da_chave
-    assert "cp_" in html and "CELULARES_CHAVE" in html and resposta["Cache-Control"] == "no-store"
+    assert "Baixar o instalador" in html and resposta["Cache-Control"] == "no-store"
+    acesso = AcessoApi.objects.get()
+    chave_na_pagina = html.split('name="chave" value="')[1].split('"')[0]
+    assert chave_na_pagina.startswith("cp_") and AcessoApi.por_chave(chave_na_pagina) == acesso
+
+    arquivo = auth_client.post(reverse("assistente:instalador"), {"chave": chave_na_pagina})
+    texto = arquivo.content.decode()
+    assert arquivo.status_code == 200 and "Instalar-Claude-Desktop.cmd" in arquivo["Content-Disposition"]
+    assert f'set "CHAVE={chave_na_pagina}"' in texto and 'set "URL=http' in texto and chr(13) + chr(10) in texto
+    assert auth_client.post(reverse("assistente:instalador"), {"chave": "cp_inventada"}).status_code == 400
+
+    # a chave de outra pessoa não vira instalador para quem não é o dono
+    outro = django_user_model.objects.create_user("outro3")
+    chave_alheia = AcessoApi.criar(outro, "dele")[1]
+    assert auth_client.post(reverse("assistente:instalador"), {"chave": chave_alheia}).status_code == 400
+
     depois = auth_client.get(reverse("assistente:desktop")).content.decode()
-    assert "CELULARES_CHAVE" not in depois and f"…{chave}" in depois
+    assert "Baixar o instalador" not in depois and "cp_" not in depois  # a chave não aparece de novo
+
+
+def test_arquivos_do_instalador_so_com_chave_valida(client, chave):
+    assert client.get("/assistente/api/conector.py").status_code == 401
+    conector = client.get("/assistente/api/conector.py", HTTP_AUTHORIZATION=f"Bearer {chave}")
+    instalador = client.get("/assistente/api/instalador.py", HTTP_AUTHORIZATION=f"Bearer {chave}")
+    assert conector.status_code == 200 and b"CELULARES_CHAVE" in conector.content
+    assert instalador.status_code == 200 and b"def mesclar" in instalador.content
+
+
+def test_instalador_mescla_a_configuracao_sem_apagar_o_que_ja_existe():
+    import importlib.util
+    from pathlib import Path
+
+    caminho = Path(__file__).parent / "conector" / "instalar_claude_desktop.py"
+    spec = importlib.util.spec_from_file_location("instalar_claude_desktop", caminho)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    antes = {"theme": "dark", "mcpServers": {"outro": {"command": "x"}}}
+    depois = modulo.mesclar(antes, "python.exe", "celulares_mcp.py", "https://exemplo.org", "cp_abc")
+    assert depois["theme"] == "dark" and depois["mcpServers"]["outro"] == {"command": "x"}
+    assert depois["mcpServers"]["celulares"]["env"] == {"CELULARES_URL": "https://exemplo.org", "CELULARES_CHAVE": "cp_abc"}
+    assert modulo.mesclar({}, "p", "s", "u", "c")["mcpServers"]["celulares"]["command"] == "p"
+    assert "celulares" not in antes["mcpServers"]  # a configuração original não foi alterada
 
 
 def test_revogar_so_a_propria_chave(auth_client, operador, django_user_model):

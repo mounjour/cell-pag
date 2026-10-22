@@ -1,0 +1,30 @@
+@echo off
+chcp 65001 >nul
+title Instalar o Claude Desktop no sistema de pagamentos
+echo.
+echo  Preparando o seu computador para usar o Claude Desktop com o sistema...
+echo.
+set "URL=@@URL@@"
+set "CHAVE=@@CHAVE@@"
+set "PY=python"
+%PY% --version >nul 2>nul || set "PY=py -3"
+%PY% --version >nul 2>nul
+if errorlevel 1 (
+  echo  Nao encontrei o Python neste computador.
+  echo  Vou abrir a pagina para instalar. Na instalacao, marque "Add python.exe to PATH"
+  echo  e depois abra este arquivo de novo.
+  start "" https://www.python.org/downloads/
+  pause
+  exit /b 1
+)
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Headers @{Authorization='Bearer %CHAVE%'} -Uri '%URL%/assistente/api/instalador.py' -OutFile ($env:TEMP + '\celulares_instalar.py')"
+if errorlevel 1 (
+  echo.
+  echo  Nao consegui falar com o sistema. Confira a internet e abra este arquivo de novo.
+  pause
+  exit /b 1
+)
+%PY% "%TEMP%\celulares_instalar.py" "%URL%" "%CHAVE%"
+del "%TEMP%\celulares_instalar.py" >nul 2>nul
+echo.
+pause

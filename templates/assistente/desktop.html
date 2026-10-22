@@ -1,52 +1,70 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Claude Desktop{% endblock %}
-{% block wrap_class %}wrap--wide{% endblock %}
 
 {% block content %}
 {% url 'pagamentos:conexoes' as volta_url %}{% include "_voltar.html" with url=volta_url %}
 <h1>{% include "_icone.html" with nome="assistente" %}Claude Desktop</h1>
 
-<div class="note">
-  <p><strong>Para que serve:</strong> liga uma conversa do Claude Desktop a este sistema. Na conversa você pede (“Roberto pagou 157,50 no Pix hoje”, “quem está atrasado?”) e o Claude consulta e registra aqui. Antes de gravar qualquer coisa, o Claude Desktop mostra o que vai fazer e <strong>você clica em Permitir</strong>.</p>
-  <p>A chave abaixo é só sua: tudo o que o Claude gravar fica registrado com o seu nome. Ela não apaga nem estorna nada, e não envia mensagens a clientes.</p>
-</div>
+<p class="note">Aqui você liga o <strong>Claude Desktop</strong> ao sistema. Depois disso, em uma conversa do Claude você pede coisas como <em>“Roberto pagou 157,50 no Pix hoje”</em> ou <em>“quem está atrasado?”</em>, e ele consulta e registra no sistema. <strong>Antes de gravar, o Claude sempre pergunta se pode</strong>, e você clica em Permitir.</p>
 
-{% if chave %}
-  <section class="proximas-lista painel-lista">
-    <header class="proximas-dia__topo"><h2>Sua chave nova</h2><span class="proximas-dia__soma">aparece só agora</span></header>
-    <div class="painel-vazio">
-      <p class="msg warning"><strong>Copie agora.</strong> Por segurança, esta chave não aparece de novo. Se perder, crie outra e revogue esta.</p>
-      <p><code>{{ chave }}</code></p>
-      <p>Trecho para colar no arquivo de configuração do Claude Desktop (passo 4), já com a sua chave:</p>
-      <pre><code>{
-  "mcpServers": {
-    "celulares": {
-      "command": "python",
-      "args": ["C:\\Users\\SEU_USUARIO\\celulares_mcp.py"],
-      "env": {
-        "CELULARES_URL": "{{ url }}",
-        "CELULARES_CHAVE": "{{ chave }}"
-      }
-    }
-  }
-}</code></pre>
+<ol class="desktop-passos">
+  <li class="desktop-passo{% if not chave %} desktop-passo--atual{% endif %}">
+    <span class="desktop-passo__numero">1</span>
+    <div class="desktop-passo__corpo">
+      <h2>Crie a sua chave</h2>
+      <p>A chave é a sua “identidade” no sistema. Tudo o que o Claude gravar fica no seu nome.</p>
+      <form method="post" class="desktop-passo__form">{% csrf_token %}
+        <input type="text" name="nome" maxlength="60" value="Meu computador" aria-label="Nome da chave">
+        <button type="submit" class="btn">{% include "_icone.html" with nome="adicionar" %}Criar minha chave</button>
+      </form>
     </div>
-  </section>
-{% endif %}
+  </li>
 
-<section class="proximas-lista painel-lista">
-  <header class="proximas-dia__topo"><h2>Passo a passo</h2></header>
-  <div class="painel-vazio">
-    <ol>
-      <li><strong>Crie a sua chave</strong> (formulário abaixo) e copie o trecho de configuração que aparece.</li>
-      <li><a href="{% url 'assistente:conector' %}">Baixe o conector</a> (arquivo <code>celulares_mcp.py</code>) e guarde na sua pasta de usuário, por exemplo <code>C:\Users\SEU_USUARIO\celulares_mcp.py</code>.</li>
-      <li>Instale a peça que ele usa: abra o <strong>Prompt de Comando</strong> e rode <code>pip install "mcp&lt;2"</code> (precisa do Python 3.10 ou mais novo; as aspas e o <code>&lt;2</code> são importantes).</li>
-      <li>No Claude Desktop: <strong>Configurações → Desenvolvedor → Editar configuração</strong>. Cole o trecho do passo 1 (ajustando o caminho do arquivo) e salve. Feche e abra o Claude Desktop de novo. As ferramentas do sistema aparecem no ícone de ferramentas da conversa. Se não aparecerem, troque <code>"python"</code> no trecho pelo caminho completo do Python (rode <code>where python</code> no Prompt de Comando para descobrir).</li>
-      <li>Crie um <strong>Projeto</strong> no Claude Desktop e cole as instruções do quadro mais abaixo nas “instruções do projeto”. Converse dentro desse Projeto.</li>
-      <li>Na primeira vez que o Claude usar uma ferramenta de <strong>gravar</strong>, o Desktop pergunta se permite. Escolha <strong>Permitir uma vez</strong>. <strong>Não escolha “Sempre permitir” nas ferramentas de gravar</strong>: é essa pergunta que garante que nada é registrado sem você ver.</li>
-    </ol>
-  </div>
-</section>
+  <li class="desktop-passo{% if chave %} desktop-passo--atual{% else %} desktop-passo--espera{% endif %}">
+    <span class="desktop-passo__numero">2</span>
+    <div class="desktop-passo__corpo">
+      <h2>Baixe e abra o instalador</h2>
+      {% if chave %}
+        <p>Clique no botão abaixo. Quando o arquivo <strong>Instalar-Claude-Desktop.cmd</strong> terminar de baixar, <strong>dê dois cliques nele</strong>. Uma janela preta vai aparecer, fazer tudo sozinha e avisar quando terminar.</p>
+        <form method="post" action="{% url 'assistente:instalador' %}" class="desktop-passo__form">{% csrf_token %}
+          <input type="hidden" name="chave" value="{{ chave }}">
+          <button type="submit" class="btn desktop-botao-grande">{% include "_icone.html" with nome="baixar" %}Baixar o instalador</button>
+        </form>
+        <p class="desktop-passo__aviso">O arquivo tem a sua chave dentro e só funciona no seu computador. Depois de usar, pode apagá-lo. Esta página só mostra o botão agora: se fechar sem baixar, crie outra chave.</p>
+      {% else %}
+        <p>Depois de criar a chave, o botão para baixar o instalador aparece aqui.</p>
+      {% endif %}
+    </div>
+  </li>
+
+  <li class="desktop-passo desktop-passo--espera">
+    <span class="desktop-passo__numero">3</span>
+    <div class="desktop-passo__corpo">
+      <h2>Feche e abra o Claude Desktop</h2>
+      <p>Feche o Claude Desktop <strong>por completo</strong> (se ele ficar perto do relógio, clique com o botão direito nele e escolha <strong>Sair</strong>) e abra de novo. Na caixa de mensagem aparece um ícone de ferramentas com o nome <strong>celulares</strong>.</p>
+    </div>
+  </li>
+
+  <li class="desktop-passo desktop-passo--espera">
+    <span class="desktop-passo__numero">4</span>
+    <div class="desktop-passo__corpo">
+      <h2>Crie um Projeto com as instruções</h2>
+      <p>No Claude Desktop, crie um <strong>Projeto</strong> (por exemplo, “Financeiro LA Iphones”) e cole o texto abaixo nas instruções do Projeto. Converse sempre dentro dele.</p>
+      <button type="button" class="btn secondary" data-copiar="#instrucoes-projeto">{% include "_icone.html" with nome="copiar" %}Copiar as instruções</button>
+      <pre class="assistente-desktop__instrucoes" id="instrucoes-projeto">{{ instrucoes }}</pre>
+    </div>
+  </li>
+
+  <li class="desktop-passo desktop-passo--espera">
+    <span class="desktop-passo__numero">5</span>
+    <div class="desktop-passo__corpo">
+      <h2>Na primeira gravação, escolha “Permitir uma vez”</h2>
+      <p>Quando o Claude for <strong>registrar</strong> algo (um pagamento, por exemplo), o Claude Desktop mostra o que ele vai fazer e pergunta se permite. Leia e escolha <strong>Permitir uma vez</strong>.</p>
+      <p class="desktop-passo__aviso"><strong>Nunca escolha “Sempre permitir”</strong> nas ações de registrar: é essa pergunta que garante que nada é gravado sem você ver.</p>
+    </div>
+  </li>
+</ol>
 
 <section class="proximas-lista painel-lista">
   <header class="proximas-dia__topo"><h2>Suas chaves</h2></header>
@@ -63,13 +81,6 @@
       </div>
     </div>
   {% empty %}<p class="empty painel-vazio">Você ainda não criou nenhuma chave.</p>{% endfor %}
-  <form method="post" class="painel-vazio assistente-desktop__novo">{% csrf_token %}
-    <label for="nome-chave">Nome da nova chave (por exemplo, o computador onde vai usar)</label>
-    <div class="assistente-desktop__linha">
-      <input type="text" id="nome-chave" name="nome" maxlength="60" placeholder="Notebook da Yslane">
-      <button type="submit" class="btn">{% include "_icone.html" with nome="adicionar" %}Criar chave</button>
-    </div>
-  </form>
 </section>
 
 <section class="proximas-lista painel-lista">
@@ -84,8 +95,16 @@
   {% empty %}<p class="empty painel-vazio">Ainda não houve registros feitos pelo Claude Desktop.</p>{% endfor %}
 </section>
 
-<section class="proximas-lista painel-lista">
-  <header class="proximas-dia__topo"><h2>Instruções para o Projeto no Claude Desktop</h2><span class="proximas-dia__soma">copie e cole</span></header>
-  <div class="painel-vazio"><pre class="assistente-desktop__instrucoes">{{ instrucoes }}</pre></div>
-</section>
+<details class="desktop-avancado">
+  <summary>Não funcionou? Instalação manual (para quem entende de computador)</summary>
+  <div class="painel-vazio">
+    <ol>
+      <li><a href="{% url 'assistente:conector' %}">Baixe o conector</a> (<code>celulares_mcp.py</code>) e guarde numa pasta sua.</li>
+      <li>No Prompt de Comando: <code>pip install "mcp&lt;2"</code> (Python 3.10 ou mais novo).</li>
+      <li>No Claude Desktop: Configurações → Desenvolvedor → Editar configuração. Adicione em <code>mcpServers</code> um item chamado <code>celulares</code> com <code>command</code> igual ao caminho completo do <code>python.exe</code> (descubra com <code>where python</code>), <code>args</code> com o caminho do arquivo e <code>env</code> com <code>CELULARES_URL</code> = <code>{{ url }}</code> e <code>CELULARES_CHAVE</code> = a sua chave.</li>
+    </ol>
+  </div>
+</details>
 {% endblock %}
+
+{% block scripts %}<script src="{% static 'js/desktop.js' %}" defer></script>{% endblock %}
