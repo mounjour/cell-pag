@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Claude Desktop{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+
+{% block content %}
+{% url 'pagamentos:conexoes' as volta_url %}{% include "_voltar.html" with url=volta_url %}
+<h1>{% include "_icone.html" with nome="assistente" %}Claude Desktop</h1>
+
+<div class="note">
+  <p><strong>Para que serve:</strong> liga uma conversa do Claude Desktop a este sistema. Na conversa você pede (“Roberto pagou 157,50 no Pix hoje”, “quem está atrasado?”) e o Claude consulta e registra aqui. Antes de gravar qualquer coisa, o Claude Desktop mostra o que vai fazer e <strong>você clica em Permitir</strong>.</p>
+  <p>A chave abaixo é só sua: tudo o que o Claude gravar fica registrado com o seu nome. Ela não apaga nem estorna nada, e não envia mensagens a clientes.</p>
+</div>
+
+{% if chave %}
+  <section class="proximas-lista painel-lista">
+    <header class="proximas-dia__topo"><h2>Sua chave nova</h2><span class="proximas-dia__soma">aparece só agora</span></header>
+    <div class="painel-vazio">
+      <p class="msg warning"><strong>Copie agora.</strong> Por segurança, esta chave não aparece de novo. Se perder, crie outra e revogue esta.</p>
+      <p><code>{{ chave }}</code></p>
+      <p>Trecho para colar no arquivo de configuração do Claude Desktop (passo 4), já com a sua chave:</p>
+      <pre><code>{
+  "mcpServers": {
+    "celulares": {
+      "command": "python",
+      "args": ["C:\\Users\\SEU_USUARIO\\celulares_mcp.py"],
+      "env": {
+        "CELULARES_URL": "{{ url }}",
+        "CELULARES_CHAVE": "{{ chave }}"
+      }
+    }
+  }
+}</code></pre>
+    </div>
+  </section>
+{% endif %}
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Passo a passo</h2></header>
+  <div class="painel-vazio">
+    <ol>
+      <li><strong>Crie a sua chave</strong> (formulário abaixo) e copie o trecho de configuração que aparece.</li>
+      <li><a href="{% url 'assistente:conector' %}">Baixe o conector</a> (arquivo <code>celulares_mcp.py</code>) e guarde na sua pasta de usuário, por exemplo <code>C:\Users\SEU_USUARIO\celulares_mcp.py</code>.</li>
+      <li>Instale a peça que ele usa: abra o <strong>Prompt de Comando</strong> e rode <code>pip install "mcp&lt;2"</code> (precisa do Python 3.10 ou mais novo; as aspas e o <code>&lt;2</code> são importantes).</li>
+      <li>No Claude Desktop: <strong>Configurações → Desenvolvedor → Editar configuração</strong>. Cole o trecho do passo 1 (ajustando o caminho do arquivo) e salve. Feche e abra o Claude Desktop de novo. As ferramentas do sistema aparecem no ícone de ferramentas da conversa. Se não aparecerem, troque <code>"python"</code> no trecho pelo caminho completo do Python (rode <code>where python</code> no Prompt de Comando para descobrir).</li>
+      <li>Crie um <strong>Projeto</strong> no Claude Desktop e cole as instruções do quadro mais abaixo nas “instruções do projeto”. Converse dentro desse Projeto.</li>
+      <li>Na primeira vez que o Claude usar uma ferramenta de <strong>gravar</strong>, o Desktop pergunta se permite. Escolha <strong>Permitir uma vez</strong>. <strong>Não escolha “Sempre permitir” nas ferramentas de gravar</strong>: é essa pergunta que garante que nada é registrado sem você ver.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Suas chaves</h2></header>
+  {% for a in acessos %}
+    <div class="proximas-item proximas-item--leve">
+      <div class="proximas-item__quem">
+        <span class="proximas-item__cliente">{{ a.nome }}</span>
+        <span class="proximas-item__detalhe">termina em …{{ a.final_da_chave }} · criada em {{ a.criado_em|date:"d/m/Y" }}{% if a.ultimo_uso %} · último uso {{ a.ultimo_uso|date:"d/m H:i" }}{% else %} · ainda não usada{% endif %}</span>
+      </div>
+      <div class="proximas-item__selos">{% if a.ativo %}<span class="pill pago">ativa</span>{% else %}<span class="pill cancelado">revogada</span>{% endif %}</div>
+      <span></span>
+      <div class="proximas-item__acoes">
+        {% if a.ativo %}<form method="post" action="{% url 'assistente:revogar' a.pk %}" data-confirmar="Revogar esta chave? O Claude Desktop que a usa deixa de funcionar.">{% csrf_token %}<button type="submit" class="btn-mini">{% include "_icone.html" with nome="cancelar" %}Revogar</button></form>{% endif %}
+      </div>
+    </div>
+  {% empty %}<p class="empty painel-vazio">Você ainda não criou nenhuma chave.</p>{% endfor %}
+  <form method="post" class="painel-vazio assistente-desktop__novo">{% csrf_token %}
+    <label for="nome-chave">Nome da nova chave (por exemplo, o computador onde vai usar)</label>
+    <div class="assistente-desktop__linha">
+      <input type="text" id="nome-chave" name="nome" maxlength="60" placeholder="Notebook da Yslane">
+      <button type="submit" class="btn">{% include "_icone.html" with nome="adicionar" %}Criar chave</button>
+    </div>
+  </form>
+</section>
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>O que o Claude gravou por você</h2></header>
+  {% for o in operacoes %}
+    <div class="proximas-item proximas-item--leve">
+      <div class="proximas-item__quem"><span class="proximas-item__cliente">{{ o.resumo|default:o.ferramenta }}</span>
+        <span class="proximas-item__detalhe">{{ o.criada_em|date:"d/m/Y H:i" }}</span></div>
+      <div class="proximas-item__selos">{% if o.ok %}<span class="pill pago">gravado</span>{% else %}<span class="pill inadimplente">recusado</span>{% endif %}</div>
+      <span></span><span></span>
+    </div>
+  {% empty %}<p class="empty painel-vazio">Ainda não houve registros feitos pelo Claude Desktop.</p>{% endfor %}
+</section>
+
+<section class="proximas-lista painel-lista">
+  <header class="proximas-dia__topo"><h2>Instruções para o Projeto no Claude Desktop</h2><span class="proximas-dia__soma">copie e cole</span></header>
+  <div class="painel-vazio"><pre class="assistente-desktop__instrucoes">{{ instrucoes }}</pre></div>
+</section>
+{% endblock %}

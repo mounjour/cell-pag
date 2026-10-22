@@ -258,11 +258,10 @@ WHATSAPP_PIX_CHAVE = env("WHATSAPP_PIX_CHAVE", default="")
 # Como o Pix é cobrado: "estatico" = código copia e cola montado aqui (chave Pix + valor), sem criar nada na Cora
 # (a Cora só informa os pagamentos pelo extrato); "fatura" = fatura Pix criada na Cora (modo antigo).
 PIX_MODO = env("PIX_MODO", default="fatura")
-# Assistente (Claude): a chave vem do Coolify (variável ANTHROPIC_API_KEY), nunca do código.
-ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY", default="")
-ASSISTENTE_MODELO = env("ASSISTENTE_MODELO", default="claude-opus-5-5")
-ASSISTENTE_ESFORCO = env("ASSISTENTE_ESFORCO", default="medium")
-ASSISTENTE_LIMITE_HORA = env.int("ASSISTENTE_LIMITE_HORA", default=40)
+PIX_CHAVE = env("WHATSAPP_PIX_CHAVE", default="")
+# Como o Pix é cobrado: "estatico" = código copia e cola montado aqui (chave Pix + valor), sem criar nada na Cora
+# (a Cora só informa os pagamentos pelo extrato); "fatura" = fatura Pix criada na Cora (modo antigo).
+PIX_MODO = env("PIX_MODO", default="fatura")
 # Commit publicado (o Dockerfile copia o SOURCE_COMMIT do Coolify) e repositório para conferir se está em dia com a main.
 VERSAO_PUBLICADA = env("VERSAO_PUBLICADA", default="")
 REPOSITORIO_GITHUB = env("REPOSITORIO_GITHUB", default="mounjour/cell-pag")
