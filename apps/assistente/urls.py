@@ -5,9 +5,9 @@ from . import views
 app_name = "assistente"
 
 urlpatterns = [
-    path("historico/", views.HistoricoView.as_view(), name="historico"),
-    path("enviar/", views.EnviarView.as_view(), name="enviar"),
-    path("nova/", views.NovaConversaView.as_view(), name="nova"),
-    path("acao/<int:pk>/confirmar/", views.AcaoConfirmarView.as_view(), name="confirmar"),
-    path("acao/<int:pk>/cancelar/", views.AcaoCancelarView.as_view(), name="cancelar"),
+    path("desktop/", views.AcessoDesktopView.as_view(), name="desktop"),
+    path("desktop/conector/", views.ConectorDownloadView.as_view(), name="conector"),
+    path("desktop/<int:pk>/revogar/", views.RevogarAcessoView.as_view(), name="revogar"),
+    path("api/ferramentas/", views.FerramentasApiView.as_view(), name="api_ferramentas"),
+    path("api/executar/", views.ExecutarApiView.as_view(), name="api_executar"),
 ]

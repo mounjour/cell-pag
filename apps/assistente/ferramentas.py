@@ -1,8 +1,8 @@
 """Ferramentas que o assistente pode usar.
 
 * **Leitura** (``LEITURA``): consultam o sistema e respondem na hora. Não alteram nada.
-* **Escrita** (``ESCRITA``): o assistente só *propõe*. Cada uma tem ``validar`` (confere os dados e monta o
-  resumo mostrado à pessoa) e ``executar`` (grava de verdade, só depois do clique em Confirmar).
+* **Escrita** (``ESCRITA``): cada uma tem ``validar`` (confere os dados e monta o resumo) e ``executar``
+  (grava). Quem autoriza é a pessoa, no pedido de permissão do Claude Desktop, antes da chamada chegar aqui.
 
 Tudo reaproveita as mesmas regras e modelos das telas do sistema; nada aqui apaga registros.
 """
@@ -343,7 +343,7 @@ FERRAMENTAS = [
      "input_schema": _esquema({}, [])},
     {"name": "proximas_cobrancas", "description": "Lista as cobranças dos próximos dias, agrupadas por data. Só leitura.",
      "input_schema": _esquema({"dias": {"type": "integer", "description": "De 1 a 30; padrão 14."}}, [])},
-    {"name": "registrar_pagamento", "description": "PROPÕE registrar o pagamento de uma parcela. Não grava: a pessoa precisa clicar em Confirmar. valor_pago é o valor da PARCELA recebido (sem os juros); os juros do atraso vão separados em juros_pago. Consulte o contrato antes para usar o saldo e os juros de hoje corretos.",
+    {"name": "registrar_pagamento", "description": "REGISTRA o pagamento de uma parcela no sistema (a pessoa autoriza no pedido de permissão do Claude Desktop). valor_pago é o valor da PARCELA recebido (sem os juros); os juros do atraso vão separados em juros_pago. Consulte o contrato antes para usar o saldo e os juros de hoje corretos.",
      "input_schema": _esquema({
          "contrato_id": {"type": "integer"},
          "parcela_numero": {"type": "integer", "description": "Número da parcela; se omitido, usa a primeira em aberto."},
@@ -353,7 +353,7 @@ FERRAMENTAS = [
          "data_pagamento": {"type": "string", "description": "AAAA-MM-DD; padrão hoje. Não pode ser futura."},
          "observacao": {"type": "string"},
      }, ["contrato_id", "valor_pago"])},
-    {"name": "anotar_contato", "description": "PROPÕE anotar um contato de cobrança (ligação, mensagem…), com a promessa de pagamento se houver. Não envia nada ao cliente. Só grava depois que a pessoa confirmar.",
+    {"name": "anotar_contato", "description": "ANOTA um contato de cobrança (ligação, mensagem…), com a promessa de pagamento se houver. Não envia nada ao cliente. A pessoa autoriza no pedido de permissão do Claude Desktop.",
      "input_schema": _esquema({
          "contrato_id": {"type": "integer"},
          "tipo": {"type": "string", "enum": ["ligacao", "whatsapp", "pessoalmente", "outro"]},
@@ -361,8 +361,55 @@ FERRAMENTAS = [
          "promessa_para": {"type": "string", "description": "AAAA-MM-DD, só se prometeu pagar."},
          "nota": {"type": "string"},
      }, ["contrato_id"])},
-    {"name": "registrar_bloqueio", "description": "PROPÕE registrar que o aparelho do contrato foi bloqueado (só o registro; o bloqueio do celular é feito pela equipe). Só grava depois da confirmação.",
+    {"name": "registrar_bloqueio", "description": "REGISTRA que o aparelho do contrato foi bloqueado (só o registro; o bloqueio do celular é feito pela equipe). A pessoa autoriza no pedido de permissão do Claude Desktop.",
      "input_schema": _esquema({"contrato_id": {"type": "integer"}, "observacao": {"type": "string", "description": "Como foi bloqueado, ex.: iCloud."}}, ["contrato_id"])},
-    {"name": "registrar_desbloqueio", "description": "PROPÕE registrar que o aparelho do contrato foi liberado. Só grava depois da confirmação.",
+    {"name": "registrar_desbloqueio", "description": "REGISTRA que o aparelho do contrato foi liberado. A pessoa autoriza no pedido de permissão do Claude Desktop.",
      "input_schema": _esquema({"contrato_id": {"type": "integer"}}, ["contrato_id"])},
 ]
+
+
+# ── interface usada pela API (conector do Claude Desktop) ─────────────────────
+
+RESUMO_DESCRICAO = (
+    "Frase curta, em português, dizendo exatamente o que será gravado (cliente, parcela, valor, data). "
+    "Ela aparece no pedido de permissão para a pessoa conferir antes de autorizar."
+)
+
+
+def catalogo() -> list[dict]:
+    """As ferramentas como o conector as publica: nome, descrição, esquema e se gravam algo."""
+    import copy
+
+    itens = []
+    for f in FERRAMENTAS:
+        grava = f["name"] in ESCRITA
+        esquema = copy.deepcopy(f["input_schema"])
+        if grava:
+            esquema["properties"]["resumo"] = {"type": "string", "description": RESUMO_DESCRICAO}
+            esquema["required"] = list(esquema["required"]) + ["resumo"]
+        itens.append({"name": f["name"], "description": f["description"], "input_schema": esquema, "grava": grava})
+    return itens
+
+
+def executar_ferramenta(nome: str, parametros: dict, usuario) -> tuple[str, str, bool]:
+    """Roda uma ferramenta. Devolve (texto para o Claude, resumo do que foi feito, se gravou algo).
+
+    Levanta ``ErroFerramenta`` quando o pedido não pode ser atendido (a mensagem é para a pessoa)."""
+    import json
+
+    parametros = dict(parametros or {})
+    resumo_informado = str(parametros.pop("resumo", "") or "")[:300]
+    if nome in LEITURA:
+        try:
+            return json.dumps(LEITURA[nome](**parametros), ensure_ascii=False), "", False
+        except TypeError as exc:
+            raise ErroFerramenta(f"Parâmetros inválidos para {nome}: {exc}")
+    if nome in ESCRITA:
+        if not resumo_informado.strip():
+            raise ErroFerramenta("Informe o resumo do que será gravado (campo resumo).")
+        validar, executar = ESCRITA[nome]
+        normalizados, resumo, avisos = validar(parametros)
+        resultado = executar(normalizados, usuario)
+        texto = f"{resumo} -> {resultado}" + (" Avisos: " + " ".join(avisos) if avisos else "")
+        return texto, resumo, True
+    raise ErroFerramenta(f"Ferramenta desconhecida: {nome}")

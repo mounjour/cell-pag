@@ -1,49 +1,75 @@
-"""Conversa com o assistente (Claude) e as ações que ele propôs para gravar no sistema."""
+"""Acesso do Claude Desktop ao sistema: a chave de cada pessoa e o registro de tudo o que foi feito por ela."""
+
+import hashlib
+import secrets
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
-class Conversa(models.Model):
-    """Uma conversa de um usuário com o assistente. ``mensagens`` guarda o histórico no formato da API do Claude."""
-
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="conversas_assistente")
-    mensagens = models.JSONField(default=list)
-    criada_em = models.DateTimeField(auto_now_add=True)
-    atualizada_em = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["-atualizada_em"]
-        verbose_name = "conversa do assistente"
-        verbose_name_plural = "conversas do assistente"
+def _hash(chave: str) -> str:
+    return hashlib.sha256(chave.encode()).hexdigest()
 
 
-class Acao(models.Model):
-    """Algo que o assistente quer gravar no sistema. Só vale depois que a pessoa confirma com o botão."""
+class AcessoApi(models.Model):
+    """Chave de acesso de uma pessoa para o conector do Claude Desktop. Só o resumo (hash) é guardado."""
 
-    class Estado(models.TextChoices):
-        PENDENTE = "pendente", "Aguardando confirmação"
-        CONFIRMADA = "confirmada", "Confirmada"
-        CANCELADA = "cancelada", "Cancelada"
-        ERRO = "erro", "Não foi possível gravar"
-
-    conversa = models.ForeignKey(Conversa, on_delete=models.CASCADE, related_name="acoes")
-    ferramenta = models.CharField(max_length=40)
-    parametros = models.JSONField(default=dict)
-    resumo = models.TextField()
-    avisos = models.JSONField(default=list, blank=True)
-    estado = models.CharField(max_length=10, choices=Estado.choices, default=Estado.PENDENTE)
-    resultado = models.TextField(blank=True)
-    criada_em = models.DateTimeField(auto_now_add=True)
-    decidida_em = models.DateTimeField(null=True, blank=True)
-    decidida_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
-    )
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="acessos_api")
+    nome = models.CharField("nome", max_length=60, help_text="Ex.: Notebook da Yslane")
+    chave_hash = models.CharField(max_length=64, unique=True, editable=False)
+    final_da_chave = models.CharField(max_length=6, editable=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    ultimo_uso = models.DateTimeField(null=True, blank=True)
+    revogado_em = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ["criada_em"]
-        verbose_name = "ação do assistente"
-        verbose_name_plural = "ações do assistente"
+        ordering = ["-criado_em"]
+        verbose_name = "acesso do Claude Desktop"
+        verbose_name_plural = "acessos do Claude Desktop"
 
     def __str__(self) -> str:
-        return f"{self.ferramenta} · {self.get_estado_display()}"
+        return f"{self.nome} ({self.usuario})"
+
+    @property
+    def ativo(self) -> bool:
+        return self.revogado_em is None
+
+    @classmethod
+    def criar(cls, usuario, nome: str) -> tuple["AcessoApi", str]:
+        """Cria o acesso e devolve (acesso, chave em texto). A chave só existe neste momento."""
+        chave = "cp_" + secrets.token_urlsafe(32)
+        acesso = cls.objects.create(usuario=usuario, nome=nome[:60], chave_hash=_hash(chave), final_da_chave=chave[-4:])
+        return acesso, chave
+
+    @classmethod
+    def por_chave(cls, chave: str) -> "AcessoApi | None":
+        if not chave:
+            return None
+        return cls.objects.select_related("usuario").filter(chave_hash=_hash(chave), revogado_em__isnull=True, usuario__is_active=True).first()
+
+    def revogar(self) -> None:
+        self.revogado_em = timezone.now()
+        self.save(update_fields=["revogado_em"])
+
+
+class OperacaoApi(models.Model):
+    """Registro de cada ferramenta usada pelo Claude Desktop (quem, quando, o quê e o resultado)."""
+
+    acesso = models.ForeignKey(AcessoApi, on_delete=models.SET_NULL, null=True, related_name="operacoes")
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="+")
+    ferramenta = models.CharField(max_length=40)
+    grava = models.BooleanField(default=False)
+    parametros = models.JSONField(default=dict)
+    resumo = models.TextField(blank=True)
+    ok = models.BooleanField(default=True)
+    resultado = models.TextField(blank=True)
+    criada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-criada_em"]
+        verbose_name = "operação do Claude Desktop"
+        verbose_name_plural = "operações do Claude Desktop"
+
+    def __str__(self) -> str:
+        return f"{self.ferramenta} · {'ok' if self.ok else 'erro'}"
