@@ -120,8 +120,12 @@ class AcessoDesktopView(LoginRequiredMixin, View):
         return resposta
 
     def _contexto(self, request, chave):
+        acessos = list(request.user.acessos_api.all())
+        ativos = [a for a in acessos if a.ativo]
+        usos = [a.ultimo_uso for a in ativos if a.ultimo_uso]
         return {
-            "acessos": list(request.user.acessos_api.all()), "chave": chave,
+            "acessos": acessos, "chave": chave,
+            "tem_chave": bool(ativos), "ultimo_uso": max(usos) if usos else None,  # alguma chave já foi usada = conectado
             "url": request.build_absolute_uri("/").rstrip("/"),
             "instrucoes": (CONECTOR / "instrucoes.md").read_text(encoding="utf-8"),
             "operacoes": list(OperacaoApi.objects.filter(usuario=request.user, grava=True)[:8]),
