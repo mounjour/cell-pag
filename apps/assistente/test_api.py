@@ -154,6 +154,24 @@ def test_instalador_mescla_a_configuracao_sem_apagar_o_que_ja_existe():
     assert "celulares" not in antes["mcpServers"]  # a configuração original não foi alterada
 
 
+def test_instalador_acha_a_pasta_de_dados_da_versao_da_loja(tmp_path, monkeypatch):
+    import importlib.util
+    from pathlib import Path
+
+    caminho = Path(__file__).parent / "conector" / "instalar_claude_desktop.py"
+    spec = importlib.util.spec_from_file_location("instalar_claude_desktop", caminho)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    local = tmp_path / "local"
+    dados = local / "Claude-Data" / "claude_abc"
+    dados.mkdir(parents=True)
+    (dados / "claude_desktop_config.json").write_text("{}")
+    monkeypatch.setenv("APPDATA", str(tmp_path / "roaming"))
+    monkeypatch.setenv("LOCALAPPDATA", str(local))
+    assert dados / "claude_desktop_config.json" in modulo.caminhos_de_configuracao()
+    assert all(c.parent != tmp_path / "roaming" for c in modulo.caminhos_de_configuracao())
+
+
 def test_revogar_so_a_propria_chave(auth_client, operador, django_user_model):
     outro = django_user_model.objects.create_user("outro")
     alheia = AcessoApi.criar(outro, "dele")[0]

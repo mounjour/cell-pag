@@ -33,20 +33,25 @@ def mesclar(config: dict, python: str, script: str, url: str, chave: str) -> dic
 
 
 def caminhos_de_configuracao() -> list[Path]:
-    """Onde o Claude Desktop guarda a configuração (instalação comum e instalação pela loja da Microsoft)."""
+    """Onde o Claude Desktop guarda a configuração: instalação comum, pela loja da Microsoft e com os dados fora do pacote."""
     roaming = Path(os.environ.get("APPDATA", ""))
     local = Path(os.environ.get("LOCALAPPDATA", ""))
     candidatos = [roaming / "Claude" / "claude_desktop_config.json"]
-    pacotes = local / "Packages"
-    if pacotes.is_dir():
-        candidatos += sorted(pacotes.glob("Claude_*/LocalCache/Roaming/Claude/claude_desktop_config.json"))
-        candidatos += [p.parent / "claude_desktop_config.json" for p in pacotes.glob("Claude_*/LocalCache/Roaming/Claude")]
+    # Na versão da loja a pasta de dados pode ficar fora do pacote: %LOCALAPPDATA%\Claude-Data\Claude_xxxx
+    if (local / "Claude-Data").is_dir():
+        candidatos += sorted((local / "Claude-Data").glob("*/claude_desktop_config.json"))
+    if (local / "Packages").is_dir():
+        candidatos += sorted((local / "Packages").glob("Claude_*/LocalCache/Roaming/Claude/claude_desktop_config.json"))
     vistos, unicos = set(), []
     for c in candidatos:
         if c not in vistos:
             vistos.add(c)
             unicos.append(c)
     return unicos
+
+
+def pasta_de_registros(caminho: Path) -> Path:
+    return caminho.parent / "logs"
 
 
 def baixar(url: str, chave: str, destino: Path) -> None:
@@ -134,7 +139,8 @@ def principal(url: str, chave: str) -> int:
     print("Pronto! Falta só uma coisa: FECHE O CLAUDE DESKTOP POR COMPLETO e abra de novo.")
     print("(Se ele ficar na bandeja perto do relógio, clique com o botão direito e escolha Sair.)")
     print("Se depois de abrir o ícone de ferramentas não mostrar 'celulares', veja o arquivo de registro em:")
-    print(f"  {Path(os.environ.get('APPDATA', '')) / 'Claude' / 'logs'}  (arquivo mcp-server-celulares.log)")
+    for caminho in escritos:
+        print(f"  {pasta_de_registros(caminho)}  (arquivo mcp-server-celulares.log)")
     return 0
 
 
