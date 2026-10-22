@@ -131,9 +131,9 @@ class AcessoDesktopView(LoginRequiredMixin, View):
         # Andamento guardado no banco: sobrevive a recarregar a página e a trocar de computador.
         feitos = [
             bool(atual),
-            bool(atual and (atual.instalador_baixado_em or atual.ultimo_uso)),
-            bool(atual and atual.ultimo_uso),
-            bool(atual and atual.instrucoes_coladas_em),
+            any(x.instalador_baixado_em or x.ultimo_uso for x in ativos),  # com dois computadores há duas chaves ativas
+            bool(usos),
+            any(x.instrucoes_coladas_em for x in ativos),
         ]
         primeiro_pendente = feitos.index(False) if False in feitos else None
         passos = [

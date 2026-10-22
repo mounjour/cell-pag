@@ -240,3 +240,11 @@ def test_chamada_de_teste_do_instalador_nao_conta_como_claude_conectado(client, 
     client.get(reverse("assistente:api_ferramentas"), HTTP_AUTHORIZATION=f"Bearer {chave}")
     acesso.refresh_from_db()
     assert acesso.ultimo_uso is not None
+
+
+def test_com_dois_computadores_basta_uma_chave_ter_sido_usada(auth_client, operador):
+    usada = AcessoApi.criar(operador, "Notebook")[0]
+    AcessoApi.criar(operador, "Outro dispositivo")  # a chave mais nova ainda não foi usada
+    usada.ultimo_uso = timezone.now()
+    usada.save(update_fields=["ultimo_uso"])
+    assert "Claude Desktop conectado" in auth_client.get(reverse("assistente:desktop")).content.decode()
