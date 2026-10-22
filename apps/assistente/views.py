@@ -116,7 +116,7 @@ class AcessoDesktopView(LoginRequiredMixin, View):
         return render(request, "assistente/desktop.html", self._contexto(request, chave))
 
     def post(self, request):
-        nome = request.POST.get("nome", "").strip()[:60] or "Claude Desktop"
+        nome = request.POST.get("nome", "").strip()[:60] or request.user.nome_curto
         _acesso, chave = AcessoApi.criar(request.user, nome)
         # A chave aparece só nesta resposta (não vai para a URL nem para o histórico do navegador).
         resposta = render(request, "assistente/desktop.html", self._contexto(request, chave))
