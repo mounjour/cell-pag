@@ -54,6 +54,21 @@ def _config_evolution():
     )
 
 
+def _recusa(codigo: int, detalhe: str) -> str:
+    """Texto do erro de uma recusa da Evolution, com o motivo quando ele ajuda a decidir o que fazer."""
+    texto = f"A Evolution recusou a operação (HTTP {codigo})."
+    if '"exists":false' in detalhe.replace(" ", ""):
+        return texto + " O número não tem WhatsApp (confira o telefone do cliente)."
+    try:
+        corpo = json.loads(detalhe)
+        motivo = corpo.get("response", {}).get("message") or corpo.get("message") or corpo.get("error")
+    except (ValueError, AttributeError):
+        motivo = None
+    if motivo:
+        texto += f" Motivo: {str(motivo)[:160]}"
+    return texto
+
+
 def _chamar_evolution(caminho: str, corpo: dict, metodo: str = "POST") -> dict:
     base_url, api_key, instancia = _config_evolution()
     url = f"{base_url}{caminho}/{urllib.parse.quote(instancia)}"
@@ -69,7 +84,7 @@ def _chamar_evolution(caminho: str, corpo: dict, metodo: str = "POST") -> dict:
     except urllib.error.HTTPError as exc:
         detalhe = exc.read().decode("utf-8", errors="replace")[:500]
         logger.warning("Evolution respondeu HTTP %s: %s", exc.code, detalhe)
-        raise WhatsAppErro(f"A Evolution recusou a operação (HTTP {exc.code}).") from exc
+        raise WhatsAppErro(_recusa(exc.code, detalhe)) from exc
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         logger.warning("Falha ao chamar a Evolution API: %s", exc)
         raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
@@ -92,7 +107,7 @@ def _chamar_evolution_get(caminho: str) -> dict:
     except urllib.error.HTTPError as exc:
         detalhe = exc.read().decode("utf-8", errors="replace")[:500]
         logger.warning("Evolution respondeu HTTP %s: %s", exc.code, detalhe)
-        raise WhatsAppErro(f"A Evolution recusou a operação (HTTP {exc.code}).") from exc
+        raise WhatsAppErro(_recusa(exc.code, detalhe)) from exc
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         logger.warning("Falha ao chamar a Evolution API: %s", exc)
         raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
