@@ -124,3 +124,51 @@ def test_editar_pagamento_corrige_data_e_juros_sem_mexer_na_parcela(cliente, aut
     futuro = timezone.localdate() + datetime.timedelta(days=1)
     ruim = auth_client.post(url, {"data_pagamento": futuro.isoformat(), "juros_pago": "0", "forma": "pix"})
     assert ruim.status_code == 200 and "futuro" in ruim.content.decode()
+
+
+def test_editar_o_contrato_remonta_o_pix_estatico_das_parcelas_em_aberto(cliente, auth_client, settings):
+    from django.urls import reverse
+
+    from apps.contratos.tests import dados_form
+
+    settings.PIX_MODO, settings.CORA_PROVIDER, settings.PIX_CHAVE = "estatico", "cora", "12345678000190"
+    hoje = timezone.localdate()
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="131.00", num_parcelas=12,
+                       data_inicio=hoje, valor_total="1572.00")
+    ct.gerar_vencimentos()
+    venc = ct.vencimentos.order_by("numero").first()
+    antigo = pix_cora.obter_ou_criar_cobranca(venc)
+    assert "131.00" in antigo.pix_copia_e_cola
+
+    resposta = auth_client.post(
+        reverse("contratos:editar", args=[ct.pk]),
+        dados_form(cliente, aparelho="", aparelho_modelo="iPhone 13", imei="359999053372501", estrutura=Contrato.Estrutura.MENSAL,
+                   dia_mes=str(hoje.day), data_inicio=hoje.isoformat(), valor_total="5918,60", valor_parcela="492,60", num_parcelas="12"),
+    )
+    assert resposta.status_code == 302
+    venc.refresh_from_db()
+    assert venc.valor_previsto == Decimal("492.60")
+    antigo.refresh_from_db()
+    assert antigo.valor == Decimal("492.60") and "492.60" in antigo.pix_copia_e_cola and "131.00" not in antigo.pix_copia_e_cola
+
+
+def test_salvar_o_contrato_conserta_um_pix_estatico_que_ficou_com_valor_antigo(cliente, auth_client, settings):
+    from django.urls import reverse
+
+    from apps.contratos.tests import dados_form
+
+    settings.PIX_MODO, settings.CORA_PROVIDER, settings.PIX_CHAVE = "estatico", "cora", "12345678000190"
+    hoje = timezone.localdate()
+    ct = novo_contrato(cliente, estrutura=Contrato.Estrutura.MENSAL, valor_parcela="492.60", num_parcelas=12, data_inicio=hoje, valor_total="5911.20")
+    ct.gerar_vencimentos()
+    venc = ct.vencimentos.order_by("numero").first()
+    pix = pix_cora.obter_ou_criar_cobranca(venc)
+    CobrancaCora.objects.filter(pk=pix.pk).update(valor=Decimal("131.00"), juros=Decimal("0.00"), pix_copia_e_cola="codigo-antigo-131.00")
+
+    auth_client.post(
+        reverse("contratos:editar", args=[ct.pk]),
+        dados_form(cliente, aparelho="", aparelho_modelo="iPhone 13", imei="359999053372501", estrutura=Contrato.Estrutura.MENSAL,
+                   data_inicio=hoje.isoformat(), valor_total="5911,20", valor_parcela="492,60", num_parcelas="12"),
+    )
+    pix.refresh_from_db()
+    assert pix.valor == Decimal("492.60") and "492.60" in pix.pix_copia_e_cola and "antigo" not in pix.pix_copia_e_cola

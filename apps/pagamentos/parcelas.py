@@ -65,6 +65,20 @@ def editar_parcela(
     return []
 
 
+def _pix_desatualizado(venc) -> bool:
+    """Pix estático aberto cujo valor (sem juros do atraso) ou data não bate mais com a parcela."""
+    from django.conf import settings
+
+    from .models import CobrancaCora
+
+    if settings.PIX_MODO != "estatico":
+        return False
+    pix = CobrancaCora.objects.filter(vencimento=venc).exclude(
+        status__in=(CobrancaCora.Status.PAGO, CobrancaCora.Status.CANCELADO)
+    ).first()
+    return pix is not None and (pix.data_vencimento != venc.data_vencimento or pix.valor - pix.juros != venc.saldo)
+
+
 def ressincronizar_parcelas_em_aberto(contrato) -> int:
     """Depois de editar o contrato, leva valor e data novos às parcelas ainda sem baixa.
 
@@ -78,6 +92,8 @@ def ressincronizar_parcelas_em_aberto(contrato) -> int:
         novo_valor = contrato.valor_parcela + venc.acrescimo
         nova_data = venc.data_vencimento if venc.data_original else contrato.data_da_parcela(venc.numero)
         if novo_valor == venc.valor_previsto and nova_data == venc.data_vencimento:
+            if _pix_desatualizado(venc):  # parcela certa, mas o código Pix guardado ficou com valor ou data antigos
+                _renovar_pix(venc, "Contrato editado")
             continue
         venc.valor_previsto = novo_valor
         venc.data_vencimento = nova_data
