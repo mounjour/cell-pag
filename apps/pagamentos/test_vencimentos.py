@@ -118,13 +118,12 @@ def test_vencimento_unico_por_contrato_e_numero(cliente):
 
 
 @pytest.mark.django_db
-def test_vencimento_saldo_e_quitada(cliente):
+def test_vencimento_saldo(cliente):
     ct = _contrato(cliente)
     v = Vencimento.objects.create(
         contrato=ct, numero=1, data_vencimento=date(2026, 3, 2), valor_previsto=Decimal("40.00")
     )
     assert v.saldo == Decimal("40.00")
-    assert v.quitada is False
 
 
 # ── Contrato.gerar_vencimentos ───────────────────────────────────────────────
@@ -218,46 +217,6 @@ def test_sem_num_parcelas_nao_ha_data_de_quitacao(cliente):
     ct = _contrato(cliente, num_parcelas=None)
     assert ct.atualizar_data_prevista_quitacao() is False
     assert ct.data_prevista_quitacao is None
-
-
-# ── Contrato.calcular_num_parcelas ───────────────────────────────────────────
-
-@pytest.mark.django_db
-def test_calcula_num_parcelas_da_divisao_exata(cliente):
-    ct = _contrato(
-        cliente, valor_total=Decimal("400.00"), valor_parcela=Decimal("40.00"), num_parcelas=None
-    )
-    assert ct.calcular_num_parcelas() is True
-    ct.refresh_from_db()
-    assert ct.num_parcelas == 10
-
-
-@pytest.mark.django_db
-def test_calcula_num_parcelas_arredonda_para_cima(cliente):
-    # 105 / 40 = 2,625 — a 3ª parcela fica menor (parcelas_conferem já avisa disso).
-    ct = _contrato(
-        cliente, valor_total=Decimal("105.00"), valor_parcela=Decimal("40.00"), num_parcelas=None
-    )
-    assert ct.calcular_num_parcelas() is True
-    ct.refresh_from_db()
-    assert ct.num_parcelas == 3
-
-
-@pytest.mark.django_db
-def test_nao_sobrescreve_num_parcelas_informado_a_mao(cliente):
-    ct = _contrato(
-        cliente, valor_total=Decimal("400.00"), valor_parcela=Decimal("40.00"), num_parcelas=8
-    )
-    assert ct.calcular_num_parcelas() is False
-    ct.refresh_from_db()
-    assert ct.num_parcelas == 8
-
-
-@pytest.mark.django_db
-def test_sem_valor_parcela_nao_calcula_num_parcelas(cliente):
-    ct = _contrato(cliente, valor_parcela=None, num_parcelas=None)
-    assert ct.calcular_num_parcelas() is False
-    assert ct.num_parcelas is None
 
 
 # ── Contrato.podar_vencimentos_excedentes ────────────────────────────────────

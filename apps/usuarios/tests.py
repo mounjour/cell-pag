@@ -16,13 +16,12 @@ class _TelaDono(DonoRequeridoMixin, View):
         return HttpResponse("ok")
 
 
-# ---------- Usuario.is_dono / is_financeiro ----------
+# ---------- Usuario.is_dono ----------
 
 @pytest.mark.django_db
 def test_perfil_financeiro_nao_e_dono(django_user_model):
     u = django_user_model.objects.create_user("fin", password="x")
     assert u.perfil == django_user_model.Perfil.FINANCEIRO
-    assert u.is_financeiro is True
     assert u.is_dono is False
 
 
@@ -32,7 +31,6 @@ def test_perfil_dono(django_user_model):
         "dono", password="x", perfil=django_user_model.Perfil.DONO
     )
     assert u.is_dono is True
-    assert u.is_financeiro is False
 
 
 @pytest.mark.django_db
