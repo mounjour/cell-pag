@@ -6,9 +6,12 @@ Quem autoriza cada gravação é a pessoa, no pedido de permissão do Claude Des
 
 import json
 import logging
+from decimal import Decimal
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
+from django.db import transaction
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -90,18 +93,18 @@ class ExecutarApiView(_ApiView):
         acesso = request.acesso
         grava = nome in ferramentas.ESCRITA
         try:
-            texto, resumo, gravou = ferramentas.executar_ferramenta(nome, parametros, acesso.usuario)
+            texto, resumo, gravou, referencias = ferramentas.executar_ferramenta(nome, parametros, acesso.usuario)
             ok, status = True, 200
         except ferramentas.ErroFerramenta as exc:
-            texto, resumo, gravou, ok, status = str(exc), "", False, False, 400
+            texto, resumo, gravou, referencias, ok, status = str(exc), "", False, {}, False, 400
         except Exception:  # noqa: BLE001 — um erro numa ferramenta não pode derrubar a API
             logger.exception("Falha na ferramenta %s do Claude Desktop", nome)
-            texto, resumo, gravou, ok, status = "Erro interno ao executar esta ferramenta.", "", False, False, 500
+            texto, resumo, gravou, referencias, ok, status = "Erro interno ao executar esta ferramenta.", "", False, {}, False, 500
         if grava or not ok:
             OperacaoApi.objects.create(
                 acesso=acesso, usuario=acesso.usuario, ferramenta=nome[:40], grava=grava,
                 parametros={k: v for k, v in parametros.items()}, resumo=resumo or str(parametros.get("resumo", ""))[:300],
-                ok=ok, resultado=texto[:2000],
+                ok=ok, resultado=texto[:2000], referencias=referencias,
             )
         return JsonResponse({"ok": ok, "resultado" if ok else "erro": texto, "gravou": gravou}, status=status)
 
@@ -197,6 +200,36 @@ class RenovarInstaladorView(LoginRequiredMixin, View):
         novo.instalador_baixado_em = timezone.now()
         novo.save(update_fields=["instalador_baixado_em"])
         return _arquivo_do_instalador(request, chave)
+
+
+class DesfazerOperacaoView(LoginRequiredMixin, View):
+    """Desfaz um pagamento que o Claude registrou (estorna a baixa). Só a própria pessoa, e só uma vez."""
+
+    def post(self, request, pk):
+        from apps.pagamentos.models import Pagamento, RecebimentoCora
+
+        operacao = get_object_or_404(OperacaoApi, pk=pk, usuario=request.user, grava=True, ok=True)
+        pagamento_id = operacao.referencias.get("pagamento_id")
+        if operacao.ferramenta != "registrar_pagamento" or not pagamento_id or operacao.desfeita_em:
+            messages.error(request, "Esta operação não pode ser desfeita por aqui.")
+            return redirect("assistente:desktop")
+        with transaction.atomic():
+            pagamento = Pagamento.objects.select_related("vencimento").filter(pk=pagamento_id).first()
+            restante = Decimal("0.00")
+            if pagamento is None:
+                messages.info(request, "Este pagamento já tinha sido estornado.")
+            else:
+                # O Pix do extrato volta para "A registrar" (senão sumiria da lista sem ter pagamento).
+                RecebimentoCora.objects.filter(pagamento=pagamento).update(
+                    situacao=RecebimentoCora.Situacao.NOVO, pagamento=None, tratado_em=None, tratado_por=None,
+                )
+                restante = pagamento.estornar()
+                messages.success(request, "Pagamento estornado. A parcela voltou a ficar em aberto.")
+            operacao.desfeita_em = timezone.now()
+            operacao.save(update_fields=["desfeita_em"])
+        if restante:
+            messages.warning(request, "Esta baixa havia transportado saldo para parcelas seguintes. Confira os valores previstos das próximas parcelas.")
+        return redirect("assistente:desktop")
 
 
 class InstrucoesColadasView(LoginRequiredMixin, View):
