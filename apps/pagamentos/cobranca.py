@@ -36,7 +36,7 @@ def _linha_da_parcela(p) -> str:
     return linha
 
 
-def _mensagem_varias_parcelas(base, parcelas, numero_pix, bloco_pix, *, alertar_bloqueio) -> str:
+def _mensagem_varias_parcelas(base, parcelas, bloco_pix, *, alertar_bloqueio) -> str:
     """Cobrança de um contrato com mais de uma parcela em aberto.
 
     Lista cada parcela com o atraso próprio. O Pix fica vinculado à mais
@@ -111,7 +111,7 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
     parcelas = linha.get("parcelas") or []
     if len(parcelas) > 1:
         base["mensagem"] = _mensagem_varias_parcelas(
-            base, parcelas, numero, bloco_pix, alertar_bloqueio=situacao.alertar_bloqueio
+            base, parcelas, bloco_pix, alertar_bloqueio=situacao.alertar_bloqueio
         )
     elif situacao.alertar_bloqueio:
         base.update(

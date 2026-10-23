@@ -9,8 +9,6 @@ from io import TextIOWrapper
 
 from openpyxl import load_workbook
 
-from .models import Contrato
-
 
 _COLUNAS = {
     "cliente": "cliente", "contato": "telefone", "cpf": "cpf", "cpfs": "cpf",

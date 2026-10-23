@@ -83,8 +83,6 @@
 .login-check input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); }
 .login-opcoes a, .login-voltar a { font-weight: 500; }
 .login-voltar { margin: 24px 0 0; font-size: 14px; }
-.login-ajuda { margin-top: 6px; color: var(--ink-faint); font-size: 13px; }
-.login-ajuda ul { margin: 4px 0 0; padding-left: 18px; }
 .login-card--simples { grid-template-columns: minmax(0, 1fr); max-width: 460px; gap: 0; padding: 40px; }
 @media (max-width: 760px) { .login-card--simples { padding: 28px 24px; } }
 a.login-submit, a.login-submit:hover { text-decoration: none; color: var(--on-accent); }

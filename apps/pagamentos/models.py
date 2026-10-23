@@ -112,10 +112,6 @@ class Vencimento(models.Model):
         from django.utils import timezone
         return max(0, (timezone.localdate() - self.data_vencimento).days)
 
-    @property
-    def quitada(self) -> bool:
-        return self.status == self.Status.PAGO
-
     def aplicar_valor_pago(self, novo_total, salvar: bool = True) -> str:
         """Grava ``valor_pago`` e recalcula ``status`` (aberto/parcial/pago).
 

@@ -19,13 +19,8 @@ h2 { font-weight: 600; }
 .meta { gap: var(--space-2); }
 .meta > div { border-left: 1px solid var(--line); padding: var(--space-2) var(--space-3); min-width: 0; border-radius: var(--radius); }
 .meta dt { text-transform: none; letter-spacing: 0; font-size: 0.85rem; font-weight: 500; }
-.painel-kpis { margin-bottom: var(--space-4); }
-.painel-kpis > div { min-height: 144px; align-content: start; gap: 0.9rem; padding: 1.4rem 1.6rem; }
-.painel-kpis dd { font-size: clamp(1.3rem, 2vw, 2.1rem); letter-spacing: -0.035em; }
-.painel-kpis .kpi-sub { letter-spacing: 0; font-size: 0.8rem; margin-top: 0.5rem; }
 /* Cor dos números: verde = dinheiro entrando, vermelho = problema, neutro = o resto. */
-.painel-kpis > div.kpi--dinheiro { background: var(--money-wash); border-color: color-mix(in srgb, var(--money) 30%, var(--line)); }
-.painel-kpis dd.kpi-dinheiro, .meta dd.kpi-dinheiro { color: var(--money); }
+.meta dd.kpi-dinheiro { color: var(--money); }
 .meta dd.critical-text { color: var(--critical-ink); }
 .painel-graficos { gap: var(--space-3); }
 .painel-graficos .card { padding: 1.75rem; }
@@ -118,10 +113,6 @@ tbody tr:hover td { background: var(--accent-wash); }
   .wrap { padding-top: 1.4rem; }
   .dashboard-heading .spacer { display: none; }
   .dashboard-heading > .btn { width: 100%; }
-  .painel-kpis { gap: 0.65rem; }
-  .painel-kpis > div { min-height: 120px; padding: 0.9rem; }
-  .painel-kpis dt { font-size: 0.75rem; }
-  .painel-kpis dd { font-size: 1.2rem; overflow-wrap: anywhere; }
   .painel-graficos .card { padding: 1rem; }
   .login-box { padding: 1.75rem 1.5rem; }
 }

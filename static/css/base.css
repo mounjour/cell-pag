@@ -232,9 +232,6 @@ h2 {
 .dialog-confirmacao__conteudo h2 { margin: 0 0 .6rem; }
 .dialog-confirmacao__conteudo p { margin: 0; color: var(--ink-soft); line-height: 1.5; }
 .dialog-confirmacao__conteudo .form-actions { margin-top: 1.25rem; justify-content: flex-end; }
-.atalhos-rapidos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; margin: 0 0 1.25rem; }
-.atalhos-rapidos .card { display: grid; gap: .2rem; padding: 1rem; text-decoration: none; }
-.atalhos-rapidos .card span { color: var(--ink-soft); font-size: .83rem; }
 .importacao-resumo { margin: 0 0 1rem; }
 .linha-pagamento-confirmado td { background: var(--ok-wash); animation: pagamento-confirmado 1.4s ease-out both; }
 @keyframes pagamento-confirmado { from { background: color-mix(in srgb, var(--ok) 32%, var(--surface)); } to { background: var(--ok-wash); } }
@@ -343,7 +340,6 @@ a.card:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); }
 .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .btn[disabled], .btn:disabled { opacity: 0.5; pointer-events: none; box-shadow: none; }
 .btn .icone { width: 16px; height: 16px; }
-.btn-block { width: 100%; font-size: 0.9375rem; }
 
 /* Secundário: neutro (o azul fica só na ação principal da tela). */
 .btn.secondary {
@@ -530,10 +526,6 @@ tbody tr:hover td { background: var(--accent-wash); }
     font-size: 0.7rem; letter-spacing: 0; font-weight: 500;
   }
   .tbl-wrap.cards td.num { text-align: right; }
-  .tbl-wrap.cards td.card-stack {
-    flex-direction: column; align-items: stretch; gap: 0.4rem;
-  }
-  .tbl-wrap.cards td.card-stack::before { margin-right: 0; }
   .tbl-wrap.cards a[href^="tel:"] { white-space: nowrap; }
   /* Alvo de toque: links de texto dentro dos cartões ganham área de ~44px de
      altura sem aumentar o cartão (padding compensado por margem negativa). */
@@ -641,13 +633,6 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .form-centered { max-width: 920px; margin-inline: auto; }
 /* Tela de conferência do cadastro: mais larga, cartões lado a lado. */
 .form-centered.resumo-confirmacao { max-width: 1180px; }
-.resumo-grade { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
-.resumo-grade > .card { margin: 0; }
-@media (min-width: 900px) {
-  .resumo-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
-  .resumo-grade > .resumo-largo { grid-column: 1 / -1; }
-  .resumo-grade > .resumo-largo .lista-dados { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; }
-}
 /* Listas de dados da conferência: linhas simples, sem cartão por item. */
 .lista-dados { display: grid; grid-template-columns: 1fr; margin: .25rem 0 0; padding: 0; }
 .lista-dados > div {
@@ -857,7 +842,6 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .envio-cell { white-space: normal; }
 .envio-vias { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
 .envio-vias .pill { white-space: nowrap; cursor: help; min-width: 3.25rem; justify-content: center; }
-.envio-glifo { margin-left: 0.3em; font-weight: 700; }
 /* Valor a cobrar = dinheiro a entrar: verde. Negrito e 1.2rem para o contraste valer como texto grande. */
 .valor-cobrar { font-weight: 700; font-size: 1.2rem; white-space: nowrap; }
 .valor-cobrar.num { color: var(--money); }
@@ -1122,24 +1106,6 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 }
 
 /* ---------- Tela inicial (painel) ---------- */
-/* 6 números-chave: colunas fixas para caírem sempre 3+3 (ou 2+2+2), sem cartão
-   órfão esticado na última linha. */
-.painel-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-@media (max-width: 519px) {
-  /* Celular: 2 colunas compactas (3 linhas) em vez de 6 cartões empilhados. */
-  .painel-kpis { gap: 0.5rem; }
-  .painel-kpis > div { padding: 0.6rem 0.7rem; }
-  .painel-kpis > div:hover { transform: none; }
-  .painel-kpis dt { font-size: 0.62rem; letter-spacing: 0.04em; }
-  .painel-kpis dd { font-size: 1.15rem; }
-}
-@media (min-width: 920px) { .painel-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.painel-kpis dd { font-size: 1.35rem; font-weight: 600; line-height: 1.25; }
-.painel-kpis .kpi-sub {
-  display: block;
-  font-size: 0.72rem; font-weight: 500;
-  color: var(--ink-faint); margin-top: 0.2rem;
-}
 /* minmax(0, ...) nas colunas (não só "3fr 2fr") — sem isso, o Chart.js pode
    deixar o <canvas> com uma largura interna maior que a coluna por um
    instante (ex.: ao trocar de layout 2 colunas → 1 coluna no responsive mode
@@ -1554,10 +1520,6 @@ button.btn-mini { cursor: pointer; font-family: inherit; }
 .proximas-item .bloqueio-form input { width: 7.5rem; min-width: 0; }
 .proximas-item--rotina .proximas-item__cliente, .proximas-item--rotina .proximas-item__detalhe { white-space: normal; overflow: visible; text-overflow: clip; }
 @media (max-width: 719px) { .proximas-item--rotina { grid-template-columns: minmax(0, 1fr); } .proximas-item--rotina > * { grid-column: 1; grid-row: auto; } }
-/* Claude Desktop: tela de acesso */
-.assistente-desktop__linha { display: flex; gap: .5rem; align-items: center; margin-top: .4rem; }
-.assistente-desktop__linha input { flex: 1; min-width: 0; }
-.assistente-desktop__instrucoes { max-height: 22rem; overflow: auto; padding: .75rem; white-space: pre-wrap; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font: inherit; font-size: .85rem; line-height: 1.5; }
 .painel-vazio pre { overflow-x: auto; padding: .75rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: .8rem; }
 .painel-vazio ol { margin: 0; padding-left: 1.2rem; line-height: 1.6; }
 .painel-vazio ol li + li { margin-top: .4rem; }

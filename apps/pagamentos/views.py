@@ -20,7 +20,6 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
-from django.utils import timezone
 
 from apps.arquivos import servir_anexo
 from apps.paginacao import paginar

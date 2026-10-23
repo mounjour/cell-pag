@@ -23,10 +23,6 @@ class Promessa(NamedTuple):
     contato: ContatoDeCobranca
     estado: str  # "hoje", "pendente" (data futura) ou "quebrada" (data passou sem pagamento)
 
-    @property
-    def dias_de_atraso_da_promessa(self) -> int:
-        return max(0, (timezone.localdate() - self.contato.promessa_para).days)
-
 
 def promessas_em_aberto(hoje: datetime.date | None = None, contrato_ids=None) -> dict[int, Promessa]:
     """``{contrato_id: Promessa}`` das promessas ainda não cumpridas (a mais recente de cada contrato)."""

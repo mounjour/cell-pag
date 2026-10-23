@@ -77,7 +77,3 @@ class Usuario(AbstractUser):
     def is_dono(self) -> bool:
         """Perfil dono (ou superusuário). Vê tudo que o financeiro vê e mais."""
         return self.is_superuser or self.perfil == self.Perfil.DONO
-
-    @property
-    def is_financeiro(self) -> bool:
-        return self.perfil == self.Perfil.FINANCEIRO

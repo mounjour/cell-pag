@@ -62,12 +62,6 @@ def composicao_do_pix(vencimento: Vencimento, hoje) -> tuple[Decimal, Decimal]:
     return max(vencimento.saldo, Decimal("0.00")), juros
 
 
-def valor_do_pix(vencimento: Vencimento, hoje) -> Decimal:
-    """Total que o cliente paga: parcelas em atraso (ou do dia) **mais os juros**."""
-    principal, juros = composicao_do_pix(vencimento, hoje)
-    return principal + juros
-
-
 def _registrar_cancelamento(cobranca: CobrancaCora, motivo: str, autor=None) -> None:
     from .models import PixCancelado
 
