@@ -1,10 +1,34 @@
 # Sistema de Acompanhamento de Pagamentos de Celulares
 
-Controle dos pagamentos de aparelhos vendidos a prazo (estruturas diária, semanal, por
-dezena, quinzenal e mensal). Uso principal do financeiro, com acesso do dono para
-relatórios e acordos.
+Controle dos pagamentos de aparelhos vendidos ou alugados a prazo (parcelas semanais,
+quinzenais e mensais). Uso diário do financeiro (Yslane) e do dono (Alisson): cobrança
+automática por WhatsApp, Pix com conferência pelo extrato da Cora, baixa de pagamentos,
+bloqueio de aparelhos, relatórios e um conector para registrar tudo pelo Claude Desktop.
 
-Contexto completo do projeto: `PLANO-DO-PROJETO.md` (não versionado).
+Contexto completo do projeto: `PLANO-DO-PROJETO.md` (não versionado). Documentação de uso,
+deploy, integrações e segurança: [`docs/`](docs/README.md).
+
+## O que o sistema faz
+
+- **Clientes, contratos e aparelhos:** cadastro, importação por planilha, geração automática
+  das parcelas (`Vencimento`) ao salvar o contrato, estoque e catálogo de aparelhos.
+- **Cobrança:** painel "Cobrar hoje", próximas cobranças, promessas de pagamento, contatos
+  registrados e acordos (renegociação). Atraso com juros diários por contrato, **sem multa**;
+  alerta de bloqueio no 8º dia de atraso.
+- **Pagamentos:** baixa manual (inclusive parcial, com troco e juros separados), edição e
+  estorno, histórico por cliente/contrato.
+- **WhatsApp (Evolution API):** envio das cobranças e confirmações, com webhook de estados
+  (enviado, entregue, lido, erro) e retentativas ao longo do dia.
+- **Pix e Cora:** modo `estatico` (código copia e cola montado no sistema) ou `fatura`
+  (fatura Pix criada na Cora). Os pagamentos entram pela leitura do extrato ("Pix recebidos"),
+  com baixa automática quando o CPF e o valor batem, e a "Conferência com a Cora" aponta
+  divergências.
+- **Bloqueios:** lista de aparelhos a bloquear/desbloquear, com o registro de quem fez.
+- **Relatórios:** início, painel e juros, por período, com exportação em Excel e PDF.
+- **Saúde das rotinas:** mostra se as rotinas agendadas rodaram e qual versão está publicada.
+- **Claude Desktop:** conector (MCP) para consultar atrasos e contratos e registrar
+  pagamentos, contatos e bloqueios por conversa. Cada pessoa tem a sua chave, o Claude Desktop
+  pede permissão antes de gravar e a tela lista tudo o que foi gravado (com "Desfazer").
 
 ## Requisitos
 
@@ -24,7 +48,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Acesse `http://127.0.0.1:8000/` — a raiz leva à lista de clientes (exige login em `/entrar/`).
+Acesse `http://127.0.0.1:8000/`: a raiz abre a tela inicial dos relatórios (exige login em `/entrar/`).
 
 ## Testes
 
@@ -32,60 +56,66 @@ Acesse `http://127.0.0.1:8000/` — a raiz leva à lista de clientes (exige logi
 pytest
 ```
 
+O CI (GitHub Actions) roda o `pytest` e uma varredura de segredos (gitleaks) em todo PR.
+
 ## Estrutura
 
 ```
 config/            configuração do projeto (settings, urls, wsgi/asgi)
 apps/
-  usuarios/        usuário customizado (perfil: financeiro | dono) + login/logout
-  clientes/        cadastro de clientes — CRUD web + admin com import/export
-  contratos/       contratos/aparelhos + documentos anexos — CRUD web
-  pagamentos/      vencimentos, baixas, atraso e agenda diária
-  relatorios/      consolidação diária/semanal/mensal + Excel/PDF
+  usuarios/        usuário customizado (perfil: financeiro | dono), login e termos
+  clientes/        cadastro de clientes, situação (em dia/atrasado) e importação
+  aparelhos/       estoque, catálogo e bloqueios de aparelhos
+  contratos/       contratos, documentos anexos, importação e pendências
+  pagamentos/      parcelas, baixas, atraso/juros, cobrança, WhatsApp, Pix/Cora, rotinas
+  relatorios/      início, painel e juros, com Excel/PDF
+  assistente/      conector do Claude Desktop (API por chave, ferramentas, instalador)
 templates/         templates de projeto
-static/            arquivos estáticos de projeto
+static/            CSS, JS e imagens
+docs/              uso, deploy, integrações e segurança
+deploy/            entrypoint do contêiner
 ```
 
-## Estado atual
+## Configuração
 
-Fases 1 a 6 implementadas: cadastros, geração de vencimentos nas cinco estruturas,
-agenda "Cobrar hoje", baixa manual (inclusive parcial), atraso/juros/status e
-relatórios para o perfil dono. Os relatórios aceitam período diário, semanal,
-mensal ou personalizado e exportam os mesmos dados em Excel e PDF.
+Tudo vem de variáveis de ambiente (veja `.env.example`). As integrações têm padrões seguros:
 
-A Fase 6 prepara diariamente uma cobrança por contrato e envia a mensagem (texto
-livre) pela **Evolution API**, com webhook para os estados enviado, entregue,
-lido e erro. Por segurança, o padrão é `WHATSAPP_PROVIDER=log`: a fila é criada,
-mas nada sai do sistema. Depois de conectar uma instância da Evolution, troque
-para `WHATSAPP_PROVIDER=evolution` e agende:
+| Variável | Padrão | Para quê |
+|---|---|---|
+| `WHATSAPP_PROVIDER` | `log` | `log` só cria a fila; `evolution` envia de verdade |
+| `CORA_PROVIDER` | `log` | `log` não fala com a Cora; use a configuração de Stage antes da produção |
+| `PIX_MODO` | `fatura` | `estatico` monta o Pix no sistema (usado em produção) |
+| `EVOLUTION_*` | vazio | URL, chave, instância e token do webhook da Evolution |
+| `CORA_*` | vazio | credenciais, certificado e token do webhook da Cora |
+
+Chaves e certificados ficam só no ambiente de produção (Coolify) e nunca no repositório.
+Os passos de ativação estão em `docs/integracoes/` (`WHATSAPP.md`, `CORA.md`).
+
+## Rotinas agendadas
 
 ```bash
-python manage.py enviar_cobrancas_clientes
+python manage.py rotina_diaria            # gera vencimentos, lembrete diário e cobranças
+python manage.py enviar_cobrancas_clientes # envia as cobranças do dia (roda de novo mais tarde como retentativa)
+python manage.py conferir_recebidos       # lê o extrato da Cora e baixa os Pix reconhecidos
+python manage.py reconciliar_cora         # confere as cobranças Pix abertas na Cora e registra baixas confirmadas
 ```
 
-O endpoint a cadastrar na Evolution é `/pagamentos/webhooks/whatsapp/`, autenticado
-por token compartilhado (`EVOLUTION_WEBHOOK_TOKEN`).
-Veja os passos de ativação em `docs/integracoes/WHATSAPP.md`.
+Em produção rodam como Scheduled Tasks do Coolify (servidor em UTC); horários e comandos em
+`docs/deploy/DEPLOY-VPS.md`. A tela **Saúde das rotinas** mostra se cada uma rodou.
 
-A Fase 7 integra a cobrança **Pix** automática da Cora, com idempotência,
-conciliação, baixa automática confirmada e painel pago/não pago. O padrão também
-é seguro (`CORA_PROVIDER=log`). Veja a ativação de Stage em `docs/integracoes/CORA.md`.
+## Deploy
 
-Ao cadastrar ou editar um contrato com o valor da parcela preenchido, as
-parcelas (`Vencimento`) já são geradas na hora — o botão "Gerar parcelas" e o
-comando continuam disponíveis como reforço.
+Produção roda numa VPS com **Coolify**, a partir do `Dockerfile` (o `deploy/entrypoint.sh`
+aplica as migrações na subida). Todo merge na `main` publica automaticamente pelo webhook do
+GitHub. Detalhes em `docs/deploy/DEPLOY-VPS.md`; o Render (`render.yaml`) ficou como alternativa antiga.
 
-Em produção, o comando `rotina_diaria` junta os três jobs do dia (gerar
-vencimentos → lembrete da Yslane → cobrança dos clientes) numa execução só,
-para o cron do provedor chamar uma vez por dia. Deploy no Render (site +
-PostgreSQL + cron) em `docs/deploy/DEPLOY.md` e no `render.yaml` da raiz.
+## Claude Desktop
 
-Depois de atualizar o projeto, aplique a migração que registra a data real de
-quitação dos contratos:
-
-```bash
-python manage.py migrate
-```
+Cada pessoa abre **Claude Desktop** no menu do sistema, cria a chave, baixa o instalador
+(`.cmd`, Windows, precisa de Python) e segue o passo a passo da tela. O instalador baixa o
+conector, ajusta a configuração do Claude Desktop e testa a ligação. As instruções para o
+Projeto/conversa do Claude saem de `apps/assistente/conector/instrucoes.md`. A API fica em
+`/assistente/api/` e só aceita a chave (guardada apenas como hash).
 
 ## Comandos úteis
 
@@ -95,8 +125,5 @@ python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 python manage.py check
-
-# Rotina diária (o cron do Render chama isto 1x/dia — ver docs/deploy/DEPLOY.md)
-python manage.py rotina_diaria
 python manage.py rotina_diaria --hoje 2026-10-01 --sem-cobrancas
 ```
