@@ -149,7 +149,7 @@ class AcessoDesktopView(LoginRequiredMixin, View):
             "tem_chave": bool(ativos), "ultimo_uso": max(usos) if usos else None,
             "url": request.build_absolute_uri("/").rstrip("/"),
             "instrucoes": (CONECTOR / "instrucoes.md").read_text(encoding="utf-8"),
-            "operacoes": list(OperacaoApi.objects.filter(usuario=request.user, grava=True)[:8]),
+            "operacoes": list(OperacaoApi.objects.filter(grava=True).select_related("usuario")[:12]),
         }
 
 
