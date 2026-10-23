@@ -165,7 +165,10 @@
     {% for o in operacoes %}
       <li>
         <div class="lt-lista__texto"><strong>{{ o.resumo|default:o.ferramenta }}</strong><span>{{ o.criada_em|date:"d/m/Y H:i" }}</span></div>
-        {% if o.ok %}<span class="pill pago">gravado</span>{% else %}<span class="pill inadimplente">recusado</span>{% endif %}
+        {% if o.desfeita_em %}<span class="pill cancelado">desfeito</span>
+        {% elif o.ok %}<span class="pill pago">gravado</span>
+          {% if o.referencias.pagamento_id %}<form method="post" action="{% url 'assistente:desfazer' o.pk %}" data-confirmar="Desfazer este pagamento? A baixa é estornada e a parcela volta a ficar em aberto.">{% csrf_token %}<button type="submit" class="btn-mini">{% include "_icone.html" with nome="cancelar" %}Desfazer</button></form>{% endif %}
+        {% else %}<span class="pill inadimplente">recusado</span>{% endif %}
       </li>
     {% empty %}<li class="lt-lista__vazio">Ainda não houve registros feitos pelo Claude Desktop.</li>{% endfor %}
   </ul>

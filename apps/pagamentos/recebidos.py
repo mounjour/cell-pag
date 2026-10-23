@@ -86,6 +86,23 @@ def _pagamento_ja_registrado(recebimento: RecebimentoCora):
     return next((p for p in candidatos if p.valor_pago + p.juros_pago == recebimento.valor), None)
 
 
+def ligar_entrada_ao_pagamento(pagamento, usuario):
+    """Pagamento Pix registrado à mão (tela ou chat) depois de a entrada já estar na lista: liga as duas.
+
+    Só liga quando é inequívoco: mesmo CPF, mesmo dia, mesmo total (parcela + juros) e uma única entrada."""
+    cpf = pagamento.contrato.cliente.cpf
+    if pagamento.forma != Pagamento.Forma.PIX or not cpf:
+        return None
+    candidatos = [
+        r for r in RecebimentoCora.objects.filter(situacao=RecebimentoCora.Situacao.NOVO, documento=cpf, valor=pagamento.valor_pago + pagamento.juros_pago)
+        if timezone.localtime(r.recebido_em).date() == pagamento.data_pagamento
+    ]
+    if len(candidatos) != 1:
+        return None
+    vincular(candidatos[0].pk, pagamento, usuario)
+    return candidatos[0]
+
+
 def baixar_automaticamente(recebimento: RecebimentoCora) -> Pagamento | None:
     """Dá a baixa quando o CPF de quem pagou é de um cliente e o valor cabe em **uma só** parcela em aberto.
 

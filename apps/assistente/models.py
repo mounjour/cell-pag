@@ -75,6 +75,8 @@ class OperacaoApi(models.Model):
     resumo = models.TextField(blank=True)
     ok = models.BooleanField(default=True)
     resultado = models.TextField(blank=True)
+    referencias = models.JSONField(default=dict, blank=True)  # ex.: {"pagamento_id": 7}, para poder desfazer
+    desfeita_em = models.DateTimeField(null=True, blank=True)
     criada_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:

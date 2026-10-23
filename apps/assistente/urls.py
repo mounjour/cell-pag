@@ -10,6 +10,7 @@ urlpatterns = [
     path("desktop/<int:pk>/revogar/", views.RevogarAcessoView.as_view(), name="revogar"),
     path("desktop/instalador/", views.InstaladorDownloadView.as_view(), name="instalador"),
     path("desktop/<int:pk>/instalador-novo/", views.RenovarInstaladorView.as_view(), name="instalador_novo"),
+    path("desktop/operacoes/<int:pk>/desfazer/", views.DesfazerOperacaoView.as_view(), name="desfazer"),
     path("desktop/instrucoes/", views.InstrucoesColadasView.as_view(), name="instrucoes_coladas"),
     path("api/conector.py", views.ArquivoApiView.as_view(), {"arquivo": "conector.py"}, name="api_conector"),
     path("api/instalador.py", views.ArquivoApiView.as_view(), {"arquivo": "instalador.py"}, name="api_instalador"),

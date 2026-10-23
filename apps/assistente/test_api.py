@@ -248,3 +248,50 @@ def test_com_dois_computadores_basta_uma_chave_ter_sido_usada(auth_client, opera
     usada.ultimo_uso = timezone.now()
     usada.save(update_fields=["ultimo_uso"])
     assert "Claude Desktop conectado" in auth_client.get(reverse("assistente:desktop")).content.decode()
+
+
+def _pix_no_extrato(cliente, valor, **extra):
+    from apps.pagamentos.models import RecebimentoCora
+
+    return RecebimentoCora.objects.create(entrada_id="ext-1", valor=Decimal(valor), recebido_em=timezone.now(), documento=cliente.cpf, nome=cliente.nome, **extra)
+
+
+def test_pagamento_pix_pelo_chat_liga_a_entrada_do_extrato_e_o_desfazer_devolve(client, auth_client, chave, operador, cliente, parcela):
+    from apps.pagamentos.models import RecebimentoCora
+
+    entrada = _pix_no_extrato(cliente, "162.50")
+    resposta = _chamar(client, chave, "registrar_pagamento", contrato_id=parcela.contrato.pk, valor_pago="157.50", juros_pago="5.00",
+                       forma="pix", resumo="parcela 1 Pix")
+    assert "Pix correspondente" in resposta.json()["resultado"]
+    entrada.refresh_from_db()
+    assert entrada.situacao == RecebimentoCora.Situacao.VINCULADO and entrada.pagamento_id == Pagamento.objects.get().pk
+
+    operacao = OperacaoApi.objects.get(ok=True)
+    assert operacao.referencias == {"pagamento_id": Pagamento.objects.get().pk}
+    assert "Desfazer" in auth_client.get(reverse("assistente:desktop")).content.decode()
+
+    assert auth_client.post(reverse("assistente:desfazer", args=[operacao.pk])).status_code == 302
+    assert Pagamento.objects.count() == 0
+    parcela.refresh_from_db(); entrada.refresh_from_db(); operacao.refresh_from_db()
+    assert parcela.status != "pago" and entrada.situacao == RecebimentoCora.Situacao.NOVO and entrada.pagamento_id is None
+    assert operacao.desfeita_em is not None
+    # segunda vez não faz nada nem quebra
+    assert auth_client.post(reverse("assistente:desfazer", args=[operacao.pk])).status_code == 302
+
+
+def test_pagamento_em_dinheiro_nao_mexe_na_entrada_do_extrato(client, chave, cliente, parcela):
+    from apps.pagamentos.models import RecebimentoCora
+
+    entrada = _pix_no_extrato(cliente, "162.50")
+    _chamar(client, chave, "registrar_pagamento", contrato_id=parcela.contrato.pk, valor_pago="157.50", juros_pago="5.00", forma="dinheiro", resumo="dinheiro")
+    entrada.refresh_from_db()
+    assert entrada.situacao == RecebimentoCora.Situacao.NOVO
+
+
+def test_so_quem_gravou_pode_desfazer(client, auth_client, chave, django_user_model, parcela):
+    _chamar(client, chave, "registrar_pagamento", contrato_id=parcela.contrato.pk, valor_pago="157.50", juros_pago="5.00", forma="pix", resumo="x")
+    operacao = OperacaoApi.objects.get(ok=True)
+    outro = django_user_model.objects.create_user("outro")
+    client.force_login(outro)
+    assert client.post(reverse("assistente:desfazer", args=[operacao.pk])).status_code == 404
+    assert Pagamento.objects.count() == 1

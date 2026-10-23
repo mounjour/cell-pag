@@ -200,8 +200,9 @@ def validar_pagamento(p: dict) -> tuple[dict, str, list[str]]:
     return normalizados, resumo, avisos
 
 
-def executar_pagamento(p: dict, usuario) -> str:
+def executar_pagamento(p: dict, usuario) -> tuple[str, dict]:
     from apps.pagamentos.limpeza import encerrar_cobranca_automatica
+    from apps.pagamentos.recebidos import ligar_entrada_ao_pagamento
 
     contrato = _contrato(p["contrato_id"])
     with transaction.atomic():
@@ -219,8 +220,16 @@ def executar_pagamento(p: dict, usuario) -> str:
         encerrar_cobranca_automatica(pagamento)
     except Exception:  # o pagamento já foi salvo; só registra o problema
         logger.exception("Falha ao encerrar a cobrança automática do pagamento %s", pagamento.pk)
+    ligado = None
+    try:
+        ligado = ligar_entrada_ao_pagamento(pagamento, usuario)
+    except Exception:  # o pagamento já foi salvo; a entrada fica na lista do painel Pix
+        logger.exception("Falha ao ligar o Pix do extrato ao pagamento %s", pagamento.pk)
     venc.refresh_from_db()
-    return f"Pagamento registrado na parcela {venc.numero}; ela agora está {venc.get_status_display().lower()}."
+    texto = f"Pagamento registrado na parcela {venc.numero}; ela agora está {venc.get_status_display().lower()}."
+    if ligado:
+        texto += " O Pix correspondente do extrato da Cora foi marcado como registrado."
+    return texto, {"pagamento_id": pagamento.pk}
 
 
 # ── escrita: anotar contato ───────────────────────────────────────────────────
@@ -391,8 +400,9 @@ def catalogo() -> list[dict]:
     return itens
 
 
-def executar_ferramenta(nome: str, parametros: dict, usuario) -> tuple[str, str, bool]:
-    """Roda uma ferramenta. Devolve (texto para o Claude, resumo do que foi feito, se gravou algo).
+def executar_ferramenta(nome: str, parametros: dict, usuario) -> tuple[str, str, bool, dict]:
+    """Roda uma ferramenta. Devolve (texto para o Claude, resumo do que foi feito, se gravou algo, referências do
+    que foi gravado, usadas para desfazer, ex.: ``{"pagamento_id": 7}``).
 
     Levanta ``ErroFerramenta`` quando o pedido não pode ser atendido (a mensagem é para a pessoa)."""
     import json
@@ -401,7 +411,7 @@ def executar_ferramenta(nome: str, parametros: dict, usuario) -> tuple[str, str,
     resumo_informado = str(parametros.pop("resumo", "") or "")[:300]
     if nome in LEITURA:
         try:
-            return json.dumps(LEITURA[nome](**parametros), ensure_ascii=False), "", False
+            return json.dumps(LEITURA[nome](**parametros), ensure_ascii=False), "", False, {}
         except TypeError as exc:
             raise ErroFerramenta(f"Parâmetros inválidos para {nome}: {exc}")
     if nome in ESCRITA:
@@ -410,6 +420,7 @@ def executar_ferramenta(nome: str, parametros: dict, usuario) -> tuple[str, str,
         validar, executar = ESCRITA[nome]
         normalizados, resumo, avisos = validar(parametros)
         resultado = executar(normalizados, usuario)
+        resultado, referencias = resultado if isinstance(resultado, tuple) else (resultado, {})
         texto = f"{resumo} -> {resultado}" + (" Avisos: " + " ".join(avisos) if avisos else "")
-        return texto, resumo, True
+        return texto, resumo, True, referencias
     raise ErroFerramenta(f"Ferramenta desconhecida: {nome}")
