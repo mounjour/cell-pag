@@ -295,3 +295,11 @@ def test_so_quem_gravou_pode_desfazer(client, auth_client, chave, django_user_mo
     client.force_login(outro)
     assert client.post(reverse("assistente:desfazer", args=[operacao.pk])).status_code == 404
     assert Pagamento.objects.count() == 1
+
+
+def test_lista_de_operacoes_mostra_as_de_todos_mas_so_quem_gravou_desfaz(client, auth_client, chave, django_user_model, parcela):
+    _chamar(client, chave, "registrar_pagamento", contrato_id=parcela.contrato.pk, valor_pago="157.50", juros_pago="5.00", forma="pix", resumo="Pagamento do colega")
+    outro = django_user_model.objects.create_user("dono", first_name="Dono")
+    client.force_login(outro)
+    html = client.get(reverse("assistente:desktop")).content.decode()
+    assert "Registrar pagamento de" in html and "Desfazer" not in html
