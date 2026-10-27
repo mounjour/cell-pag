@@ -89,7 +89,7 @@ def test_gravar_pagamento_pede_resumo_e_registra_quem_fez(client, chave, operado
 def test_parcela_ja_paga_e_recusada_e_o_erro_fica_registrado(client, chave, parcela):
     Pagamento(contrato=parcela.contrato, vencimento=parcela, data_pagamento=timezone.localdate(), valor_pago=Decimal("157.50"), forma="pix").registrar()
     resposta = _chamar(client, chave, "registrar_pagamento", contrato_id=parcela.contrato.pk, parcela_numero=1, valor_pago="157.50", resumo="de novo")
-    assert resposta.status_code == 400 and "já recebeu pagamento" in resposta.json()["erro"]
+    assert resposta.status_code == 400 and "já está paga" in resposta.json()["erro"]
     assert Pagamento.objects.count() == 1 and OperacaoApi.objects.get().ok is False
 
 
@@ -303,3 +303,59 @@ def test_lista_de_operacoes_mostra_as_de_todos_mas_so_quem_gravou_desfaz(client,
     client.force_login(outro)
     html = client.get(reverse("assistente:desktop")).content.decode()
     assert "Registrar pagamento de" in html and "Desfazer" not in html
+
+
+def test_ajustar_parcela_soma_e_tira_valor_e_refaz_o_pix(client, chave, parcela):
+    ct = parcela.contrato.pk
+    soma = _chamar(client, chave, "ajustar_parcela", contrato_id=ct, acrescimo="5.00", motivo="troca de tela", resumo="Somar R$ 5,00 na parcela 1")
+    assert soma.status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.valor_previsto == Decimal("162.50") and parcela.acrescimo == Decimal("5.00") and parcela.acrescimo_motivo == "troca de tela"
+    desconto = _chamar(client, chave, "ajustar_parcela", contrato_id=ct, acrescimo="-20.00", resumo="Desconto de R$ 20,00")
+    assert desconto.status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.valor_previsto == Decimal("137.50")
+    igual = _chamar(client, chave, "ajustar_parcela", contrato_id=ct, acrescimo="-20.00", resumo="de novo")
+    assert igual.status_code == 400 and "Nada mudaria" in igual.json()["erro"]
+    zerado = _chamar(client, chave, "ajustar_parcela", contrato_id=ct, acrescimo="-999.00", resumo="absurdo")
+    assert zerado.status_code == 400 and "maior que zero" in zerado.json()["erro"]
+
+
+def test_perdoar_e_adiar_sao_acordos_e_podem_ser_desfeitos(client, chave, parcela):
+    from apps.pagamentos.models import Acordo
+
+    ct = parcela.contrato.pk
+    perdao = _chamar(client, chave, "perdoar_juros", contrato_id=ct, juros="2.00", resumo="Perdoar R$ 2,00")
+    assert perdao.status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.juros_abonado == Decimal("2.00")
+    acordo = Acordo.objects.get()
+    assert str(acordo.pk) in _chamar(client, chave, "consultar_contrato", contrato_id=ct).json()["resultado"]
+    assert _chamar(client, chave, "desfazer_acordo", acordo_id=acordo.pk, resumo="Desfazer").status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.juros_abonado == Decimal("0.00")
+    nova = (timezone.localdate() + datetime.timedelta(days=3)).isoformat()
+    assert _chamar(client, chave, "adiar_parcela", contrato_id=ct, nova_data=nova, resumo="Adiar").status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.data_vencimento.isoformat() == nova
+
+
+def test_estornar_e_corrigir_pagamento_pelo_chat(client, chave, parcela):
+    ct = parcela.contrato.pk
+    _chamar(client, chave, "registrar_pagamento", contrato_id=ct, valor_pago="157.50", forma="dinheiro", resumo="Pagar")
+    pagamento = Pagamento.objects.get()
+    corrigido = _chamar(client, chave, "corrigir_pagamento", pagamento_id=pagamento.pk, juros_pago="5.00", forma="pix", resumo="Corrigir")
+    assert corrigido.status_code == 200
+    pagamento.refresh_from_db()
+    assert pagamento.juros_pago == Decimal("5.00") and pagamento.forma == "pix"
+    assert _chamar(client, chave, "estornar_pagamento", pagamento_id=pagamento.pk, resumo="Estornar").status_code == 200
+    assert Pagamento.objects.count() == 0
+    parcela.refresh_from_db()
+    assert parcela.status == "aberto"
+
+
+def test_pagamento_parcial_manual_e_o_resto_depois(client, chave, parcela):
+    ct = parcela.contrato.pk
+    assert _chamar(client, chave, "registrar_pagamento", contrato_id=ct, valor_pago="100.00", forma="pix", resumo="Parcial").status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.status in ("parcial", "pago")

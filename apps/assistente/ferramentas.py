@@ -102,13 +102,13 @@ def consultar_contrato(contrato_id=None, **_) -> dict:
         cobranca = a_cobrar.get(v.numero)
         parcelas.append({
             "numero": v.numero, "data_de_cobranca": v.data_vencimento.isoformat(), "status": v.status,
-            "previsto": str(v.valor_previsto), "pago": str(v.valor_pago), "saldo": str(v.saldo),
+            "previsto": str(v.valor_previsto), "ajuste": str(v.acrescimo), "pago": str(v.valor_pago), "saldo": str(v.saldo),
             "juros_hoje": str(cobranca.juros) if cobranca else "0.00",
             "dias_de_atraso": cobranca.dias_atraso if cobranca else 0,
             "total_hoje": str(cobranca.total) if cobranca else str(max(v.saldo, Decimal("0.00"))),
         })
     pagamentos = [
-        {"data": p.data_pagamento.isoformat(), "parcela": p.vencimento.numero if p.vencimento_id else None,
+        {"pagamento_id": p.pk, "data": p.data_pagamento.isoformat(), "parcela": p.vencimento.numero if p.vencimento_id else None,
          "valor": str(p.valor_pago), "juros": str(p.juros_pago), "forma": p.forma}
         for p in contrato.pagamentos.select_related("vencimento").order_by("-data_pagamento", "-pk")[:8]
     ]
@@ -122,6 +122,11 @@ def consultar_contrato(contrato_id=None, **_) -> dict:
         "alertar_bloqueio": situacao.alertar_bloqueio if situacao else False,
         "bloqueado_desde": bloqueio.bloqueado_em.date().isoformat() if bloqueio else None,
         "parcelas": parcelas, "ultimos_pagamentos": pagamentos,
+        "acordos": [
+            {"acordo_id": a.pk, "parcela": a.vencimento.numero, "tipo": a.get_tipo_display(),
+             "juros_perdoados": str(a.juros_perdoados), "nova_data": a.nova_data.isoformat() if a.nova_data else None}
+            for a in contrato.acordos.select_related("vencimento").filter(desfeito_em__isnull=True).order_by("-criado_em")[:8]
+        ],
         "hoje": hoje.isoformat(),
     }
 
@@ -174,8 +179,8 @@ def validar_pagamento(p: dict) -> tuple[dict, str, list[str]]:
         venc = contrato.vencimentos.filter(numero=p["parcela_numero"]).first()
         if venc is None:
             raise ErroFerramenta(f"O contrato não tem a parcela {p['parcela_numero']}.")
-    if venc.status == Vencimento.Status.PAGO or venc.pagamentos.exists():
-        raise ErroFerramenta(f"A parcela {venc.numero} já recebeu pagamento. Estornar é com a equipe, pela tela do contrato.")
+    if venc.status == Vencimento.Status.PAGO:
+        raise ErroFerramenta(f"A parcela {venc.numero} já está paga. Se foi lançada errado, use estornar_pagamento.")
     valor = _dinheiro(p.get("valor_pago"), "o valor da parcela recebido", exclusivo=True)
     juros = _dinheiro(p.get("juros_pago") or "0", "os juros recebidos")
     forma = p.get("forma") or "pix"
@@ -183,6 +188,8 @@ def validar_pagamento(p: dict) -> tuple[dict, str, list[str]]:
         raise ErroFerramenta("A forma de pagamento precisa ser pix, dinheiro ou outro.")
     data = _data(p.get("data_pagamento"), "pagamento", padrao=timezone.localdate(), permitir_futuro=False)
     avisos = []
+    if venc.pagamentos.exists():
+        avisos.append("Esta parcela já tinha pagamento parcial; este soma ao que já foi pago.")
     if valor > venc.saldo:
         avisos.append(f"O valor passa do saldo da parcela ({_brl(venc.saldo)}): o excedente abate a próxima parcela.")
     if valor < venc.saldo:
@@ -207,8 +214,8 @@ def executar_pagamento(p: dict, usuario) -> tuple[str, dict]:
     contrato = _contrato(p["contrato_id"])
     with transaction.atomic():
         venc = Vencimento.objects.select_for_update().get(contrato=contrato, numero=p["parcela_numero"])
-        if venc.status == Vencimento.Status.PAGO or venc.pagamentos.exists():
-            raise ErroFerramenta(f"A parcela {venc.numero} já recebeu pagamento; nada foi gravado.")
+        if venc.status == Vencimento.Status.PAGO:
+            raise ErroFerramenta(f"A parcela {venc.numero} já está paga; nada foi gravado.")
         pagamento = Pagamento(
             contrato=contrato, vencimento=venc, data_pagamento=datetime.date.fromisoformat(p["data_pagamento"]),
             valor_pago=Decimal(p["valor_pago"]), juros_pago=Decimal(p["juros_pago"]), forma=p["forma"],
@@ -322,6 +329,229 @@ def executar_desbloqueio(p: dict, usuario) -> str:
     return "Liberação registrada."
 
 
+# ── escrita: ajustar valor, acordos, estorno e correção de pagamento ──────────
+
+def _parcela(contrato: Contrato, numero) -> Vencimento:
+    if numero in (None, ""):
+        venc = contrato.parcela_em_aberto()
+        if venc is None:
+            raise ErroFerramenta("Este contrato não tem parcela em aberto.")
+        return venc
+    venc = contrato.vencimentos.filter(numero=numero).first()
+    if venc is None:
+        raise ErroFerramenta(f"O contrato não tem a parcela {numero}.")
+    return venc
+
+
+def validar_ajuste(p: dict) -> tuple[dict, str, list[str]]:
+    from apps.pagamentos import parcelas
+
+    contrato = _contrato(p.get("contrato_id"))
+    venc = _parcela(contrato, p.get("parcela_numero"))
+    if motivo := parcelas.motivo_para_nao_editar(venc):
+        raise ErroFerramenta(motivo)
+    base_atual = parcelas.valor_base(venc)
+    base = _dinheiro(p["valor_base"], "o valor da parcela", exclusivo=True) if p.get("valor_base") not in (None, "") else base_atual
+    acrescimo = (
+        _dinheiro(p["acrescimo"], "o ajuste", minimo=Decimal("-99999999"))
+        if p.get("acrescimo") not in (None, "") else venc.acrescimo
+    )
+    data = _data(p.get("data_vencimento"), "cobrança", padrao=venc.data_vencimento)
+    if base + acrescimo <= 0:
+        raise ErroFerramenta("O valor da parcela (com o ajuste) precisa ficar maior que zero.")
+    if base + acrescimo < venc.valor_pago:
+        raise ErroFerramenta(f"A parcela já recebeu {_brl(venc.valor_pago)}; o valor não pode ficar abaixo disso.")
+    if (base, acrescimo, data) == (base_atual, venc.acrescimo, venc.data_vencimento):
+        raise ErroFerramenta("Nada mudaria: os valores informados são os que a parcela já tem.")
+    motivo = str(p.get("motivo") or "")[:120]
+    normalizados = {
+        "contrato_id": contrato.pk, "parcela_numero": venc.numero, "valor_base": str(base),
+        "acrescimo": str(acrescimo), "data_vencimento": data.isoformat(), "motivo": motivo,
+    }
+    partes = []
+    if acrescimo != venc.acrescimo:
+        partes.append(f"ajuste de {_brl(venc.acrescimo)} para {_brl(acrescimo)} ({'valor a mais' if acrescimo >= 0 else 'desconto'})")
+    if base != base_atual:
+        partes.append(f"valor base de {_brl(base_atual)} para {_brl(base)}")
+    if data != venc.data_vencimento:
+        partes.append(f"cobrança de {venc.data_vencimento:%d/%m/%Y} para {data:%d/%m/%Y}")
+    resumo = (
+        f"Ajustar a parcela {venc.numero} de {_nome_do_contrato(contrato)}: " + "; ".join(partes)
+        + f". Fica em {_brl(base + acrescimo)}."
+    )
+    return normalizados, resumo, ["O Pix aberto dessa parcela é refeito com o valor novo."]
+
+
+def executar_ajuste(p: dict, usuario) -> str:
+    from apps.pagamentos import parcelas
+
+    contrato = _contrato(p["contrato_id"])
+    venc = contrato.vencimentos.get(numero=p["parcela_numero"])
+    try:
+        avisos = parcelas.editar_parcela(
+            venc, data_vencimento=datetime.date.fromisoformat(p["data_vencimento"]), valor_base=Decimal(p["valor_base"]),
+            acrescimo=Decimal(p["acrescimo"]), motivo=p["motivo"], autor=usuario,
+        )
+    except parcelas.ParcelaInvalida as exc:
+        raise ErroFerramenta(str(exc))
+    venc.refresh_from_db()
+    return f"Parcela {venc.numero} atualizada: agora {_brl(venc.valor_previsto)}, cobrança em {venc.data_vencimento:%d/%m/%Y}." + "".join(f" {t}" for _, t in avisos)
+
+
+def validar_perdao(p: dict) -> tuple[dict, str, list[str]]:
+    from apps.pagamentos import acordos
+
+    contrato = _contrato(p.get("contrato_id"))
+    venc = _parcela(contrato, p.get("parcela_numero"))
+    if motivo := acordos.motivo_para_nao_negociar(venc):
+        raise ErroFerramenta(motivo)
+    cobrado = acordos.juros_a_cobrar(venc, timezone.localdate())
+    if cobrado <= 0:
+        raise ErroFerramenta("Esta parcela não tem juros para perdoar hoje.")
+    juros = _dinheiro(p["juros"], "os juros a perdoar", exclusivo=True) if p.get("juros") not in (None, "") else cobrado
+    if juros > cobrado:
+        raise ErroFerramenta(f"Só há {_brl(cobrado)} de juros para perdoar hoje.")
+    nota = str(p.get("nota") or "")[:200]
+    return (
+        {"contrato_id": contrato.pk, "parcela_numero": venc.numero, "juros": str(juros), "nota": nota},
+        f"Perdoar {_brl(juros)} de juros da parcela {venc.numero} de {_nome_do_contrato(contrato)}"
+        + (f" ({nota})." if nota else "."),
+        [],
+    )
+
+
+def executar_perdao(p: dict, usuario) -> str:
+    from apps.pagamentos import acordos
+
+    venc = _contrato(p["contrato_id"]).vencimentos.get(numero=p["parcela_numero"])
+    try:
+        acordo, avisos = acordos.aplicar_acordo(
+            venc, tipo="perdao_juros", autor=usuario, juros_perdoar=Decimal(p["juros"]), nota=p["nota"] or MARCA_ASSISTENTE,
+        )
+    except acordos.AcordoInvalido as exc:
+        raise ErroFerramenta(str(exc))
+    return f"{_brl(acordo.juros_perdoados)} de juros perdoados (acordo {acordo.pk})." + "".join(f" {t}" for _, t in avisos)
+
+
+def validar_adiamento(p: dict) -> tuple[dict, str, list[str]]:
+    from apps.pagamentos import acordos
+
+    contrato = _contrato(p.get("contrato_id"))
+    venc = _parcela(contrato, p.get("parcela_numero"))
+    if motivo := acordos.motivo_para_nao_negociar(venc):
+        raise ErroFerramenta(motivo)
+    nova = _data(p.get("nova_data"), "nova cobrança", permitir_passado=False)
+    if nova is None:
+        raise ErroFerramenta("Informe a nova data de cobrança (nova_data).")
+    if nova <= venc.data_vencimento:
+        raise ErroFerramenta("A nova data precisa ser depois da cobrança atual da parcela.")
+    nota = str(p.get("nota") or "")[:200]
+    return (
+        {"contrato_id": contrato.pk, "parcela_numero": venc.numero, "nova_data": nova.isoformat(), "nota": nota},
+        f"Adiar a parcela {venc.numero} de {_nome_do_contrato(contrato)} de {venc.data_vencimento:%d/%m/%Y} para {nova:%d/%m/%Y}"
+        + (f" ({nota})." if nota else "."),
+        ["Os juros do atraso recomeçam a contar da nova data."],
+    )
+
+
+def executar_adiamento(p: dict, usuario) -> str:
+    from apps.pagamentos import acordos
+
+    venc = _contrato(p["contrato_id"]).vencimentos.get(numero=p["parcela_numero"])
+    try:
+        acordo, avisos = acordos.aplicar_acordo(
+            venc, tipo="nova_data", autor=usuario, nova_data=datetime.date.fromisoformat(p["nova_data"]),
+            nota=p["nota"] or MARCA_ASSISTENTE,
+        )
+    except acordos.AcordoInvalido as exc:
+        raise ErroFerramenta(str(exc))
+    return f"Parcela {venc.numero} agora é cobrada em {acordo.nova_data:%d/%m/%Y} (acordo {acordo.pk})." + "".join(f" {t}" for _, t in avisos)
+
+
+def validar_desfazer_acordo(p: dict) -> tuple[dict, str, list[str]]:
+    from apps.pagamentos import acordos
+    from apps.pagamentos.models import Acordo
+
+    acordo = Acordo.objects.select_related("contrato__cliente", "vencimento").filter(pk=p.get("acordo_id")).first()
+    if acordo is None:
+        raise ErroFerramenta("Não existe acordo com esse id. Use consultar_contrato para ver os acordos.")
+    if not acordos.pode_desfazer(acordo):
+        raise ErroFerramenta("Este acordo não pode ser desfeito (já foi desfeito, a parcela recebeu pagamento ou há um acordo mais novo).")
+    return (
+        {"acordo_id": acordo.pk},
+        f"Desfazer o acordo ({acordo.get_tipo_display().lower()}) da parcela {acordo.vencimento.numero} de {_nome_do_contrato(acordo.contrato)}.",
+        [],
+    )
+
+
+def executar_desfazer_acordo(p: dict, usuario) -> str:
+    from apps.pagamentos import acordos
+    from apps.pagamentos.models import Acordo
+
+    try:
+        avisos = acordos.desfazer_acordo(Acordo.objects.get(pk=p["acordo_id"]), autor=usuario)
+    except acordos.AcordoInvalido as exc:
+        raise ErroFerramenta(str(exc))
+    return "Acordo desfeito: a parcela voltou ao que era antes." + "".join(f" {t}" for _, t in avisos)
+
+
+def _pagamento(pagamento_id) -> Pagamento:
+    try:
+        return Pagamento.objects.select_related("contrato__cliente", "vencimento").get(pk=int(pagamento_id))
+    except (Pagamento.DoesNotExist, TypeError, ValueError):
+        raise ErroFerramenta("Não existe pagamento com esse id. Use consultar_contrato para ver os pagamentos.")
+
+
+def validar_estorno(p: dict) -> tuple[dict, str, list[str]]:
+    pagamento = _pagamento(p.get("pagamento_id"))
+    parcela = f"parcela {pagamento.vencimento.numero}" if pagamento.vencimento_id else "sem parcela"
+    return (
+        {"pagamento_id": pagamento.pk},
+        f"Estornar o pagamento de {_brl(pagamento.valor_pago)} de {_nome_do_contrato(pagamento.contrato)} "
+        f"({parcela}, {pagamento.data_pagamento:%d/%m/%Y}). A parcela volta a ficar em aberto.",
+        ["Se o pagamento veio de um Pix do extrato, ele volta para \"A registrar\"."],
+    )
+
+
+def executar_estorno(p: dict, usuario) -> str:
+    from apps.pagamentos.recebidos import estornar_liberando_extrato
+
+    with transaction.atomic():
+        pagamento = _pagamento(p["pagamento_id"])
+        restante = estornar_liberando_extrato(pagamento)
+    texto = "Pagamento estornado; a parcela voltou ao que era."
+    if restante:
+        texto += " Atenção: essa baixa tinha transportado saldo para parcelas seguintes; confira os valores previstos delas."
+    return texto
+
+
+def validar_edicao_pagamento(p: dict) -> tuple[dict, str, list[str]]:
+    pagamento = _pagamento(p.get("pagamento_id"))
+    data = _data(p.get("data_pagamento"), "pagamento", padrao=pagamento.data_pagamento, permitir_futuro=False)
+    juros = _dinheiro(p["juros_pago"], "os juros recebidos") if p.get("juros_pago") not in (None, "") else pagamento.juros_pago
+    forma = p.get("forma") or pagamento.forma
+    if forma not in {c for c, _ in Pagamento.Forma.choices}:
+        raise ErroFerramenta("A forma de pagamento precisa ser pix, dinheiro ou outro.")
+    observacao = str(p["observacao"])[:200] if p.get("observacao") not in (None, "") else pagamento.observacao
+    if (data, juros, forma, observacao) == (pagamento.data_pagamento, pagamento.juros_pago, pagamento.forma, pagamento.observacao):
+        raise ErroFerramenta("Nada mudaria: os dados informados são os que o pagamento já tem.")
+    return (
+        {"pagamento_id": pagamento.pk, "data_pagamento": data.isoformat(), "juros_pago": str(juros), "forma": forma, "observacao": observacao},
+        f"Corrigir o pagamento de {_nome_do_contrato(pagamento.contrato)}: data {data:%d/%m/%Y}, juros {_brl(juros)}, {Pagamento.Forma(forma).label}.",
+        ["O valor da parcela paga não muda aqui; para isso, estorne e registre de novo."],
+    )
+
+
+def executar_edicao_pagamento(p: dict, usuario) -> str:
+    pagamento = _pagamento(p["pagamento_id"])
+    pagamento.data_pagamento = datetime.date.fromisoformat(p["data_pagamento"])
+    pagamento.juros_pago = Decimal(p["juros_pago"])
+    pagamento.forma = p["forma"]
+    pagamento.observacao = p["observacao"]
+    pagamento.save(update_fields=["data_pagamento", "juros_pago", "forma", "observacao"])
+    return "Pagamento corrigido."
+
+
 # ── catálogo entregue ao Claude ───────────────────────────────────────────────
 
 LEITURA = {
@@ -336,6 +566,12 @@ ESCRITA = {
     "anotar_contato": (validar_contato, executar_contato),
     "registrar_bloqueio": (validar_bloqueio, executar_bloqueio),
     "registrar_desbloqueio": (validar_desbloqueio, executar_desbloqueio),
+    "ajustar_parcela": (validar_ajuste, executar_ajuste),
+    "perdoar_juros": (validar_perdao, executar_perdao),
+    "adiar_parcela": (validar_adiamento, executar_adiamento),
+    "desfazer_acordo": (validar_desfazer_acordo, executar_desfazer_acordo),
+    "estornar_pagamento": (validar_estorno, executar_estorno),
+    "corrigir_pagamento": (validar_edicao_pagamento, executar_edicao_pagamento),
 }
 
 
@@ -352,7 +588,7 @@ FERRAMENTAS = [
      "input_schema": _esquema({}, [])},
     {"name": "proximas_cobrancas", "description": "Lista as cobranças dos próximos dias, agrupadas por data. Só leitura.",
      "input_schema": _esquema({"dias": {"type": "integer", "description": "De 1 a 30; padrão 14."}}, [])},
-    {"name": "registrar_pagamento", "description": "REGISTRA o pagamento de uma parcela no sistema (a pessoa autoriza no pedido de permissão do Claude Desktop). valor_pago é o valor da PARCELA recebido (sem os juros); os juros do atraso vão separados em juros_pago. Consulte o contrato antes para usar o saldo e os juros de hoje corretos.",
+    {"name": "registrar_pagamento", "description": "REGISTRA manualmente o pagamento de uma parcela (inteiro ou parcial, em qualquer data passada). valor_pago é o valor da PARCELA recebido (sem os juros); os juros do atraso vão separados em juros_pago. Consulte o contrato antes para usar o saldo e os juros de hoje corretos. Para somar ou tirar valor da parcela use ajustar_parcela.",
      "input_schema": _esquema({
          "contrato_id": {"type": "integer"},
          "parcela_numero": {"type": "integer", "description": "Número da parcela; se omitido, usa a primeira em aberto."},
@@ -374,6 +610,39 @@ FERRAMENTAS = [
      "input_schema": _esquema({"contrato_id": {"type": "integer"}, "observacao": {"type": "string", "description": "Como foi bloqueado, ex.: iCloud."}}, ["contrato_id"])},
     {"name": "registrar_desbloqueio", "description": "REGISTRA que o aparelho do contrato foi liberado. A pessoa autoriza no pedido de permissão do Claude Desktop.",
      "input_schema": _esquema({"contrato_id": {"type": "integer"}}, ["contrato_id"])},
+    {"name": "ajustar_parcela", "description": "SOMA ou TIRA valor de uma parcela em aberto, ou muda o valor/data dela. acrescimo é o ajuste TOTAL da parcela: positivo = valor a mais (ex.: 5.00 soma R$ 5,00 à parcela), negativo = desconto (ex.: -20.00), 0 = remove o ajuste. valor_base muda o valor da própria parcela. Tudo que for omitido continua como está (consulte o contrato antes: o campo ajuste mostra o que já existe). O Pix aberto é refeito com o valor novo. Para juros de atraso, use perdoar_juros ou registre_pagamento com juros_pago.",
+     "input_schema": _esquema({
+         "contrato_id": {"type": "integer"},
+         "parcela_numero": {"type": "integer", "description": "Se omitido, usa a primeira em aberto."},
+         "acrescimo": {"type": "string", "description": "Ajuste total da parcela, com sinal: 5.00 soma, -20.00 desconta, 0 remove."},
+         "valor_base": {"type": "string", "description": "Novo valor da parcela sem o ajuste, ex.: 160.00."},
+         "data_vencimento": {"type": "string", "description": "AAAA-MM-DD, nova data de cobrança."},
+         "motivo": {"type": "string", "description": "Por que o ajuste (até 120 letras), ex.: troca de tela."},
+     }, ["contrato_id"])},
+    {"name": "perdoar_juros", "description": "PERDOA juros de atraso de uma parcela (acordo). Sem o campo juros, perdoa todos os de hoje. A pessoa autoriza no pedido de permissão do Claude Desktop.",
+     "input_schema": _esquema({
+         "contrato_id": {"type": "integer"}, "parcela_numero": {"type": "integer"},
+         "juros": {"type": "string", "description": "Quanto perdoar, ex.: 10.00. Omitido = todos os juros de hoje."},
+         "nota": {"type": "string"},
+     }, ["contrato_id"])},
+    {"name": "adiar_parcela", "description": "ADIA a cobrança de uma parcela para uma nova data (acordo). Os juros recomeçam a contar da nova data.",
+     "input_schema": _esquema({
+         "contrato_id": {"type": "integer"}, "parcela_numero": {"type": "integer"},
+         "nova_data": {"type": "string", "description": "AAAA-MM-DD, depois da cobrança atual e não no passado."},
+         "nota": {"type": "string"},
+     }, ["contrato_id", "nova_data"])},
+    {"name": "desfazer_acordo", "description": "DESFAZ um acordo (perdão de juros ou adiamento) enquanto a parcela não recebeu pagamento. O id do acordo vem de consultar_contrato.",
+     "input_schema": _esquema({"acordo_id": {"type": "integer"}}, ["acordo_id"])},
+    {"name": "estornar_pagamento", "description": "ESTORNA (desfaz) um pagamento registrado: a parcela volta a ficar em aberto. O id do pagamento vem de consultar_contrato. Use quando o pagamento foi lançado errado.",
+     "input_schema": _esquema({"pagamento_id": {"type": "integer"}}, ["pagamento_id"])},
+    {"name": "corrigir_pagamento", "description": "CORRIGE data, juros, forma ou observação de um pagamento já registrado (o valor da parcela paga não muda; para isso, estorne e registre de novo). O id do pagamento vem de consultar_contrato. Campos omitidos continuam como estão.",
+     "input_schema": _esquema({
+         "pagamento_id": {"type": "integer"},
+         "data_pagamento": {"type": "string", "description": "AAAA-MM-DD, não pode ser futura."},
+         "juros_pago": {"type": "string"},
+         "forma": {"type": "string", "enum": ["pix", "dinheiro", "outro"]},
+         "observacao": {"type": "string"},
+     }, ["pagamento_id"])},
 ]
 
 

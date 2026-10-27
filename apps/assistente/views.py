@@ -206,7 +206,8 @@ class DesfazerOperacaoView(LoginRequiredMixin, View):
     """Desfaz um pagamento que o Claude registrou (estorna a baixa). Só a própria pessoa, e só uma vez."""
 
     def post(self, request, pk):
-        from apps.pagamentos.models import Pagamento, RecebimentoCora
+        from apps.pagamentos.models import Pagamento
+        from apps.pagamentos.recebidos import estornar_liberando_extrato
 
         operacao = get_object_or_404(OperacaoApi, pk=pk, usuario=request.user, grava=True, ok=True)
         pagamento_id = operacao.referencias.get("pagamento_id")
@@ -220,10 +221,7 @@ class DesfazerOperacaoView(LoginRequiredMixin, View):
                 messages.info(request, "Este pagamento já tinha sido estornado.")
             else:
                 # O Pix do extrato volta para "A registrar" (senão sumiria da lista sem ter pagamento).
-                RecebimentoCora.objects.filter(pagamento=pagamento).update(
-                    situacao=RecebimentoCora.Situacao.NOVO, pagamento=None, tratado_em=None, tratado_por=None,
-                )
-                restante = pagamento.estornar()
+                restante = estornar_liberando_extrato(pagamento)
                 messages.success(request, "Pagamento estornado. A parcela voltou a ficar em aberto.")
             operacao.desfeita_em = timezone.now()
             operacao.save(update_fields=["desfeita_em"])
