@@ -28,7 +28,10 @@ deploy, integrações e segurança: [`docs/`](docs/README.md).
 - **Saúde das rotinas:** mostra se as rotinas agendadas rodaram e qual versão está publicada.
 - **Claude Desktop:** conector (MCP) para consultar atrasos e contratos, registrar
   pagamentos (inteiros ou parciais), somar ou tirar valor de parcelas, perdoar juros, adiar,
-  estornar e corrigir pagamentos, anotar contatos e registrar bloqueios por conversa. Cada pessoa tem a sua chave, o Claude Desktop
+  estornar e corrigir pagamentos, cadastrar e editar clientes e contratos, controlar Pix e cobrança
+  automática, tratar o extrato da Cora e comprovantes, enviar cobrança por WhatsApp, ver relatórios
+  e anotar contatos e bloqueios por conversa. O conector avisa o Claude Desktop quando ganha ferramentas
+  novas, então a mesma conversa passa a usá-las. Cada pessoa tem a sua chave, o Claude Desktop
   pede permissão antes de gravar e a tela lista tudo o que foi gravado (com "Desfazer").
 
 ## Requisitos
