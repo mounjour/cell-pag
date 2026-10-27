@@ -152,6 +152,101 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
     return base
 
 
+def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_preparar: bool) -> None:
+    """Prepara e envia a cobrança de uma linha da agenda (Pix, mensagem e registro), somando em ``resultado``."""
+    dados_iniciais = dados_da_mensagem(linha)
+    contrato = linha["contrato"]
+    destinatario = numero_so_digitos(contrato.cliente.telefone_whatsapp)
+    pix = (
+        obter_ou_criar_cobranca(dados_iniciais["vencimento"], hoje=hoje)
+        if dados_iniciais["vencimento"]
+        else None
+    )
+    if pix and pix.status == CobrancaCora.Status.CANCELADO:
+        # Alguém cancelou o Pix desta parcela: a cobrança automática dela está
+        # suspensa. Não manda mensagem (o QR não vale mais) nem marca erro.
+        resultado["ignoradas"] += 1
+        return
+    dados = dados_da_mensagem(
+        linha,
+        chave_pix=pix.pix_copia_e_cola if pix and pix.pix_copia_e_cola else None,
+    )
+    cobranca, criada = Cobranca.objects.get_or_create(
+        contrato=contrato,
+        data_alvo=hoje,
+        canal=Cobranca.Canal.WHATSAPP,
+        defaults={
+            "vencimento": dados["vencimento"],
+            "destinatario": destinatario,
+            "mensagem": dados["mensagem"],
+        },
+    )
+    if criada:
+        resultado["preparadas"] += 1
+    if settings.CORA_PROVIDER == "cora" and (pix is None or not pix.pix_copia_e_cola):
+        cobranca.status = Cobranca.Status.ERRO
+        cobranca.erro = pix.erro if pix else "Não foi possível vincular a cobrança a uma parcela."
+        cobranca.save(update_fields=["status", "erro", "atualizado_em"])
+        resultado["erros"] += 1
+        return
+    if cobranca.status in {
+        Cobranca.Status.ENVIADO,
+        Cobranca.Status.ENTREGUE,
+        Cobranca.Status.LIDO,
+        Cobranca.Status.CANCELADO,
+        Cobranca.Status.APAGADO,
+    }:
+        resultado["ignoradas"] += 1
+        return
+    if somente_preparar:
+        return
+
+    try:
+        if pix and pix.qr_code_url:
+            resposta = enviar_imagem(
+                destinatario=destinatario,
+                imagem_url=pix.qr_code_url,
+                legenda=dados["mensagem"],
+            )
+        else:
+            resposta = enviar_mensagem(
+                destinatario=destinatario,
+                texto=dados["mensagem"],
+            )
+    except WhatsAppErro as exc:
+        cobranca.status = Cobranca.Status.ERRO
+        cobranca.erro = str(exc)
+        cobranca.tentativas += 1
+        cobranca.save(update_fields=["status", "erro", "tentativas", "atualizado_em"])
+        resultado["erros"] += 1
+        logger.exception("Falha na cobrança %s", cobranca.pk)
+        return
+
+    cobranca.tentativas += 1
+    if resposta["simulado"]:
+        cobranca.erro = "Modo de simulação: mensagem não enviada."
+        resultado["simuladas"] += 1
+    else:
+        cobranca.status = Cobranca.Status.ENVIADO
+        cobranca.id_externo = resposta["id"]
+        cobranca.erro = ""
+        cobranca.enviado_em = timezone.now()
+        resultado["enviadas"] += 1
+        # Copia-e-cola sozinho, por último: é a mensagem que o cliente toca e
+        # segura para copiar. Se só ele falhar, a cobrança principal já saiu
+        # (o cliente tem o QR) — registra o aviso sem marcar como erro, para
+        # o retry não reenviar tudo de novo.
+        if dados["codigo_pix"]:
+            try:
+                resposta_codigo = enviar_mensagem(destinatario=destinatario, texto=dados["codigo_pix"])
+                cobranca.id_externo_codigo = resposta_codigo.get("id", "")
+            except WhatsAppErro as exc:
+                cobranca.erro = f"Copia-e-cola não enviado: {exc}"
+                logger.warning("Copia-e-cola da cobrança %s não enviado: %s", cobranca.pk, exc)
+
+    cobranca.save()
+
+
 def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=False) -> dict:
     hoje = hoje or timezone.localdate()
     resultado = {"preparadas": 0, "enviadas": 0, "simuladas": 0, "erros": 0, "ignoradas": 0, "pausada": False}
@@ -162,96 +257,20 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
     agenda = montar_agenda_do_dia(hoje=hoje)
 
     for linha in agenda["linhas"]:
-        dados_iniciais = dados_da_mensagem(linha)
-        contrato = linha["contrato"]
-        destinatario = numero_so_digitos(contrato.cliente.telefone_whatsapp)
-        pix = (
-            obter_ou_criar_cobranca(dados_iniciais["vencimento"], hoje=hoje)
-            if dados_iniciais["vencimento"]
-            else None
-        )
-        if pix and pix.status == CobrancaCora.Status.CANCELADO:
-            # Alguém cancelou o Pix desta parcela: a cobrança automática dela está
-            # suspensa. Não manda mensagem (o QR não vale mais) nem marca erro.
-            resultado["ignoradas"] += 1
-            continue
-        dados = dados_da_mensagem(
-            linha,
-            chave_pix=pix.pix_copia_e_cola if pix and pix.pix_copia_e_cola else None,
-        )
-        cobranca, criada = Cobranca.objects.get_or_create(
-            contrato=contrato,
-            data_alvo=hoje,
-            canal=Cobranca.Canal.WHATSAPP,
-            defaults={
-                "vencimento": dados["vencimento"],
-                "destinatario": destinatario,
-                "mensagem": dados["mensagem"],
-            },
-        )
-        if criada:
-            resultado["preparadas"] += 1
-        if settings.CORA_PROVIDER == "cora" and (pix is None or not pix.pix_copia_e_cola):
-            cobranca.status = Cobranca.Status.ERRO
-            cobranca.erro = pix.erro if pix else "Não foi possível vincular a cobrança a uma parcela."
-            cobranca.save(update_fields=["status", "erro", "atualizado_em"])
-            resultado["erros"] += 1
-            continue
-        if cobranca.status in {
-            Cobranca.Status.ENVIADO,
-            Cobranca.Status.ENTREGUE,
-            Cobranca.Status.LIDO,
-            Cobranca.Status.CANCELADO,
-            Cobranca.Status.APAGADO,
-        }:
-            resultado["ignoradas"] += 1
-            continue
-        if somente_preparar:
-            continue
+        _processar_linha(linha, hoje, resultado, somente_preparar)
 
-        try:
-            if pix and pix.qr_code_url:
-                resposta = enviar_imagem(
-                    destinatario=destinatario,
-                    imagem_url=pix.qr_code_url,
-                    legenda=dados["mensagem"],
-                )
-            else:
-                resposta = enviar_mensagem(
-                    destinatario=destinatario,
-                    texto=dados["mensagem"],
-                )
-        except WhatsAppErro as exc:
-            cobranca.status = Cobranca.Status.ERRO
-            cobranca.erro = str(exc)
-            cobranca.tentativas += 1
-            cobranca.save(update_fields=["status", "erro", "tentativas", "atualizado_em"])
-            resultado["erros"] += 1
-            logger.exception("Falha na cobrança %s", cobranca.pk)
-            continue
+    return resultado
 
-        cobranca.tentativas += 1
-        if resposta["simulado"]:
-            cobranca.erro = "Modo de simulação: mensagem não enviada."
-            resultado["simuladas"] += 1
-        else:
-            cobranca.status = Cobranca.Status.ENVIADO
-            cobranca.id_externo = resposta["id"]
-            cobranca.erro = ""
-            cobranca.enviado_em = timezone.now()
-            resultado["enviadas"] += 1
-            # Copia-e-cola sozinho, por último: é a mensagem que o cliente toca e
-            # segura para copiar. Se só ele falhar, a cobrança principal já saiu
-            # (o cliente tem o QR) — registra o aviso sem marcar como erro, para
-            # o retry não reenviar tudo de novo.
-            if dados["codigo_pix"]:
-                try:
-                    resposta_codigo = enviar_mensagem(destinatario=destinatario, texto=dados["codigo_pix"])
-                    cobranca.id_externo_codigo = resposta_codigo.get("id", "")
-                except WhatsAppErro as exc:
-                    cobranca.erro = f"Copia-e-cola não enviado: {exc}"
-                    logger.warning("Copia-e-cola da cobrança %s não enviado: %s", cobranca.pk, exc)
 
-        cobranca.save()
+def enviar_cobranca_do_contrato(contrato, hoje: datetime.date | None = None) -> dict:
+    """Manda agora a cobrança de hoje de um contrato (a mesma mensagem e Pix da rotina). Não depende da pausa geral.
 
+    Devolve o mesmo resumo da rotina; ``None`` em ``cobranca`` quando o contrato não está na cobrança de hoje."""
+    hoje = hoje or timezone.localdate()
+    resultado = {"preparadas": 0, "enviadas": 0, "simuladas": 0, "erros": 0, "ignoradas": 0, "pausada": False}
+    linha = next((l for l in montar_agenda_do_dia(hoje=hoje)["linhas"] if l["contrato"].pk == contrato.pk), None)
+    if linha is None:
+        return {**resultado, "cobranca": None}
+    _processar_linha(linha, hoje, resultado, False)
+    resultado["cobranca"] = Cobranca.objects.filter(contrato=contrato, data_alvo=hoje, canal=Cobranca.Canal.WHATSAPP).first()
     return resultado

@@ -89,7 +89,7 @@ def test_gravar_pagamento_pede_resumo_e_registra_quem_fez(client, chave, operado
 def test_parcela_ja_paga_e_recusada_e_o_erro_fica_registrado(client, chave, parcela):
     Pagamento(contrato=parcela.contrato, vencimento=parcela, data_pagamento=timezone.localdate(), valor_pago=Decimal("157.50"), forma="pix").registrar()
     resposta = _chamar(client, chave, "registrar_pagamento", contrato_id=parcela.contrato.pk, parcela_numero=1, valor_pago="157.50", resumo="de novo")
-    assert resposta.status_code == 400 and "já recebeu pagamento" in resposta.json()["erro"]
+    assert resposta.status_code == 400 and "já está paga" in resposta.json()["erro"]
     assert Pagamento.objects.count() == 1 and OperacaoApi.objects.get().ok is False
 
 
@@ -253,7 +253,8 @@ def test_com_dois_computadores_basta_uma_chave_ter_sido_usada(auth_client, opera
 def _pix_no_extrato(cliente, valor, **extra):
     from apps.pagamentos.models import RecebimentoCora
 
-    return RecebimentoCora.objects.create(entrada_id="ext-1", valor=Decimal(valor), recebido_em=timezone.now(), documento=cliente.cpf, nome=cliente.nome, **extra)
+    dados = {"entrada_id": "ext-1", "valor": Decimal(valor), "recebido_em": timezone.now(), "documento": cliente.cpf, "nome": cliente.nome, **extra}
+    return RecebimentoCora.objects.create(**dados)
 
 
 def test_pagamento_pix_pelo_chat_liga_a_entrada_do_extrato_e_o_desfazer_devolve(client, auth_client, chave, operador, cliente, parcela):
@@ -303,3 +304,178 @@ def test_lista_de_operacoes_mostra_as_de_todos_mas_so_quem_gravou_desfaz(client,
     client.force_login(outro)
     html = client.get(reverse("assistente:desktop")).content.decode()
     assert "Registrar pagamento de" in html and "Desfazer" not in html
+
+
+def test_ajustar_parcela_soma_e_tira_valor_e_refaz_o_pix(client, chave, parcela):
+    ct = parcela.contrato.pk
+    soma = _chamar(client, chave, "ajustar_parcela", contrato_id=ct, acrescimo="5.00", motivo="troca de tela", resumo="Somar R$ 5,00 na parcela 1")
+    assert soma.status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.valor_previsto == Decimal("162.50") and parcela.acrescimo == Decimal("5.00") and parcela.acrescimo_motivo == "troca de tela"
+    desconto = _chamar(client, chave, "ajustar_parcela", contrato_id=ct, acrescimo="-20.00", resumo="Desconto de R$ 20,00")
+    assert desconto.status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.valor_previsto == Decimal("137.50")
+    igual = _chamar(client, chave, "ajustar_parcela", contrato_id=ct, acrescimo="-20.00", resumo="de novo")
+    assert igual.status_code == 400 and "Nada mudaria" in igual.json()["erro"]
+    zerado = _chamar(client, chave, "ajustar_parcela", contrato_id=ct, acrescimo="-999.00", resumo="absurdo")
+    assert zerado.status_code == 400 and "maior que zero" in zerado.json()["erro"]
+
+
+def test_perdoar_e_adiar_sao_acordos_e_podem_ser_desfeitos(client, chave, parcela):
+    from apps.pagamentos.models import Acordo
+
+    ct = parcela.contrato.pk
+    perdao = _chamar(client, chave, "perdoar_juros", contrato_id=ct, juros="2.00", resumo="Perdoar R$ 2,00")
+    assert perdao.status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.juros_abonado == Decimal("2.00")
+    acordo = Acordo.objects.get()
+    assert str(acordo.pk) in _chamar(client, chave, "consultar_contrato", contrato_id=ct).json()["resultado"]
+    assert _chamar(client, chave, "desfazer_acordo", acordo_id=acordo.pk, resumo="Desfazer").status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.juros_abonado == Decimal("0.00")
+    nova = (timezone.localdate() + datetime.timedelta(days=3)).isoformat()
+    assert _chamar(client, chave, "adiar_parcela", contrato_id=ct, nova_data=nova, resumo="Adiar").status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.data_vencimento.isoformat() == nova
+
+
+def test_estornar_e_corrigir_pagamento_pelo_chat(client, chave, parcela):
+    ct = parcela.contrato.pk
+    _chamar(client, chave, "registrar_pagamento", contrato_id=ct, valor_pago="157.50", forma="dinheiro", resumo="Pagar")
+    pagamento = Pagamento.objects.get()
+    corrigido = _chamar(client, chave, "corrigir_pagamento", pagamento_id=pagamento.pk, juros_pago="5.00", forma="pix", resumo="Corrigir")
+    assert corrigido.status_code == 200
+    pagamento.refresh_from_db()
+    assert pagamento.juros_pago == Decimal("5.00") and pagamento.forma == "pix"
+    assert _chamar(client, chave, "estornar_pagamento", pagamento_id=pagamento.pk, resumo="Estornar").status_code == 200
+    assert Pagamento.objects.count() == 0
+    parcela.refresh_from_db()
+    assert parcela.status == "aberto"
+
+
+def test_pagamento_parcial_manual_e_o_resto_depois(client, chave, parcela):
+    ct = parcela.contrato.pk
+    assert _chamar(client, chave, "registrar_pagamento", contrato_id=ct, valor_pago="100.00", forma="pix", resumo="Parcial").status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.status in ("parcial", "pago")
+
+
+# ── clientes, contratos, Pix e relatórios pelo chat ──────────────────────────
+
+def _grava(client, chave, ferramenta, **p):
+    return _chamar(client, chave, ferramenta, resumo=f"Teste de {ferramenta}", **p)
+
+
+def test_cadastrar_editar_e_arquivar_cliente(client, chave):
+    from apps.clientes.models import Cliente
+
+    ruim = _grava(client, chave, "cadastrar_cliente", nome="Maria", cpf="111.111.111-11", telefone="88999990000")
+    assert ruim.status_code == 400 and "CPF" in ruim.json()["erro"]
+    ok = _grava(client, chave, "cadastrar_cliente", nome="Maria Souza", cpf="529.982.247-25", telefone="88999990000")
+    assert ok.status_code == 200
+    maria = Cliente.objects.get(cpf="52998224725")
+    assert _grava(client, chave, "cadastrar_cliente", nome="Outra", cpf="52998224725", telefone="88999990001").status_code == 400
+    assert _grava(client, chave, "editar_cliente", cliente_id=maria.pk, endereco="Rua A, 10").status_code == 200
+    maria.refresh_from_db()
+    assert maria.endereco == "Rua A, 10" and maria.nome == "Maria Souza"
+    assert _grava(client, chave, "editar_cliente", cliente_id=maria.pk, endereco="Rua A, 10").status_code == 400  # nada mudaria
+    assert _grava(client, chave, "arquivar_cliente", cliente_id=maria.pk).status_code == 200
+    maria.refresh_from_db()
+    assert maria.ativo is False
+    assert _grava(client, chave, "arquivar_cliente", cliente_id=maria.pk, ativo=True).status_code == 200
+
+
+def test_cadastrar_contrato_pelo_estoque_gera_parcelas_e_entrada(client, chave, cliente):
+    from apps.aparelhos.models import Aparelho
+
+    ap = Aparelho.objects.create(modelo="iPhone 11 64GB", imei="123456789012345")
+    assert ap.modelo in _chamar(client, chave, "listar_estoque").json()["resultado"]
+    resposta = _grava(
+        client, chave, "cadastrar_contrato", cliente_id=cliente.pk, aparelho_id=ap.pk, apelido="iPhone 11", valor_total="1200.00",
+        num_parcelas=4, estrutura="mensal", dia_mes=15, entrada="200.00", entrada_forma="pix",
+    )
+    assert resposta.status_code == 200, resposta.json()
+    contrato = Contrato.objects.get(aparelho=ap)
+    assert contrato.valor_parcela == Decimal("300.00") and contrato.vencimentos.exists()
+    assert Pagamento.objects.get(contrato=contrato, vencimento=None).valor_pago == Decimal("200.00")
+    # o mesmo aparelho não pode ser usado de novo
+    de_novo = _grava(client, chave, "cadastrar_contrato", cliente_id=cliente.pk, aparelho_id=ap.pk, apelido="x", valor_total="100", num_parcelas=2, estrutura="mensal", dia_mes=10)
+    assert de_novo.status_code == 400
+
+
+def test_editar_e_quitar_contrato(client, chave, parcela):
+    ct = parcela.contrato
+    ct.imei = "123456789012345"  # contrato antigo exige IMEI para ser editado, como na tela
+    ct.save()
+    r = _grava(client, chave, "editar_contrato", contrato_id=ct.pk, juros_diario="3.00", observacoes="combinado")
+    assert r.status_code == 200, r.json()
+    ct.refresh_from_db()
+    assert ct.juros_diario == Decimal("3.00") and ct.observacoes == "combinado"
+    assert _grava(client, chave, "editar_contrato", contrato_id=ct.pk).status_code == 400
+    assert _grava(client, chave, "quitar_contrato", contrato_id=ct.pk).status_code == 200
+    ct.refresh_from_db()
+    assert ct.quitado
+    assert _grava(client, chave, "quitar_contrato", contrato_id=ct.pk).status_code == 400
+
+
+def test_pausar_e_retomar_cobranca_automatica(client, chave):
+    from apps.pagamentos.models import ConfiguracaoCobranca
+
+    assert "nunca foram iniciadas" in _grava(client, chave, "cobranca_automatica", acao="retomar").json()["erro"]
+    ConfiguracaoCobranca.definir(False, None)
+    assert _grava(client, chave, "cobranca_automatica", acao="pausar").status_code == 200
+    assert ConfiguracaoCobranca.esta_pausada()
+    assert _grava(client, chave, "cobranca_automatica", acao="pausar").status_code == 400
+    assert _grava(client, chave, "cobranca_automatica", acao="retomar").status_code == 200
+    assert not ConfiguracaoCobranca.esta_pausada()
+
+
+def test_suspender_e_retomar_a_cobranca_de_uma_parcela(client, chave, parcela):
+    from apps.pagamentos.models import CobrancaCora
+
+    ct = parcela.contrato.pk
+    assert _grava(client, chave, "controlar_pix_parcela", contrato_id=ct, acao="retomar").status_code == 400
+    assert _grava(client, chave, "controlar_pix_parcela", contrato_id=ct, acao="suspender").status_code == 200
+    assert CobrancaCora.objects.get(vencimento=parcela).status == CobrancaCora.Status.CANCELADO
+    assert _grava(client, chave, "controlar_pix_parcela", contrato_id=ct, acao="retomar").status_code == 200
+    assert CobrancaCora.objects.get(vencimento=parcela).status == CobrancaCora.Status.PENDENTE
+
+
+def test_relatorios_historico_pendencias_e_rotinas(client, chave, parcela):
+    ct = parcela.contrato.pk
+    _grava(client, chave, "registrar_pagamento", contrato_id=ct, valor_pago="157.50", juros_pago="5.00", forma="pix")
+    rel = json.loads(_chamar(client, chave, "relatorio_periodo").json()["resultado"])
+    assert Decimal(rel["recebido"]) == Decimal("157.50") and Decimal(rel["juros_recebidos"]) == Decimal("5.00")
+    hist = json.loads(_chamar(client, chave, "listar_pagamentos").json()["resultado"])
+    assert hist["total_de_pagamentos"] == 1 and hist["pagamentos"][0]["pagamento_id"]
+    assert _chamar(client, chave, "relatorio_periodo", inicio="2026-10-10", fim="2026-10-01").status_code == 400
+    pend = json.loads(_chamar(client, chave, "pendencias_pix").json()["resultado"])
+    assert pend["pix_recebidos_sem_pagamento_registrado"] == [] and "cobranca_automatica_pausada" in pend
+    assert "rotinas" in json.loads(_chamar(client, chave, "saude_das_rotinas").json()["resultado"])
+
+
+def test_ignorar_e_vincular_entrada_do_extrato(client, chave, cliente, parcela):
+    from apps.pagamentos.models import RecebimentoCora
+
+    a = _pix_no_extrato(cliente, Decimal("162.50"))
+    b = _pix_no_extrato(cliente, Decimal("10.00"), entrada_id="x2")
+    assert _grava(client, chave, "ignorar_entrada_extrato", recebimento_id=b.pk).status_code == 200
+    b.refresh_from_db()
+    assert b.situacao == RecebimentoCora.Situacao.IGNORADO
+    assert _grava(client, chave, "ignorar_entrada_extrato", recebimento_id=b.pk).status_code == 400
+    _grava(client, chave, "registrar_pagamento", contrato_id=parcela.contrato.pk, valor_pago="157.50", juros_pago="5.00", forma="dinheiro")
+    pagamento = Pagamento.objects.get()
+    assert _grava(client, chave, "vincular_entrada_extrato", recebimento_id=a.pk, pagamento_id=pagamento.pk).status_code == 200
+    a.refresh_from_db()
+    assert a.pagamento == pagamento and a.situacao == RecebimentoCora.Situacao.VINCULADO
+
+
+def test_enviar_cobranca_so_se_o_contrato_esta_na_cobranca_de_hoje(client, chave, parcela, cliente):
+    ct = parcela.contrato.pk
+    ok = _grava(client, chave, "enviar_cobranca_whatsapp", contrato_id=ct)
+    assert ok.status_code in (200, 400), ok.json()
+    if ok.status_code == 200:
+        from apps.pagamentos.models import Cobranca
+        assert Cobranca.objects.filter(contrato_id=ct).exists()

@@ -86,6 +86,16 @@ def _pagamento_ja_registrado(recebimento: RecebimentoCora):
     return next((p for p in candidatos if p.valor_pago + p.juros_pago == recebimento.valor), None)
 
 
+def estornar_liberando_extrato(pagamento) -> bool:
+    """Estorna a baixa e devolve o Pix do extrato para \"A registrar\" (senão sumiria da lista sem ter pagamento).
+
+    Devolve se a baixa havia transportado saldo para parcelas seguintes."""
+    RecebimentoCora.objects.filter(pagamento=pagamento).update(
+        situacao=RecebimentoCora.Situacao.NOVO, pagamento=None, tratado_em=None, tratado_por=None,
+    )
+    return bool(pagamento.estornar())
+
+
 def ligar_entrada_ao_pagamento(pagamento, usuario):
     """Pagamento Pix registrado à mão (tela ou chat) depois de a entrada já estar na lista: liga as duas.
 
