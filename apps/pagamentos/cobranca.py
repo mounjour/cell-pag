@@ -262,6 +262,57 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
     return resultado
 
 
+GRUPOS_DE_MENSAGENS = {
+    "enviadas": [Cobranca.Status.ENVIADO, Cobranca.Status.ENTREGUE, Cobranca.Status.LIDO],
+    "erro": [Cobranca.Status.ERRO],
+    "pendentes": [Cobranca.Status.PENDENTE],
+}
+
+
+def mensagens_do_dia(dia: datetime.date, grupo: str = "") -> dict:
+    """O que aconteceu com as mensagens de cobrança de um dia.
+
+    Devolve as mensagens (filtradas por ``grupo``: enviadas, erro, pendentes ou todas), a contagem de cada grupo e,
+    só para hoje, os contratos que estão na cobrança mas ainda não têm mensagem (a rotina não chegou neles)."""
+    do_dia = list(Cobranca.objects.select_related("contrato__cliente").filter(data_alvo=dia).order_by("status", "contrato__cliente__nome"))
+    contagem = {nome: sum(c.status in status for c in do_dia) for nome, status in GRUPOS_DE_MENSAGENS.items()}
+    contagem["outras"] = len(do_dia) - sum(contagem.values())
+    contagem["todas"] = len(do_dia)
+    mensagens = [c for c in do_dia if c.status in GRUPOS_DE_MENSAGENS[grupo]] if grupo in GRUPOS_DE_MENSAGENS else do_dia
+    sem_mensagem = []
+    if dia == timezone.localdate() and grupo in ("", "pendentes"):
+        com_mensagem = {c.contrato_id for c in do_dia}
+        sem_mensagem = [linha for linha in montar_agenda_do_dia(hoje=dia)["linhas"] if linha["contrato"].pk not in com_mensagem]
+    return {"mensagens": mensagens, "contagem": contagem, "sem_mensagem": sem_mensagem}
+
+
+def enviar_agora(contrato, hoje: datetime.date | None = None) -> tuple[str, str]:
+    """Manda agora a cobrança de hoje e devolve ``(nível, texto)`` para a tela ou o chat.
+
+    Nível: ``success``, ``warning`` (simulação), ``info`` (já enviada) ou ``error`` (nada saiu; o texto diz o motivo)."""
+    hoje = hoje or timezone.localdate()
+    nome = contrato.cliente.nome
+    if contrato.quitado:
+        return "error", f"{nome}: contrato quitado, não há o que cobrar."
+    ja_enviada = Cobranca.objects.filter(
+        contrato=contrato, data_alvo=hoje, canal=Cobranca.Canal.WHATSAPP,
+        status__in=[Cobranca.Status.ENVIADO, Cobranca.Status.ENTREGUE, Cobranca.Status.LIDO],
+    ).exists()
+    if ja_enviada:
+        return "info", f"A cobrança de hoje de {nome} já foi enviada."
+    resultado = enviar_cobranca_do_contrato(contrato, hoje)
+    cobranca = resultado["cobranca"]
+    if resultado["ignoradas"] and (cobranca is None or cobranca.status != Cobranca.Status.ENVIADO):
+        return "error", f"Nada foi enviado a {nome}: a cobrança desta parcela está suspensa (Pix cancelado). Retome a cobrança no cliente."
+    if cobranca is None:
+        return "error", f"{nome} não está na cobrança de hoje (não está atrasado nem vence hoje); nada foi enviado."
+    if cobranca.status == Cobranca.Status.ERRO:
+        return "error", f"A mensagem para {nome} não saiu: {cobranca.erro or 'erro no envio'}"
+    if resultado["simuladas"]:
+        return "warning", f"Modo de simulação: a mensagem para {nome} NÃO foi enviada de verdade."
+    return "success", f"Cobrança enviada no WhatsApp de {nome}."
+
+
 def enviar_cobranca_do_contrato(contrato, hoje: datetime.date | None = None) -> dict:
     """Manda agora a cobrança de hoje de um contrato (a mesma mensagem e Pix da rotina). Não depende da pausa geral.
 

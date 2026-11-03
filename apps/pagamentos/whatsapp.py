@@ -124,6 +124,15 @@ def obter_status_conexao() -> str:
     return (dados.get("instance") or {}).get("state", "")
 
 
+def desconectar_sessao() -> None:
+    """Encerra a sessão do WhatsApp na Evolution (logout), para ler um QR novo.
+
+    Serve quando a sessão fica presa: a Evolution diz "open", mas as mensagens falham com "Connection Closed"."""
+    if settings.WHATSAPP_PROVIDER.lower().strip() != "evolution":
+        raise WhatsAppErro("Modo simulação (WHATSAPP_PROVIDER != evolution): não há sessão para reiniciar.")
+    _chamar_evolution("/instance/logout", {}, "DELETE")
+
+
 def obter_qrcode() -> str:
     """Pede um QR code novo pra conectar (ou reconectar) o WhatsApp.
 

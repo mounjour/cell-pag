@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Mensagens de cobrança{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <h1>{% include "_icone.html" with nome="whatsapp" %}Mensagens de cobrança · {{ dia|date:"d/m/Y" }}</h1>
+  <span class="spacer"></span>
+  <a class="btn secondary" href="?data={{ dia_anterior|date:'Y-m-d' }}{% if grupo %}&grupo={{ grupo }}{% endif %}">Dia anterior</a>
+  {% if not eh_hoje %}<a class="btn secondary" href="?{% if grupo %}grupo={{ grupo }}{% endif %}">Hoje</a>
+  <a class="btn secondary" href="?data={{ dia_seguinte|date:'Y-m-d' }}{% if grupo %}&grupo={{ grupo }}{% endif %}">Dia seguinte</a>{% endif %}
+</div>
+
+{% if eh_hoje and config_cobranca.pausada %}
+  <p class="resumo-alerta">As cobranças automáticas estão <strong>pausadas</strong>: nenhuma mensagem sai sozinha até você retomar em <a href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar hoje</a>.</p>
+{% endif %}
+
+<nav class="filtro-pills" aria-label="Filtrar mensagens">
+  <a class="filtro-pill{% if not grupo %} ativo{% endif %}" href="?data={{ dia|date:'Y-m-d' }}">Todas ({{ contagem.todas }})</a>
+  <a class="filtro-pill{% if grupo == 'enviadas' %} ativo{% endif %}" href="?data={{ dia|date:'Y-m-d' }}&grupo=enviadas">Enviadas ({{ contagem.enviadas }})</a>
+  <a class="filtro-pill{% if grupo == 'erro' %} ativo{% endif %}" href="?data={{ dia|date:'Y-m-d' }}&grupo=erro">Com erro ({{ contagem.erro }})</a>
+  <a class="filtro-pill{% if grupo == 'pendentes' %} ativo{% endif %}" href="?data={{ dia|date:'Y-m-d' }}&grupo=pendentes">Pendentes ({{ contagem.pendentes }})</a>
+</nav>
+
+{% if mensagens or sem_mensagem %}
+  <div class="tbl-wrap cards">
+    <table>
+      <thead>
+        <tr><th>Cliente</th><th>Contrato</th><th>Situação</th><th>Enviada às</th><th class="num">Tentativas</th><th>Observação</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for c in mensagens %}
+          <tr>
+            <td data-label="Cliente"><a href="{% url 'clientes:detalhe' c.contrato.cliente.pk %}">{{ c.contrato.cliente.nome }}</a></td>
+            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' c.contrato.pk %}">{{ c.contrato.apelido }}</a></td>
+            <td data-label="Situação"><span class="pill {{ c.status }}">{{ c.get_status_display }}</span></td>
+            <td data-label="Enviada às">{% if c.enviado_em %}{{ c.enviado_em|time:"H:i" }}{% else %}—{% endif %}</td>
+            <td class="num" data-label="Tentativas">{{ c.tentativas }}</td>
+            <td data-label="Observação">{% if c.erro %}{{ c.erro }}{% else %}—{% endif %}</td>
+            <td>
+              {% if eh_hoje and c.status == 'erro' or eh_hoje and c.status == 'pendente' %}
+                <form method="post" action="{% url 'pagamentos:cobranca_enviar' c.contrato.pk %}" data-confirmar-envio="Enviar agora a cobrança de {{ c.contrato.cliente.nome|escapejs }} no WhatsApp? A mensagem sai de verdade para o cliente.">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}{% if c.status == 'erro' %}Tentar de novo{% else %}Enviar agora{% endif %}</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        {% for l in sem_mensagem %}
+          <tr>
+            <td data-label="Cliente"><a href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a></td>
+            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a></td>
+            <td data-label="Situação"><span class="pill pendente">Ainda sem mensagem</span></td>
+            <td data-label="Enviada às">—</td>
+            <td class="num" data-label="Tentativas">0</td>
+            <td data-label="Observação">Está na cobrança de hoje, mas a rotina ainda não chegou nele.</td>
+            <td>
+              <form method="post" action="{% url 'pagamentos:cobranca_enviar' l.contrato.pk %}" data-confirmar-envio="Enviar agora a cobrança de {{ l.contrato.cliente.nome|escapejs }} no WhatsApp? A mensagem sai de verdade para o cliente.">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn secondary">{% include "_icone.html" with nome="whatsapp" %}Enviar agora</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="helptext">O erro “Connection Closed” quer dizer que a sessão do WhatsApp caiu na Evolution: veja <a href="{% url 'pagamentos:conexoes' %}">Conexões</a>.</p>
+{% else %}
+  <p class="empty">Nenhuma mensagem {% if grupo %}neste grupo{% else %}nesta data{% endif %}.</p>
+{% endif %}
+{% endblock %}
