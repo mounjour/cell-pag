@@ -17,6 +17,7 @@ from django.utils import timezone
 from apps.aparelhos.models import BloqueioAparelho
 from apps.clientes.models import Cliente
 from apps.contratos.models import Contrato
+from apps.pagamentos.forms import pagamento_repetido
 from apps.pagamentos.models import ContatoDeCobranca, Pagamento, Vencimento
 
 logger = logging.getLogger(__name__)
@@ -188,12 +189,14 @@ def validar_pagamento(p: dict) -> tuple[dict, str, list[str]]:
         raise ErroFerramenta("A forma de pagamento precisa ser pix, dinheiro ou outro.")
     data = _data(p.get("data_pagamento"), "pagamento", padrao=timezone.localdate(), permitir_futuro=False)
     avisos = []
+    if pagamento_repetido(venc, valor, juros, data, forma):
+        raise ErroFerramenta("Um pagamento idêntico acabou de ser registrado nesta parcela; nada foi gravado. Se o cliente pagou duas vezes, espere alguns minutos.")
     if venc.pagamentos.exists():
         avisos.append("Esta parcela já tinha pagamento parcial; este soma ao que já foi pago.")
     if valor > venc.saldo:
         avisos.append(f"O valor passa do saldo da parcela ({_brl(venc.saldo)}): o excedente abate a próxima parcela.")
     if valor < venc.saldo:
-        avisos.append(f"O valor é menor que o saldo da parcela ({_brl(venc.saldo)}): o que faltar vai para a próxima parcela.")
+        avisos.append(f"O valor é menor que o saldo da parcela ({_brl(venc.saldo)}): faltam {_brl(venc.saldo - valor)}, que continuam sendo cobrados nesta parcela (com o juros do atraso) até quitar.")
     normalizados = {
         "contrato_id": contrato.pk, "parcela_numero": venc.numero, "valor_pago": str(valor), "juros_pago": str(juros),
         "forma": forma, "data_pagamento": data.isoformat(), "observacao": str(p.get("observacao") or "")[:200],
@@ -634,7 +637,7 @@ def executar_estorno(p: dict, usuario) -> str:
         restante = estornar_liberando_extrato(pagamento)
     texto = "Pagamento estornado; a parcela voltou ao que era."
     if restante:
-        texto += " Atenção: essa baixa tinha transportado saldo para parcelas seguintes; confira os valores previstos delas."
+        texto += " Atenção: essa baixa tinha levado valor para parcelas seguintes (troco ou saldo de uma baixa parcial antiga); confira os valores previstos delas."
     return texto
 
 
@@ -1147,7 +1150,7 @@ FERRAMENTAS = [
      "input_schema": _esquema({}, [])},
     {"name": "proximas_cobrancas", "description": "Lista as cobranças dos próximos dias, agrupadas por data. Só leitura.",
      "input_schema": _esquema({"dias": {"type": "integer", "description": "De 1 a 30; padrão 14."}}, [])},
-    {"name": "registrar_pagamento", "description": "REGISTRA manualmente o pagamento de uma parcela (inteiro ou parcial, em qualquer data passada). valor_pago é o valor da PARCELA recebido (sem os juros); os juros do atraso vão separados em juros_pago. Consulte o contrato antes para usar o saldo e os juros de hoje corretos. Para somar ou tirar valor da parcela use ajustar_parcela.",
+    {"name": "registrar_pagamento", "description": "REGISTRA manualmente o pagamento de uma parcela (inteiro ou parcial, em qualquer data passada). Pagamento parcial abate a parcela e o que falta continua sendo cobrado nela até quitar; valor a mais abate a próxima. valor_pago é o valor da PARCELA recebido (sem os juros); os juros do atraso vão separados em juros_pago. Consulte o contrato antes para usar o saldo e os juros de hoje corretos. Para somar ou tirar valor da parcela use ajustar_parcela.",
      "input_schema": _esquema({
          "contrato_id": {"type": "integer"},
          "parcela_numero": {"type": "integer", "description": "Número da parcela; se omitido, usa a primeira em aberto."},

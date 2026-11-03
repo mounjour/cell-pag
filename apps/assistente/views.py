@@ -226,7 +226,7 @@ class DesfazerOperacaoView(LoginRequiredMixin, View):
             operacao.desfeita_em = timezone.now()
             operacao.save(update_fields=["desfeita_em"])
         if restante:
-            messages.warning(request, "Esta baixa havia transportado saldo para parcelas seguintes. Confira os valores previstos das próximas parcelas.")
+            messages.warning(request, "Esta baixa havia levado valor para as parcelas seguintes (troco ou saldo de uma baixa parcial antiga). Confira os valores previstos delas.")
         return redirect("assistente:desktop")
 
 

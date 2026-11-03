@@ -359,23 +359,19 @@ PREFIXO_BAIXA_AUTOMATICA = "Baixa automática pela Cora"
 def _dar_baixa(cobranca: CobrancaCora) -> None:
     if cobranca.duplicada:
         return  # revisão manual permanece pendente mesmo em notificações repetidas
-    existente = Pagamento.objects.filter(vencimento=cobranca.vencimento).first()
-    if existente is not None:
-        # A parcela já tem baixa. Se foi este mesmo Pix (repetição do aviso da
-        # Cora), nada a fazer. Se foi outro meio (ex.: dinheiro), o cliente pagou
-        # duas vezes: o valor entrou na Cora sem constar no sistema, então marca
-        # a duplicidade para o painel Pix mostrar e o financeiro devolver.
-        if not existente.observacao.startswith(PREFIXO_BAIXA_AUTOMATICA) and not cobranca.duplicada:
-            cobranca.duplicada = True
-            cobranca.save(update_fields=["duplicada", "atualizado_em"])
-            logger.warning(
-                "Pix %s pago em duplicidade: a parcela %s já tinha baixa por outro meio.",
-                cobranca.cora_id,
-                cobranca.vencimento_id,
-            )
-        return
+    if Pagamento.objects.filter(vencimento=cobranca.vencimento, observacao__contains=f"({cobranca.cora_id})").exists():
+        return  # repetição do aviso da Cora: este Pix já virou baixa
     vencimento = cobranca.vencimento
     vencimento.refresh_from_db()
+    if vencimento.status == Vencimento.Status.PAGO and not cobranca.duplicada:
+        # A parcela já foi quitada por outro meio (ex.: dinheiro): o cliente pagou duas vezes. O valor entrou na
+        # Cora sem constar no sistema, então marca a duplicidade para o painel Pix mostrar e o financeiro devolver.
+        cobranca.duplicada = True
+        cobranca.save(update_fields=["duplicada", "atualizado_em"])
+        logger.warning(
+            "Pix %s pago em duplicidade: a parcela %s já estava quitada por outro meio.", cobranca.cora_id, cobranca.vencimento_id,
+        )
+        return
     # O Pix é sempre parcela + juros: o juros vai para o campo próprio e só o principal
     # abate a parcela. Se vier menos que o total, o juros é o primeiro a ser coberto.
     juros_pago = min(cobranca.juros, cobranca.total_pago)

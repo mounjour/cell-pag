@@ -205,9 +205,14 @@ def enviar_confirmacao(cobranca_id: int) -> bool:
         juros = min(cobranca.juros, cobranca.total_pago)
         parcela = f"{cobranca.total_pago - juros:.2f}".replace(".", ",")
         detalhe = f", sendo R$ {parcela} de parcela e R$ {f'{juros:.2f}'.replace('.', ',')} de juros"
+    vencimento.refresh_from_db()
+    falta = (
+        f" Ainda faltam R$ {f'{vencimento.saldo:.2f}'.replace('.', ',')} desta parcela."
+        if vencimento.saldo > 0 and vencimento.status != vencimento.Status.PAGO else ""
+    )
     texto = (
         f"Olá, {_primeiro_nome(contrato.cliente)}! Recebemos o seu pagamento de R$ {valor}{detalhe} "
-        f"(parcela {vencimento.numero} — {contrato.apelido}). Obrigado!"
+        f"(parcela {vencimento.numero} — {contrato.apelido}).{falta} Obrigado!"
     )
     try:
         resposta = enviar_mensagem(

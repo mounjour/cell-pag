@@ -1,5 +1,6 @@
 """Formulário de baixa de pagamento (Fase 3)."""
 
+import datetime
 import json
 from decimal import Decimal
 
@@ -63,9 +64,7 @@ class PagamentoForm(forms.ModelForm):
         self.fields["data_pagamento"].input_formats = ["%Y-%m-%d"]
 
         abertas = (
-            contrato.vencimentos.exclude(status=Vencimento.Status.PAGO)
-            .exclude(pagamentos__isnull=False)  # já tem baixa — só via estorno (clean_vencimento)
-            .order_by("numero")
+            contrato.vencimentos.em_aberto().order_by("numero")  # parcela com pagamento parcial segue aqui, até quitar
             if contrato is not None
             else Vencimento.objects.none()
         )
@@ -147,16 +146,28 @@ class PagamentoForm(forms.ModelForm):
             raise forms.ValidationError("A data do pagamento não pode ser no futuro.")
         return data
 
-    def clean_vencimento(self):
-        venc = self.cleaned_data.get("vencimento")
-        if venc is not None and venc.pagamentos.exists():
-            baixa = venc.pagamentos.first()
+    def clean(self):
+        dados = super().clean()
+        venc, valor, data = dados.get("vencimento"), dados.get("valor_pago"), dados.get("data_pagamento")
+        if venc is not None and valor and data and pagamento_repetido(
+            venc, valor, dados.get("juros_pago") or Decimal("0.00"), data, dados.get("forma")
+        ):
             raise forms.ValidationError(
-                f"A parcela {venc.numero} já recebeu baixa em "
-                f"{baixa.data_pagamento:%d/%m/%Y} (R$ {baixa.valor_pago:.2f}). "
-                "Estorne a baixa existente antes de lançar outra."
+                f"Um pagamento igual ({_formata_moeda(valor)}) acabou de ser registrado na parcela {venc.numero}. "
+                "Se foi por engano, não precisa lançar de novo; se o cliente pagou duas vezes, espere alguns minutos."
             )
-        return venc
+        return dados
+
+
+JANELA_DE_PAGAMENTO_REPETIDO = datetime.timedelta(minutes=10)
+
+
+def pagamento_repetido(vencimento, valor, juros, data, forma) -> bool:
+    """Já existe, na mesma parcela, um pagamento idêntico lançado há poucos minutos (clique duplo, tela reenviada)."""
+    return vencimento.pagamentos.filter(
+        valor_pago=valor, juros_pago=juros, data_pagamento=data, forma=forma,
+        criado_em__gte=timezone.now() - JANELA_DE_PAGAMENTO_REPETIDO,
+    ).exists()
 
 
 def _formata_moeda(valor) -> str:
