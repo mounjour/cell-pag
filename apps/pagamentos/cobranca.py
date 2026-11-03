@@ -322,6 +322,14 @@ def enviar_cobranca_do_contrato(contrato, hoje: datetime.date | None = None) -> 
     linha = next((l for l in montar_agenda_do_dia(hoje=hoje)["linhas"] if l["contrato"].pk == contrato.pk), None)
     if linha is None:
         return {**resultado, "cobranca": None}
+    # Mensagem do dia apagada ou cancelada (ex.: depois de um pagamento parcial) e o contrato ainda deve: manda outra.
+    from .limpeza import reabrir_cobranca
+
+    for antiga in Cobranca.objects.filter(
+        contrato=contrato, data_alvo=hoje, canal=Cobranca.Canal.WHATSAPP,
+        status__in=[Cobranca.Status.APAGADO, Cobranca.Status.CANCELADO],
+    ):
+        reabrir_cobranca(antiga)
     _processar_linha(linha, hoje, resultado, False)
     resultado["cobranca"] = Cobranca.objects.filter(contrato=contrato, data_alvo=hoje, canal=Cobranca.Canal.WHATSAPP).first()
     return resultado

@@ -49,7 +49,7 @@ def test_encerrar_cobranca_renova_o_pix_se_a_parcela_ainda_tem_saldo(cliente_cob
     chamadas = []
     monkeypatch.setattr(limpeza, "_renovar_pix", lambda v, motivo, autor: chamadas.append(("renovar", motivo)) or [])
     monkeypatch.setattr(limpeza, "_cancelar_pix", lambda v: chamadas.append(("cancelar",)) or [])
-    monkeypatch.setattr(limpeza, "_resolver_mensagens", lambda p, v: [])
+    monkeypatch.setattr(limpeza, "_resolver_mensagens", lambda p, v, **kw: [])
 
     limpeza.encerrar_cobranca_automatica(_paga(contrato, venc, "30.00"))
     assert chamadas == [("renovar", "Pagamento parcial")]  # continua cobrando: Pix novo, com o saldo
@@ -157,3 +157,70 @@ def test_migracao_nao_mexe_quando_a_seguinte_nao_bate(cliente_cobranca):
 
     p1.refresh_from_db(), p2.refresh_from_db()
     assert p1.saldo_repassado == Decimal("40.00") and p2.valor_previsto == Decimal("125.00")  # deixa como estava
+
+
+# ── a mensagem do dia depois de um pagamento parcial ──────────────────────────
+
+def _mensagem_enviada(contrato, venc, status=None):
+    from apps.pagamentos.models import Cobranca
+
+    return Cobranca.objects.create(
+        contrato=contrato, vencimento=venc, data_alvo=timezone.localdate(), destinatario="5583999991234", mensagem="valor cheio",
+        status=status or Cobranca.Status.ENVIADO, id_externo="msg-1", id_externo_codigo="msg-2", enviado_em=timezone.now(), tentativas=1,
+    )
+
+
+def test_pagamento_parcial_apaga_a_mensagem_antiga_e_libera_um_envio_novo_no_dia(cliente_cobranca, settings, monkeypatch):
+    from apps.pagamentos.models import Cobranca
+
+    settings.WHATSAPP_APAGAR_AO_BAIXAR = True
+    apagadas = []
+    monkeypatch.setattr(limpeza, "apagar_mensagem", lambda **kw: apagadas.append(kw["id_mensagem"]))
+    monkeypatch.setattr(limpeza, "_renovar_pix", lambda v, motivo, autor: [])
+    hoje = timezone.localdate()
+    contrato = _contrato(cliente_cobranca, hoje, atraso=1)
+    venc = contrato.vencimentos.get()
+    mensagem = _mensagem_enviada(contrato, venc)
+
+    limpeza.encerrar_cobranca_automatica(_paga(contrato, venc, "30.00"))  # parcial
+    mensagem.refresh_from_db()
+    assert apagadas == ["msg-1", "msg-2"]  # o pedido de valor cheio sai do celular do cliente
+    assert mensagem.status == Cobranca.Status.PENDENTE and mensagem.id_externo == "" and mensagem.enviado_em is None
+
+
+def test_pagamento_total_continua_so_apagando_a_mensagem(cliente_cobranca, settings, monkeypatch):
+    from apps.pagamentos.models import Cobranca
+
+    settings.WHATSAPP_APAGAR_AO_BAIXAR = True
+    monkeypatch.setattr(limpeza, "apagar_mensagem", lambda **kw: None)
+    monkeypatch.setattr(limpeza, "_cancelar_pix", lambda v: [])
+    hoje = timezone.localdate()
+    contrato = _contrato(cliente_cobranca, hoje, atraso=1)
+    venc = contrato.vencimentos.get()
+    mensagem = _mensagem_enviada(contrato, venc)
+
+    limpeza.encerrar_cobranca_automatica(_paga(contrato, venc, "100.00"))  # quitou
+    mensagem.refresh_from_db()
+    assert mensagem.status == Cobranca.Status.APAGADO
+
+
+def test_botao_enviar_reabre_a_mensagem_apagada_se_o_contrato_ainda_deve(cliente_cobranca, settings, monkeypatch):
+    from apps.pagamentos import cobranca
+    from apps.pagamentos.models import Cobranca
+
+    settings.WHATSAPP_PROVIDER = "evolution"
+    settings.CORA_PROVIDER = "log"
+    enviadas = []
+    monkeypatch.setattr(cobranca, "enviar_mensagem", lambda **kw: enviadas.append(kw) or {"simulado": False, "id": "novo"})
+    monkeypatch.setattr(cobranca, "enviar_imagem", lambda **kw: enviadas.append(kw) or {"simulado": False, "id": "novo"})
+    hoje = timezone.localdate()
+    contrato = _contrato(cliente_cobranca, hoje, atraso=2)
+    venc = contrato.vencimentos.get()
+    _paga(contrato, venc, "40.00")  # parcial: segue devendo
+    antiga = _mensagem_enviada(contrato, venc, status=Cobranca.Status.APAGADO)
+
+    nivel, texto = cobranca.enviar_agora(contrato)
+    antiga.refresh_from_db()
+    assert nivel == "success" and enviadas
+    assert antiga.status == Cobranca.Status.ENVIADO and antiga.id_externo == "novo"
+    assert "R$ 60,00" in antiga.mensagem or "60,00" in enviadas[0].get("texto", enviadas[0].get("legenda", ""))
