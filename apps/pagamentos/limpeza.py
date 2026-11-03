@@ -21,6 +21,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from . import cora_api
+from .acordos import _renovar_pix
 from .models import Cobranca, CobrancaCora
 from .pix_cora import CancelamentoRecusado, cancelar_cobranca
 from .whatsapp import WhatsAppErro, apagar_mensagem
@@ -48,8 +49,14 @@ def encerrar_cobranca_automatica(pagamento) -> list[Aviso]:
     vencimento = pagamento.vencimento
     if vencimento is None:
         return []
+    vencimento.refresh_from_db()
     avisos: list[Aviso] = []
-    avisos += _cancelar_pix(vencimento)
+    if vencimento.saldo > 0 and vencimento.status != vencimento.Status.PAGO:
+        # Pagamento parcial: a parcela continua sendo cobrada, só que pelo que falta. O Pix antigo (valor cheio) sai
+        # e a próxima rotina gera outro com o saldo; a mensagem que pedia o valor cheio fica sem efeito.
+        avisos += _renovar_pix(vencimento, "Pagamento parcial", None)
+    else:
+        avisos += _cancelar_pix(vencimento)
     avisos += _resolver_mensagens(pagamento, vencimento)
     return avisos
 

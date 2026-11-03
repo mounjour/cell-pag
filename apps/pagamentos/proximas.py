@@ -1,6 +1,6 @@
 """Próximas cobranças: o que a rotina das 8h30 vai cobrar nos próximos dias.
 
-Parcelas em aberto, sem baixa, de contratos não quitados, cuja data de cobrança cai de amanhã em diante.
+Parcelas em aberto (com saldo a receber) de contratos não quitados, cuja data de cobrança cai de amanhã em diante.
 Parcela vencida ou do dia continua no "Cobrar hoje". Só existem as parcelas já geradas (a rotina gera
 com ~60 dias de antecedência), o que cobre as janelas de 7, 14 e 30 dias.
 """
@@ -29,8 +29,7 @@ def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None) -> dic
     fim = hoje + datetime.timedelta(days=dias)
     parcelas = list(
         Vencimento.objects.filter(data_vencimento__gt=hoje, data_vencimento__lte=fim)
-        .exclude(status=Vencimento.Status.PAGO)
-        .exclude(pagamentos__isnull=False)
+        .em_aberto()
         .exclude(contrato__status="quitado")
         .select_related("contrato__cliente")
         .order_by("data_vencimento", "contrato__cliente__nome", "numero")

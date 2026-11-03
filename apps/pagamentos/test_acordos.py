@@ -120,13 +120,13 @@ def test_nova_data_exige_a_data(parcela):
 
 # ── quando não dá para negociar ────────────────────────────────────────────
 
-def test_parcela_paga_com_baixa_ou_contrato_quitado_nao_negocia(parcela):
+def test_parcela_paga_ou_contrato_quitado_nao_negocia(parcela):
     contrato = parcela.contrato
-    Pagamento.objects.create(contrato=contrato, vencimento=parcela, valor_pago=Decimal("100.00"), data_pagamento=HOJE())
-    with pytest.raises(acordos.AcordoInvalido, match="recebeu pagamento"):
-        acordos.aplicar_acordo(parcela, tipo=Acordo.Tipo.PERDAO_JUROS)
+    Vencimento.objects.filter(pk=parcela.pk).update(status=Vencimento.Status.PAGO)
+    with pytest.raises(acordos.AcordoInvalido, match="já está paga"):
+        acordos.aplicar_acordo(_recarrega(parcela), tipo=Acordo.Tipo.PERDAO_JUROS)
 
-    Pagamento.objects.all().delete()
+    Vencimento.objects.filter(pk=parcela.pk).update(status=Vencimento.Status.ABERTO)
     contrato.status = Contrato.Status.QUITADO
     contrato.save()
     with pytest.raises(acordos.AcordoInvalido, match="quitado"):

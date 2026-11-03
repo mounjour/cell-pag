@@ -28,16 +28,17 @@ def test_lista_so_o_que_ainda_vai_ser_cobrado_agrupado_por_data(auth_client, cli
     _parcela(ct, 5, 20)                                  # fora da janela de 14 dias
     paga = _parcela(ct, 6, 2, status=Vencimento.Status.PAGO)
     com_baixa = _parcela(ct, 7, 3)
-    Pagamento.objects.create(contrato=ct, vencimento=com_baixa, valor_pago=Decimal("100.00"),
-                             data_pagamento=timezone.localdate())
+    Pagamento(contrato=ct, vencimento=com_baixa, valor_pago=Decimal("300.00"), data_pagamento=timezone.localdate()).registrar()  # quitada
+    parcial = _parcela(ct, 8, 4)
+    Pagamento(contrato=ct, vencimento=parcial, valor_pago=Decimal("100.00"), data_pagamento=timezone.localdate()).registrar()  # falta 200
 
     dados = proximas_cobrancas(14)
-    assert [g["data"] for g in dados["grupos"]] == [amanha.data_vencimento, depois.data_vencimento]
-    assert dados["quantidade"] == 2 and dados["total"] == Decimal("600.00")
-    assert proximas_cobrancas(30)["quantidade"] == 3  # a janela maior inclui a de 20 dias
+    assert [g["data"] for g in dados["grupos"]] == [amanha.data_vencimento, parcial.data_vencimento, depois.data_vencimento]
+    assert dados["quantidade"] == 3 and dados["total"] == Decimal("800.00")  # 300 + o que falta da parcial (200) + 300
+    assert proximas_cobrancas(30)["quantidade"] == 4  # a janela maior inclui a de 20 dias
 
     html = auth_client.get(reverse("pagamentos:proximas_cobrancas")).content.decode()
-    assert "Próximas cobranças" in html and ct.apelido in html and "R$ 600,00" in html
+    assert "Próximas cobranças" in html and ct.apelido in html and "R$ 800,00" in html
     assert auth_client.get(reverse("pagamentos:proximas_cobrancas") + "?dias=99").status_code == 200
 
 

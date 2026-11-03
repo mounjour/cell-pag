@@ -355,11 +355,19 @@ def test_estornar_e_corrigir_pagamento_pelo_chat(client, chave, parcela):
     assert parcela.status == "aberto"
 
 
-def test_pagamento_parcial_manual_e_o_resto_depois(client, chave, parcela):
+def test_pagamento_parcial_pelo_chat_deixa_o_saldo_na_parcela_e_o_resto_quita(client, chave, parcela):
     ct = parcela.contrato.pk
-    assert _chamar(client, chave, "registrar_pagamento", contrato_id=ct, valor_pago="100.00", forma="pix", resumo="Parcial").status_code == 200
+    r = _chamar(client, chave, "registrar_pagamento", contrato_id=ct, valor_pago="100.00", forma="pix", resumo="Parcial")
+    assert r.status_code == 200 and "continuam sendo cobrados" in r.json()["resultado"]
     parcela.refresh_from_db()
-    assert parcela.status in ("parcial", "pago")
+    assert parcela.status == "parcial" and parcela.saldo == Decimal("57.50")
+    # um pagamento idêntico logo em seguida é recusado (clique duplo)
+    repetido = _chamar(client, chave, "registrar_pagamento", contrato_id=ct, valor_pago="100.00", forma="pix", resumo="Parcial de novo")
+    assert repetido.status_code == 400 and "idêntico" in repetido.json()["erro"]
+    # o resto, com outro valor, soma e quita a mesma parcela
+    assert _chamar(client, chave, "registrar_pagamento", contrato_id=ct, valor_pago="57.50", forma="pix", resumo="Resto").status_code == 200
+    parcela.refresh_from_db()
+    assert parcela.status == "pago" and parcela.pagamentos.count() == 2
 
 
 # ── clientes, contratos, Pix e relatórios pelo chat ──────────────────────────

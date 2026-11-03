@@ -39,19 +39,13 @@ def parcelas_a_cobrar(contrato, hoje: datetime.date) -> list[ParcelaACobrar]:
     """Cada parcela em aberto vencida (ou que vence hoje), do nº mais antigo ao mais novo.
 
     O atraso e o juros são **de cada parcela** (contados a partir do próprio
-    vencimento), não do contrato. Parcela que já recebeu baixa fica de fora —
-    o que faltou nela já foi transportado para a seguinte (ver
-    ``Pagamento.registrar``). Vazia quando o contrato ainda não tem vencimentos
-    gerados.
+    vencimento), não do contrato. Parcela com pagamento parcial continua aqui, com o
+    saldo que falta (e o juros do atraso, que segue contando desde o vencimento dela).
+    Vazia quando o contrato ainda não tem vencimentos gerados.
     """
     from apps.pagamentos import atraso
-    from apps.pagamentos.models import Vencimento
 
-    abertas = (
-        contrato.vencimentos.exclude(status=Vencimento.Status.PAGO)
-        .exclude(pagamentos__isnull=False)
-        .order_by("numero")
-    )
+    abertas = contrato.vencimentos.em_aberto().order_by("numero")
     itens = []
     for venc in abertas:
         dias = atraso.dias_de_atraso(venc.data_vencimento, hoje, contrato.estrutura)
@@ -129,8 +123,8 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
 
         vencimento_aberto = ct.parcela_em_aberto()
         # Usa o saldo real da parcela em aberto, não o valor nominal do
-        # contrato: depois de uma baixa parcial, o saldo transportado já
-        # ajustou esse valor, e é ele que o Pix automático de fato cobra
+        # contrato: depois de uma baixa parcial, é o que falta nela que o Pix
+        # automático de fato cobra
         # (ver apps/pagamentos/pix_cora.py) — painel e mensagem têm que bater
         # com o que a Cora realmente gera. Sem vencimento gerado ainda,
         # preserva `None` quando falta `valor_parcela` (o painel mostra "—").

@@ -3,8 +3,7 @@
 Calcula tudo em poucas consultas (os contratos e as parcelas em aberto de uma vez),
 com as mesmas regras da tela Cobrar hoje: a parcela atrasa no dia seguinte ao
 vencimento (na semanal, depois do domingo que fecha a semana), os juros são por
-dia de atraso de cada parcela, e parcela que já recebeu baixa não entra (o que
-faltou foi transportado para a seguinte).
+dia de atraso de cada parcela; parcela com pagamento parcial continua contando (só sai ao quitar).
 """
 
 import datetime
@@ -62,8 +61,7 @@ def situacoes_dos_clientes(cliente_ids, hoje: datetime.date | None = None) -> di
     ids_ativos = [c.pk for c in contratos if not c.quitado]
     for venc in (
         Vencimento.objects.filter(contrato_id__in=ids_ativos)
-        .exclude(status=Vencimento.Status.PAGO)
-        .exclude(pagamentos__isnull=False)
+        .em_aberto()
         .order_by("data_vencimento", "numero")
     ):
         abertas.setdefault(venc.contrato_id, []).append(venc)

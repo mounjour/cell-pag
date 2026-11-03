@@ -133,7 +133,7 @@ def baixar_automaticamente(recebimento: RecebimentoCora) -> Pagamento | None:
     for cliente in Cliente.objects.filter(cpf=recebimento.documento, ativo=True):
         for contrato in cliente.contratos.exclude(status="quitado"):
             parcela = (
-                contrato.vencimentos.exclude(status="pago").exclude(pagamentos__isnull=False).order_by("numero").first()
+                contrato.vencimentos.em_aberto().order_by("numero").first()
             )
             if parcela is None:
                 continue

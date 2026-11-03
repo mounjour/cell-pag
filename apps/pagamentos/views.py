@@ -631,10 +631,6 @@ class PagamentoCreateView(LoginRequiredMixin, CreateView):
         ctx["parcelas_abertas"] = self.contrato.vencimentos.exclude(
             status=Vencimento.Status.PAGO
         ).order_by("numero")
-        # Pode haver parcela "em aberto" pra mostrar (parcial) sem nenhuma
-        # selecionável no formulário — todas já com baixa, saldo ainda não
-        # repassado pra próxima (ver Contrato.parcela_em_aberto). Distingue
-        # esse caso de "não há mais nada a cobrar" no template.
         ctx["pode_registrar"] = ctx["form"].fields["vencimento"].queryset.exists()
         ctx["juros_ate_hoje"] = ctx["resumo_cobranca"]["juros"]
         return ctx
@@ -744,8 +740,8 @@ class PagamentoEstornarView(LoginRequiredMixin, View):
         if restante_transportado:
             messages.warning(
                 request,
-                "Esta baixa havia transportado saldo para parcelas seguintes. "
-                "Confira os valores previstos das próximas parcelas na mão.",
+                "Esta baixa havia levado valor para as parcelas seguintes (troco ou saldo de uma baixa parcial antiga). "
+                "Confira os valores previstos delas na mão.",
             )
         return redirect("contratos:detalhe", pk=contrato_pk)
 

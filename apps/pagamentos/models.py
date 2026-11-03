@@ -8,13 +8,13 @@ a recorrência de datas em ``apps.pagamentos.recorrencia``.
 uma parcela (PLANO-DO-PROJETO.md, seções 4.4 e 6). Regras confirmadas com o
 Alisson (03/09 + esta conversa):
 
-* uma linha de ``Pagamento`` por parcela — ``UniqueConstraint(contrato,
-  vencimento)`` (anti cobrança duplicada) + checagem na tela + trilha via
-  ``django-auditlog``;
-* **pagamento parcial** (Q16) é aceito: a parcela fica ``parcial`` e o saldo que
-  faltou é **somado ao ``valor_previsto`` da próxima parcela em aberto** (ou fica
-  em ``Contrato.saldo_transportado`` se não houver próxima). Pagamento a maior
-  faz o caminho inverso (pré-paga a(s) próxima(s));
+* uma parcela pode receber **vários pagamentos** (trilha via ``django-auditlog``;
+  a tela e o chat recusam um pagamento idêntico registrado há poucos minutos);
+* **pagamento parcial** é aceito: o valor **abate a parcela**, que fica ``parcial`` e
+  continua em aberto com o saldo que falta — esse saldo segue sendo cobrado (Pix, mensagem
+  e juros do atraso) até a parcela ser quitada. Pagamento a maior faz o caminho inverso:
+  o que passa da parcela abate a(s) próxima(s). (Antes de nov/2026 o que faltava era somado
+  à parcela seguinte; essas baixas antigas guardam o valor em ``Vencimento.saldo_repassado``);
 * a baixa **não** quita o contrato — quitar é ação manual da Yslane
   (``contratos:quitar``);
 * a baixa **não** mexe em ``Contrato.proximo_vencimento`` (isso é Fase 4).
@@ -31,6 +31,15 @@ from django.db import models, transaction
 from django.utils import timezone
 
 from apps.validadores import validar_extensao_upload, validar_tamanho_upload
+
+
+class VencimentoQuerySet(models.QuerySet):
+    def em_aberto(self):
+        """Parcelas que ainda têm o que receber: não pagas e com saldo (já descontado o que uma baixa parcial
+        antiga repassou à parcela seguinte)."""
+        return self.exclude(status=Vencimento.Status.PAGO).filter(
+            valor_previsto__gt=models.F("valor_pago") + models.F("saldo_repassado")
+        )
 
 
 class Vencimento(models.Model):
@@ -75,9 +84,18 @@ class Vencimento(models.Model):
         help_text="Valor combinado além da parcela (ou desconto, se negativo). Já está somado em ``valor_previsto``.",
     )
     acrescimo_motivo = models.CharField("motivo do ajuste", max_length=120, blank=True)
+    saldo_repassado = models.DecimalField(
+        "saldo repassado", max_digits=10, decimal_places=2, default=Decimal("0.00"),
+        help_text=(
+            "Só em baixas parciais antigas: o que faltou foi somado ao previsto da parcela seguinte, "
+            "então não é mais cobrado nesta."
+        ),
+    )
 
     criado_em = models.DateTimeField("criado em", auto_now_add=True)
     atualizado_em = models.DateTimeField("atualizado em", auto_now=True)
+
+    objects = VencimentoQuerySet.as_manager()
 
     class Meta:
         verbose_name = "vencimento"
@@ -96,7 +114,7 @@ class Vencimento(models.Model):
     @property
     def saldo(self) -> Decimal:
         """Quanto ainda falta receber desta parcela."""
-        return self.valor_previsto - self.valor_pago
+        return self.valor_previsto - self.valor_pago - self.saldo_repassado
 
     @property
     def diferenca_do_original(self) -> Decimal:
@@ -200,11 +218,6 @@ class Pagamento(models.Model):
         verbose_name_plural = "pagamentos"
         ordering = ["-data_pagamento", "-criado_em"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["contrato", "vencimento"],
-                condition=models.Q(vencimento__isnull=False),
-                name="pagamento_unico_por_vencimento",
-            ),
             models.CheckConstraint(
                 condition=models.Q(valor_pago__gt=0),
                 name="pagamento_valor_positivo",
@@ -217,11 +230,10 @@ class Pagamento(models.Model):
 
     @transaction.atomic
     def registrar(self) -> None:
-        """Salva a baixa e reflete na parcela: ``valor_pago``, ``status`` e o
-        transporte do saldo do parcial (ou do troco) para a próxima parcela.
+        """Salva a baixa e reflete na parcela: ``valor_pago`` e ``status``.
 
-        Idempotente por construção — a ``UniqueConstraint(contrato, vencimento)``
-        impede uma segunda baixa na mesma parcela.
+        Pagamento parcial só abate: o saldo continua na própria parcela, que segue em aberto.
+        O que passar do valor da parcela (troco) abate a(s) parcela(s) seguinte(s).
         """
         from apps.contratos.models import Contrato
 
@@ -234,16 +246,15 @@ class Pagamento(models.Model):
             return
 
         venc.aplicar_valor_pago(venc.valor_pago + self.valor_pago)
-        restante = venc.valor_previsto - venc.valor_pago  # >0 faltou · <0 troco
-        if restante:
+        restante = venc.valor_previsto - venc.valor_pago  # >0 ainda falta (fica nesta parcela) · <0 troco
+        if restante < 0:
             self._transportar_saldo(restante)
 
     def _transportar_saldo(self, restante: Decimal) -> None:
-        """Distribui ``restante`` pelas parcelas seguintes em aberto.
+        """Distribui o troco (``restante`` negativo) pelas parcelas seguintes em aberto.
 
-        ``restante`` positivo (faltou) entra no ``valor_previsto`` da próxima
-        parcela; negativo (troco) abate — cascateando se o troco for maior que a
-        parcela. Sem parcela seguinte, sobra em ``Contrato.saldo_transportado``.
+        Abate o ``valor_previsto`` da próxima parcela, cascateando se o troco for maior que ela.
+        Sem parcela seguinte, sobra em ``Contrato.saldo_transportado``.
         """
         seguintes = (
             self.contrato.vencimentos.filter(numero__gt=self.vencimento.numero)
@@ -277,16 +288,21 @@ class Pagamento(models.Model):
     def estornar(self) -> Decimal:
         """Desfaz a baixa: tira ``valor_pago`` da parcela e recalcula o status.
 
-        Devolve o ``restante`` que esta baixa havia transportado para as
-        parcelas seguintes (0 se não transportou) — a view usa isso para avisar
-        que o saldo transportado precisa de conferência manual. Não desfaz o
-        transporte automaticamente (parcelas seguintes podem já ter recebido
-        baixa).
+        Devolve quanto esta baixa havia levado para as parcelas seguintes (0 se nada): o troco que
+        abateu a(s) seguinte(s) ou, em baixas parciais antigas, o que faltou e foi somado à seguinte.
+        A view usa isso para avisar que os valores delas precisam de conferência manual. Não desfaz
+        esse transporte automaticamente (as seguintes podem já ter recebido baixa).
         """
         venc = self.vencimento
         restante_transportado = Decimal("0.00")
         if venc is not None:
-            restante_transportado = venc.valor_previsto - venc.valor_pago
+            restante = venc.valor_previsto - venc.valor_pago
+            if restante < 0:
+                restante_transportado = -restante
+            if venc.saldo_repassado:
+                restante_transportado = venc.saldo_repassado
+                venc.saldo_repassado = Decimal("0.00")
+                venc.save(update_fields=["saldo_repassado", "atualizado_em"])
             venc.aplicar_valor_pago(venc.valor_pago - self.valor_pago)
         self.delete()
         return restante_transportado

@@ -40,7 +40,7 @@ def test_totais_iguais_em_agenda_cliente_contrato_e_baixa(plano, auth_client):
 
 
 @pytest.mark.parametrize("valor,trecho,previstos", [
-    ("30,00", "faltam R$ 10,00", [40, 50, 40, 40]),
+    ("30,00", "faltam R$ 10,00", [40, 40, 40, 40]),
     ("40,00", "Parcela 1: ficará paga", [40, 40, 40, 40]),
     ("100,00", "Parcela 3: abatimento de R$ 20,00", [40, 0, 20, 40]),
     ("200,00", "R$ 40,00 ficará como crédito", [40, 0, 0, 0]),

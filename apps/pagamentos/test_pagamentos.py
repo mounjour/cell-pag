@@ -2,9 +2,9 @@
 
 Regras (PLANO-DO-PROJETO.md, seções 4.4 e 6; decisões desta conversa):
 
-* uma linha de ``Pagamento`` por parcela (``UniqueConstraint(contrato, vencimento)``);
-* parcial: parcela vira ``parcial`` e o saldo entra no ``valor_previsto`` da
-  próxima parcela em aberto (ou em ``Contrato.saldo_transportado``);
+* uma parcela aceita vários pagamentos;
+* parcial: a parcela vira ``parcial`` e o saldo que falta continua nela (segue sendo cobrado até quitar);
+  só o troco (valor a mais) abate a(s) próxima(s) parcela(s);
 * a baixa não quita o contrato (quitar é manual — ``contratos:quitar``).
 """
 
@@ -82,27 +82,31 @@ def test_baixa_total_marca_parcela_paga_sem_quitar_contrato(cliente):
 
 
 @pytest.mark.django_db
-def test_baixa_parcial_transporta_saldo_para_a_proxima(cliente):
+def test_baixa_parcial_abate_a_parcela_e_o_saldo_continua_nela(cliente):
     ct = _contrato_com_parcelas(cliente)
     _baixa(ct, 1, "30.00")
 
     v1 = ct.vencimentos.get(numero=1)
     v2 = ct.vencimentos.get(numero=2)
-    assert v1.status == Vencimento.Status.PARCIAL
-    assert v2.valor_previsto == Decimal("50.00")  # 40 + 10 que faltaram
+    assert v1.status == Vencimento.Status.PARCIAL and v1.saldo == Decimal("10.00")
+    assert v2.valor_previsto == Decimal("40.00")  # nada foi somado à seguinte
+    assert ct.parcela_em_aberto() == v1  # segue sendo a parcela a cobrar
     ct.refresh_from_db()
     assert ct.saldo_transportado == Decimal("0.00")
 
 
 @pytest.mark.django_db
-def test_parcial_na_ultima_parcela_vai_para_saldo_transportado(cliente):
+def test_parcial_na_ultima_parcela_continua_nela(cliente):
     ct = _contrato_com_parcelas(cliente, num_parcelas=2)
     _baixa(ct, 1, "40.00")
     _baixa(ct, 2, "30.00")
 
     ct.refresh_from_db()
-    assert ct.saldo_transportado == Decimal("10.00")
-    assert ct.vencimentos.get(numero=2).status == Vencimento.Status.PARCIAL
+    assert ct.saldo_transportado == Decimal("0.00")
+    v2 = ct.vencimentos.get(numero=2)
+    assert v2.status == Vencimento.Status.PARCIAL and v2.saldo == Decimal("10.00")
+    _baixa(ct, 2, "10.00")
+    assert ct.vencimentos.get(numero=2).status == Vencimento.Status.PAGO
 
 
 @pytest.mark.django_db
@@ -224,16 +228,27 @@ def test_gerar_vencimentos_drena_saldo_transportado(cliente):
 # ── constraints ────────────────────────────────────────────────────────────
 
 @pytest.mark.django_db
-def test_uma_baixa_por_parcela(cliente):
+def test_a_parcela_aceita_varias_baixas_ate_quitar(cliente):
     ct = _contrato_com_parcelas(cliente)
     _baixa(ct, 1, "20.00")
-    with pytest.raises(IntegrityError):
-        with transaction.atomic():
-            Pagamento.objects.create(
-                contrato=ct,
-                vencimento=ct.vencimentos.get(numero=1),
-                valor_pago=Decimal("20.00"),
-            )
+    _baixa(ct, 1, "15.00")
+    v1 = ct.vencimentos.get(numero=1)
+    assert v1.status == Vencimento.Status.PARCIAL and v1.saldo == Decimal("5.00")
+    _baixa(ct, 1, "5.00")
+    v1.refresh_from_db()
+    assert v1.status == Vencimento.Status.PAGO and v1.pagamentos.count() == 3
+    assert ct.vencimentos.get(numero=2).valor_previsto == Decimal("40.00")
+
+
+@pytest.mark.django_db
+def test_estornar_uma_das_baixas_reabre_o_saldo(cliente):
+    ct = _contrato_com_parcelas(cliente)
+    _baixa(ct, 1, "20.00")
+    ultima = _baixa(ct, 1, "20.00")
+    assert ct.vencimentos.get(numero=1).status == Vencimento.Status.PAGO
+    assert ultima.estornar() == Decimal("0.00")
+    v1 = ct.vencimentos.get(numero=1)
+    assert v1.status == Vencimento.Status.PARCIAL and v1.saldo == Decimal("20.00")
 
 
 @pytest.mark.django_db
@@ -293,21 +308,27 @@ def test_post_cria_baixa_e_redireciona(auth_client, cliente):
 
 
 @pytest.mark.django_db
-def test_post_em_parcela_ja_com_baixa_da_erro_de_form(auth_client, cliente):
+def test_post_em_parcela_parcial_registra_o_resto_e_quita(auth_client, cliente):
     ct = _contrato_com_parcelas(cliente)
-    _baixa(ct, 1, "30.00")  # parcial — parcela segue no queryset
+    _baixa(ct, 1, "30.00")  # parcial — a parcela segue aceitando pagamento
     v1 = ct.vencimentos.get(numero=1)
     resp = auth_client.post(
         reverse("pagamentos:novo", args=[ct.pk]),
-        {
-            "vencimento": v1.pk,
-            "data_pagamento": "2026-03-02",
-            "valor_pago": "10,00",
-            "forma": "pix",
-        },
+        {"vencimento": v1.pk, "data_pagamento": "2026-03-02", "valor_pago": "10,00", "forma": "pix"},
     )
-    assert resp.status_code == 200
-    assert resp.context["form"].errors
+    assert resp.status_code == 302
+    assert Pagamento.objects.count() == 2
+    assert ct.vencimentos.get(numero=1).status == Vencimento.Status.PAGO
+
+
+@pytest.mark.django_db
+def test_post_repetido_logo_em_seguida_e_recusado(auth_client, cliente):
+    ct = _contrato_com_parcelas(cliente)
+    v1 = ct.vencimentos.get(numero=1)
+    dados = {"vencimento": v1.pk, "data_pagamento": "2026-03-02", "valor_pago": "10,00", "forma": "pix"}
+    assert auth_client.post(reverse("pagamentos:novo", args=[ct.pk]), dados).status_code == 302
+    resp = auth_client.post(reverse("pagamentos:novo", args=[ct.pk]), dados)
+    assert resp.status_code == 200 and "acabou de ser registrado" in resp.content.decode()
     assert Pagamento.objects.count() == 1
 
 

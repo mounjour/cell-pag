@@ -326,24 +326,12 @@ class Contrato(models.Model):
     # feito dentro dos métodos para evitar import circular com aquele módulo.
 
     def parcela_em_aberto(self):
-        """`Vencimento` mais antigo (menor nº) ainda não pago e sem baixa — a
-        próxima parcela a cobrar. ``None`` quando o contrato ainda não tem
-        vencimentos gerados (falta `valor_parcela`, ou o job diário ainda não
-        rodou).
-
-        Exclui parcelas `parcial` que já têm uma baixa registrada: a regra de
-        "uma linha de Pagamento por parcela" (anti cobrança duplicada) impede
-        lançar outra ali — o saldo que faltou já foi transportado pra próxima
-        parcela em aberto, que é quem de fato ainda aceita baixa.
+        """`Vencimento` mais antigo (menor nº) que ainda tem saldo a receber — a
+        próxima parcela a cobrar (uma parcela com pagamento parcial continua nela até quitar).
+        ``None`` quando o contrato ainda não tem vencimentos gerados (falta
+        `valor_parcela`, ou o job diário ainda não rodou).
         """
-        from apps.pagamentos.models import Vencimento
-
-        return (
-            self.vencimentos.exclude(status=Vencimento.Status.PAGO)
-            .exclude(pagamentos__isnull=False)
-            .order_by("numero")
-            .first()
-        )
+        return self.vencimentos.em_aberto().order_by("numero").first()
 
     def data_referencia_atraso(self):
         """Data usada para medir atraso: a da `parcela_em_aberto()` quando já

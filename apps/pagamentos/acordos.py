@@ -8,7 +8,7 @@ combinado, sem nenhum caminho paralelo:
 * **Nova data** — a data de cobrança da parcela muda e o juros passa a contar a partir dela; a
   data antiga fica em ``data_original``.
 
-Um acordo só vale para parcela em aberto e sem baixa, e pode ser **desfeito** enquanto ela não for paga.
+Um acordo vale para parcela em aberto (inclusive com pagamento parcial) e pode ser **desfeito** enquanto ela não receber pagamento.
 """
 
 import datetime
@@ -47,8 +47,6 @@ def motivo_para_nao_negociar(vencimento: Vencimento) -> str:
         return "O contrato já está quitado."
     if vencimento.status == Vencimento.Status.PAGO:
         return "Esta parcela já está paga."
-    if vencimento.pagamentos.exists():
-        return "Esta parcela já recebeu pagamento (parcial): registre o restante em vez de negociar."
     return ""
 
 
@@ -142,6 +140,8 @@ def desfazer_acordo(acordo: Acordo, *, autor=None) -> list[Aviso]:
     vencimento = Vencimento.objects.select_for_update().select_related("contrato").get(pk=acordo.vencimento_id)
     if motivo := motivo_para_nao_negociar(vencimento):
         raise AcordoInvalido(f"Não dá para desfazer: {motivo[0].lower()}{motivo[1:]}")
+    if vencimento.pagamentos.exists():
+        raise AcordoInvalido("Não dá para desfazer: a parcela já recebeu pagamento.")
     posterior = vencimento.acordos.filter(desfeito_em__isnull=True, criado_em__gt=acordo.criado_em).exists()
     if posterior:
         raise AcordoInvalido("Desfaça primeiro o acordo mais recente desta parcela.")
@@ -165,6 +165,6 @@ def desfazer_acordo(acordo: Acordo, *, autor=None) -> list[Aviso]:
 
 def pode_desfazer(acordo: Acordo) -> bool:
     """O acordo ainda pode ser desfeito (ativo, parcela sem pagamento e sem acordo mais novo)."""
-    if not acordo.ativo or motivo_para_nao_negociar(acordo.vencimento):
+    if not acordo.ativo or motivo_para_nao_negociar(acordo.vencimento) or acordo.vencimento.pagamentos.exists():
         return False
     return not acordo.vencimento.acordos.filter(desfeito_em__isnull=True, criado_em__gt=acordo.criado_em).exists()

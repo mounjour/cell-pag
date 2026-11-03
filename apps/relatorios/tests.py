@@ -141,15 +141,14 @@ def test_baixa_parcial_nao_conta_o_saldo_duas_vezes(dados_relatorio, dono):
         juros_pago=Decimal("10.00"),
         usuario_baixa=dono,
     ).registrar()
-    # Parcela 1: 60 pagos, 40 transportados p/ a parcela 3 (previsto 140).
+    # Parcela 1: 60 pagos, os 40 que faltam continuam nela (a parcela 3 segue em 100).
     rel = montar_relatorio(date(2026, 9, 1), date(2026, 9, 4))
-    # 60 (p.1) + 100 (p.2) + 140 (p.3) = 300 — e não 100 + 100 + 140.
-    assert rel["total_previsto"] == Decimal("300.00")
+    assert rel["total_previsto"] == Decimal("300.00")  # 100 + 100 + 100
     assert rel["total_recebido"] == Decimal("160.00")
     assert rel["total_juros"] == Decimal("10.00")
-    # Só a parcela 3 está em atraso; o saldo da p.1 não é contado de novo.
+    # Em atraso: o que falta da parcela 1 (40) e a parcela 3 inteira (100).
     assert rel["total_atrasado"] == Decimal("140.00")
-    assert rel["quantidade_atrasados"] == 1
+    assert rel["quantidade_atrasados"] == 2
 
 
 @pytest.mark.django_db
