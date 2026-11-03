@@ -1084,20 +1084,12 @@ def validar_enviar_cobranca(p: dict) -> tuple[dict, str, list[str]]:
 
 
 def executar_enviar_cobranca(p: dict, usuario) -> str:
-    from apps.pagamentos.cobranca import enviar_cobranca_do_contrato
-    from apps.pagamentos.models import Cobranca
+    from apps.pagamentos.cobranca import enviar_agora
 
-    resultado = enviar_cobranca_do_contrato(_contrato(p["contrato_id"]))
-    cobranca = resultado["cobranca"]
-    if cobranca is None:
-        raise ErroFerramenta("Este contrato não está na cobrança de hoje (não está atrasado nem vence hoje); nada foi enviado.")
-    if resultado["ignoradas"] and cobranca.status not in (Cobranca.Status.ENVIADO,):
-        raise ErroFerramenta("Nada foi enviado: a cobrança dessa parcela está suspensa (Pix cancelado) ou já havia saído.")
-    if cobranca.status == Cobranca.Status.ERRO:
-        raise ErroFerramenta(f"A mensagem não saiu: {cobranca.erro or 'erro no envio'}")
-    if resultado["simuladas"]:
-        return "Modo de simulação: a mensagem NÃO foi enviada de verdade."
-    return "Cobrança enviada no WhatsApp do cliente."
+    nivel, texto = enviar_agora(_contrato(p["contrato_id"]))
+    if nivel in ("error", "info"):
+        raise ErroFerramenta(texto)
+    return texto
 
 
 # ── catálogo entregue ao Claude ───────────────────────────────────────────────

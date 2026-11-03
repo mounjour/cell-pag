@@ -72,6 +72,14 @@
                   </a>
                 </span>
                 <a class="btn btn-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}" aria-label="Registrar pagamento de {{ l.contrato.cliente.nome }} — {{ l.contrato.apelido }}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>
+                {% if l.pix.status != 'cancelado' and l.cobranca.status != 'enviado' and l.cobranca.status != 'entregue' and l.cobranca.status != 'lido' %}
+                <form method="post" action="{% url 'pagamentos:cobranca_enviar' l.contrato.pk %}"
+                      data-confirmar-envio="Enviar agora a cobrança de {{ l.contrato.cliente.nome|escapejs }} no WhatsApp? A mensagem sai de verdade para o cliente.">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit" class="btn secondary" aria-label="Enviar cobrança de {{ l.contrato.cliente.nome }} agora">{% include "_icone.html" with nome="whatsapp" %}Enviar cobrança</button>
+                </form>
+                {% endif %}
                 <a class="btn secondary" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}"
                    aria-label="Abrir {{ l.contrato.cliente.nome }}">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">

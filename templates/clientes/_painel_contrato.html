@@ -58,6 +58,12 @@
         </div>
 
         {% if p.automatica == 'ativa' %}
+          <form method="post" action="{% url 'pagamentos:cobranca_enviar' ct.pk %}"
+                data-confirmar-envio="Enviar agora a cobrança de {{ ct.cliente.nome|escapejs }} no WhatsApp? A mensagem sai de verdade para o cliente.">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn secondary">{% include "_icone.html" with nome="whatsapp" %}Enviar cobrança agora</button>
+          </form>
           <form method="post" action="{% url 'pagamentos:cobranca_suspender' p.parcela.pk %}"
                 onsubmit="return confirm('Suspender a cobrança automática da parcela {{ p.parcela.numero }} de {{ ct.cliente.nome|escapejs }}? Nenhuma mensagem nem Pix será enviado até você retomar. Se já existe um Pix em aberto, ele é cancelado na Cora.')">
             {% csrf_token %}

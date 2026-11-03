@@ -479,3 +479,4 @@ def test_enviar_cobranca_so_se_o_contrato_esta_na_cobranca_de_hoje(client, chave
     if ok.status_code == 200:
         from apps.pagamentos.models import Cobranca
         assert Cobranca.objects.filter(contrato_id=ct).exists()
+

@@ -7,6 +7,7 @@ lembrete no WhatsApp da Yslane às 08:30 já tem o texto e o job prontos; falta
 só a conta WhatsApp Business para o envio de verdade (ver `lembrete.py`).
 """
 
+import datetime
 import logging
 
 from django.contrib import messages
@@ -883,6 +884,59 @@ class ConexoesGerarQrView(LoginRequiredMixin, View):
         request.session[CHAVE_SESSAO_QR_ATIVO] = _agora().timestamp()
         QrWhatsApp.limpar()  # "gerar outro" = código novo de verdade
         return redirect("pagamentos:conexoes")
+
+
+class MensagensView(LoginRequiredMixin, TemplateView):
+    """As mensagens de cobrança de um dia: o que saiu, o que deu erro e por quê (só leitura; reenviar usa o botão de cada linha)."""
+
+    template_name = "pagamentos/mensagens.html"
+
+    def get_context_data(self, **kwargs):
+        from .cobranca import mensagens_do_dia
+
+        ctx = super().get_context_data(**kwargs)
+        hoje = timezone.localdate()
+        try:
+            dia = datetime.date.fromisoformat(self.request.GET.get("data", ""))
+        except ValueError:
+            dia = hoje
+        grupo = self.request.GET.get("grupo", "")
+        ctx.update(
+            mensagens_do_dia(dia, grupo), dia=dia, hoje=hoje, grupo=grupo, eh_hoje=dia == hoje,
+            dia_anterior=dia - datetime.timedelta(days=1), dia_seguinte=dia + datetime.timedelta(days=1),
+            config_cobranca=ConfiguracaoCobranca.obter(),
+        )
+        return ctx
+
+
+class ConexoesReiniciarView(LoginRequiredMixin, View):
+    """Descarta a sessão presa do WhatsApp na Evolution e já pede um QR novo (POST)."""
+
+    def post(self, request):
+        from .whatsapp import WhatsAppErro, desconectar_sessao
+
+        try:
+            desconectar_sessao()
+        except WhatsAppErro as exc:
+            messages.error(request, f"Não consegui reiniciar a sessão do WhatsApp: {exc}")
+            return redirect("pagamentos:conexoes")
+        cache.delete("whatsapp_status")
+        QrWhatsApp.limpar()
+        request.session[CHAVE_SESSAO_QR_ATIVO] = _agora().timestamp()
+        messages.success(request, "Sessão do WhatsApp descartada. Leia o QR code com o celular da empresa para reconectar.")
+        return redirect("pagamentos:conexoes")
+
+
+class CobrancaEnviarView(LoginRequiredMixin, View):
+    """Manda agora, pelo WhatsApp, a cobrança de hoje de um contrato (POST)."""
+
+    def post(self, request, contrato_pk):
+        from .cobranca import enviar_agora
+
+        contrato = get_object_or_404(Contrato.objects.select_related("cliente"), pk=contrato_pk)
+        nivel, texto = enviar_agora(contrato)
+        getattr(messages, nivel)(request, texto)
+        return _voltar_para_origem(request, padrao="pagamentos:cobrar_hoje")
 
 
 class ConexoesQrView(LoginRequiredMixin, View):

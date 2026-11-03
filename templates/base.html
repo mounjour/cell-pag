@@ -40,6 +40,7 @@
       <a href="{% url 'pagamentos:proximas_cobrancas' %}"{% if pagina == 'proximas_cobrancas' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="proximas" %}<span>Próximas cobranças</span></a>
       <a href="{% url 'aparelhos:bloqueios' %}"{% if pagina == 'bloqueios' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="bloqueio" %}<span>Bloqueios</span>{% if bloqueios_pendentes_n %}<span class="selo selo--bloqueio"><span class="sr-only">{{ bloqueios_pendentes_n }} aparelho{{ bloqueios_pendentes_n|pluralize }} para bloquear ou desbloquear</span><span aria-hidden="true">{{ bloqueios_pendentes_n }}</span></span>{% endif %}</a>
       <a href="{% url 'pagamentos:pix_painel' %}"{% if pagina == 'pix_painel' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="pix" %}<span>Pix</span>{% if pix_alertas_n %}<span class="selo selo--alerta"><span class="sr-only">{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span><span aria-hidden="true">{{ pix_alertas_n }}</span></span>{% endif %}</a>
+      <a href="{% url 'pagamentos:mensagens' %}"{% if pagina == 'mensagens' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="whatsapp" %}<span>Mensagens</span></a>
       <a href="{% url 'pagamentos:historico' %}"{% if pagina == 'historico' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="historico" %}<span>Histórico</span></a>
       <p class="nav-grupo">Cadastros</p>
       <a href="{% url 'clientes:lista' %}"{% if secao == 'clientes' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="clientes" %}<span>Clientes</span></a>
@@ -131,9 +132,10 @@
     <a href="{% url 'clientes:lista' %}"{% if secao == 'clientes' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="clientes" %}<span>Clientes</span></a>
     <a href="{% url 'contratos:lista' %}"{% if secao == 'contratos' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="contratos" %}<span>Contratos</span></a>
     <details class="menu-pop menu-mais">
-      <summary{% if pagina == 'pix_painel' or pagina == 'historico' or pagina == 'conexoes' or secao == 'aparelhos' or secao == 'relatorios' and pagina != 'inicio' %} class="active"{% endif %}>{% include "_icone.html" with nome="mais" %}<span>Mais</span>{% if pix_alertas_n %}<span class="selo selo--tab selo--alerta"><span class="sr-only">{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix</span><span aria-hidden="true">{{ pix_alertas_n }}</span></span>{% else %}<span class="selo selo--tab selo--alerta" data-whatsapp-selo{% if not whatsapp_desconectado %} hidden{% endif %}><span class="sr-only">WhatsApp desconectado</span><span aria-hidden="true">!</span></span>{% endif %}</summary>
+      <summary{% if pagina == 'pix_painel' or pagina == 'mensagens' or pagina == 'historico' or pagina == 'conexoes' or secao == 'aparelhos' or secao == 'relatorios' and pagina != 'inicio' %} class="active"{% endif %}>{% include "_icone.html" with nome="mais" %}<span>Mais</span>{% if pix_alertas_n %}<span class="selo selo--tab selo--alerta"><span class="sr-only">{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix</span><span aria-hidden="true">{{ pix_alertas_n }}</span></span>{% else %}<span class="selo selo--tab selo--alerta" data-whatsapp-selo{% if not whatsapp_desconectado %} hidden{% endif %}><span class="sr-only">WhatsApp desconectado</span><span aria-hidden="true">!</span></span>{% endif %}</summary>
       <div class="menu-painel">
         <a class="menu-item" href="{% url 'pagamentos:pix_painel' %}">{% include "_icone.html" with nome="pix" %}<span>Pix</span>{% if pix_alertas_n %}<span class="selo selo--alerta"><span class="sr-only">{{ pix_alertas_n }} alerta{{ pix_alertas_n|pluralize }} no Pix</span><span aria-hidden="true">{{ pix_alertas_n }}</span></span>{% endif %}</a>
+        <a class="menu-item" href="{% url 'pagamentos:mensagens' %}">{% include "_icone.html" with nome="whatsapp" %}<span>Mensagens de cobrança</span></a>
         <a class="menu-item" href="{% url 'pagamentos:historico' %}">{% include "_icone.html" with nome="historico" %}<span>Histórico de pagamentos</span></a>
         <a class="menu-item" href="{% url 'pagamentos:proximas_cobrancas' %}">{% include "_icone.html" with nome="proximas" %}<span>Próximas cobranças</span></a>
         <a class="menu-item" href="{% url 'aparelhos:bloqueios' %}">{% include "_icone.html" with nome="bloqueio" %}<span>Bloqueios</span>{% if bloqueios_pendentes_n %}<span class="selo selo--bloqueio"><span aria-hidden="true">{{ bloqueios_pendentes_n }}</span></span>{% endif %}</a>
@@ -153,6 +155,7 @@
     {% block content %}{% endblock %}
   </main>
   <script src="{% static 'js/voltar.js' %}" defer></script>
+  <script src="{% static 'js/confirmar_envio.js' %}?v=1" defer></script>
   <script src="{% static 'js/linha_clicavel.js' %}?v=1" defer></script>
   {% if user.is_authenticated %}  <script src="{% static 'js/menu.js' %}" defer></script>
   <script src="{% static 'js/busca.js' %}" defer></script>{% endif %}

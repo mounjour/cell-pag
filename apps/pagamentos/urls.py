@@ -11,6 +11,7 @@ urlpatterns = [
     path("cobrar-hoje/", views.CobrarHojeView.as_view(), name="cobrar_hoje"),
     path("recebidos/", views.RecebidosView.as_view(), name="recebidos"),
     path("rotinas/", views.RotinasView.as_view(), name="rotinas"),
+    path("mensagens/", views.MensagensView.as_view(), name="mensagens"),
     path("conferencia-cora/", views.ConferenciaCoraView.as_view(), name="conferencia_cora"),
     path("recebidos/<int:pk>/ignorar/", views.RecebidoIgnorarView.as_view(), name="recebido_ignorar"),
     path("proximas-cobrancas/", views.ProximasCobrancasView.as_view(), name="proximas_cobrancas"),
@@ -40,6 +41,8 @@ urlpatterns = [
     path("conexoes/status/", views.ConexoesStatusView.as_view(), name="conexoes_status"),
     path("conexoes/gerar-qr/", views.ConexoesGerarQrView.as_view(), name="conexoes_gerar_qr"),
     path("conexoes/qr/", views.ConexoesQrView.as_view(), name="conexoes_qr"),
+    path("conexoes/reiniciar/", views.ConexoesReiniciarView.as_view(), name="conexoes_reiniciar"),
+    path("contrato/<int:contrato_pk>/cobranca/enviar/", views.CobrancaEnviarView.as_view(), name="cobranca_enviar"),
     path(
         "comprovante/<int:pk>/",
         views.ComprovanteDownloadView.as_view(),
