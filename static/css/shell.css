@@ -160,7 +160,7 @@
   .app-shell { padding-left: var(--lateral); padding-bottom: 0; }
   .sidebar {
     position: fixed; inset: 0 auto 0 0; z-index: 25; display: flex; flex-direction: column; gap: 1.75rem;
-    width: var(--lateral); padding: 1.25rem 1rem; overflow-y: auto;
+    width: var(--lateral); padding: 1.25rem 1rem; overflow-y: auto; scrollbar-width: none;
     background: var(--surface); border-right: 1px solid var(--line);
   }
   .sidebar .brand { padding: 0.25rem 0.5rem; }
@@ -319,13 +319,13 @@
    "Mais") e no título das páginas; botões e o resto do sistema seguem com a
    cor do texto. Vermelho fica reservado a alertas. */
 .app-shell {
-  --ic-assistente: #2563eb; --ic-inicio: #2563eb; --ic-cobrar: #2563eb; --ic-proximas: #2563eb; --ic-bloqueio: #2563eb; --ic-pix: #2563eb; --ic-historico: #2563eb;
+  --ic-assistente: #2563eb; --ic-inicio: #2563eb; --ic-cobrar: #2563eb; --ic-proximas: #2563eb; --ic-bloqueio: #2563eb; --ic-pix: #2563eb; --ic-historico: #2563eb; --ic-whatsapp: #2563eb;
   --ic-clientes: #7c3aed; --ic-contratos: #7c3aed; --ic-aparelhos: #7c3aed;
   --ic-conexoes: #059669;
   --ic-relatorios: #ea580c; --ic-juros: #ea580c;
 }
 :root[data-tema="escuro"] .app-shell {
-  --ic-assistente: #60a5fa; --ic-inicio: #60a5fa; --ic-cobrar: #60a5fa; --ic-proximas: #60a5fa; --ic-bloqueio: #60a5fa; --ic-pix: #60a5fa; --ic-historico: #60a5fa;
+  --ic-assistente: #60a5fa; --ic-inicio: #60a5fa; --ic-cobrar: #60a5fa; --ic-proximas: #60a5fa; --ic-bloqueio: #60a5fa; --ic-pix: #60a5fa; --ic-historico: #60a5fa; --ic-whatsapp: #60a5fa;
   --ic-clientes: #a78bfa; --ic-contratos: #a78bfa; --ic-aparelhos: #a78bfa;
   --ic-conexoes: #34d399;
   --ic-relatorios: #fb923c; --ic-juros: #fb923c;
@@ -337,6 +337,7 @@
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="bloqueio"] { color: var(--ic-bloqueio); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="pix"] { color: var(--ic-pix); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="historico"] { color: var(--ic-historico); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="whatsapp"] { color: var(--ic-whatsapp); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="clientes"] { color: var(--ic-clientes); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="contratos"] { color: var(--ic-contratos); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="aparelhos"] { color: var(--ic-aparelhos); }
@@ -347,6 +348,13 @@
 /* Menu lateral: ícones maiores, para ocupar melhor a barra. */
 .sidebar .nav a { gap: 0.85rem; min-height: 44px; }
 .sidebar .nav a .icone { width: 24px; height: 24px; }
+/* Sem barra de rolagem no menu lateral: em telas baixas ele se compacta para caber; se ainda faltar, rola com a roda do mouse. */
+.sidebar::-webkit-scrollbar { display: none; }
+@media (min-width: 1024px) and (max-height: 1040px) {
+  .sidebar { gap: 1rem; padding-block: 1rem; }
+  .sidebar .nav a { min-height: 40px; }
+  .sidebar .nav-grupo { margin-top: 0.9rem; }
+}
 
 /* Ícone antes do título da página */
 h1 > .icone { width: 1.05em; height: 1.05em; margin-right: 0.45rem; vertical-align: -0.1em; stroke-width: 2; }
