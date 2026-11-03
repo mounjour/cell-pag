@@ -121,3 +121,39 @@ def test_estorno_de_baixa_parcial_antiga_limpa_o_saldo_repassado(cliente_cobranc
     assert pagamento.estornar() == Decimal("40.00")  # avisa que o que faltou tinha ido para a seguinte
     venc.refresh_from_db()
     assert venc.saldo_repassado == Decimal("0.00") and venc.saldo == Decimal("100.00")
+
+
+def test_migracao_devolve_o_que_faltou_para_a_parcela_de_origem(cliente_cobranca):
+    """Pagou 60 de 100 pela regra antiga: os 40 que faltaram foram somados à parcela 2 (140)."""
+    hoje = timezone.localdate()
+    contrato = _contrato(cliente_cobranca, hoje, atraso=9)  # parcela 1: R$ 100, vencida há 9 dias; valor_parcela do contrato = 100
+    p1 = contrato.vencimentos.get()
+    Pagamento.objects.create(contrato=contrato, vencimento=p1, valor_pago=Decimal("60.00"), data_pagamento=hoje)
+    Vencimento.objects.filter(pk=p1.pk).update(status=Vencimento.Status.PARCIAL, valor_pago=Decimal("60.00"), saldo_repassado=Decimal("40.00"))
+    p2 = Vencimento.objects.create(contrato=contrato, numero=2, valor_previsto=Decimal("140.00"), data_vencimento=hoje + datetime.timedelta(days=20))
+    p3 = Vencimento.objects.create(contrato=contrato, numero=3, valor_previsto=Decimal("130.00"), data_vencimento=hoje + datetime.timedelta(days=50))  # fora do padrão: não é tocada
+
+    migracao = importlib.import_module("apps.pagamentos.migrations.0020_devolver_saldo_das_baixas_parciais_antigas")
+    migracao.devolver_saldo_a_parcela_de_origem(registro_de_apps, None)
+
+    p1.refresh_from_db(), p2.refresh_from_db(), p3.refresh_from_db()
+    assert p1.saldo_repassado == Decimal("0.00") and p1.saldo == Decimal("40.00")
+    assert p2.valor_previsto == Decimal("100.00")  # voltou a ser a parcela do contrato
+    assert p3.valor_previsto == Decimal("130.00")
+    (item,) = parcelas_a_cobrar(contrato, hoje)  # e a parcela 1 volta a ser cobrada, atrasada, pelo que falta
+    assert item.numero == 1 and item.saldo == Decimal("40.00") and item.dias_atraso == 9
+
+
+def test_migracao_nao_mexe_quando_a_seguinte_nao_bate(cliente_cobranca):
+    hoje = timezone.localdate()
+    contrato = _contrato(cliente_cobranca, hoje, atraso=2)
+    p1 = contrato.vencimentos.get()
+    Pagamento.objects.create(contrato=contrato, vencimento=p1, valor_pago=Decimal("60.00"), data_pagamento=hoje)
+    Vencimento.objects.filter(pk=p1.pk).update(status=Vencimento.Status.PARCIAL, valor_pago=Decimal("60.00"), saldo_repassado=Decimal("40.00"))
+    p2 = Vencimento.objects.create(contrato=contrato, numero=2, valor_previsto=Decimal("125.00"), data_vencimento=hoje + datetime.timedelta(days=20))
+
+    migracao = importlib.import_module("apps.pagamentos.migrations.0020_devolver_saldo_das_baixas_parciais_antigas")
+    migracao.devolver_saldo_a_parcela_de_origem(registro_de_apps, None)
+
+    p1.refresh_from_db(), p2.refresh_from_db()
+    assert p1.saldo_repassado == Decimal("40.00") and p2.valor_previsto == Decimal("125.00")  # deixa como estava
