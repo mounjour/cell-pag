@@ -51,13 +51,15 @@ def encerrar_cobranca_automatica(pagamento) -> list[Aviso]:
         return []
     vencimento.refresh_from_db()
     avisos: list[Aviso] = []
-    if vencimento.saldo > 0 and vencimento.status != vencimento.Status.PAGO:
+    continua_cobrando = vencimento.saldo > 0 and vencimento.status != vencimento.Status.PAGO
+    if continua_cobrando:
         # Pagamento parcial: a parcela continua sendo cobrada, só que pelo que falta. O Pix antigo (valor cheio) sai
-        # e a próxima rotina gera outro com o saldo; a mensagem que pedia o valor cheio fica sem efeito.
+        # e a próxima rotina gera outro com o saldo; a mensagem que pedia o valor cheio é apagada e um novo envio,
+        # com o saldo, fica liberado no mesmo dia.
         avisos += _renovar_pix(vencimento, "Pagamento parcial", None)
     else:
         avisos += _cancelar_pix(vencimento)
-    avisos += _resolver_mensagens(pagamento, vencimento)
+    avisos += _resolver_mensagens(pagamento, vencimento, continua_cobrando=continua_cobrando)
     return avisos
 
 
@@ -93,14 +95,18 @@ def _cancelar_pix(vencimento) -> list[Aviso]:
     return [("info", f"Pix da parcela {numero} cancelado: o QR code não vale mais.")]
 
 
-def _resolver_mensagens(pagamento, vencimento) -> list[Aviso]:
+def _resolver_mensagens(pagamento, vencimento, *, continua_cobrando: bool = False) -> list[Aviso]:
     """Mensagens ainda não enviadas são canceladas; as já enviadas (dentro da
-    janela do WhatsApp) são apagadas do celular do cliente, se possível."""
+    janela do WhatsApp) são apagadas do celular do cliente, se possível.
+
+    Se a parcela continua em cobrança (pagamento parcial), nada é cancelado e a mensagem apagada volta a ficar
+    pendente: a próxima rotina (ou o botão de enviar) manda outra, com o saldo que falta."""
     candidatas = Cobranca.objects.filter(contrato=pagamento.contrato).filter(
         Q(vencimento=vencimento) | Q(vencimento__isnull=True)
     )
-    cancelar = candidatas.filter(status__in=(Cobranca.Status.PENDENTE, Cobranca.Status.ERRO))
-    cancelar.update(status=Cobranca.Status.CANCELADO, atualizado_em=timezone.now())
+    if not continua_cobrando:
+        cancelar = candidatas.filter(status__in=(Cobranca.Status.PENDENTE, Cobranca.Status.ERRO))
+        cancelar.update(status=Cobranca.Status.CANCELADO, atualizado_em=timezone.now())
 
     janela = datetime.timedelta(hours=settings.WHATSAPP_APAGAR_JANELA_HORAS)
     limite = timezone.now() - janela
@@ -122,8 +128,11 @@ def _resolver_mensagens(pagamento, vencimento) -> list[Aviso]:
             logger.warning("Não consegui apagar a cobrança %s: %s", cobranca.pk, exc)
             falhas.append(cobranca)
             continue
-        cobranca.status = Cobranca.Status.APAGADO
-        cobranca.save(update_fields=["status", "atualizado_em"])
+        if continua_cobrando:
+            reabrir_cobranca(cobranca)
+        else:
+            cobranca.status = Cobranca.Status.APAGADO
+            cobranca.save(update_fields=["status", "atualizado_em"])
         apagadas += 1
 
     avisos: list[Aviso] = []
@@ -137,6 +146,19 @@ def _resolver_mensagens(pagamento, vencimento) -> list[Aviso]:
     if falhas:
         avisos.append(_aviso_avisar_cliente(pagamento, "não pôde ser apagada"))
     return avisos
+
+
+def reabrir_cobranca(cobranca) -> None:
+    """Deixa a mensagem do dia pendente de novo (sem rastro do envio antigo), para sair outra com o valor atual."""
+    cobranca.status = Cobranca.Status.PENDENTE
+    cobranca.id_externo = ""
+    cobranca.id_externo_codigo = ""
+    cobranca.enviado_em = cobranca.entregue_em = cobranca.lido_em = None
+    cobranca.tentativas = 0
+    cobranca.erro = ""
+    cobranca.save(update_fields=[
+        "status", "id_externo", "id_externo_codigo", "enviado_em", "entregue_em", "lido_em", "tentativas", "erro", "atualizado_em",
+    ])
 
 
 def _aviso_avisar_cliente(pagamento, motivo: str) -> Aviso:
