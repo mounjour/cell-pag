@@ -806,7 +806,7 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .pill.entregue, .pill.lido { background: var(--ok-wash); color: var(--ok-ink); }
 .pill.erro { background: var(--critical-wash); color: var(--critical-ink); }
 .pill.vencido { background: var(--critical-wash); color: var(--critical-ink); }
-.pill.cancelado { background: var(--surface-2); color: var(--ink-faint); }
+.pill.cancelado, .pill.apagado { background: var(--surface-2); color: var(--ink-faint); }
 
 /* Selo de canal ("Pix"/"Msg" em Cobrar hoje, status Pix no painel Pix): cor
    do próprio canal — petróleo (a cor do Pix real é bem próxima) e verde
@@ -818,7 +818,7 @@ details.note > p { margin: 0; padding: 0 1.05rem 0.9rem; }
 .pill.pill-pix:not(.aberto):not(.pago):not(.vencido):not(.cancelado):not(.erro) {
   background: var(--accent-wash); color: var(--accent-ink);
 }
-.pill.pill-msg:not(.enviado):not(.entregue):not(.lido):not(.erro) {
+.pill.pill-msg:not(.enviado):not(.entregue):not(.lido):not(.erro):not(.pendente):not(.cancelado):not(.apagado) {
   background: var(--wa-wash); color: var(--wa-ink);
 }
 
@@ -1421,9 +1421,9 @@ tr[data-href]:hover td, section.painel-contrato[data-href]:hover { background: v
 .pill.pago:not(.pill--icone)::before, .pill.em_dia:not(.pill--icone)::before, .pill.vendido:not(.pill--icone)::before, .pill.entregue:not(.pill--icone)::before, .pill.lido:not(.pill--icone)::before, .pill.quitado:not(.pill--icone)::before, .pill.disponivel:not(.pill--icone)::before { --ic: var(--ic-ok); }
 .pill.aberto:not(.pill--icone)::before, .pill.pendente:not(.pill--icone)::before { --ic: var(--ic-relogio); }
 .pill.parcial:not(.pill--icone)::before, .pill.enviado:not(.pill--icone)::before { --ic: var(--ic-parcial); }
-.pill.cancelado:not(.pill--icone)::before { --ic: var(--ic-cancel); }
+.pill.cancelado:not(.pill--icone)::before, .pill.apagado:not(.pill--icone)::before { --ic: var(--ic-cancel); }
 .pill.alocado:not(.pill--icone)::before { --ic: var(--ic-aparelho); }
-.pill.atrasado:not(.pill--icone)::before, .pill.inadimplente:not(.pill--icone)::before, .pill.vencido:not(.pill--icone)::before, .pill.erro:not(.pill--icone)::before, .pill.alerta-bloqueio:not(.pill--icone)::before, .pill.pago:not(.pill--icone)::before, .pill.em_dia:not(.pill--icone)::before, .pill.vendido:not(.pill--icone)::before, .pill.entregue:not(.pill--icone)::before, .pill.lido:not(.pill--icone)::before, .pill.quitado:not(.pill--icone)::before, .pill.disponivel:not(.pill--icone)::before, .pill.aberto:not(.pill--icone)::before, .pill.pendente:not(.pill--icone)::before, .pill.parcial:not(.pill--icone)::before, .pill.enviado:not(.pill--icone)::before, .pill.cancelado:not(.pill--icone)::before, .pill.alocado:not(.pill--icone)::before { width: 1.1em; height: 1.1em; border-radius: 0; box-shadow: none; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
+.pill.atrasado:not(.pill--icone)::before, .pill.inadimplente:not(.pill--icone)::before, .pill.vencido:not(.pill--icone)::before, .pill.erro:not(.pill--icone)::before, .pill.alerta-bloqueio:not(.pill--icone)::before, .pill.pago:not(.pill--icone)::before, .pill.em_dia:not(.pill--icone)::before, .pill.vendido:not(.pill--icone)::before, .pill.entregue:not(.pill--icone)::before, .pill.lido:not(.pill--icone)::before, .pill.quitado:not(.pill--icone)::before, .pill.disponivel:not(.pill--icone)::before, .pill.aberto:not(.pill--icone)::before, .pill.pendente:not(.pill--icone)::before, .pill.parcial:not(.pill--icone)::before, .pill.enviado:not(.pill--icone)::before, .pill.cancelado:not(.pill--icone)::before, .pill.apagado:not(.pill--icone)::before, .pill.alocado:not(.pill--icone)::before { width: 1.1em; height: 1.1em; border-radius: 0; box-shadow: none; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; }
 .pill.alerta-bloqueio { display: inline-flex; align-items: center; gap: .35rem; }
 .pill.alerta-bloqueio .icone { width: 14px; height: 14px; }
 /* Selos de atraso: mesma largura mínima e centralizados na linha, para as bordas alinharem entre linhas. */

@@ -48,7 +48,7 @@
             <td class="envio-cell" data-label="Envio">
               <span class="envio-vias">
                 <span class="pill pill-pix {{ l.pix.status }}">Pix: {% if l.pix %}{{ l.pix.get_status_display }}{% else %}Não gerado{% endif %}</span>
-                <span class="pill pill-msg {{ l.cobranca.status }}">Mensagem: {% if l.cobranca %}{{ l.cobranca.get_status_display }}{% else %}Não enviada{% endif %}</span>
+                <span class="pill pill-msg {{ l.cobranca.status|default:'pendente' }}">Mensagem: {% if l.cobranca %}{{ l.cobranca.get_status_display }}{% else %}Não enviada{% endif %}</span>
               </span>
               {% if l.cobranca.erro %}<span class="helptext">Falha no envio. Abra o cliente para conferir.</span>{% endif %}
               {% if l.pix.status == 'cancelado' %}<span class="pill atrasado" title="A rotina diária não cobra esta parcela até você retomar no cliente.">Suspensa</span>{% endif %}
