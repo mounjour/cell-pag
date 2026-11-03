@@ -190,6 +190,8 @@ tbody tr:hover td { background: var(--accent-wash); }
 .comprovante-acoes form { margin: 0; }
 .cobrar-hoje .contato-actions { display: flex; flex-direction: column; align-items: stretch; gap: .45rem; }
 .cobrar-hoje .contato-actions .btn { white-space: normal; text-align: center; }
+/* O botão "Enviar cobrança" vive num formulário: ele some do layout para o botão esticar como os outros. */
+.cobrar-hoje .contato-actions form { display: contents; }
 .cobrar-hoje .envio-vias { display: flex; flex-direction: column; align-items: flex-start; }
 .cobrar-hoje .envio-vias .pill { white-space: normal; text-align: left; }
 @media (min-width: 640px) {
