@@ -19,6 +19,7 @@
   Chart.defaults.color = v("--ink-faint", "#6b7280");
   Chart.defaults.borderColor = v("--line", "#e5e7eb");
   Chart.defaults.font.family = "'DM Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif";
+  Chart.defaults.font.size = 12;
   var tip = Chart.defaults.plugins.tooltip;
   tip.backgroundColor = v("--surface", "#ffffff");
   tip.titleColor = v("--ink", "#111827");
@@ -35,7 +36,16 @@
       legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10 } },
       tooltip: { callbacks: { label: function (c) { return c.dataset.label + ": " + brl(c.parsed.y); } } },
     },
-    scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { callback: curto } } },
+    layout: { padding: { top: 4, right: 4, bottom: 0, left: 0 } },
+    scales: {
+      x: { grid: { display: false }, border: { display: false } },
+      y: {
+        beginAtZero: true,
+        border: { display: false },
+        grid: { color: v("--line", "#e5e7eb") },
+        ticks: { callback: curto, padding: 8 },
+      },
+    },
   };
 
   var entradas = dados("fin-entradas-data");
@@ -59,8 +69,14 @@
       data: {
         labels: entradas.labels,
         datasets: [
-          { label: "Parcelas", data: entradas.parcelas, backgroundColor: v("--money", "#12a150"), borderRadius: 3 },
-          { label: "Juros", data: entradas.juros, backgroundColor: v("--ink-faint", "#6b7280"), borderRadius: 3 },
+          {
+            label: "Parcelas", data: entradas.parcelas, backgroundColor: v("--money", "#12a150"),
+            borderRadius: 5, borderSkipped: false, maxBarThickness: 28,
+          },
+          {
+            label: "Juros", data: entradas.juros, backgroundColor: v("--ink-faint", "#6b7280"),
+            borderRadius: 5, borderSkipped: false, maxBarThickness: 28,
+          },
         ],
       },
       options: opcoes,
@@ -75,8 +91,14 @@
       data: {
         labels: meses.labels,
         datasets: [
-          { label: "Previsto", data: meses.previsto, backgroundColor: v("--line-strong", "#d1d5db"), borderRadius: 3 },
-          { label: "Recebido", data: meses.recebido, backgroundColor: v("--money", "#12a150"), borderRadius: 3 },
+          {
+            label: "Previsto", data: meses.previsto, backgroundColor: v("--line-strong", "#d1d5db"),
+            borderRadius: 5, borderSkipped: false, maxBarThickness: 30,
+          },
+          {
+            label: "Recebido", data: meses.recebido, backgroundColor: v("--money", "#12a150"),
+            borderRadius: 5, borderSkipped: false, maxBarThickness: 30,
+          },
         ],
       },
       options: opcoesBase,
@@ -91,7 +113,13 @@
     opcoesProx.plugins.tooltip = { callbacks: { label: function (c) { return brl(c.parsed.y); } } };
     new Chart(elProximos, {
       type: "bar",
-      data: { labels: proximos.labels, datasets: [{ label: "A vencer", data: proximos.valores, backgroundColor: v("--ink-soft", "#4b5563"), borderRadius: 3 }] },
+      data: {
+        labels: proximos.labels,
+        datasets: [{
+          label: "A vencer", data: proximos.valores, backgroundColor: v("--accent", "#1f5fd1"),
+          borderRadius: 5, borderSkipped: false, maxBarThickness: 28,
+        }],
+      },
       options: opcoesProx,
     });
   }
