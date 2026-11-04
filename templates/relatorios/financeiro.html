@@ -29,26 +29,19 @@
       <dd class="fin-sub">parcelas e juros{% if d.var_entrou is not None %}. <span class="fin-var {% if d.var_entrou >= 0 %}fin-var--bom{% else %}fin-var--ruim{% endif %}">{% if d.var_entrou > 0 %}+{% endif %}{{ d.var_entrou|floatformat:1 }}%</span> sobre o período anterior{% endif %}</dd>
     </div>
     <div>
-      <dt>Recebido de parcelas</dt><dd class="num">R$ {{ d.recebido|floatformat:"2g" }}</dd>
-      <dd class="fin-sub">{{ d.n_recebimentos }} pagamento{{ d.n_recebimentos|pluralize }}{% if d.recebido_anterior %}. No anterior: R$ {{ d.recebido_anterior|floatformat:"2g" }}{% endif %}</dd>
-    </div>
-    <div>
-      <dt>Previsto até hoje</dt><dd class="num">R$ {{ d.previsto_ate_hoje|floatformat:"2g" }}</dd>
-      <dd class="fin-sub">No período inteiro: R$ {{ d.previsto|floatformat:"2g" }}</dd>
-    </div>
-    <div>
       <dt>Realizado</dt>
       <dd class="num{% if d.situacao_do_previsto == 'abaixo' %} critical-text{% endif %}">{% if d.taxa_realizada is not None %}{{ d.taxa_realizada|floatformat:1 }}%{% else %}—{% endif %}</dd>
       <dd class="fin-sub">{% if d.situacao_do_previsto == 'abaixo' %}Abaixo do previsto{% elif d.situacao_do_previsto == 'acima' %}Acima do previsto{% elif d.situacao_do_previsto == 'dentro' %}Dentro do previsto{% else %}Nada previsto até hoje{% endif %}</dd>
     </div>
     <div>
-      <dt>Juros recebidos</dt><dd class="num">R$ {{ d.juros_recebidos|floatformat:"2g" }}</dd>
-      <dd class="fin-sub">juros pagos no período</dd>
-    </div>
-    <div>
       <dt>Em atraso hoje</dt><dd class="num{% if d.atraso.total %} critical-text{% endif %}">R$ {{ d.atraso.total|floatformat:"2g" }}</dd>
       <dd class="fin-sub">{{ d.atraso.contratos_em_atraso }} contrato{{ d.atraso.contratos_em_atraso|pluralize }} com valor em aberto</dd>
     </div>
+  </dl>
+  <dl class="fin-metricas-secundarias">
+    <div><dt>Recebido de parcelas</dt><dd class="num">R$ {{ d.recebido|floatformat:"2g" }}</dd><dd class="fin-sub">{{ d.n_recebimentos }} pagamento{{ d.n_recebimentos|pluralize }}{% if d.recebido_anterior %}. No anterior: R$ {{ d.recebido_anterior|floatformat:"2g" }}{% endif %}</dd></div>
+    <div><dt>Previsto até hoje</dt><dd class="num">R$ {{ d.previsto_ate_hoje|floatformat:"2g" }}</dd><dd class="fin-sub">No período inteiro: R$ {{ d.previsto|floatformat:"2g" }}</dd></div>
+    <div><dt>Juros recebidos</dt><dd class="num">R$ {{ d.juros_recebidos|floatformat:"2g" }}</dd><dd class="fin-sub">juros pagos no período</dd></div>
   </dl>
 </section>
 
@@ -59,10 +52,12 @@
     <div><dt>Contratos ativos</dt><dd class="num">{{ d.carteira.ativos }}</dd><dd class="fin-sub">Valor médio: R$ {{ d.carteira.ticket_medio|floatformat:"2g" }}</dd></div>
     <div><dt>Em dia</dt><dd class="num">{{ d.carteira.em_dia }}</dd><dd class="fin-sub">Adimplência: {% if d.carteira.adimplencia is not None %}{{ d.carteira.adimplencia|floatformat:0 }}%{% else %}—{% endif %}</dd></div>
     <div><dt>Em atraso</dt><dd class="num{% if d.carteira.atrasados or d.carteira.inadimplentes %} critical-text{% endif %}">{{ d.carteira.atrasados|add:d.carteira.inadimplentes }}</dd><dd class="fin-sub">{{ d.carteira.atrasados }} atrasado{{ d.carteira.atrasados|pluralize }}, {{ d.carteira.inadimplentes }} inadimplente{{ d.carteira.inadimplentes|pluralize }}. Inadimplência: {% if d.carteira.inadimplencia is not None %}{{ d.carteira.inadimplencia|floatformat:0 }}%{% else %}—{% endif %}</dd></div>
+    <div><dt>Carteira a receber</dt><dd class="num kpi-dinheiro">R$ {{ d.carteira.a_receber_total|floatformat:"2g" }}</dd><dd class="fin-sub">R$ {{ d.carteira.a_receber_gerado|floatformat:"2g" }} já geradas e R$ {{ d.carteira.a_receber_futuro|floatformat:"2g" }} por gerar</dd></div>
+  </dl>
+  <dl class="fin-metricas-secundarias">
     <div><dt>Receita por dia</dt><dd class="num">R$ {{ d.carteira.receita_por_dia|floatformat:"2g" }}</dd><dd class="fin-sub">{{ d.carteira.n_diarios }} contrato{{ d.carteira.n_diarios|pluralize }} diário{{ d.carteira.n_diarios|pluralize }}</dd></div>
     <div><dt>Receita por semana</dt><dd class="num">R$ {{ d.carteira.receita_por_semana|floatformat:"2g" }}</dd><dd class="fin-sub">{{ d.carteira.n_semanais }} semanal{{ d.carteira.n_semanais|pluralize:",is" }} e {{ d.carteira.n_quinzenais }} quinzena{{ d.carteira.n_quinzenais|pluralize:"l,is" }}</dd></div>
     <div><dt>Previsto no mês</dt><dd class="num">R$ {{ d.carteira.previsto_do_mes|floatformat:"2g" }}</dd><dd class="fin-sub">todas as parcelas do mês cheio</dd></div>
-    <div><dt>Carteira a receber</dt><dd class="num kpi-dinheiro">R$ {{ d.carteira.a_receber_total|floatformat:"2g" }}</dd><dd class="fin-sub">R$ {{ d.carteira.a_receber_gerado|floatformat:"2g" }} já geradas e R$ {{ d.carteira.a_receber_futuro|floatformat:"2g" }} por gerar</dd></div>
   </dl>
 </section>
 
@@ -72,14 +67,14 @@
     <h2>Evolução: previsto × recebido</h2>
     <div class="fin-grafico"><canvas id="fin-meses" aria-label="Recebido e previsto por mês nos últimos doze meses"></canvas></div>
     {% if d.evolucao %}
-    <div class="tbl-wrap"><table class="fin-tabela">
+    <details class="fin-detalhes"><summary>Ver tabela mensal</summary><div class="tbl-wrap"><table class="fin-tabela">
       <thead><tr><th>Mês</th><th class="num">Previsto</th><th class="num">Recebido</th><th class="num">Realizado</th></tr></thead>
       <tbody>
       {% for m in d.evolucao %}
         <tr><td>{{ m.rotulo }}</td><td class="num">R$ {{ m.previsto|floatformat:"2g" }}</td><td class="num">R$ {{ m.recebido|floatformat:"2g" }}</td><td class="num">{% if m.taxa is not None %}{{ m.taxa|floatformat:1 }}%{% else %}—{% endif %}</td></tr>
       {% endfor %}
       </tbody>
-    </table></div>
+    </table></div></details>
     {% endif %}
   </section>
   <section>
@@ -89,15 +84,14 @@
     {% elif d.entradas.rotulos %}<p class="empty">Nenhuma entrada neste período.</p>
     {% else %}<p class="empty">Nada para mostrar: o período ainda não começou.</p>{% endif %}
 
-    <h2 class="fin-h2-espaco">Por frequência de pagamento</h2>
-    <div class="tbl-wrap"><table class="fin-tabela">
+    <details class="fin-detalhes fin-h2-espaco"><summary>Por frequência de pagamento</summary><div class="tbl-wrap"><table class="fin-tabela">
       <thead><tr><th>Frequência</th><th class="num">Contratos</th><th class="num">Previsto</th><th class="num">Recebido</th><th class="num">Parte do recebido</th></tr></thead>
       <tbody>
       {% for l in d.por_periodicidade %}
         <tr{% if l.total %} class="fin-total"{% endif %}><td>{{ l.rotulo }}</td><td class="num">{{ l.contratos }}</td><td class="num">R$ {{ l.previsto|floatformat:"2g" }}</td><td class="num">R$ {{ l.recebido|floatformat:"2g" }}</td><td class="num">{% if l.participacao is not None %}{{ l.participacao|floatformat:1 }}%{% else %}—{% endif %}</td></tr>
       {% endfor %}
       </tbody>
-    </table></div>
+    </table></div></details>
   </section>
 </div>
 

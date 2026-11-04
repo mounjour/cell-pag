@@ -18,14 +18,18 @@
 .fin-resumo { margin: 0 0 1.15rem; }
 .fin-resumo dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; margin: 0; }
 .fin-resumo dl > div { display: grid; align-content: start; gap: 0.25rem; min-width: 0; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--raise); }
-.fin-resumo--carteira dl > div:last-child { grid-column: span 2; }
-.fin-resumo--periodo dl > div:first-child { border-color: color-mix(in srgb, var(--money) 28%, var(--line)); background: var(--money-wash); }
-.fin-resumo--periodo dl > div:nth-child(4) { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: var(--accent-wash); }
-.fin-resumo--periodo dl > div:last-child { border-color: color-mix(in srgb, var(--critical) 28%, var(--line)); background: var(--critical-wash); }
-.fin-resumo--carteira dl > div:last-child { border-color: color-mix(in srgb, var(--money) 28%, var(--line)); background: var(--money-wash); }
+.fin-resumo--periodo > dl:not(.fin-metricas-secundarias) > div:first-child { border-color: color-mix(in srgb, var(--money) 28%, var(--line)); background: var(--money-wash); }
+.fin-resumo--periodo > dl:not(.fin-metricas-secundarias) > div:nth-child(2) { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: var(--accent-wash); }
+.fin-resumo--periodo > dl:not(.fin-metricas-secundarias) > div:last-child { border-color: color-mix(in srgb, var(--critical) 28%, var(--line)); background: var(--critical-wash); }
+.fin-resumo--carteira > dl:not(.fin-metricas-secundarias) > div:last-child { border-color: color-mix(in srgb, var(--money) 28%, var(--line)); background: var(--money-wash); }
+.fin-metricas-secundarias { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 0 !important; margin-top: 0.6rem !important; padding: 0.2rem 0; border-bottom: 1px solid var(--line); background: transparent !important; }
+.fin-metricas-secundarias > div { padding: 0.65rem 0.9rem !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+.fin-metricas-secundarias > div + div { border-left: 1px solid var(--line) !important; }
+.fin-metricas-secundarias dd { font-size: 1rem !important; }
+.fin-metricas-secundarias dd.fin-sub { font-size: 0.76rem !important; }
 @media (min-width: 900px) {
   .fin-resumo dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .fin-resumo--carteira dl { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .fin-resumo--carteira > dl:not(.fin-metricas-secundarias) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 .fin-resumo dt { color: var(--ink-soft); font-size: 0.82rem; font-weight: 500; }
 .fin-resumo dd { margin: 0; font-size: 1.28rem; font-weight: 650; line-height: 1.2; letter-spacing: -0.02em; overflow-wrap: anywhere; }
@@ -72,6 +76,10 @@
 .fin-h2-espaco { margin-top: var(--fin-gap); }
 .fin-tabela tr.fin-total td { font-weight: 700; border-top: 1px solid var(--line-strong); }
 .fin-ranking { padding-left: 0; }
+.fin-detalhes { margin-top: 0.85rem; }
+.fin-detalhes > summary { width: fit-content; color: var(--accent-ink); font-size: 0.84rem; font-weight: 600; cursor: pointer; }
+.fin-detalhes > summary::marker { color: var(--ink-faint); }
+.fin-detalhes[open] > summary { margin-bottom: 0.75rem; }
 
 /* Previsão: quatro números em linha */
 .fin-previsao { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; margin: 0 0 1.5rem; }
@@ -97,4 +105,7 @@
   .fin-cabecalho .report-filter { width: 100%; }
   .fin-grafico { height: 220px; }
   .fin-grade > section, .fin-painel { padding: 1rem; }
+  .fin-metricas-secundarias { grid-template-columns: 1fr !important; }
+  .fin-metricas-secundarias > div + div { border-top: 1px solid var(--line) !important; border-left: 0 !important; }
+  .fin-resumo--periodo > dl:not(.fin-metricas-secundarias) > div:last-child { grid-column: span 2; }
 }
