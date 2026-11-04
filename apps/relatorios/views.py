@@ -13,6 +13,7 @@ from openpyxl.utils import get_column_letter
 from apps.paginacao import paginar
 from apps.usuarios.mixins import DonoRequeridoMixin
 
+from .dashboard import montar_dashboard
 from .forms import PeriodoForm
 from .pdf import montar_pdf
 from .servicos import montar_hoje, montar_juros_em_aberto, montar_painel_inicial, montar_relatorio
@@ -57,11 +58,10 @@ def _contexto(request):
 
 
 class InicioView(LoginRequiredMixin, TemplateView):
-    """Tela inicial: o que pede ação hoje, a fila de cobrança, números-chave e gráficos.
+    """Tela inicial: o que pede ação hoje, a fila de cobrança e os números-chave.
 
-    Aberta a qualquer usuário autenticado (a Yslane também usa). Os dados vêm
-    de ``montar_painel_inicial``; os gráficos recebem listas já convertidas
-    para ``float``/``int`` e são injetados no HTML via ``json_script``.
+    Aberta a qualquer usuário autenticado (a Yslane também usa). Os dados vêm de ``montar_painel_inicial``;
+    os gráficos ficam na tela Financeiro (``FinanceiroView``).
     """
 
     template_name = "relatorios/inicio.html"
@@ -74,21 +74,6 @@ class InicioView(LoginRequiredMixin, TemplateView):
         ctx["painel"] = painel
         ctx["hoje"] = montar_hoje(painel["hoje"])
         ctx["whatsapp_estado"] = status_whatsapp()
-        ctx["serie_json"] = {
-            "labels": [m["rotulo"] for m in painel["serie_meses"]],
-            "recebido": [float(m["recebido"]) for m in painel["serie_meses"]],
-            "previsto": [float(m["previsto"]) for m in painel["serie_meses"]],
-        }
-        contagem = painel["status_contagem"]
-        ctx["status_json"] = {
-            "labels": ["Em dia", "Atrasado", "Inadimplente", "Quitado"],
-            "data": [
-                contagem.get("em_dia", 0),
-                contagem.get("atrasado", 0),
-                contagem.get("inadimplente", 0),
-                contagem.get("quitado", 0),
-            ],
-        }
         return ctx
 
 
@@ -97,6 +82,36 @@ class RelatorioView(DonoRequeridoMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         return {**super().get_context_data(**kwargs), **_contexto(self.request)}
+
+
+class FinanceiroView(DonoRequeridoMixin, TemplateView):
+    """Dashboard financeiro: recebido, previsto, atraso, carteira, Pix e o que vem pela frente, num só lugar.
+
+    Só o dono vê (como os Relatórios). Sem filtro, mostra o mês corrente."""
+
+    template_name = "relatorios/financeiro.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        hoje = timezone.localdate()
+        form = PeriodoForm(self.request.GET or {"periodo": "mensal", "referencia": hoje.isoformat()})
+        ctx.update(form=form, d=None, querystring="", inicio_iso="", fim_iso="")
+        if not form.is_valid():
+            return ctx
+        inicio, fim = form.cleaned_data["inicio"], form.cleaned_data["fim"]
+        d = montar_dashboard(inicio, fim, hoje)
+        ctx.update(
+            d=d, inicio_iso=inicio.isoformat(), fim_iso=fim.isoformat(),
+            querystring=urlencode({"periodo": "personalizado", "inicio": inicio.isoformat(), "fim": fim.isoformat()}),
+            entradas_json={"labels": d["entradas"]["rotulos"], "parcelas": d["entradas"]["parcelas"], "juros": d["entradas"]["juros"]},
+            meses_json={
+                "labels": [m["rotulo"] for m in d["serie_meses"]],
+                "recebido": [float(m["recebido"]) for m in d["serie_meses"]],
+                "previsto": [float(m["previsto"]) for m in d["serie_meses"]],
+            },
+            proximos_json={"labels": d["agenda"]["rotulos"], "valores": d["agenda"]["valores"]},
+        )
+        return ctx
 
 
 class JurosView(DonoRequeridoMixin, TemplateView):

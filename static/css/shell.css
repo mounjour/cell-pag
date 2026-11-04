@@ -322,13 +322,13 @@
   --ic-assistente: #2563eb; --ic-inicio: #2563eb; --ic-cobrar: #2563eb; --ic-proximas: #2563eb; --ic-bloqueio: #2563eb; --ic-pix: #2563eb; --ic-historico: #2563eb; --ic-whatsapp: #2563eb;
   --ic-clientes: #7c3aed; --ic-contratos: #7c3aed; --ic-aparelhos: #7c3aed;
   --ic-conexoes: #059669;
-  --ic-relatorios: #ea580c; --ic-juros: #ea580c;
+  --ic-relatorios: #ea580c; --ic-juros: #ea580c; --ic-financeiro: #ea580c;
 }
 :root[data-tema="escuro"] .app-shell {
   --ic-assistente: #60a5fa; --ic-inicio: #60a5fa; --ic-cobrar: #60a5fa; --ic-proximas: #60a5fa; --ic-bloqueio: #60a5fa; --ic-pix: #60a5fa; --ic-historico: #60a5fa; --ic-whatsapp: #60a5fa;
   --ic-clientes: #a78bfa; --ic-contratos: #a78bfa; --ic-aparelhos: #a78bfa;
   --ic-conexoes: #34d399;
-  --ic-relatorios: #fb923c; --ic-juros: #fb923c;
+  --ic-relatorios: #fb923c; --ic-juros: #fb923c; --ic-financeiro: #fb923c;
 }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="inicio"] { color: var(--ic-inicio); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="cobrar"] { color: var(--ic-cobrar); }
@@ -344,6 +344,7 @@
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="conexoes"] { color: var(--ic-conexoes); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="relatorios"] { color: var(--ic-relatorios); }
 :is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="juros"] { color: var(--ic-juros); }
+:is(.sidebar .nav, .tabbar, .menu-mais .menu-painel, h1) .icone[data-icone="financeiro"] { color: var(--ic-financeiro); }
 .sidebar .nav a.active .icone, .tabbar a.active .icone { stroke-width: 2.2; }
 /* Menu lateral: ícones maiores, para ocupar melhor a barra. */
 .sidebar .nav a { gap: 0.85rem; min-height: 44px; }
