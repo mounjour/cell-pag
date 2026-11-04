@@ -2,13 +2,14 @@
 {% load static %}
 {% block title %}Financeiro{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/financeiro.css' %}?v=6">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/financeiro.css' %}?v=7">{% endblock %}
 
 {% block content %}
 <div class="fin">
-<h1>{% include "_icone.html" with nome="financeiro" %}Financeiro</h1>
-
-{% include "relatorios/_seletor_periodo.html" %}
+<header class="fin-cabecalho">
+  <h1>{% include "_icone.html" with nome="financeiro" %}Financeiro</h1>
+  {% include "relatorios/_seletor_periodo.html" %}
+</header>
 
 {% if form.non_field_errors %}
   <div class="msg error report-filter-erro" role="alert">{% for erro in form.non_field_errors %}{{ erro }}{% if not forloop.last %} {% endif %}{% endfor %}</div>
@@ -20,7 +21,7 @@
 
 {# ── 1. O período: quanto entrou, quanto era para entrar e quanto está atrasado ── #}
 <h2 class="fin-resumo-titulo">Indicadores do período</h2>
-<section class="fin-resumo" aria-label="Resumo do período">
+<section class="fin-resumo fin-resumo--periodo" aria-label="Resumo do período">
   <dl>
     <div class="fin-destaque">
       <dt>Entrou no período</dt>
@@ -101,7 +102,7 @@
 </div>
 
 {# ── 4. Quem está devendo ── #}
-<section class="fin-bloco">
+<section class="fin-bloco fin-painel">
   <h2>Quem está devendo hoje</h2>
   <p class="fin-linha">
     <strong class="num critical-text">R$ {{ d.atraso.total|floatformat:"2g" }}</strong> em atraso:
@@ -183,7 +184,7 @@
 </div>
 
 {# ── 6. O que vem pela frente ── #}
-<section class="fin-bloco">
+<section class="fin-bloco fin-painel">
   <h2>Agenda e previsão, próximos {{ d.agenda.dias }} dias</h2>
   <dl class="fin-previsao">
     <div><dt>Próximos 7 dias</dt><dd class="num">R$ {{ d.agenda.total_7|floatformat:"2g" }}</dd></div>
@@ -213,7 +214,7 @@
 </section>
 
 {# ── 7. Alertas e pendências ── #}
-<section class="fin-bloco">
+<section class="fin-bloco fin-painel">
   <h2>Alertas e pendências</h2>
   <div class="tbl-wrap"><table class="fin-tabela fin-alertas">
     <thead><tr><th>Indicador</th><th class="num">Valor</th><th>Situação</th></tr></thead>

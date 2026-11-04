@@ -1,49 +1,57 @@
-/* Dashboard financeiro. Tela de leitura de números: sem cartões, só títulos, filetes e tabelas.
-   Verde = dinheiro entrando, vermelho = problema; o resto fica em tinta neutra. */
-.fin { --fin-gap: 2.25rem; }
-.fin h1 { margin-bottom: 0.4rem; }
-.fin h2 { margin: 0 0 0.75rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--ink); color: var(--ink); font-size: 1.05rem; letter-spacing: 0; text-transform: none; }
-.fin-resumo-titulo { margin-top: 1.5rem; }
+/* Dashboard financeiro. A leitura vai do resultado aos detalhes e às ações. */
+.fin { --fin-gap: 1.5rem; }
+.fin-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.6rem; }
+.fin-cabecalho h1 { margin: 0; }
+.fin-cabecalho .report-filter { display: block; width: auto; margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.fin h2 { margin: 0 0 1rem; padding: 0; border: 0; color: var(--ink); font-size: 1.05rem; letter-spacing: -0.01em; text-transform: none; }
+.fin h2::after { content: ""; display: block; width: 2rem; height: 0.18rem; margin-top: 0.65rem; border-radius: 999px; background: var(--accent); }
+.fin-resumo-titulo { margin-top: 1.75rem; color: var(--ink-soft) !important; font-size: 0.78rem !important; font-weight: 700; letter-spacing: 0.08em !important; text-transform: uppercase !important; }
+.fin-resumo-titulo::after { display: none; }
 .fin-periodo + .fin-resumo-titulo { margin-top: 0; }
-.fin h3 { margin: 0 0 0.5rem; color: var(--ink-soft); font-size: 0.9rem; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.fin h3 { margin: 0 0 0.7rem; color: var(--ink-soft); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
 .fin-sub { color: var(--ink-faint); font-size: 0.82rem; font-weight: 400; }
-.fin-periodo { margin: 0.75rem 0 1.5rem; color: var(--ink-soft); font-size: 0.9rem; }
+.fin-periodo { margin: 0 0 1.4rem; color: var(--ink-soft); font-size: 0.88rem; }
 .fin-linha { margin: 0 0 1rem; color: var(--ink-soft); }
 .fin-linha strong { color: var(--ink); font-size: 1.15rem; }
 
-/* Resumo: números numa régua; os filetes vêm do vão de 1px entre as células (valem quando a linha quebra) */
-.fin-resumo { margin: 0 0 1.25rem; border-block: 1px solid var(--line); }
-.fin-resumo + .fin-resumo { margin-top: -0.25rem; }
-.fin-resumo dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; background: var(--line); }
-.fin-resumo dl > div { display: grid; align-content: start; gap: 0.2rem; padding: 1rem 1.1rem; background: var(--paper); min-width: 0; }
+/* Indicadores. Cada um é autocontido para escanear os valores sem seguir filetes. */
+.fin-resumo { margin: 0 0 1.15rem; }
+.fin-resumo dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; margin: 0; }
+.fin-resumo dl > div { display: grid; align-content: start; gap: 0.25rem; min-width: 0; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--raise); }
 .fin-resumo--carteira dl > div:last-child { grid-column: span 2; }
+.fin-resumo--periodo dl > div:first-child { border-color: color-mix(in srgb, var(--money) 28%, var(--line)); background: var(--money-wash); }
+.fin-resumo--periodo dl > div:nth-child(4) { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: var(--accent-wash); }
+.fin-resumo--periodo dl > div:last-child { border-color: color-mix(in srgb, var(--critical) 28%, var(--line)); background: var(--critical-wash); }
+.fin-resumo--carteira dl > div:last-child { border-color: color-mix(in srgb, var(--money) 28%, var(--line)); background: var(--money-wash); }
 @media (min-width: 900px) {
   .fin-resumo dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .fin-resumo--carteira dl { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 .fin-resumo dt { color: var(--ink-soft); font-size: 0.82rem; font-weight: 500; }
-.fin-resumo dd { margin: 0; font-size: 1.2rem; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
-.fin-destaque dd.num { font-size: 1.7rem; letter-spacing: -0.01em; }
+.fin-resumo dd { margin: 0; font-size: 1.28rem; font-weight: 650; line-height: 1.2; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.fin-destaque dd.num { font-size: 1.8rem; }
 .fin-resumo dd.fin-sub { font-size: 0.8rem; font-weight: 400; }
-.fin-resumo { margin-bottom: var(--fin-gap); }
-.fin-resumo:has(+ .fin-resumo) { margin-bottom: 0; }
 .fin-var { font-weight: 600; font-variant-numeric: tabular-nums; }
 .fin-var--bom { color: var(--money); }
 .fin-var--ruim { color: var(--critical-ink); }
 
-/* Grades de seções lado a lado */
-.fin-grade { display: grid; gap: var(--fin-gap) 3rem; margin: 0 0 var(--fin-gap); }
+/* Blocos de análise */
+.fin-grade { display: grid; gap: var(--fin-gap); margin: 0 0 var(--fin-gap); }
 @media (min-width: 1000px) { .fin-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1000px) { .fin-grade--atraso { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); } }
 .fin-grade > * { min-width: 0; }
+.fin-grade > section, .fin-painel { padding: 1.3rem; border: 1px solid var(--line); border-radius: calc(var(--radius) + 2px); background: var(--surface); box-shadow: var(--raise); }
 .fin-bloco { margin: 0 0 var(--fin-gap); }
-.fin-grafico { position: relative; width: 100%; height: 280px; }
-.fin-grafico--baixo { height: 200px; }
+.fin-grafico { position: relative; width: 100%; height: 250px; margin: 0 0 0.75rem; }
+.fin-grafico--baixo { height: 190px; }
 
 /* Tabelas e listas */
 .fin-tabela { width: 100%; }
-.fin-tabela td, .fin-tabela th { padding: 0.55rem 0.5rem; }
+.fin-tabela td, .fin-tabela th { padding: 0.5rem 0.4rem; }
 .fin-tabela .fin-sub { display: block; }
+.fin .tbl-wrap { margin-bottom: 0; box-shadow: none; }
+.fin .tbl-wrap:hover { box-shadow: none; }
+.fin .tbl-wrap th { background: var(--surface-2); }
 .fin-lista { list-style: none; margin: 0; padding: 0; }
 .fin-lista li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.35rem 1rem; align-items: baseline; padding: 0.7rem 0; border-bottom: 1px solid var(--line); }
 .fin-lista .fin-barra { grid-column: 1 / -1; }
@@ -66,11 +74,12 @@
 .fin-ranking { padding-left: 0; }
 
 /* Previsão: quatro números em linha */
-.fin-previsao { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0 0 1.5rem; background: var(--line); border-block: 1px solid var(--line); }
+.fin-previsao { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; margin: 0 0 1.5rem; }
 @media (min-width: 900px) { .fin-previsao { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.fin-previsao > div { display: grid; align-content: start; gap: 0.2rem; padding: 0.9rem 1.1rem; background: var(--paper); }
+.fin-previsao > div { display: grid; align-content: start; gap: 0.25rem; min-width: 0; padding: 0.95rem 1rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
+.fin-previsao .fin-destaque { border-color: color-mix(in srgb, var(--money) 28%, var(--line)); background: var(--money-wash); }
 .fin-previsao dt { color: var(--ink-soft); font-size: 0.82rem; font-weight: 500; }
-.fin-previsao dd { margin: 0; font-size: 1.2rem; font-weight: 600; }
+.fin-previsao dd { margin: 0; font-size: 1.25rem; font-weight: 650; letter-spacing: -0.02em; }
 .fin-previsao dd.fin-sub { font-size: 0.8rem; font-weight: 400; }
 .fin-previsao .fin-destaque dd.num { font-size: 1.4rem; }
 
@@ -79,3 +88,13 @@
 .fin-nivel--critico { background: var(--critical-wash); color: var(--critical-ink); }
 .fin-nivel--atencao { background: var(--amber-wash); color: var(--amber-ink); }
 .fin-nivel--ok { background: var(--ok-wash); color: var(--ok-ink); }
+
+/* Estado vazio não concorre visualmente com gráficos e tabelas que têm dados. */
+.fin .empty { min-height: 7rem; padding: 1.25rem; }
+
+@media (max-width: 639px) {
+  .fin-cabecalho { display: grid; align-items: start; }
+  .fin-cabecalho .report-filter { width: 100%; }
+  .fin-grafico { height: 220px; }
+  .fin-grade > section, .fin-painel { padding: 1rem; }
+}
