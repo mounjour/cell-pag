@@ -1,7 +1,7 @@
 # Desenvolvimento — instalar com: pip install -r requirements-dev.txt
 -r requirements.txt
 
-pytest==9.1.1
+pytest==9.2.0
 pytest-django==4.14.0
-model-bakery==1.24.1
+model-bakery==1.24.2
 pytest-xdist==3.8.0
