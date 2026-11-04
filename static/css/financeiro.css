@@ -1,0 +1,81 @@
+/* Dashboard financeiro. Tela de leitura de números: sem cartões, só títulos, filetes e tabelas.
+   Verde = dinheiro entrando, vermelho = problema; o resto fica em tinta neutra. */
+.fin { --fin-gap: 2.25rem; }
+.fin h1 { margin-bottom: 0.4rem; }
+.fin h2 { margin: 0 0 0.75rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--ink); color: var(--ink); font-size: 1.05rem; letter-spacing: 0; text-transform: none; }
+.fin-resumo-titulo { margin-top: 1.5rem; }
+.fin-periodo + .fin-resumo-titulo { margin-top: 0; }
+.fin h3 { margin: 0 0 0.5rem; color: var(--ink-soft); font-size: 0.9rem; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.fin-sub { color: var(--ink-faint); font-size: 0.82rem; font-weight: 400; }
+.fin-periodo { margin: 0.75rem 0 1.5rem; color: var(--ink-soft); font-size: 0.9rem; }
+.fin-linha { margin: 0 0 1rem; color: var(--ink-soft); }
+.fin-linha strong { color: var(--ink); font-size: 1.15rem; }
+
+/* Resumo: números numa régua; os filetes vêm do vão de 1px entre as células (valem quando a linha quebra) */
+.fin-resumo { margin: 0 0 1.25rem; border-block: 1px solid var(--line); }
+.fin-resumo + .fin-resumo { margin-top: -0.25rem; }
+.fin-resumo dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; background: var(--line); }
+.fin-resumo dl > div { display: grid; align-content: start; gap: 0.2rem; padding: 1rem 1.1rem; background: var(--paper); min-width: 0; }
+.fin-resumo--carteira dl > div:last-child { grid-column: span 2; }
+@media (min-width: 900px) {
+  .fin-resumo dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fin-resumo--carteira dl { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.fin-resumo dt { color: var(--ink-soft); font-size: 0.82rem; font-weight: 500; }
+.fin-resumo dd { margin: 0; font-size: 1.2rem; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.fin-destaque dd.num { font-size: 1.7rem; letter-spacing: -0.01em; }
+.fin-resumo dd.fin-sub { font-size: 0.8rem; font-weight: 400; }
+.fin-resumo { margin-bottom: var(--fin-gap); }
+.fin-resumo:has(+ .fin-resumo) { margin-bottom: 0; }
+.fin-var { font-weight: 600; font-variant-numeric: tabular-nums; }
+.fin-var--bom { color: var(--money); }
+.fin-var--ruim { color: var(--critical-ink); }
+
+/* Grades de seções lado a lado */
+.fin-grade { display: grid; gap: var(--fin-gap) 3rem; margin: 0 0 var(--fin-gap); }
+@media (min-width: 1000px) { .fin-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .fin-grade--atraso { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); } }
+.fin-grade > * { min-width: 0; }
+.fin-bloco { margin: 0 0 var(--fin-gap); }
+.fin-grafico { position: relative; width: 100%; height: 280px; }
+.fin-grafico--baixo { height: 200px; }
+
+/* Tabelas e listas */
+.fin-tabela { width: 100%; }
+.fin-tabela td, .fin-tabela th { padding: 0.55rem 0.5rem; }
+.fin-tabela .fin-sub { display: block; }
+.fin-lista { list-style: none; margin: 0; padding: 0; }
+.fin-lista li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.35rem 1rem; align-items: baseline; padding: 0.7rem 0; border-bottom: 1px solid var(--line); }
+.fin-lista .fin-barra { grid-column: 1 / -1; }
+.fin-pares { margin: 0 0 1.75rem; }
+.fin-pares > div { display: flex; justify-content: space-between; gap: 1.25rem; align-items: baseline; padding: 0.65rem 0; border-bottom: 1px solid var(--line); }
+.fin-pares dt { color: var(--ink-soft); font-size: 0.9rem; }
+.fin-pares dd { margin: 0; font-weight: 600; text-align: right; }
+.fin-pares dd .fin-sub { display: block; font-weight: 400; }
+
+/* Barrinha de proporção (valor em relação ao maior da lista) */
+.fin-barra { display: block; height: 0.35rem; margin-top: 0.35rem; overflow: hidden; border-radius: 999px; background: var(--surface-2); }
+.fin-barra > span { display: block; height: 100%; border-radius: 999px; background: var(--ink-faint); }
+.fin-lista .fin-barra > span { background: var(--money); }
+.fin-tabela .fin-barra > span { background: var(--critical); }
+
+.fin ::selection { background: color-mix(in srgb, var(--ink) 14%, transparent); }
+
+.fin-h2-espaco { margin-top: var(--fin-gap); }
+.fin-tabela tr.fin-total td { font-weight: 700; border-top: 1px solid var(--line-strong); }
+.fin-ranking { padding-left: 0; }
+
+/* Previsão: quatro números em linha */
+.fin-previsao { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0 0 1.5rem; background: var(--line); border-block: 1px solid var(--line); }
+@media (min-width: 900px) { .fin-previsao { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.fin-previsao > div { display: grid; align-content: start; gap: 0.2rem; padding: 0.9rem 1.1rem; background: var(--paper); }
+.fin-previsao dt { color: var(--ink-soft); font-size: 0.82rem; font-weight: 500; }
+.fin-previsao dd { margin: 0; font-size: 1.2rem; font-weight: 600; }
+.fin-previsao dd.fin-sub { font-size: 0.8rem; font-weight: 400; }
+.fin-previsao .fin-destaque dd.num { font-size: 1.4rem; }
+
+/* Alertas: a gravidade aparece em texto, não só em cor */
+.fin-nivel { display: inline-block; padding: 0.15em 0.65em; border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 600; background: var(--surface-2); color: var(--ink-soft); }
+.fin-nivel--critico { background: var(--critical-wash); color: var(--critical-ink); }
+.fin-nivel--atencao { background: var(--amber-wash); color: var(--amber-ink); }
+.fin-nivel--ok { background: var(--ok-wash); color: var(--ok-ink); }

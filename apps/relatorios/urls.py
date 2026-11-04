@@ -6,6 +6,7 @@ app_name = "relatorios"
 
 urlpatterns = [
     path("inicio/", views.InicioView.as_view(), name="inicio"),
+    path("financeiro/", views.FinanceiroView.as_view(), name="financeiro"),
     path("", views.RelatorioView.as_view(), name="painel"),
     path("juros/", views.JurosView.as_view(), name="juros"),
     path("excel/", views.RelatorioExcelView.as_view(), name="excel"),

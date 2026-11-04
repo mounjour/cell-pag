@@ -85,7 +85,8 @@ def test_inicio_mostra_o_que_pede_acao_antes_dos_numeros(auth_client, monkeypatc
     _contrato_atrasado("Fila Visivel", 3)
     html = auth_client.get(reverse("relatorios:inicio")).content.decode()
     assert "Quem cobrar agora" in html and "Fila Visivel" in html
-    assert html.index("hoje-faixa") < html.index("fila-acao") < html.index("kpi-faixa") < html.index("graficos-recolhiveis")
+    assert html.index("hoje-faixa") < html.index("fila-acao") < html.index("kpi-faixa")
+    assert "canvas" not in html and "graficos-recolhiveis" not in html  # os gráficos moram na tela Financeiro
     assert "data-whatsapp-tile" in html
 
 

@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Financeiro{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/financeiro.css' %}?v=6">{% endblock %}
+
+{% block content %}
+<div class="fin">
+<h1>{% include "_icone.html" with nome="financeiro" %}Financeiro</h1>
+
+{% include "relatorios/_seletor_periodo.html" %}
+
+{% if form.non_field_errors %}
+  <div class="msg error report-filter-erro" role="alert">{% for erro in form.non_field_errors %}{{ erro }}{% if not forloop.last %} {% endif %}{% endfor %}</div>
+{% endif %}
+
+{% if d %}
+<p class="fin-periodo">{{ d.inicio|date:"d/m/Y" }} a {{ d.fim|date:"d/m/Y" }}, comparado com {{ d.inicio_anterior|date:"d/m" }} a {{ d.fim_anterior|date:"d/m/Y" }}.
+  <a href="{% url 'relatorios:painel' %}?{{ querystring }}">Ver relatório detalhado</a></p>
+
+{# ── 1. O período: quanto entrou, quanto era para entrar e quanto está atrasado ── #}
+<h2 class="fin-resumo-titulo">Indicadores do período</h2>
+<section class="fin-resumo" aria-label="Resumo do período">
+  <dl>
+    <div class="fin-destaque">
+      <dt>Entrou no período</dt>
+      <dd class="num kpi-dinheiro">R$ {{ d.entrou|floatformat:"2g" }}</dd>
+      <dd class="fin-sub">parcelas e juros{% if d.var_entrou is not None %}. <span class="fin-var {% if d.var_entrou >= 0 %}fin-var--bom{% else %}fin-var--ruim{% endif %}">{% if d.var_entrou > 0 %}+{% endif %}{{ d.var_entrou|floatformat:1 }}%</span> sobre o período anterior{% endif %}</dd>
+    </div>
+    <div>
+      <dt>Recebido de parcelas</dt><dd class="num">R$ {{ d.recebido|floatformat:"2g" }}</dd>
+      <dd class="fin-sub">{{ d.n_recebimentos }} pagamento{{ d.n_recebimentos|pluralize }}{% if d.recebido_anterior %}. No anterior: R$ {{ d.recebido_anterior|floatformat:"2g" }}{% endif %}</dd>
+    </div>
+    <div>
+      <dt>Previsto até hoje</dt><dd class="num">R$ {{ d.previsto_ate_hoje|floatformat:"2g" }}</dd>
+      <dd class="fin-sub">No período inteiro: R$ {{ d.previsto|floatformat:"2g" }}</dd>
+    </div>
+    <div>
+      <dt>Realizado</dt>
+      <dd class="num{% if d.situacao_do_previsto == 'abaixo' %} critical-text{% endif %}">{% if d.taxa_realizada is not None %}{{ d.taxa_realizada|floatformat:1 }}%{% else %}—{% endif %}</dd>
+      <dd class="fin-sub">{% if d.situacao_do_previsto == 'abaixo' %}Abaixo do previsto{% elif d.situacao_do_previsto == 'acima' %}Acima do previsto{% elif d.situacao_do_previsto == 'dentro' %}Dentro do previsto{% else %}Nada previsto até hoje{% endif %}</dd>
+    </div>
+    <div>
+      <dt>Juros recebidos</dt><dd class="num">R$ {{ d.juros_recebidos|floatformat:"2g" }}</dd>
+      <dd class="fin-sub">juros pagos no período</dd>
+    </div>
+    <div>
+      <dt>Em atraso hoje</dt><dd class="num{% if d.atraso.total %} critical-text{% endif %}">R$ {{ d.atraso.total|floatformat:"2g" }}</dd>
+      <dd class="fin-sub">{{ d.atraso.contratos_em_atraso }} contrato{{ d.atraso.contratos_em_atraso|pluralize }} com valor em aberto</dd>
+    </div>
+  </dl>
+</section>
+
+{# ── 2. A carteira de contratos ── #}
+<h2 class="fin-resumo-titulo">Carteira</h2>
+<section class="fin-resumo fin-resumo--carteira" aria-label="Carteira de contratos">
+  <dl>
+    <div><dt>Contratos ativos</dt><dd class="num">{{ d.carteira.ativos }}</dd><dd class="fin-sub">Valor médio: R$ {{ d.carteira.ticket_medio|floatformat:"2g" }}</dd></div>
+    <div><dt>Em dia</dt><dd class="num">{{ d.carteira.em_dia }}</dd><dd class="fin-sub">Adimplência: {% if d.carteira.adimplencia is not None %}{{ d.carteira.adimplencia|floatformat:0 }}%{% else %}—{% endif %}</dd></div>
+    <div><dt>Em atraso</dt><dd class="num{% if d.carteira.atrasados or d.carteira.inadimplentes %} critical-text{% endif %}">{{ d.carteira.atrasados|add:d.carteira.inadimplentes }}</dd><dd class="fin-sub">{{ d.carteira.atrasados }} atrasado{{ d.carteira.atrasados|pluralize }}, {{ d.carteira.inadimplentes }} inadimplente{{ d.carteira.inadimplentes|pluralize }}. Inadimplência: {% if d.carteira.inadimplencia is not None %}{{ d.carteira.inadimplencia|floatformat:0 }}%{% else %}—{% endif %}</dd></div>
+    <div><dt>Receita por dia</dt><dd class="num">R$ {{ d.carteira.receita_por_dia|floatformat:"2g" }}</dd><dd class="fin-sub">{{ d.carteira.n_diarios }} contrato{{ d.carteira.n_diarios|pluralize }} diário{{ d.carteira.n_diarios|pluralize }}</dd></div>
+    <div><dt>Receita por semana</dt><dd class="num">R$ {{ d.carteira.receita_por_semana|floatformat:"2g" }}</dd><dd class="fin-sub">{{ d.carteira.n_semanais }} semanal{{ d.carteira.n_semanais|pluralize:",is" }} e {{ d.carteira.n_quinzenais }} quinzena{{ d.carteira.n_quinzenais|pluralize:"l,is" }}</dd></div>
+    <div><dt>Previsto no mês</dt><dd class="num">R$ {{ d.carteira.previsto_do_mes|floatformat:"2g" }}</dd><dd class="fin-sub">todas as parcelas do mês cheio</dd></div>
+    <div><dt>Carteira a receber</dt><dd class="num kpi-dinheiro">R$ {{ d.carteira.a_receber_total|floatformat:"2g" }}</dd><dd class="fin-sub">R$ {{ d.carteira.a_receber_gerado|floatformat:"2g" }} já geradas e R$ {{ d.carteira.a_receber_futuro|floatformat:"2g" }} por gerar</dd></div>
+  </dl>
+</section>
+
+{# ── 3. Evolução e entradas ── #}
+<div class="fin-grade">
+  <section>
+    <h2>Evolução: previsto × recebido</h2>
+    <div class="fin-grafico"><canvas id="fin-meses" aria-label="Recebido e previsto por mês nos últimos doze meses"></canvas></div>
+    {% if d.evolucao %}
+    <div class="tbl-wrap"><table class="fin-tabela">
+      <thead><tr><th>Mês</th><th class="num">Previsto</th><th class="num">Recebido</th><th class="num">Realizado</th></tr></thead>
+      <tbody>
+      {% for m in d.evolucao %}
+        <tr><td>{{ m.rotulo }}</td><td class="num">R$ {{ m.previsto|floatformat:"2g" }}</td><td class="num">R$ {{ m.recebido|floatformat:"2g" }}</td><td class="num">{% if m.taxa is not None %}{{ m.taxa|floatformat:1 }}%{% else %}—{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% endif %}
+  </section>
+  <section>
+    <h2>Entradas {% if d.entradas.por_mes %}por mês{% else %}por dia{% endif %}</h2>
+    {% if d.entradas.tem %}
+      <div class="fin-grafico"><canvas id="fin-entradas" aria-label="Valor que entrou por {% if d.entradas.por_mes %}mês{% else %}dia{% endif %} no período, parcelas e juros"></canvas></div>
+    {% elif d.entradas.rotulos %}<p class="empty">Nenhuma entrada neste período.</p>
+    {% else %}<p class="empty">Nada para mostrar: o período ainda não começou.</p>{% endif %}
+
+    <h2 class="fin-h2-espaco">Por frequência de pagamento</h2>
+    <div class="tbl-wrap"><table class="fin-tabela">
+      <thead><tr><th>Frequência</th><th class="num">Contratos</th><th class="num">Previsto</th><th class="num">Recebido</th><th class="num">Parte do recebido</th></tr></thead>
+      <tbody>
+      {% for l in d.por_periodicidade %}
+        <tr{% if l.total %} class="fin-total"{% endif %}><td>{{ l.rotulo }}</td><td class="num">{{ l.contratos }}</td><td class="num">R$ {{ l.previsto|floatformat:"2g" }}</td><td class="num">R$ {{ l.recebido|floatformat:"2g" }}</td><td class="num">{% if l.participacao is not None %}{{ l.participacao|floatformat:1 }}%{% else %}—{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+</div>
+
+{# ── 4. Quem está devendo ── #}
+<section class="fin-bloco">
+  <h2>Quem está devendo hoje</h2>
+  <p class="fin-linha">
+    <strong class="num critical-text">R$ {{ d.atraso.total|floatformat:"2g" }}</strong> em atraso:
+    R$ {{ d.atraso.saldo|floatformat:"2g" }} de parcelas e R$ {{ d.atraso.juros|floatformat:"2g" }} de juros,
+    em {{ d.atraso.parcelas }} parcela{{ d.atraso.parcelas|pluralize }} de {{ d.atraso.contratos_em_atraso }} contrato{{ d.atraso.contratos_em_atraso|pluralize }}.
+    <a href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar hoje</a> e <a href="{% url 'relatorios:juros' %}">Juros</a>
+  </p>
+  <div class="fin-grade fin-grade--atraso">
+    <div>
+      <h3>Por faixa de atraso</h3>
+      <div class="tbl-wrap"><table class="fin-tabela">
+        <thead><tr><th>Faixa</th><th class="num">Parcelas</th><th class="num">Valor</th><th class="num">Juros</th><th class="num">Total</th></tr></thead>
+        <tbody>
+        {% for f in d.atraso.faixas %}
+          <tr>
+            <td>{{ f.rotulo }}<span class="fin-barra" aria-hidden="true"><span style="width: {{ f.barra }}%"></span></span></td>
+            <td class="num">{{ f.parcelas }}</td>
+            <td class="num">R$ {{ f.saldo|floatformat:"2g" }}</td>
+            <td class="num">R$ {{ f.juros|floatformat:"2g" }}</td>
+            <td class="num"><strong>R$ {{ f.total|floatformat:"2g" }}</strong></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+    <div>
+      <h3>Maiores valores em atraso</h3>
+      {% if d.atraso.devedores %}
+      <div class="tbl-wrap"><table class="fin-tabela">
+        <thead><tr><th>Cliente</th><th class="num">Dias</th><th class="num">Parcelas</th><th class="num">Total</th></tr></thead>
+        <tbody>
+        {% for x in d.atraso.devedores %}
+          <tr>
+            <td><a href="{% url 'clientes:detalhe' x.contrato.cliente.pk %}">{{ x.contrato.cliente.nome }}</a> <span class="fin-sub">{{ x.contrato.apelido }}</span></td>
+            <td class="num">{{ x.dias }}</td>
+            <td class="num">{{ x.parcelas }}</td>
+            <td class="num"><strong>R$ {{ x.total|floatformat:"2g" }}</strong></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}<p class="empty">Nenhum contrato em atraso.</p>{% endif %}
+    </div>
+  </div>
+</section>
+
+{# ── 5. Quem mais pagou e como o dinheiro entrou ── #}
+<div class="fin-grade">
+  <section>
+    <h2>Quem mais pagou no período</h2>
+    {% if d.ranking %}
+      <ol class="fin-lista fin-ranking">
+        {% for r in d.ranking %}
+          <li><span><a href="{% url 'clientes:detalhe' r.cliente_id %}">{{ r.nome }}</a> <span class="fin-sub">{{ r.n }} pagamento{{ r.n|pluralize }}</span></span><strong class="num">R$ {{ r.total|floatformat:"2g" }}</strong>
+            <span class="fin-barra" aria-hidden="true"><span style="width: {{ r.barra }}%"></span></span></li>
+        {% endfor %}
+      </ol>
+    {% else %}<p class="empty">Nenhum recebimento no período.</p>{% endif %}
+  </section>
+  <section>
+    <h2>Por forma de pagamento</h2>
+    {% if d.por_forma %}
+      <ul class="fin-lista">
+        {% for f in d.por_forma %}
+          <li><span>{{ f.forma_label }} <span class="fin-sub">{{ f.quantidade }} pagamento{{ f.quantidade|pluralize }}</span></span><strong class="num">R$ {{ f.total|floatformat:"2g" }}</strong>
+            <span class="fin-barra" aria-hidden="true"><span style="width: {{ f.parte }}%"></span></span></li>
+        {% endfor %}
+      </ul>
+    {% else %}<p class="empty">Nenhum recebimento no período.</p>{% endif %}
+
+    <h2 class="fin-h2-espaco">De onde veio o recebido</h2>
+    <ul class="fin-lista">
+      {% for o in d.origem %}
+        <li><span>{{ o.rotulo }}</span><strong class="num">R$ {{ o.valor|floatformat:"2g" }}</strong>
+          <span class="fin-barra" aria-hidden="true"><span style="width: {{ o.barra }}%"></span></span></li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+{# ── 6. O que vem pela frente ── #}
+<section class="fin-bloco">
+  <h2>Agenda e previsão, próximos {{ d.agenda.dias }} dias</h2>
+  <dl class="fin-previsao">
+    <div><dt>Próximos 7 dias</dt><dd class="num">R$ {{ d.agenda.total_7|floatformat:"2g" }}</dd></div>
+    <div><dt>Próximos {{ d.agenda.dias }} dias</dt><dd class="num">R$ {{ d.agenda.total|floatformat:"2g" }}</dd><dd class="fin-sub">{{ d.agenda.quantidade }} cobrança{{ d.agenda.quantidade|pluralize }}</dd></div>
+    <div><dt>Em atraso, a recuperar</dt><dd class="num{% if d.atraso.total %} critical-text{% endif %}">R$ {{ d.atraso.total|floatformat:"2g" }}</dd></div>
+    <div class="fin-destaque"><dt>Potencial total em {{ d.agenda.dias }} dias</dt><dd class="num kpi-dinheiro">R$ {{ d.potencial_30_dias|floatformat:"2g" }}</dd><dd class="fin-sub">a vencer mais o atraso</dd></div>
+  </dl>
+  <div class="fin-grade">
+    <div>
+      {% if d.agenda.rotulos %}<div class="fin-grafico fin-grafico--baixo"><canvas id="fin-proximos" aria-label="Valor a vencer por dia nos próximos dias"></canvas></div>
+      {% else %}<p class="empty">Nada a vencer nos próximos dias.</p>{% endif %}
+    </div>
+    <div>
+      {% if d.agenda.proximas %}
+      <div class="tbl-wrap"><table class="fin-tabela">
+        <thead><tr><th>Data</th><th>Cliente</th><th>Frequência</th><th class="num">Valor</th></tr></thead>
+        <tbody>
+        {% for p in d.agenda.proximas %}
+          <tr><td class="num">{{ p.data|date:"d/m" }}</td><td><a href="{% url 'clientes:detalhe' p.cliente.pk %}">{{ p.cliente.nome }}</a></td><td>{{ p.estrutura }}</td><td class="num">R$ {{ p.valor|floatformat:"2g" }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% if d.agenda.mais %}<p class="fin-sub"><a href="{% url 'pagamentos:proximas_cobrancas' %}">Mais {{ d.agenda.mais }} em Próximas cobranças</a></p>{% endif %}
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{# ── 7. Alertas e pendências ── #}
+<section class="fin-bloco">
+  <h2>Alertas e pendências</h2>
+  <div class="tbl-wrap"><table class="fin-tabela fin-alertas">
+    <thead><tr><th>Indicador</th><th class="num">Valor</th><th>Situação</th></tr></thead>
+    <tbody>
+    {% for a in d.alertas %}
+      <tr>
+        <td>{% if a.link %}<a href="{% url a.link %}">{{ a.indicador }}</a>{% else %}{{ a.indicador }}{% endif %}</td>
+        <td class="num">{% if a.dinheiro %}R$ {{ a.valor|floatformat:"2g" }}{% else %}{{ a.valor }}{% endif %}</td>
+        <td><span class="fin-nivel fin-nivel--{{ a.nivel }}">{% if a.nivel == 'critico' %}Crítico{% elif a.nivel == 'atencao' %}Atenção{% elif a.nivel == 'info' %}Informativo{% else %}Em ordem{% endif %}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+{# ── 8. Resto do período, Pix e aparelhos ── #}
+<div class="fin-grade">
+  <section>
+    <h2>No período</h2>
+    <dl class="fin-pares">
+      <div><dt>Contratos novos</dt><dd class="num">{{ d.novos_contratos.n }}</dd></div>
+      <div><dt>Valor dos contratos novos</dt><dd class="num">R$ {{ d.novos_contratos.valor|floatformat:"2g" }}</dd></div>
+      <div><dt>Clientes novos</dt><dd class="num">{{ d.novos_clientes }}</dd></div>
+      <div><dt>Contratos quitados</dt><dd class="num">{{ d.quitados }}</dd></div>
+      <div><dt>Juros em aberto hoje</dt><dd class="num">R$ {{ d.carteira.juros_em_aberto|floatformat:"2g" }}</dd></div>
+    </dl>
+  </section>
+  <section>
+    <h2>Pix e extrato</h2>
+    <dl class="fin-pares">
+      <div><dt>Entrou no extrato e ainda sem pagamento registrado</dt><dd class="num{% if d.extrato_sem_baixa_n %} critical-text{% endif %}">R$ {{ d.extrato_sem_baixa_valor|floatformat:"2g" }}<span class="fin-sub">{{ d.extrato_sem_baixa_n }} entrada{{ d.extrato_sem_baixa_n|pluralize }}</span></dd></div>
+      <div><dt>Pix aguardando pagamento</dt><dd class="num">R$ {{ d.pix_aguardando_valor|floatformat:"2g" }}<span class="fin-sub">{{ d.pix_aguardando_n }} Pix</span></dd></div>
+    </dl>
+    <h2 class="fin-h2-espaco">Aparelhos</h2>
+    <dl class="fin-pares">
+      <div><dt>Comprados no período (custo)</dt><dd class="num">R$ {{ d.aparelhos.comprados_valor|floatformat:"2g" }}<span class="fin-sub">{{ d.aparelhos.comprados_n }} aparelho{{ d.aparelhos.comprados_n|pluralize }}</span></dd></div>
+      <div><dt>Parados no estoque (custo)</dt><dd class="num">R$ {{ d.aparelhos.estoque_valor|floatformat:"2g" }}<span class="fin-sub">{{ d.aparelhos.estoque_n }} aparelho{{ d.aparelhos.estoque_n|pluralize }}</span></dd></div>
+    </dl>
+    <p class="fin-sub"><a href="{% url 'pagamentos:recebidos' %}">Registrar o que entrou no extrato</a> e <a href="{% url 'pagamentos:pix_painel' %}">Painel Pix</a></p>
+  </section>
+</div>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/relatorio_calendario.js' %}" defer></script>
+  {% if d %}
+  {{ entradas_json|json_script:"fin-entradas-data" }}
+  {{ meses_json|json_script:"fin-meses-data" }}
+  {{ proximos_json|json_script:"fin-proximos-data" }}
+  <script src="{% static 'js/chart.umd.min.js' %}"></script>
+  <script src="{% static 'js/financeiro.js' %}?v=2"></script>
+  {% endif %}
+{% endblock %}
