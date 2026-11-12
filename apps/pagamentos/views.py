@@ -912,6 +912,32 @@ class MensagensView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+class GruposWhatsAppView(LoginRequiredMixin, TemplateView):
+    """O que a Evolution diz sobre os grupos do número conectado (sem cache) e quais clientes já usam cada um."""
+
+    template_name = "pagamentos/grupos_whatsapp.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.clientes.models import Cliente
+
+        from .whatsapp import WhatsAppErro, consultar_grupos
+
+        ctx = super().get_context_data(**kwargs)
+        try:
+            ctx["resultado"] = consultar_grupos()
+            ctx["erro"] = ""
+        except WhatsAppErro as exc:
+            ctx["resultado"], ctx["erro"] = None, str(exc)
+        usados = {}
+        for c in Cliente.objects.exclude(grupo_whatsapp="").only("nome", "grupo_whatsapp"):
+            usados.setdefault(c.grupo_whatsapp, []).append(c.nome)
+        ctx["usados"] = usados
+        if ctx["resultado"]:
+            for g in ctx["resultado"]["grupos"]:
+                g["clientes"] = usados.get(g["id"], [])
+        return ctx
+
+
 class ConexoesReiniciarView(LoginRequiredMixin, View):
     """Reinicia a conexão do WhatsApp na Evolution, **sem perder a sessão** (não precisa de QR) (POST)."""
 
