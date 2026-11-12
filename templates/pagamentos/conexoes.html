@@ -6,6 +6,7 @@
   <h1>{% include "_icone.html" with nome="conexoes" %}Conexões</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="{% url 'assistente:desktop' %}">{% include "_icone.html" with nome="assistente" %}Claude Desktop</a>
+  <a class="btn secondary" href="{% url 'pagamentos:grupos_whatsapp' %}">{% include "_icone.html" with nome="whatsapp" %}Grupos do WhatsApp</a>
   <a class="btn secondary" href="{% url 'pagamentos:mensagens' %}">{% include "_icone.html" with nome="whatsapp" %}Mensagens enviadas</a>
   <a class="btn secondary" href="{% url 'pagamentos:rotinas' %}">{% include "_icone.html" with nome="alerta" %}Saúde das rotinas</a>
 </div>

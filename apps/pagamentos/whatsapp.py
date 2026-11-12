@@ -8,6 +8,7 @@ texto livre, então não há mais templates aprovados: a mensagem montada em
 import json
 import logging
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -115,32 +116,51 @@ def _chamar_evolution_get(caminho: str, consulta: dict | None = None):
         raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
 
 
-def grupos_do_whatsapp() -> list[dict] | None:
-    """Grupos em que o número da empresa está: ``[{"id", "nome", "participantes"}]`` por nome.
+def consultar_grupos() -> dict:
+    """Pergunta à Evolution quais grupos o número conectado tem, sem cache e **levantando** o erro (usado no diagnóstico).
 
-    ``None`` quando não dá para saber (modo simulação, Evolution fora do ar): quem chama cai no cadastro manual.
-    O resultado fica em cache por 5 minutos (a lista é pesada para a Evolution)."""
-    from django.core.cache import cache
-
+    Devolve ``{"grupos": [{"id", "nome", "participantes"}] por nome, "recebidos": quantos itens a Evolution mandou,
+    "ignorados": itens que não são grupo (@g.us), "segundos": quanto demorou}``."""
     if settings.WHATSAPP_PROVIDER.lower().strip() != "evolution":
-        return None
-    guardado = cache.get("whatsapp_grupos")
-    if guardado is not None:
-        return guardado
-    try:
-        dados = _chamar_evolution_get("/group/fetchAllGroups", {"getParticipants": "false"})
-    except WhatsAppErro as exc:
-        logger.warning("Não consegui listar os grupos do WhatsApp: %s", exc)
-        return None
+        raise WhatsAppErro("Modo simulação (WHATSAPP_PROVIDER != evolution): não há grupos para listar.")
+    inicio = time.monotonic()
+    dados = _chamar_evolution_get("/group/fetchAllGroups", {"getParticipants": "false"})
+    itens = dados if isinstance(dados, list) else []
     grupos = sorted(
         (
             {"id": g["id"], "nome": str(g.get("subject") or g["id"]), "participantes": int(g.get("size") or 0)}
-            for g in (dados if isinstance(dados, list) else [])
+            for g in itens
             if isinstance(g, dict) and str(g.get("id", "")).endswith("@g.us")
         ),
         key=lambda g: g["nome"].lower(),
     )
-    cache.set("whatsapp_grupos", grupos, 300)
+    ignorados = [str(g.get("id", g))[:40] if isinstance(g, dict) else str(g)[:40] for g in itens if not (isinstance(g, dict) and str(g.get("id", "")).endswith("@g.us"))]
+    if not isinstance(dados, list):
+        ignorados.append(f"resposta que não é uma lista: {str(dados)[:120]}")
+    logger.info("Evolution devolveu %d item(ns), %d grupo(s), em %.1fs.", len(itens), len(grupos), time.monotonic() - inicio)
+    return {"grupos": grupos, "recebidos": len(itens), "ignorados": ignorados, "segundos": round(time.monotonic() - inicio, 1)}
+
+
+def grupos_do_whatsapp(forcar: bool = False) -> list[dict] | None:
+    """Grupos em que o número da empresa está: ``[{"id", "nome", "participantes"}]`` por nome.
+
+    ``None`` quando não dá para saber (modo simulação, Evolution fora do ar): quem chama cai no cadastro manual.
+    O resultado fica em cache por 1 minuto (a lista é pesada para a Evolution); ``forcar`` ignora o cache."""
+    from django.core.cache import cache
+
+    if settings.WHATSAPP_PROVIDER.lower().strip() != "evolution":
+        return None
+    if forcar:
+        cache.delete("whatsapp_grupos")
+    guardado = cache.get("whatsapp_grupos")
+    if guardado is not None:
+        return guardado
+    try:
+        grupos = consultar_grupos()["grupos"]
+    except WhatsAppErro as exc:
+        logger.warning("Não consegui listar os grupos do WhatsApp: %s", exc)
+        return None
+    cache.set("whatsapp_grupos", grupos, 60)
     return grupos
 
 

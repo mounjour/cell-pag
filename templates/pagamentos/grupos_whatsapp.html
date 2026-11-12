@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Grupos do WhatsApp{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+  <h1>{% include "_icone.html" with nome="whatsapp" %}Grupos do WhatsApp</h1>
+  <span class="spacer"></span>
+  <a class="btn secondary" href="{% url 'pagamentos:grupos_whatsapp' %}">{% include "_icone.html" with nome="gerar" %}Atualizar agora</a>
+  <a class="btn secondary" href="{% url 'pagamentos:conexoes' %}">Voltar para Conexões</a>
+</div>
+<p class="note">Isto é o que a Evolution informa agora, sem guardar nada: os grupos em que o <strong>número conectado</strong> está. É esta lista que aparece no campo <em>Grupo do WhatsApp</em> do cadastro do cliente.</p>
+
+{% if erro %}
+  <p class="resumo-alerta"><strong>A Evolution não respondeu:</strong> {{ erro }}</p>
+{% elif resultado %}
+  <p class="count">
+    A Evolution devolveu <strong>{{ resultado.recebidos }}</strong> item{{ resultado.recebidos|pluralize:",ns" }}
+    ({{ resultado.grupos|length }} grupo{{ resultado.grupos|length|pluralize }}) em {{ resultado.segundos }} s.
+  </p>
+  {% if resultado.ignorados %}
+    <p class="resumo-alerta">{{ resultado.ignorados|length }} item{{ resultado.ignorados|length|pluralize:",ns" }} não parece{{ resultado.ignorados|length|pluralize:",m" }} grupo e foi ignorado{{ resultado.ignorados|length|pluralize }}: {{ resultado.ignorados|join:", " }}</p>
+  {% endif %}
+  {% if resultado.grupos %}
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Nome do grupo</th><th class="num">Participantes</th><th>Identificador</th><th>Usado por</th></tr></thead>
+      <tbody>
+        {% for g in resultado.grupos %}
+          <tr>
+            <td>{{ g.nome }}</td>
+            <td class="num">{{ g.participantes }}</td>
+            <td><code>{{ g.id }}</code></td>
+            <td>{% if g.clientes %}{{ g.clientes|join:", " }}{% else %}—{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  {% else %}
+    <p class="empty">A Evolution não devolveu nenhum grupo.</p>
+  {% endif %}
+{% endif %}
+
+{% if resultado and resultado.grupos|length < 2 %}
+  <p class="helptext">Se os grupos dos clientes não aparecem aqui, a Evolution não está listando eles para este número. Não é o cadastro do cliente.</p>
+{% endif %}
+{% endblock %}

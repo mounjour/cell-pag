@@ -150,3 +150,59 @@ def test_tela_do_cliente_mostra_o_grupo(auth_client):
     )
     html = auth_client.get(reverse("clientes:detalhe", args=[cliente.pk])).content.decode()
     assert "Maria + Financeiro" in html and "vão para este grupo" in html
+
+
+# ── diagnóstico: o que a Evolution devolve ───────────────────────────────────
+
+def test_consultar_grupos_conta_o_que_chegou_e_o_que_foi_ignorado(settings, monkeypatch):
+    settings.WHATSAPP_PROVIDER = "evolution"
+    monkeypatch.setattr(
+        whatsapp, "_chamar_evolution_get",
+        lambda caminho, consulta=None: [
+            {"id": GRUPO, "subject": "Maria + Financeiro", "size": 3},
+            {"id": "5583999990000@s.whatsapp.net", "subject": "contato"},
+            "lixo",
+        ],
+    )
+    r = whatsapp.consultar_grupos()
+    assert r["recebidos"] == 3 and [g["nome"] for g in r["grupos"]] == ["Maria + Financeiro"] and len(r["ignorados"]) == 2
+    monkeypatch.setattr(whatsapp, "_chamar_evolution_get", lambda c, q=None: {"error": True})
+    assert "não é uma lista" in whatsapp.consultar_grupos()["ignorados"][0]
+
+
+def test_lista_de_grupos_dura_um_minuto_e_pode_ser_forcada(settings, monkeypatch):
+    settings.WHATSAPP_PROVIDER = "evolution"
+    chamadas = []
+    monkeypatch.setattr(whatsapp, "_chamar_evolution_get", lambda c, q=None: chamadas.append(1) or [{"id": GRUPO, "subject": "A", "size": 3}])
+    whatsapp.grupos_do_whatsapp()
+    whatsapp.grupos_do_whatsapp()
+    assert len(chamadas) == 1
+    whatsapp.grupos_do_whatsapp(forcar=True)
+    assert len(chamadas) == 2
+
+
+def test_tela_de_diagnostico_mostra_os_grupos_e_quem_usa(auth_client, settings, monkeypatch):
+    settings.WHATSAPP_PROVIDER = "evolution"
+    grupos = [{"id": GRUPO, "subject": "Maria + Financeiro", "size": 3}, {"id": "120363000000000009@g.us", "subject": "Outro", "size": 83}]
+    monkeypatch.setattr(whatsapp, "_chamar_evolution_get", lambda c, q=None: grupos if "fetchAllGroups" in c else {"instance": {"state": "open"}})
+    Cliente.objects.create(nome="Maria", cpf="52998224725", telefone_whatsapp="+5588999990000", grupo_whatsapp=GRUPO)
+    html = auth_client.get(reverse("pagamentos:grupos_whatsapp")).content.decode()
+    assert "devolveu <strong>2</strong>" in html and "Maria + Financeiro" in html and GRUPO in html
+    assert "<td>Maria</td>" in html  # o cliente que já usa o grupo aparece na linha dele
+    assert "Maria + Financeiro" in html and "Outro" in html
+
+
+def test_tela_de_diagnostico_mostra_o_erro_da_evolution(auth_client, settings, monkeypatch):
+    settings.WHATSAPP_PROVIDER = "evolution"
+
+    def _falha(c, q=None):
+        if "fetchAllGroups" in c:
+            raise whatsapp.WhatsAppErro("Falha de comunicação com a Evolution API.")
+        return {"instance": {"state": "open"}}
+
+    monkeypatch.setattr(whatsapp, "_chamar_evolution_get", _falha)
+    assert "A Evolution não respondeu" in auth_client.get(reverse("pagamentos:grupos_whatsapp")).content.decode()
+
+
+def test_tela_de_diagnostico_exige_login(client):
+    assert client.get(reverse("pagamentos:grupos_whatsapp")).status_code == 302
