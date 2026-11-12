@@ -160,8 +160,21 @@ def grupos_do_whatsapp(forcar: bool = False) -> list[dict] | None:
     except WhatsAppErro as exc:
         logger.warning("Não consegui listar os grupos do WhatsApp: %s", exc)
         return None
+    grupos = grupos + _grupos_vistos_fora_da_lista({g["id"] for g in grupos})
     cache.set("whatsapp_grupos", grupos, 60)
     return grupos
+
+
+def _grupos_vistos_fora_da_lista(ja_listados: set) -> list[dict]:
+    """Grupos de onde chegou mensagem e que a Evolution não listou (nome pelo ``findGroupInfos``, se der)."""
+    from .grupos import completar_nomes
+    from .models import GrupoWhatsApp
+
+    completar_nomes()
+    return [
+        {"id": g.jid, "nome": g.nome or f"Grupo sem nome ({g.jid[:6]}…{g.jid[-9:]})", "participantes": g.participantes or 0, "visto": True}
+        for g in GrupoWhatsApp.objects.exclude(jid__in=ja_listados)
+    ]
 
 
 def jid_do_destino(destinatario: str) -> str:

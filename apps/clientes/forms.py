@@ -1,6 +1,8 @@
 from django import forms
 
-from .models import Cliente, so_digitos
+from django.core.exceptions import ValidationError
+
+from .models import Cliente, so_digitos, valida_grupo_whatsapp
 
 TAMANHO_MAX_CSV = 1024 * 1024  # 1 MB
 
@@ -45,9 +47,27 @@ class ClienteForm(forms.ModelForm):
         self.fields["grupo_whatsapp"] = forms.ChoiceField(
             label=campo.label, required=False, choices=opcoes, help_text=campo.help_text,
         )
+        # A lista da Evolution pode não trazer o grupo: dá para colar o identificador (aparece em Conexões > Grupos do WhatsApp).
+        self.fields["grupo_whatsapp_manual"] = forms.CharField(
+            label="Ou cole o identificador do grupo", required=False, max_length=60,
+            help_text="Use se o grupo não estiver na lista acima. Termina em @g.us.",
+        )
+        self.order_fields(["nome", "cpf", "telefone_whatsapp", "grupo_whatsapp", "grupo_whatsapp_manual", "endereco"])
 
     def clean_cpf(self) -> str:
         return so_digitos(self.cleaned_data.get("cpf", ""))
+
+    def clean(self):
+        dados = super().clean()
+        manual = (dados.get("grupo_whatsapp_manual") or "").strip()
+        if manual:
+            try:
+                valida_grupo_whatsapp(manual)
+            except ValidationError as exc:
+                self.add_error("grupo_whatsapp_manual", exc)
+            else:
+                dados["grupo_whatsapp"] = manual
+        return dados
 
     def save(self, commit=True):
         cliente = super().save(commit=False)
@@ -56,6 +76,11 @@ class ClienteForm(forms.ModelForm):
             cliente.grupo_whatsapp_nome = ""
         elif grupo in self._nomes_dos_grupos:
             cliente.grupo_whatsapp_nome = self._nomes_dos_grupos[grupo]
+        elif self.cleaned_data.get("grupo_whatsapp_manual"):
+            from apps.pagamentos.models import GrupoWhatsApp
+
+            visto = GrupoWhatsApp.objects.filter(jid=grupo).first()
+            cliente.grupo_whatsapp_nome = visto.nome if visto else ""
         if commit:
             cliente.save()
         return cliente

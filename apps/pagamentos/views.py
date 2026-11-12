@@ -928,6 +928,14 @@ class GruposWhatsAppView(LoginRequiredMixin, TemplateView):
             ctx["erro"] = ""
         except WhatsAppErro as exc:
             ctx["resultado"], ctx["erro"] = None, str(exc)
+        from .grupos import completar_nomes
+        from .models import GrupoWhatsApp
+
+        completar_nomes()
+        listados = {g["id"] for g in ctx["resultado"]["grupos"]} if ctx["resultado"] else set()
+        ctx["vistos"] = list(GrupoWhatsApp.objects.all())
+        for g in ctx["vistos"]:
+            g.na_lista = g.jid in listados
         usados = {}
         for c in Cliente.objects.exclude(grupo_whatsapp="").only("nome", "grupo_whatsapp"):
             usados.setdefault(c.grupo_whatsapp, []).append(c.nome)
@@ -935,6 +943,8 @@ class GruposWhatsAppView(LoginRequiredMixin, TemplateView):
         if ctx["resultado"]:
             for g in ctx["resultado"]["grupos"]:
                 g["clientes"] = usados.get(g["id"], [])
+        for g in ctx["vistos"]:
+            g.clientes = usados.get(g.jid, [])
         return ctx
 
 
