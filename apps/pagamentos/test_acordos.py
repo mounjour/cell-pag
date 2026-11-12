@@ -158,6 +158,9 @@ def test_desfazer_nova_data_restaura_o_vencimento(parcela):
 
 def test_so_o_acordo_mais_recente_da_parcela_pode_ser_desfeito(parcela):
     primeiro, _ = acordos.aplicar_acordo(parcela, tipo=Acordo.Tipo.PERDAO_JUROS, juros_perdoar=Decimal("10.00"))
+    # No Windows dois registros criados em sequência podem sair com o mesmo horário; o primeiro é anterior de fato.
+    Acordo.objects.filter(pk=primeiro.pk).update(criado_em=primeiro.criado_em - datetime.timedelta(seconds=1))
+    primeiro.refresh_from_db()
     segundo, _ = acordos.aplicar_acordo(_recarrega(parcela), tipo=Acordo.Tipo.PERDAO_JUROS, juros_perdoar=Decimal("5.00"))
     assert not acordos.pode_desfazer(primeiro) and acordos.pode_desfazer(segundo)
     with pytest.raises(acordos.AcordoInvalido, match="mais recente"):

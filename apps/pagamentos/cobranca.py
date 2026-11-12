@@ -2,6 +2,7 @@
 
 import datetime
 import logging
+import time
 from decimal import Decimal
 
 from django.conf import settings
@@ -10,7 +11,7 @@ from django.utils import timezone
 from .agenda import montar_agenda_do_dia
 from .models import Cobranca, CobrancaCora, ConfiguracaoCobranca
 from .pix_cora import obter_ou_criar_cobranca
-from .whatsapp import WhatsAppErro, enviar_imagem, enviar_mensagem
+from .whatsapp import WhatsAppErro, conexao_caiu, enviar_imagem, enviar_mensagem, reiniciar_conexao
 
 logger = logging.getLogger("pagamentos.cobranca")
 
@@ -152,6 +153,29 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
     return base
 
 
+PAUSA_APOS_REINICIAR = 10  # segundos para a Evolution reconectar antes de tentar de novo
+
+
+def _enviar_com_recuperacao(enviar, resultado: dict, **dados):
+    """Envia; se falhar por conexão morta, reinicia a conexão e tenta de novo (uma vez por rotina).
+
+    Sem isso, uma queda do WhatsApp derrubava todas as cobranças do dia."""
+    try:
+        return enviar(**dados)
+    except WhatsAppErro as exc:
+        if not conexao_caiu(exc) or resultado.get("reiniciou_conexao"):
+            raise
+        resultado["reiniciou_conexao"] = True
+        logger.warning("Conexão do WhatsApp caída (%s); reiniciando e tentando de novo.", exc)
+        try:
+            reiniciar_conexao()
+        except WhatsAppErro as falha:
+            logger.warning("Não consegui reiniciar a conexão do WhatsApp: %s", falha)
+            raise exc
+        time.sleep(PAUSA_APOS_REINICIAR)
+        return enviar(**dados)
+
+
 def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_preparar: bool) -> None:
     """Prepara e envia a cobrança de uma linha da agenda (Pix, mensagem e registro), somando em ``resultado``."""
     dados_iniciais = dados_da_mensagem(linha)
@@ -203,13 +227,15 @@ def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_
 
     try:
         if pix and pix.qr_code_url:
-            resposta = enviar_imagem(
+            resposta = _enviar_com_recuperacao(
+                enviar_imagem, resultado,
                 destinatario=destinatario,
                 imagem_url=pix.qr_code_url,
                 legenda=dados["mensagem"],
             )
         else:
-            resposta = enviar_mensagem(
+            resposta = _enviar_com_recuperacao(
+                enviar_mensagem, resultado,
                 destinatario=destinatario,
                 texto=dados["mensagem"],
             )
@@ -249,7 +275,7 @@ def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_
 
 def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=False) -> dict:
     hoje = hoje or timezone.localdate()
-    resultado = {"preparadas": 0, "enviadas": 0, "simuladas": 0, "erros": 0, "ignoradas": 0, "pausada": False}
+    resultado = {"preparadas": 0, "enviadas": 0, "simuladas": 0, "erros": 0, "ignoradas": 0, "pausada": False, "reiniciou_conexao": False}
     if ConfiguracaoCobranca.esta_pausada():
         # Chave geral desligada por alguém: nem Pix novo nem mensagem sai.
         resultado["pausada"] = True
@@ -318,7 +344,7 @@ def enviar_cobranca_do_contrato(contrato, hoje: datetime.date | None = None) -> 
 
     Devolve o mesmo resumo da rotina; ``None`` em ``cobranca`` quando o contrato não está na cobrança de hoje."""
     hoje = hoje or timezone.localdate()
-    resultado = {"preparadas": 0, "enviadas": 0, "simuladas": 0, "erros": 0, "ignoradas": 0, "pausada": False}
+    resultado = {"preparadas": 0, "enviadas": 0, "simuladas": 0, "erros": 0, "ignoradas": 0, "pausada": False, "reiniciou_conexao": False}
     linha = next((l for l in montar_agenda_do_dia(hoje=hoje)["linhas"] if l["contrato"].pk == contrato.pk), None)
     if linha is None:
         return {**resultado, "cobranca": None}

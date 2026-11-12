@@ -62,5 +62,8 @@ class Command(ComandoRegistrado):
                 f"{conciliacao['pagas']} paga(s), {conciliacao['erros']} erro(s)."
             )
         )
+        if resultado.get("reiniciou_conexao"):
+            self.stdout.write(self.style.WARNING("A conexão do WhatsApp estava caída e foi reiniciada automaticamente."))
         if resultado["erros"] or conciliacao["erros"]:
-            raise CommandError("Falha no envio de cobranças ou na conciliação Cora; consulte o painel.")
+            detalhe = f"{resultado['erros']} cobrança(s) com erro no WhatsApp (veja a tela Mensagens)" if resultado["erros"] else "falha na conciliação Cora"
+            raise CommandError(f"Falha no envio de cobranças: {detalhe}.")

@@ -16,11 +16,16 @@
   <h2>WhatsApp</h2>
   {% if status_whatsapp == "open" %}
     <p><span class="pill pago">Conectado</span></p>
-    <form method="post" action="{% url 'pagamentos:conexoes_reiniciar' %}"
+    <form method="post" action="{% url 'pagamentos:conexoes_reiniciar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}Reiniciar a conexão</button>
+      <p class="helptext">Use se as mensagens falham com “Connection Closed” mesmo aparecendo Conectado. Não precisa de QR.</p>
+    </form>
+    <form method="post" action="{% url 'pagamentos:conexoes_desconectar' %}"
           data-confirmar-envio="Desconectar o WhatsApp e gerar um QR code novo? As cobranças param de sair até você ler o QR de novo com o celular da empresa.">
       {% csrf_token %}
-      <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}Reiniciar sessão do WhatsApp</button>
-      <p class="helptext">Use se as mensagens falham com “Connection Closed” mesmo aparecendo Conectado.</p>
+      <button type="submit" class="btn-mini">{% include "_icone.html" with nome="cancelar" %}Desconectar e ler o QR de novo</button>
+      <p class="helptext">Último recurso, se reiniciar a conexão não resolver.</p>
     </form>
   {% elif status_whatsapp == "simulado" %}
     <p><span class="pill aberto">Modo simulação</span> — <code>WHATSAPP_PROVIDER</code> não está como <code>evolution</code>; nenhuma mensagem real é enviada.</p>
@@ -28,6 +33,11 @@
     <p><span class="pill inadimplente">Desconectado</span>{% if erro_whatsapp %} — {{ erro_whatsapp }}{% endif %}</p>
 
     {% if not quer_qr %}
+      <form method="post" action="{% url 'pagamentos:conexoes_reiniciar' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}Reiniciar a conexão</button>
+        <p class="helptext">Tenta reconectar com a sessão guardada, sem QR. Se não voltar, gere o QR abaixo.</p>
+      </form>
       <form method="post" action="{% url 'pagamentos:conexoes_gerar_qr' %}">
         {% csrf_token %}
         <button type="submit" class="btn">{% include "_icone.html" with nome="conexoes" %}Gerar QR Code</button>

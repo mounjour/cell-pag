@@ -162,6 +162,33 @@ def obter_status_conexao() -> str:
     return (dados.get("instance") or {}).get("state", "")
 
 
+def conexao_caiu(erro) -> bool:
+    """O erro é o de uma conexão morta ("Connection Closed"): reiniciar a conexão costuma resolver."""
+    return "connection closed" in str(erro).lower()
+
+
+def reiniciar_conexao() -> str:
+    """Reinicia a conexão com o WhatsApp **sem perder a sessão** (não precisa de QR).
+
+    A Evolution fecha o socket e reconecta com a sessão guardada. Se ela já sabe que está desconectada (estado
+    ``close``), recusa o restart; aí pede a reconexão. Devolve ``"reiniciada"`` ou ``"reconectada"``;
+    levanta ``WhatsAppErro`` se nenhuma das duas funcionar (aí só lendo o QR de novo)."""
+    if settings.WHATSAPP_PROVIDER.lower().strip() != "evolution":
+        raise WhatsAppErro("Modo simulação (WHATSAPP_PROVIDER != evolution): não há conexão para reiniciar.")
+    try:
+        dados = _chamar_evolution("/instance/restart", {})
+    except WhatsAppErro as exc:
+        if "not connected" not in str(exc).lower():
+            raise
+        dados = _chamar_evolution_get("/instance/connect")
+        acao = "reconectada"
+    else:
+        acao = "reiniciada"
+    if isinstance(dados, dict) and dados.get("error"):  # a Evolution devolve o erro no corpo, com status 200
+        raise WhatsAppErro(f"A Evolution não conseguiu reiniciar a conexão: {str(dados.get('message', ''))[:160]}")
+    return acao
+
+
 def desconectar_sessao() -> None:
     """Encerra a sessão do WhatsApp na Evolution (logout), para ler um QR novo.
 
