@@ -97,9 +97,11 @@ def _extrair_id_mensagem(dados: dict) -> str:
     return identificador
 
 
-def _chamar_evolution_get(caminho: str) -> dict:
+def _chamar_evolution_get(caminho: str, consulta: dict | None = None):
     base_url, api_key, instancia = _config_evolution()
     url = f"{base_url}{caminho}/{urllib.parse.quote(instancia)}"
+    if consulta:
+        url += "?" + urllib.parse.urlencode(consulta)
     requisicao = urllib.request.Request(url, headers={"apikey": api_key})
     try:
         with urllib.request.urlopen(requisicao, timeout=15) as resposta:
@@ -111,6 +113,42 @@ def _chamar_evolution_get(caminho: str) -> dict:
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         logger.warning("Falha ao chamar a Evolution API: %s", exc)
         raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
+
+
+def grupos_do_whatsapp() -> list[dict] | None:
+    """Grupos em que o número da empresa está: ``[{"id", "nome", "participantes"}]`` por nome.
+
+    ``None`` quando não dá para saber (modo simulação, Evolution fora do ar): quem chama cai no cadastro manual.
+    O resultado fica em cache por 5 minutos (a lista é pesada para a Evolution)."""
+    from django.core.cache import cache
+
+    if settings.WHATSAPP_PROVIDER.lower().strip() != "evolution":
+        return None
+    guardado = cache.get("whatsapp_grupos")
+    if guardado is not None:
+        return guardado
+    try:
+        dados = _chamar_evolution_get("/group/fetchAllGroups", {"getParticipants": "false"})
+    except WhatsAppErro as exc:
+        logger.warning("Não consegui listar os grupos do WhatsApp: %s", exc)
+        return None
+    grupos = sorted(
+        (
+            {"id": g["id"], "nome": str(g.get("subject") or g["id"]), "participantes": int(g.get("size") or 0)}
+            for g in (dados if isinstance(dados, list) else [])
+            if isinstance(g, dict) and str(g.get("id", "")).endswith("@g.us")
+        ),
+        key=lambda g: g["nome"].lower(),
+    )
+    cache.set("whatsapp_grupos", grupos, 300)
+    return grupos
+
+
+def jid_do_destino(destinatario: str) -> str:
+    """Identificador que a Evolution usa na conversa: o do grupo como está, ou o telefone com ``@s.whatsapp.net``."""
+    if "@" in str(destinatario):
+        return str(destinatario)
+    return f"{numero_so_digitos(destinatario)}@s.whatsapp.net"
 
 
 def obter_status_conexao() -> str:
@@ -224,7 +262,7 @@ def apagar_mensagem(*, destinatario: str, id_mensagem: str) -> dict:
         "/chat/deleteMessageForEveryone",
         {
             "id": id_mensagem,
-            "remoteJid": f"{numero_so_digitos(destinatario)}@s.whatsapp.net",
+            "remoteJid": jid_do_destino(destinatario),
             "fromMe": True,
         },
         metodo="DELETE",
