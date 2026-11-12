@@ -83,9 +83,17 @@ def shell(request):
         from apps.pagamentos.rotinas import rotinas_com_problema
         return rotinas_com_problema()
 
+    def mensagens_com_erro():
+        from django.utils import timezone
+
+        from apps.pagamentos.models import Cobranca
+
+        return Cobranca.objects.filter(data_alvo=timezone.localdate(), status=Cobranca.Status.ERRO).count()
+
     def notificacoes_n():
         return (
             pix_alertas()
+            + (1 if mensagens_com_erro() else 0)
             + (1 if rotinas_com_problema_n() else 0)
             + importacoes_pendentes()
             + (1 if whatsapp_desconectado() else 0)
@@ -113,6 +121,7 @@ def shell(request):
         "bloqueios_pendentes_n": SimpleLazyObject(aparelhos_bloqueio_pendente),
         "importacoes_pendentes_n": SimpleLazyObject(importacoes_pendentes),
         "rotinas_com_problema_n": SimpleLazyObject(rotinas_com_problema_n),
+        "mensagens_com_erro_n": SimpleLazyObject(mensagens_com_erro),
         "notificacoes_n": SimpleLazyObject(notificacoes_n),
         "importacoes_pendentes_rotulo": SimpleLazyObject(rotulo_importacoes_pendentes),
     }

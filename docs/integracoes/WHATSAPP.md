@@ -130,6 +130,23 @@ está junto com o financeiro (assim a equipe acompanha tudo no mesmo lugar).
 - **Cuidado:** a cobrança mostra valores e juros para **todos** do grupo. Use só grupos com o cliente e a
   equipe.
 
+## Quando a conexão cai ("Connection Closed")
+
+A Evolution às vezes fica com o estado **"Conectado"** mesmo com a conexão real morta (o estado é só uma
+variável dela). Os envios passam a falhar com `Connection Closed`.
+
+- **Recuperação automática:** se um envio da rotina falhar assim, o sistema reinicia a conexão
+  (`POST /instance/restart/{instância}`, sem perder a sessão e sem QR), espera uns segundos e tenta de novo.
+  Só reinicia **uma vez por rotina**. A rotina registra o aviso e, se ainda houver erro, a falha mostra
+  quantas cobranças ficaram com erro.
+- **Botão manual:** em **Conexões**, **Reiniciar a conexão** faz o mesmo. Se a Evolution já sabe que está
+  desconectada (`close`), o sistema pede a reconexão (`GET /instance/connect/{instância}`). **Desconectar e ler o
+  QR de novo** (logout) é o último recurso: o logout falha com a conexão morta, por isso não é o primeiro passo.
+- **Aviso:** cobranças de hoje com erro aparecem nas notificações (sino) e como aviso na tela **Mensagens**.
+- **Causa de queda que já tivemos:** o banco da Evolution no Neon (hiberna e fica inacessível justo na hora de
+  reconectar; erro `P1001` nos logs). Hoje o banco da Evolution é um PostgreSQL na própria VPS, no compose
+  da Evolution, sem esse problema.
+
 ## Rotina diária
 
 Depois de gerar os vencimentos, execute:

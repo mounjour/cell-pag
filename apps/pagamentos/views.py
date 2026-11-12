@@ -902,11 +902,41 @@ class MensagensView(LoginRequiredMixin, TemplateView):
             dia_anterior=dia - datetime.timedelta(days=1), dia_seguinte=dia + datetime.timedelta(days=1),
             config_cobranca=ConfiguracaoCobranca.obter(),
         )
+        n = ctx["contagem"]["erro"]
+        if dia == hoje and n:
+            messages.warning(
+                self.request,
+                f"{n} cobrança{'s' if n != 1 else ''} de hoje com erro no WhatsApp. Veja o motivo na tabela e use “Tentar de novo”; "
+                "se for “Connection Closed”, reinicie a conexão em Conexões.",
+            )
         return ctx
 
 
 class ConexoesReiniciarView(LoginRequiredMixin, View):
-    """Descarta a sessão presa do WhatsApp na Evolution e já pede um QR novo (POST)."""
+    """Reinicia a conexão do WhatsApp na Evolution, **sem perder a sessão** (não precisa de QR) (POST)."""
+
+    def post(self, request):
+        from .whatsapp import WhatsAppErro, reiniciar_conexao
+
+        try:
+            acao = reiniciar_conexao()
+        except WhatsAppErro as exc:
+            messages.error(
+                request,
+                f"Não consegui reiniciar a conexão do WhatsApp: {exc} Se continuar assim, use “Desconectar e ler o QR de novo”.",
+            )
+            return redirect("pagamentos:conexoes")
+        cache.delete("whatsapp_status")
+        messages.success(
+            request,
+            f"Conexão {acao}. Espere uns segundos e teste com “Enviar cobrança”; se as mensagens ainda falharem, "
+            "use “Desconectar e ler o QR de novo”.",
+        )
+        return redirect("pagamentos:conexoes")
+
+
+class ConexoesDesconectarView(LoginRequiredMixin, View):
+    """Último recurso: descarta a sessão do WhatsApp na Evolution e já pede um QR novo (POST)."""
 
     def post(self, request):
         from .whatsapp import WhatsAppErro, desconectar_sessao
@@ -914,7 +944,7 @@ class ConexoesReiniciarView(LoginRequiredMixin, View):
         try:
             desconectar_sessao()
         except WhatsAppErro as exc:
-            messages.error(request, f"Não consegui reiniciar a sessão do WhatsApp: {exc}")
+            messages.error(request, f"Não consegui desconectar a sessão do WhatsApp: {exc}")
             return redirect("pagamentos:conexoes")
         cache.delete("whatsapp_status")
         QrWhatsApp.limpar()

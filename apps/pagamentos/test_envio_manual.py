@@ -81,11 +81,11 @@ def test_botao_exige_login(client):
 
 
 @pytest.mark.django_db
-def test_reiniciar_sessao_faz_logout_e_ja_pede_o_qr(auth_client, monkeypatch):
+def test_desconectar_faz_logout_e_ja_pede_o_qr(auth_client, monkeypatch):
     chamadas = []
     monkeypatch.setattr("apps.pagamentos.whatsapp.desconectar_sessao", lambda: chamadas.append("logout"))
     QrWhatsApp.guardar("data:image/png;base64,AAA", timezone.now())
-    resposta = auth_client.post(reverse("pagamentos:conexoes_reiniciar"))
+    resposta = auth_client.post(reverse("pagamentos:conexoes_desconectar"))
     assert chamadas == ["logout"] and resposta.status_code == 302
     assert "Sessão do WhatsApp descartada" in [str(m) for m in get_messages(resposta.wsgi_request)][0]
     assert QrWhatsApp.atual() is None
@@ -93,13 +93,13 @@ def test_reiniciar_sessao_faz_logout_e_ja_pede_o_qr(auth_client, monkeypatch):
 
 
 @pytest.mark.django_db
-def test_reiniciar_sessao_mostra_o_erro_da_evolution(auth_client, monkeypatch):
+def test_desconectar_mostra_o_erro_da_evolution(auth_client, monkeypatch):
     def _falha():
         raise WhatsAppErro("Falha de comunicação com a Evolution API.")
 
     monkeypatch.setattr("apps.pagamentos.whatsapp.desconectar_sessao", _falha)
-    resposta = auth_client.post(reverse("pagamentos:conexoes_reiniciar"), follow=True)
-    assert "Não consegui reiniciar a sessão" in resposta.content.decode()
+    resposta = auth_client.post(reverse("pagamentos:conexoes_desconectar"), follow=True)
+    assert "Não consegui desconectar a sessão" in resposta.content.decode()
 
 
 def test_logout_usa_delete_na_evolution(settings, monkeypatch):
@@ -127,7 +127,8 @@ def test_botoes_aparecem_nas_telas(auth_client, cliente_cobranca, evolution, mon
     assert reverse("pagamentos:cobranca_enviar", args=[contrato.pk]) not in depois  # já enviada: some o botão
     monkeypatch.setattr("apps.pagamentos.badge.status_whatsapp_ao_vivo", lambda: "open")
     conexoes = auth_client.get(reverse("pagamentos:conexoes")).content.decode()
-    assert reverse("pagamentos:conexoes_reiniciar") in conexoes and "Reiniciar sessão do WhatsApp" in conexoes
+    assert reverse("pagamentos:conexoes_reiniciar") in conexoes and "Reiniciar a conexão" in conexoes
+    assert reverse("pagamentos:conexoes_desconectar") in conexoes and "Desconectar e ler o QR de novo" in conexoes
 
 
 # ── tela "Mensagens de cobrança" ──────────────────────────────────────────────

@@ -42,6 +42,7 @@ urlpatterns = [
     path("conexoes/gerar-qr/", views.ConexoesGerarQrView.as_view(), name="conexoes_gerar_qr"),
     path("conexoes/qr/", views.ConexoesQrView.as_view(), name="conexoes_qr"),
     path("conexoes/reiniciar/", views.ConexoesReiniciarView.as_view(), name="conexoes_reiniciar"),
+    path("conexoes/desconectar/", views.ConexoesDesconectarView.as_view(), name="conexoes_desconectar"),
     path("contrato/<int:contrato_pk>/cobranca/enviar/", views.CobrancaEnviarView.as_view(), name="cobranca_enviar"),
     path(
         "comprovante/<int:pk>/",
