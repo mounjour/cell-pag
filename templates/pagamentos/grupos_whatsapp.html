@@ -40,6 +40,29 @@
   {% endif %}
 {% endif %}
 
+<h2>Grupos de onde chegaram mensagens</h2>
+<p class="note">Quando alguém manda uma mensagem num grupo em que o número conectado está, o sistema anota o identificador dele (nunca o conteúdo). Serve para cadastrar um grupo que a lista acima não trouxe: peça para o cliente ou o financeiro mandar um "oi" no grupo e atualize esta tela.</p>
+{% if vistos %}
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Nome do grupo</th><th class="num">Participantes</th><th>Identificador</th><th>Última mensagem</th><th>Na lista da Evolution</th><th>Usado por</th></tr></thead>
+    <tbody>
+      {% for g in vistos %}
+        <tr>
+          <td>{{ g.nome|default:"nome ainda não conhecido" }}</td>
+          <td class="num">{{ g.participantes|default:"—" }}</td>
+          <td><code>{{ g.jid }}</code></td>
+          <td>{{ g.visto_em|date:"d/m/Y H:i" }} ({{ g.mensagens }} mensagem{{ g.mensagens|pluralize:",ns" }})</td>
+          <td>{% if g.na_lista %}sim{% else %}não{% endif %}</td>
+          <td>{% if g.clientes %}{{ g.clientes|join:", " }}{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="helptext">Para usar um grupo daqui, copie o identificador e cole em <em>Editar cliente &gt; Ou cole o identificador do grupo</em>.</p>
+{% else %}
+  <p class="empty">Ainda não chegou mensagem de nenhum grupo desde que o webhook foi ligado.</p>
+{% endif %}
+
 {% if resultado and resultado.grupos|length < 2 %}
   <p class="helptext">Se os grupos dos clientes não aparecem aqui, a Evolution não está listando eles para este número. Não é o cadastro do cliente.</p>
 {% endif %}

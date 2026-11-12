@@ -17,6 +17,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from .comprovantes import processar_mensagem_recebida
+from .grupos import registrar_grupo_visto
 from .models import Cobranca
 from .webhook_auth import token_valido
 
@@ -91,6 +92,10 @@ def _registrar_arquivos_recebidos(payload) -> int:
         return 0
     novos = 0
     for dado in _eventos(payload):
+        try:
+            registrar_grupo_visto(dado)
+        except Exception:  # noqa: BLE001 — anotar o grupo nunca pode atrapalhar o resto do aviso
+            logger.exception("Falha ao registrar o grupo de uma mensagem recebida.")
         if processar_mensagem_recebida(dado) is not None:
             novos += 1
     return novos

@@ -516,6 +516,27 @@ class QrWhatsApp(models.Model):
         cls.objects.filter(pk=1).delete()
 
 
+class GrupoWhatsApp(models.Model):
+    """Grupo do WhatsApp de onde já chegou uma mensagem (só o identificador; o conteúdo nunca é guardado).
+
+    A lista de grupos da Evolution pode vir incompleta; o webhook, não: toda mensagem de grupo traz o
+    identificador dele. Assim dá para cadastrar o grupo de um cliente mesmo que ele não esteja na lista."""
+
+    jid = models.CharField("identificador", max_length=60, unique=True)
+    nome = models.CharField("nome do grupo", max_length=200, blank=True)
+    participantes = models.PositiveIntegerField("participantes", null=True, blank=True)
+    visto_em = models.DateTimeField("última mensagem em")
+    mensagens = models.PositiveIntegerField("mensagens vistas", default=1)
+
+    class Meta:
+        verbose_name = "grupo do WhatsApp"
+        verbose_name_plural = "grupos do WhatsApp"
+        ordering = ["-visto_em"]
+
+    def __str__(self) -> str:
+        return self.nome or self.jid
+
+
 class ConfiguracaoCobranca(models.Model):
     """Chave geral das cobranças automáticas (registro único, ``pk=1``).
 
