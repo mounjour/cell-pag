@@ -339,7 +339,7 @@ class Cobranca(models.Model):
     )
     data_alvo = models.DateField("data da cobrança")
     canal = models.CharField(max_length=12, choices=Canal.choices, default=Canal.WHATSAPP)
-    destinatario = models.CharField(max_length=20)
+    destinatario = models.CharField(max_length=60)  # telefone (só dígitos) ou identificador de grupo (@g.us)
     mensagem = models.TextField()
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDENTE)
     id_externo = models.CharField("ID no provedor", max_length=160, blank=True, db_index=True)

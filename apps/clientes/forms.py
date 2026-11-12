@@ -17,7 +17,7 @@ class ClienteForm(forms.ModelForm):
 
     class Meta:
         model = Cliente
-        fields = ["nome", "cpf", "telefone_whatsapp", "endereco"]
+        fields = ["nome", "cpf", "telefone_whatsapp", "grupo_whatsapp", "endereco"]
         widgets = {
             "nome": forms.TextInput(attrs={"autofocus": True}),
             "telefone_whatsapp": forms.TextInput(
@@ -26,8 +26,39 @@ class ClienteForm(forms.ModelForm):
             "endereco": forms.TextInput(attrs={"placeholder": "Opcional"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._nomes_dos_grupos = {}
+        from apps.pagamentos.whatsapp import grupos_do_whatsapp
+
+        grupos = grupos_do_whatsapp()
+        if grupos is None:
+            return  # sem lista (simulação ou Evolution fora do ar): fica o campo de texto
+        atual = self.instance.grupo_whatsapp if self.instance and self.instance.pk else ""
+        opcoes = [("", "Sem grupo: usar o telefone do cliente")]
+        for g in grupos:
+            self._nomes_dos_grupos[g["id"]] = g["nome"]
+            opcoes.append((g["id"], f"{g['nome']} ({g['participantes']} participantes)"))
+        if atual and atual not in self._nomes_dos_grupos:  # o grupo gravado não aparece mais na lista: mantém a escolha
+            opcoes.append((atual, f"{self.instance.grupo_whatsapp_nome or atual} (não encontrado agora)"))
+        campo = self.fields["grupo_whatsapp"]
+        self.fields["grupo_whatsapp"] = forms.ChoiceField(
+            label=campo.label, required=False, choices=opcoes, help_text=campo.help_text,
+        )
+
     def clean_cpf(self) -> str:
         return so_digitos(self.cleaned_data.get("cpf", ""))
+
+    def save(self, commit=True):
+        cliente = super().save(commit=False)
+        grupo = self.cleaned_data.get("grupo_whatsapp") or ""
+        if not grupo:
+            cliente.grupo_whatsapp_nome = ""
+        elif grupo in self._nomes_dos_grupos:
+            cliente.grupo_whatsapp_nome = self._nomes_dos_grupos[grupo]
+        if commit:
+            cliente.save()
+        return cliente
 
 
 class ImportarClientesForm(forms.Form):

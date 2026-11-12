@@ -111,6 +111,25 @@ cliente (`WHATSAPP_APAGAR_AO_BAIXAR`, dentro de `WHATSAPP_APAGAR_JANELA_HORAS`
 horas — o limite do próprio WhatsApp). Se não for possível, a tela avisa. Se o
 cliente pagar o Pix também, o painel Pix mostra a duplicidade para devolução.
 
+## Grupo do cliente com a equipe
+
+Em vez do telefone do cliente, as mensagens do sistema podem ir para um **grupo do WhatsApp** em que ele
+está junto com o financeiro (assim a equipe acompanha tudo no mesmo lugar).
+
+- **Cadastro:** em **Editar cliente**, o campo *Grupo do WhatsApp* lista os grupos do número da empresa
+  (nome e quantidade de participantes). Sem lista (Evolution fora do ar), dá para colar o identificador
+  (termina em `@g.us`). Sem grupo escolhido, tudo continua indo para o telefone do cliente.
+- **O que vai para o grupo:** a cobrança (mensagem e Pix), a confirmação de pagamento e o aviso de
+  comprovante. A mensagem apagada ao dar baixa também é apagada no grupo.
+- **Comprovante no grupo:** o sistema só lê imagem ou PDF mandado **pelo próprio cliente** no grupo
+  cadastrado (confere o número de quem enviou). Mensagens do financeiro, de outras pessoas ou de grupos
+  desconhecidos são ignoradas.
+- **Na Evolution:** o número da empresa precisa estar no grupo; o evento `MESSAGES_UPSERT` do webhook
+  continua ligado e a configuração **Ignorar grupos (`groupsIgnore`) deve ficar DESLIGADA**, senão a
+  Evolution descarta o que chega dos grupos.
+- **Cuidado:** a cobrança mostra valores e juros para **todos** do grupo. Use só grupos com o cliente e a
+  equipe.
+
 ## Rotina diária
 
 Depois de gerar os vencimentos, execute:

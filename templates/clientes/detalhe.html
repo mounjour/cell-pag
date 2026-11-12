@@ -82,6 +82,7 @@
   <div><dt>Telefone / WhatsApp</dt><dd>
     <a class="num" href="tel:{{ cliente.telefone_whatsapp.as_e164 }}">{{ cliente.telefone_exibicao }}</a>
   </dd></div>
+  <div><dt>Grupo do WhatsApp</dt><dd>{% if cliente.grupo_whatsapp %}{{ cliente.grupo_whatsapp_nome|default:"grupo cadastrado" }}<span class="helptext">As mensagens do sistema vão para este grupo.</span>{% else %}—{% endif %}</dd></div>
   <div><dt>Endereço</dt><dd>{{ cliente.endereco|default:"—" }}</dd></div>
   <div><dt>Cadastrado em</dt><dd class="num">{{ cliente.criado_em|date:"d/m/Y" }}</dd></div>
 </dl>

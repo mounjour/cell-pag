@@ -10,7 +10,7 @@ from django.utils import timezone
 from .agenda import montar_agenda_do_dia
 from .models import Cobranca, CobrancaCora, ConfiguracaoCobranca
 from .pix_cora import obter_ou_criar_cobranca
-from .whatsapp import WhatsAppErro, enviar_imagem, enviar_mensagem, numero_so_digitos
+from .whatsapp import WhatsAppErro, enviar_imagem, enviar_mensagem
 
 logger = logging.getLogger("pagamentos.cobranca")
 
@@ -156,7 +156,7 @@ def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_
     """Prepara e envia a cobrança de uma linha da agenda (Pix, mensagem e registro), somando em ``resultado``."""
     dados_iniciais = dados_da_mensagem(linha)
     contrato = linha["contrato"]
-    destinatario = numero_so_digitos(contrato.cliente.telefone_whatsapp)
+    destinatario = contrato.cliente.destino_whatsapp  # o grupo, se o cliente tiver um; senão o telefone
     pix = (
         obter_ou_criar_cobranca(dados_iniciais["vencimento"], hoje=hoje)
         if dados_iniciais["vencimento"]

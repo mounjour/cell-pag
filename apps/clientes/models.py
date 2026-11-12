@@ -16,6 +16,12 @@ def so_digitos(valor: str) -> str:
     return re.sub(r"\D", "", valor or "")
 
 
+def valida_grupo_whatsapp(valor: str) -> None:
+    """O identificador de um grupo do WhatsApp termina em ``@g.us`` (ex.: ``120363012345678901@g.us``)."""
+    if valor and not re.fullmatch(r"\d{8,20}(-\d{5,15})?@g\.us", valor):
+        raise ValidationError("Identificador de grupo inválido. Ele termina em @g.us.", code="grupo_invalido")
+
+
 class Cliente(models.Model):
     """Cliente que comprou um ou mais aparelhos a prazo.
 
@@ -33,6 +39,14 @@ class Cliente(models.Model):
     )
     telefone_whatsapp = PhoneNumberField("telefone / WhatsApp", region="BR")
     endereco = models.CharField("endereço", max_length=255, blank=True)
+    grupo_whatsapp = models.CharField(
+        "grupo do WhatsApp", max_length=60, blank=True, validators=[valida_grupo_whatsapp],
+        help_text=(
+            "Opcional. Grupo em que o cliente está junto com a equipe: as mensagens do sistema vão para ele em vez "
+            "do telefone do cliente. Use só grupos com o cliente e a equipe: a cobrança mostra valores e juros."
+        ),
+    )
+    grupo_whatsapp_nome = models.CharField("nome do grupo", max_length=120, blank=True)
     ativo = models.BooleanField(
         "ativo",
         default=True,
@@ -75,6 +89,16 @@ class Cliente(models.Model):
             return tel.as_national if tel.country_code == 55 else tel.as_international
         except Exception:
             return str(tel)
+
+    @property
+    def destino_whatsapp(self) -> str:
+        """Para onde vão as mensagens do sistema: o grupo (com o cliente e a equipe), se houver; senão, o telefone."""
+        if self.grupo_whatsapp:
+            return self.grupo_whatsapp
+        try:
+            return so_digitos(self.telefone_whatsapp.as_e164)
+        except AttributeError:
+            return so_digitos(str(self.telefone_whatsapp or ""))
 
     @property
     def whatsapp_url(self) -> str:

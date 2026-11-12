@@ -26,7 +26,7 @@ from apps.contratos.models import Contrato
 
 from . import cora_api
 from .models import CobrancaCora, ComprovanteRecebido
-from .whatsapp import WhatsAppErro, enviar_mensagem, numero_so_digitos
+from .whatsapp import WhatsAppErro, enviar_mensagem
 
 logger = logging.getLogger("pagamentos.comprovantes")
 
@@ -48,12 +48,37 @@ def _variantes_do_numero(digitos: str) -> set[str]:
 
 
 def _jid_de_pessoa(key: dict) -> str:
-    """Devolve o número (só dígitos) de uma conversa individual, ou '' (grupos e
-    identificadores anônimos "@lid" sem número são ignorados)."""
+    """Devolve o número (só dígitos) de uma conversa individual, ou '' (identificadores anônimos "@lid" sem número
+    são ignorados; grupos são tratados em ``cliente_da_mensagem``)."""
     for candidato in (key.get("remoteJid"), key.get("remoteJidAlt"), key.get("senderPn")):
         if isinstance(candidato, str) and candidato.endswith("@s.whatsapp.net"):
             return re.sub(r"\D", "", candidato.split("@")[0])
     return ""
+
+
+def _numero_do_participante(chave: dict) -> str:
+    """Número (só dígitos) de quem mandou a mensagem num grupo; '' se o WhatsApp só informou um id anônimo (@lid)."""
+    for candidato in (chave.get("participant"), chave.get("participantAlt"), chave.get("senderPn")):
+        if isinstance(candidato, str) and candidato.endswith("@s.whatsapp.net"):
+            return re.sub(r"\D", "", candidato.split("@")[0])
+    return ""
+
+
+def cliente_da_mensagem(chave: dict) -> Cliente | None:
+    """O cliente que mandou: pelo número, numa conversa individual, ou, num grupo cadastrado, só se quem mandou
+    for o próprio cliente (mensagens do financeiro e de outras pessoas do grupo não contam)."""
+    grupo = chave.get("remoteJid")
+    if isinstance(grupo, str) and grupo.endswith("@g.us"):
+        cliente = Cliente.objects.filter(grupo_whatsapp=grupo, ativo=True).first()
+        remetente = _numero_do_participante(chave)
+        if cliente is None or not remetente:
+            return None
+        try:
+            telefone = str(cliente.telefone_whatsapp.as_e164)
+        except AttributeError:
+            return None
+        return cliente if telefone in _variantes_do_numero(remetente) else None
+    return achar_cliente(_jid_de_pessoa(chave))
 
 
 def achar_cliente(digitos: str) -> Cliente | None:
@@ -106,7 +131,7 @@ def processar_mensagem_recebida(dado: dict) -> ComprovanteRecebido | None:
     arquivo = _arquivo_da_mensagem(dado.get("message") or {})
     if arquivo is None:
         return None
-    cliente = achar_cliente(_jid_de_pessoa(chave))
+    cliente = cliente_da_mensagem(chave)
     if cliente is None:
         logger.info("Arquivo recebido de número que não é de cliente; ignorado.")
         return None
@@ -168,9 +193,7 @@ def _avisar_cliente_que_ainda_nao_caiu(comprovante: ComprovanteRecebido) -> None
         "Assim que ele cair, avisamos por aqui. Se precisar, é só responder esta mensagem."
     )
     try:
-        resposta = enviar_mensagem(
-            destinatario=numero_so_digitos(comprovante.cliente.telefone_whatsapp), texto=texto
-        )
+        resposta = enviar_mensagem(destinatario=comprovante.cliente.destino_whatsapp, texto=texto)
     except WhatsAppErro as exc:
         logger.warning("Resposta ao comprovante %s não enviada: %s", comprovante.pk, exc)
         return
@@ -215,9 +238,7 @@ def enviar_confirmacao(cobranca_id: int) -> bool:
         f"(parcela {vencimento.numero} — {contrato.apelido}).{falta} Obrigado!"
     )
     try:
-        resposta = enviar_mensagem(
-            destinatario=numero_so_digitos(contrato.cliente.telefone_whatsapp), texto=texto
-        )
+        resposta = enviar_mensagem(destinatario=contrato.cliente.destino_whatsapp, texto=texto)
     except WhatsAppErro as exc:
         logger.warning("Confirmação do Pix %s não enviada: %s", cobranca.pk, exc)
         return False
