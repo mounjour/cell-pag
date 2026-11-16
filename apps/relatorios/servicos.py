@@ -363,7 +363,7 @@ def montar_inicio_cobrancas(hoje: datetime.date, painel: dict, hoje_dados: dict)
     total_ctr = max(painel["contratos_ativos"], 1)
     situacoes = [
         {"rotulo": "Em dia", "n": n_dia, "cor": "var(--ic-ok)"},
-        {"rotulo": f"Vence em até {JANELA_VENCIMENTOS} dias", "n": n_vencendo, "cor": "var(--ic-warn)"},
+        {"rotulo": f"Parcela nos próximos {JANELA_VENCIMENTOS} dias", "n": n_vencendo, "cor": "var(--ic-warn)"},
         {"rotulo": "Atrasado", "n": n_atr, "cor": "#d97a2b"},
         {"rotulo": "Inadimplente", "n": n_inad, "cor": "var(--ic-danger)"},
     ]
