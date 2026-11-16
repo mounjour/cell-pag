@@ -19,10 +19,10 @@
   </div>
 
   <section class="ic-kpis" aria-label="Indicadores">
-    <div class="ic-kpi"><small>A cobrar hoje</small><b class="num">R$ {{ hoje.a_cobrar_valor|floatformat:"2g" }}</b><span>{{ ic.vencem_hoje_abertas }} vence{{ ic.vencem_hoje_abertas|pluralize:",m" }} hoje + {{ hoje.n_atraso }} vencida{{ hoje.n_atraso|pluralize }}</span></div>
+    <div class="ic-kpi"><small>A cobrar hoje</small><b class="num">R$ {{ hoje.a_cobrar_valor|floatformat:"2g" }}</b><span>{{ ic.vencem_hoje_abertas }} de hoje + {{ hoje.n_atraso }} atrasada{{ hoje.n_atraso|pluralize }}</span></div>
     <div class="ic-kpi good"><small>Recebido hoje</small><b class="num">R$ {{ hoje.recebido_hoje|floatformat:"2g" }}</b><span>{{ hoje.recebido_hoje_n }} pagamento{{ hoje.recebido_hoje_n|pluralize }}</span></div>
     <div class="ic-kpi{% if painel.total_atrasado %} bad{% endif %}"><small>Em atraso</small><b class="num">R$ {{ painel.total_atrasado|floatformat:"2g" }}</b><span>{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }} · {{ ic.n_clientes_atraso }} cliente{{ ic.n_clientes_atraso|pluralize }}</span></div>
-    <div class="ic-kpi"><small>A vencer em 7 dias</small><b class="num">R$ {{ ic.total_proximos|floatformat:"2g" }}</b><span>{{ ic.proximas_n }} parcela{{ ic.proximas_n|pluralize }}</span></div>
+    <div class="ic-kpi"><small>Parcelas dos próximos 7 dias</small><b class="num">R$ {{ ic.total_proximos|floatformat:"2g" }}</b><span>{{ ic.proximas_n }} parcela{{ ic.proximas_n|pluralize }}</span></div>
     <div class="ic-kpi"><small>Contratos ativos</small><b class="num">{{ painel.contratos_ativos }}</b><span>Média por contrato R$ {{ painel.ticket_medio|floatformat:"2g" }}</span></div>
     <div class="ic-kpi"><small>Recebido do dia</small><b class="num">{{ ic.progresso }}%</b><span>recebido ÷ (recebido + a cobrar)</span><div class="ic-goal"><i style="width:{{ ic.progresso }}%"></i></div></div>
   </section>
@@ -56,7 +56,7 @@
       {% endwith %}
 
       <div class="ic-sec-head">
-        <h3>Parcelas que vencem hoje</h3>
+        <h3>Parcelas de hoje</h3>
         <div class="ic-tabs" role="tablist" data-ic-abas="venc">
           <button class="ic-tab" type="button" role="tab" aria-selected="true" data-f="todos">Todas</button>
           <button class="ic-tab" type="button" role="tab" aria-selected="false" data-f="aberta">Pendentes</button>
@@ -68,7 +68,7 @@
           <div class="ic-item{% if v.paga %} done{% endif %}" data-f="{% if v.paga %}paga{% else %}aberta{% endif %}">
             <div class="ic-ini">{{ v.contrato.cliente.nome|slice:":2"|upper }}</div>
             <div class="ic-info"><b><a href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a></b><span>{{ v.contrato.aparelho_modelo|default:v.contrato.apelido }} · parcela {{ v.numero }}/{{ v.contrato.num_parcelas }}</span></div>
-            <span class="ic-when{% if v.paga %} paid{% endif %}">{% if v.paga %}Paga{% else %}Vence hoje{% endif %}</span>
+            <span class="ic-when{% if v.paga %} paid{% endif %}">{% if v.paga %}Paga{% else %}É hoje{% endif %}</span>
             <div class="ic-val num">R$ {{ v.valor_exibido|floatformat:"2g" }}</div>
             <div class="ic-acts">
               <a class="ic-btn sm" href="{{ v.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
@@ -135,7 +135,7 @@
     </section>
 
     <section class="ic-card ic-panel">
-      <h3>Parcelas a vencer</h3>
+      <h3>Parcelas dos próximos 7 dias</h3>
       <div class="ic-hint">{{ painel.hoje|date:"j b"|lower }} a {{ ic.fim_janela|date:"j b"|lower }} · <b class="num">R$ {{ ic.total_proximos|floatformat:"2g" }}</b> em {{ ic.proximas_n }} parcela{{ ic.proximas_n|pluralize }}</div>
       {% for v in ic.proximas %}
         <div class="ic-mini">
@@ -143,7 +143,7 @@
           <div class="ic-info"><b><a href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a>{% if v.data_vencimento == painel.hoje %}<span class="ic-pill">hoje</span>{% endif %}</b><span>{{ v.contrato.aparelho_modelo|default:v.contrato.apelido }} · parcela {{ v.numero }}/{{ v.contrato.num_parcelas }}</span></div>
           <div class="ic-v num">R$ {{ v.valor_exibido|floatformat:"2g" }}</div>
         </div>
-      {% empty %}<div class="ic-empty">Nenhum vencimento no período.</div>{% endfor %}
+      {% empty %}<div class="ic-empty">Nenhuma parcela no período.</div>{% endfor %}
       {% if ic.proximas_restante %}<p class="ic-mais"><a href="{% url 'contratos:lista' %}">+ {{ ic.proximas_restante }} outra{{ ic.proximas_restante|pluralize }} no período</a></p>{% endif %}
     </section>
 
@@ -174,7 +174,7 @@
     <h3>Resumo financeiro</h3>
     <div class="ic-sum-grid">
       <div><small>A receber em aberto</small><b class="num">R$ {{ painel.a_receber|floatformat:"2g" }}</b><span>total da carteira</span></div>
-      <div><small>Em atraso</small><b class="num danger">R$ {{ painel.total_atrasado|floatformat:"2g" }}</b><span>{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }} vencida{{ painel.qtd_atrasados|pluralize }}</span></div>
+      <div><small>Em atraso</small><b class="num danger">R$ {{ painel.total_atrasado|floatformat:"2g" }}</b><span>{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }} atrasada{{ painel.qtd_atrasados|pluralize }}</span></div>
       <div><small>Recebido no mês</small><b class="num">R$ {{ painel.recebido_mes|floatformat:"2g" }}</b><span>de R$ {{ painel.previsto_mes|floatformat:"2g" }} previstos</span></div>
       <div><small>Contratos ativos</small><b class="num">{{ painel.contratos_ativos }}</b><span>Média por contrato R$ {{ painel.ticket_medio|floatformat:"2g" }}</span></div>
       <div><small>Inadimplentes / atrasados</small><b class="num">{{ painel.inadimplentes }} / {{ painel.atrasados_contratos }}</b><span>contratos</span></div>

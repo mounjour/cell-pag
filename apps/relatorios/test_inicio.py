@@ -93,4 +93,4 @@ def test_inicio_mostra_o_que_pede_acao_antes_dos_numeros(auth_client, monkeypatc
 @pytest.mark.django_db
 def test_inicio_sem_cobrancas_diz_que_esta_tudo_em_dia(auth_client):
     html = auth_client.get(reverse("relatorios:inicio")).content.decode()
-    assert "Tudo em dia por hoje." in html and "Nenhum vencimento no período." in html
+    assert "Tudo em dia por hoje." in html and "Nenhuma parcela no período." in html
