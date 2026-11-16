@@ -3,23 +3,23 @@
 {% block title %}Acompanhamento Pix{% endblock %}
 
 {% block content %}
-<h1>{% include "_icone.html" with nome="pix" %}Acompanhamento Pix · {{ hoje|date:"d/m/Y" }}</h1>
+<h1>{% include "_icone.html" with nome="pix" %}Acompanhamento Pix, {{ hoje|date:"d/m/Y" }}</h1>
 <p class="acoes-linha"><a class="btn secondary" href="{% url 'pagamentos:recebidos' %}">{% include "_icone.html" with nome="dinheiro" %}Pix recebidos sem baixa</a>
 <a class="btn secondary" href="{% url 'pagamentos:conferencia_cora' %}">{% include "_icone.html" with nome="quitar" %}Conferência com a Cora</a></p>
 <p class="note">Uma cobrança Pix pode reunir várias parcelas vencidas e a de hoje, sem juros. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
 
 {% if comprovantes %}
 <section class="alerta-comprovante" role="alert">
-  <h2>Comprovantes recebidos · conferir na Cora</h2>
+  <h2>Comprovantes recebidos, conferir na Cora</h2>
   <p>O cliente mandou um arquivo pelo WhatsApp, mas o Pix ainda não aparece na Cora. <strong>O arquivo não prova o pagamento</strong> (pode ser qualquer foto): abra a conversa para ver, confira a Cora e, se for falso, descarte. Quando o Pix cair, o sistema dá a baixa e avisa o cliente sozinho.</p>
   <ul class="duplicidade-lista">
     {% for c in comprovantes %}
       <li>
         <span>
           <a href="{% url 'clientes:detalhe' c.cliente.pk %}">{{ c.cliente.nome }}</a>
-          · {{ c.get_tipo_display }}{% if c.nome_arquivo %} “{{ c.nome_arquivo }}”{% endif %}
-          · {% if c.vencimento %}parcela {{ c.vencimento.numero }} de {{ c.vencimento.contrato.apelido }}{% else %}<em>sem parcela em aberto</em>{% endif %}
-          · recebido em {{ c.recebido_em|date:"d/m/Y H:i" }}
+         , {{ c.get_tipo_display }}{% if c.nome_arquivo %} “{{ c.nome_arquivo }}”{% endif %}
+         , {% if c.vencimento %}parcela {{ c.vencimento.numero }} de {{ c.vencimento.contrato.apelido }}{% else %}<em>sem parcela em aberto</em>{% endif %}
+         , recebido em {{ c.recebido_em|date:"d/m/Y H:i" }}
           {% if c.legenda %}<span class="helptext">“{{ c.legenda }}”</span>{% endif %}
         </span>
         <span class="comprovante-acoes">
@@ -41,12 +41,12 @@
 
 {% if duplicadas %}
 <section class="alerta-duplicidade" role="alert">
-  <h2>Pix recebido · revisão manual</h2>
+  <h2>Pix recebido para revisão manual</h2>
   <p>Há pagamento em duplicidade ou divergência entre o Pix recebido e as parcelas em aberto. O valor entrou na Cora e <strong>não foi lançado no sistema</strong>. Confira as baixas do contrato e providencie o lançamento correto ou a devolução antes de marcar como resolvido. Este botão apenas encerra o aviso.</p>
   <ul class="duplicidade-lista">
     {% for c in duplicadas %}
       <li>
-        <span><a href="{% url 'clientes:detalhe' c.vencimento.contrato.cliente.pk %}">{{ c.vencimento.contrato.cliente.nome }}</a> · {{ c.vencimento.contrato.apelido }} · parcela {{ c.vencimento.numero }} · <strong class="num">R$ {{ c.total_pago|floatformat:"2g" }}</strong>{% if c.pago_em %} · pago em {{ c.pago_em|date:"d/m/Y H:i" }}{% endif %}</span>
+        <span><a href="{% url 'clientes:detalhe' c.vencimento.contrato.cliente.pk %}">{{ c.vencimento.contrato.cliente.nome }}</a>, {{ c.vencimento.contrato.apelido }}, parcela {{ c.vencimento.numero }}, <strong class="num">R$ {{ c.total_pago|floatformat:"2g" }}</strong>{% if c.pago_em %}, pago em {{ c.pago_em|date:"d/m/Y H:i" }}{% endif %}</span>
         <form method="post" action="{% url 'pagamentos:pix_duplicidade_resolvida' c.pk %}">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">

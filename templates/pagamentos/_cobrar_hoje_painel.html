@@ -1,102 +1,105 @@
 <div id="painel-cobrar-hoje">
 {% if linhas %}
-  <dl class="meta meta--4col cobrar-resumo">
-    <div><dt>Para cobrar</dt><dd class="num">{{ total_linhas }}</dd></div>
-    <div><dt>Atrasados</dt><dd class="num">{{ n_atraso }}</dd></div>
-    <div><dt>Alerta de bloqueio</dt><dd class="num">{{ n_bloqueio }}</dd></div>
-    <div><dt>Total previsto (parcela + juros)</dt><dd class="num kpi-dinheiro">R$ {{ total_previsto }}</dd></div>
+  <dl class="cob-kpis meta meta--4col cobrar-resumo">
+    <div class="cob-kpi"><dt>Para cobrar</dt><dd class="num">{{ total_linhas }}</dd></div>
+    <div class="cob-kpi{% if n_atraso %} cob-kpi--ruim{% endif %}"><dt>Atrasados</dt><dd class="num">{{ n_atraso }}</dd></div>
+    <div class="cob-kpi{% if n_bloqueio %} cob-kpi--aviso{% endif %}"><dt>Alerta de bloqueio</dt><dd class="num">{{ n_bloqueio }}</dd></div>
+    <div class="cob-kpi cob-kpi--dinheiro"><dt>Total previsto (parcela + juros)</dt><dd class="num kpi-dinheiro">R$ {{ total_previsto|floatformat:"2g" }}</dd></div>
   </dl>
-  <details class="note cobrar-ajuda"><summary>Como funciona</summary><p>Confira as parcelas e os juros antes de cobrar. O Pix reúne as parcelas vencidas e a de hoje, sem juros. Registre pagamentos por fora em “Registrar pagamento”; em “Abrir cliente” você vê o histórico e pode suspender a cobrança.</p></details>
+  <details class="cob-ajuda cobrar-ajuda"><summary>Como funciona</summary><p>Confira as parcelas e os juros antes de cobrar. O Pix reúne as parcelas vencidas e a de hoje, sem juros. Registre pagamentos por fora em “Registrar pagamento”; em “Abrir cliente” você vê o histórico e pode suspender a cobrança.</p></details>
 
-  <div class="tbl-wrap cards cobrar-hoje">
-    <table>
-      <thead>
-        <tr><th>Cliente</th><th>Contrato</th><th>Situação</th><th class="num">A cobrar</th><th>Envio</th><th>Contato</th></tr>
-      </thead>
-      <tbody>
-        {% for l in linhas %}
-          <tr class="linha-link row-acento row-acento--{% if l.vence_hoje %}em_dia{% else %}{{ l.situacao.status }}{% endif %}">
-            <td class="cli-cell"><a class="link-linha" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a></td>
-            <td class="contrato-cell" data-label="Contrato">
-              <a href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a>
-              <span class="estrutura">· {{ l.contrato.get_estrutura_display }}</span>
-            </td>
-            <td class="situacao-cell" data-label="Situação">
-              {% if l.vence_hoje %}
-                <span class="pill em_dia">Cobrança hoje</span>
-              {% else %}
-                <span class="situacao-selos">
-                  <span class="pill {{ l.situacao.status }}">{{ l.contrato.status_efetivo_label }}</span>
-                  {% if l.bloqueado %}<span class="pill bloqueado">{% include "_icone.html" with nome="bloqueio" %} bloqueado</span>{% elif l.situacao.alertar_bloqueio %}<a class="pill alerta-bloqueio" href="{% url 'aparelhos:bloqueios' %}">{% include "_icone.html" with nome="bloqueio" %}bloquear aparelho</a>{% endif %}
-                </span>
-                <span class="atraso-dias">{{ l.situacao.dias_atraso }} dia{{ l.situacao.dias_atraso|pluralize }} de atraso</span>
-                {% if l.promessa %}<a class="pill {% if l.promessa.estado == 'quebrada' %}inadimplente{% else %}aberto{% endif %}" href="{% url 'contratos:detalhe' l.contrato.pk %}#contatos">{% if l.promessa.estado == 'quebrada' %}promessa de {{ l.promessa.contato.promessa_para|date:"d/m" }} não cumprida{% else %}prometeu pagar {{ l.promessa.contato.promessa_para|date:"d/m" }}{% endif %}</a>{% endif %}
-              {% endif %}
-            </td>
-            <td class="num cobrar-cell" data-label="A cobrar">
-              {% if l.a_cobrar %}
-                <span class="valor-cobrar num">R$ {{ l.a_cobrar }}</span>
-                {% if l.parcela %}
-                  {% include "pagamentos/_composicao.html" with resumo=l.resumo %}
-                {% elif l.situacao.juros %}
-                  <span class="helptext">só juros R$ {{ l.situacao.juros }} · defina o valor da parcela no contrato</span>
-                {% endif %}
-              {% else %}
-                <span class="valor-cobrar">—</span>
-              {% endif %}
-            </td>
-            <td class="envio-cell" data-label="Envio">
-              <span class="envio-vias">
-                <span class="pill pill-pix {{ l.pix.status }}">Pix: {% if l.pix %}{{ l.pix.get_status_display }}{% else %}Não gerado{% endif %}</span>
-                <span class="pill pill-msg {{ l.cobranca.status|default:'pendente' }}">Mensagem: {% if l.cobranca %}{{ l.cobranca.get_status_display }}{% else %}Não enviada{% endif %}</span>
-              </span>
-              {% if l.cobranca.erro %}<span class="helptext">Falha no envio. Abra o cliente para conferir.</span>{% endif %}
-              {% if l.pix.status == 'cancelado' %}<span class="pill atrasado" title="A rotina diária não cobra esta parcela até você retomar no cliente.">Suspensa</span>{% endif %}
-            </td>
-            <td data-label="Contato" class="contato-cell">
-              <div class="contato-actions">
-                <span class="contato-vias">
-                  <a class="icon-btn icon-btn--phone" href="tel:{{ l.contrato.cliente.telefone_whatsapp.as_e164 }}"
-                     title="Ligar para {{ l.contrato.cliente.telefone_exibicao }}"
-                     aria-label="Ligar para {{ l.contrato.cliente.nome }} — {{ l.contrato.cliente.telefone_exibicao }}">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
-                      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                    </svg>
-                  </a>
-                  <a class="icon-btn icon-btn--wa" href="{{ l.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener"
-                     title="Abrir WhatsApp de {{ l.contrato.cliente.telefone_exibicao }}"
-                     aria-label="Abrir WhatsApp de {{ l.contrato.cliente.nome }}">
-                    <svg viewBox="0 0 32 32" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
-                      <path d="M16.004 0h-.008C7.174 0 .002 7.174.002 16c0 3.5 1.13 6.744 3.05 9.38L1.06 31.26l6.08-1.944A15.9 15.9 0 0 0 16.004 32C24.83 32 32 24.826 32 16S24.83 0 16.004 0zm9.32 22.598c-.386 1.09-1.92 1.994-3.142 2.258-.836.178-1.928.32-5.604-1.204-4.7-1.948-7.726-6.724-7.962-7.034-.226-.31-1.9-2.53-1.9-4.826 0-2.296 1.166-3.424 1.636-3.904.386-.394.844-.574 1.324-.574.156 0 .296.008.424.014.386.016.58.038.834.646.316.764 1.09 2.66 1.182 2.854.094.194.156.42.028.73-.12.31-.226.45-.42.694-.194.244-.408.542-.582.73-.194.21-.396.436-.17.826.226.39.998 1.646 2.144 2.664 1.474 1.314 2.72 1.72 3.16 1.914.44.194.694.162.95-.098.32-.32 1.006-1.146 1.33-1.542.32-.396.6-.34 1.006-.194.408.146 2.594 1.224 3.04 1.446.446.222.742.33.85.516.108.192.108 1.09-.278 2.18z"/>
-                    </svg>
-                  </a>
-                </span>
-                <a class="btn btn-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}" aria-label="Registrar pagamento de {{ l.contrato.cliente.nome }} — {{ l.contrato.apelido }}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>
-                {% if l.pix.status != 'cancelado' and l.cobranca.status != 'enviado' and l.cobranca.status != 'entregue' and l.cobranca.status != 'lido' %}
-                <form method="post" action="{% url 'pagamentos:cobranca_enviar' l.contrato.pk %}"
-                      data-confirmar-envio="Enviar agora a cobrança de {{ l.contrato.cliente.nome|escapejs }} no WhatsApp? A mensagem sai de verdade para o cliente.">
-                  {% csrf_token %}
-                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                  <button type="submit" class="btn secondary" aria-label="Enviar cobrança de {{ l.contrato.cliente.nome }} agora">{% include "_icone.html" with nome="whatsapp" %}Enviar cobrança</button>
-                </form>
-                {% endif %}
-                <a class="btn secondary" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}"
-                   aria-label="Abrir {{ l.contrato.cliente.nome }}">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                  </svg>
-                  Abrir cliente
-                </a>
-              </div>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="cob-cabecalho" aria-hidden="true">
+    <span>Cliente</span><span>Situação</span><span class="cob-col-num">Valor a cobrar</span><span>Status do envio</span><span>Ações</span>
   </div>
+  <ul class="cob-lista cobrar-hoje">
+    {% for l in linhas %}
+      <li class="cob-item cob-item--{% if l.vence_hoje %}em_dia{% else %}{{ l.situacao.status }}{% endif %}">
+        <div class="cob-quem">
+          <span class="cob-avatar" aria-hidden="true">{{ l.contrato.cliente.nome|slice:":2"|upper }}</span>
+          <div class="cob-quem-texto">
+            <a class="cob-cliente" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a>
+            <span class="cob-contrato"><a href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a> <span class="estrutura cob-tag">{{ l.contrato.get_estrutura_display }}</span></span>
+          </div>
+        </div>
+
+        <div class="cob-situacao">
+          {% if l.vence_hoje %}
+            <span class="pill em_dia">Cobrança hoje</span>
+          {% else %}
+            <span class="situacao-selos">
+              <span class="pill {{ l.situacao.status }}">{{ l.contrato.status_efetivo_label }}</span>
+              {% if l.bloqueado %}<span class="pill bloqueado">{% include "_icone.html" with nome="bloqueio" %} bloqueado</span>{% elif l.situacao.alertar_bloqueio %}<a class="pill alerta-bloqueio" href="{% url 'aparelhos:bloqueios' %}">{% include "_icone.html" with nome="bloqueio" %}bloquear aparelho</a>{% endif %}
+            </span>
+            <span class="atraso-dias">{{ l.situacao.dias_atraso }} dia{{ l.situacao.dias_atraso|pluralize }} de atraso</span>
+            {% if l.promessa %}<a class="pill {% if l.promessa.estado == 'quebrada' %}inadimplente{% else %}aberto{% endif %}" href="{% url 'contratos:detalhe' l.contrato.pk %}#contatos">{% if l.promessa.estado == 'quebrada' %}promessa de {{ l.promessa.contato.promessa_para|date:"d/m" }} não cumprida{% else %}prometeu pagar {{ l.promessa.contato.promessa_para|date:"d/m" }}{% endif %}</a>{% endif %}
+          {% endif %}
+        </div>
+
+        <div class="cob-valor num cobrar-cell">
+          {% if l.a_cobrar %}
+            <span class="valor-cobrar num">R$ {{ l.a_cobrar|floatformat:"2g" }}</span>
+            {% if l.parcela %}
+              {% include "pagamentos/_composicao.html" with resumo=l.resumo %}
+            {% elif l.situacao.juros %}
+              <span class="helptext">só juros R$ {{ l.situacao.juros|floatformat:"2g" }}. Defina o valor da parcela no contrato</span>
+            {% endif %}
+          {% else %}
+            <span class="valor-cobrar">—</span>
+          {% endif %}
+        </div>
+
+        <div class="cob-envio">
+          <span class="envio-vias">
+            <span class="pill pill-pix {{ l.pix.status }}">Pix: {% if l.pix %}{{ l.pix.get_status_display }}{% else %}Não gerado{% endif %}</span>
+            <span class="pill pill-msg {{ l.cobranca.status|default:'pendente' }}">Mensagem: {% if l.cobranca %}{{ l.cobranca.get_status_display }}{% else %}Não enviada{% endif %}</span>
+          </span>
+          {% if l.cobranca.erro %}<span class="helptext">Falha no envio. Abra o cliente para conferir.</span>{% endif %}
+          {% if l.pix.status == 'cancelado' %}<span class="pill atrasado" title="A rotina diária não cobra esta parcela até você retomar no cliente.">Suspensa</span>{% endif %}
+        </div>
+
+        <div class="cob-acoes">
+          <div class="cob-acoes-linha">
+            <a class="btn btn-registrar cob-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}" aria-label="Registrar pagamento de {{ l.contrato.cliente.nome }} — {{ l.contrato.apelido }}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>
+            <span class="contato-vias">
+              <a class="icon-btn icon-btn--phone" href="tel:{{ l.contrato.cliente.telefone_whatsapp.as_e164 }}"
+                 title="Ligar para {{ l.contrato.cliente.telefone_exibicao }}"
+                 aria-label="Ligar para {{ l.contrato.cliente.nome }} — {{ l.contrato.cliente.telefone_exibicao }}">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+                  <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                </svg>
+              </a>
+              <a class="icon-btn icon-btn--wa" href="{{ l.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener"
+                 title="Abrir WhatsApp de {{ l.contrato.cliente.telefone_exibicao }}"
+                 aria-label="Abrir WhatsApp de {{ l.contrato.cliente.nome }}">
+                <svg viewBox="0 0 32 32" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+                  <path d="M16.004 0h-.008C7.174 0 .002 7.174.002 16c0 3.5 1.13 6.744 3.05 9.38L1.06 31.26l6.08-1.944A15.9 15.9 0 0 0 16.004 32C24.83 32 32 24.826 32 16S24.83 0 16.004 0zm9.32 22.598c-.386 1.09-1.92 1.994-3.142 2.258-.836.178-1.928.32-5.604-1.204-4.7-1.948-7.726-6.724-7.962-7.034-.226-.31-1.9-2.53-1.9-4.826 0-2.296 1.166-3.424 1.636-3.904.386-.394.844-.574 1.324-.574.156 0 .296.008.424.014.386.016.58.038.834.646.316.764 1.09 2.66 1.182 2.854.094.194.156.42.028.73-.12.31-.226.45-.42.694-.194.244-.408.542-.582.73-.194.21-.396.436-.17.826.226.39.998 1.646 2.144 2.664 1.474 1.314 2.72 1.72 3.16 1.914.44.194.694.162.95-.098.32-.32 1.006-1.146 1.33-1.542.32-.396.6-.34 1.006-.194.408.146 2.594 1.224 3.04 1.446.446.222.742.33.85.516.108.192.108 1.09-.278 2.18z"/>
+                </svg>
+              </a>
+            </span>
+          </div>
+          <div class="cob-acoes-linha cob-acoes-linha--sec">
+            {% if l.pix.status != 'cancelado' and l.cobranca.status != 'enviado' and l.cobranca.status != 'entregue' and l.cobranca.status != 'lido' %}
+            <form method="post" action="{% url 'pagamentos:cobranca_enviar' l.contrato.pk %}"
+                  data-confirmar-envio="Enviar agora a cobrança de {{ l.contrato.cliente.nome|escapejs }} no WhatsApp? A mensagem sai de verdade para o cliente.">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn secondary" aria-label="Enviar cobrança de {{ l.contrato.cliente.nome }} agora">{% include "_icone.html" with nome="whatsapp" %}Enviar cobrança</button>
+            </form>
+            {% endif %}
+            <a class="btn secondary cob-abrir" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}" aria-label="Abrir {{ l.contrato.cliente.nome }}">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              Abrir cliente
+            </a>
+          </div>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
   {% include "_pagination.html" %}
 {% else %}
-  <div class="empty">
+  <div class="empty cob-vazio">
     <p>Nada para cobrar hoje.</p>
     <p class="helptext">Aparecem aqui os contratos atrasados ou com cobrança no dia.</p>
   </div>

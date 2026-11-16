@@ -33,9 +33,9 @@
   </dl>
   <p class="count">
     Recebido: <strong>R$ {{ relatorio.recebido_do_periodo|floatformat:"2g" }}</strong> de parcelas do período
-    · <strong>R$ {{ relatorio.recebido_de_atrasadas|floatformat:"2g" }}</strong> de parcelas atrasadas
-    · <strong>R$ {{ relatorio.recebido_adiantado|floatformat:"2g" }}</strong> adiantado{% if relatorio.recebido_sem_parcela %}
-    · <strong>R$ {{ relatorio.recebido_sem_parcela|floatformat:"2g" }}</strong> sem parcela{% endif %}.
+   , <strong>R$ {{ relatorio.recebido_de_atrasadas|floatformat:"2g" }}</strong> de parcelas atrasadas
+   , <strong>R$ {{ relatorio.recebido_adiantado|floatformat:"2g" }}</strong> adiantado{% if relatorio.recebido_sem_parcela %}
+   , <strong>R$ {{ relatorio.recebido_sem_parcela|floatformat:"2g" }}</strong> sem parcela{% endif %}.
     Falta receber do período: <strong>R$ {{ relatorio.falta_do_periodo|floatformat:"2g" }}</strong>.
   </p>
 

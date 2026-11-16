@@ -278,7 +278,7 @@ def test_painel_pix_mostra_duplicidade_e_selo_no_menu_e_resolve(auth_client, par
     pix.duplicada, pix.total_pago, pix.pago_em = True, Decimal("100.00"), timezone.now()
     pix.save()
     html = auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
-    assert "Pix recebido · revisão manual" in html and "Cliente Dinheiro" in html and "R$ 100,00" in html
+    assert "Pix recebido para revisão manual" in html and "Cliente Dinheiro" in html and "R$ 100,00" in html
     assert 'class="selo selo--alerta"><span' in html
 
     resp = auth_client.post(reverse("pagamentos:pix_duplicidade_resolvida", args=[pix.pk]))
@@ -286,7 +286,7 @@ def test_painel_pix_mostra_duplicidade_e_selo_no_menu_e_resolve(auth_client, par
     pix.refresh_from_db()
     assert pix.duplicidade_resolvida_em is not None
     html = auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
-    assert "Pix recebido · revisão manual" not in html and 'class="selo selo--alerta"><span' not in html
+    assert "Pix recebido para revisão manual" not in html and 'class="selo selo--alerta"><span' not in html
 
 
 @pytest.mark.django_db

@@ -6,7 +6,7 @@
       <p>
         <span class="pill bloqueado">{% include "_icone.html" with nome="bloqueio" %} bloqueado desde {{ bloqueio_ativo.bloqueado_em|date:"d/m/Y" }}</span>
         {% if bloqueio_ativo.bloqueado_por %}por {{ bloqueio_ativo.bloqueado_por.nome_curto }}{% endif %}
-        {% if bloqueio_ativo.observacao %}· {{ bloqueio_ativo.observacao }}{% endif %}
+        {% if bloqueio_ativo.observacao %} {{ bloqueio_ativo.observacao }}{% endif %}
       </p>
       {% if s and s.dias_atraso == 0 %}<p class="helptext">O cliente regularizou: já pode liberar o aparelho.</p>{% endif %}
       <form method="post" action="{% url 'aparelhos:desbloquear' bloqueio_ativo.pk %}">

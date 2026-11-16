@@ -71,7 +71,7 @@ def test_lista_mostra_situacao_valor_e_contatos(auth_client):
     c = novo_cliente("Maria Atrasada")
     contrato_com_parcela(c, datetime.date.today() - datetime.timedelta(days=2))
     html = auth_client.get(reverse("clientes:lista")).content.decode()
-    assert "Maria Atrasada" in html and "Atrasado · 2 dias" in html
+    assert "Maria Atrasada" in html and "Atrasado há 2 dias" in html
     assert "R$ 110,00" in html  # 100 + 2 dias × R$ 5
     assert f"tel:{c.telefone_whatsapp.as_e164}" in html and "wa.me" in html
 
@@ -108,7 +108,7 @@ def test_busca_continua_funcionando_junto_com_o_filtro(auth_client):
 def test_a_partir_de_tres_dias_aparece_inadimplente(auth_client):
     c = novo_cliente("Muito Atrasada")
     contrato_com_parcela(c, datetime.date.today() - datetime.timedelta(days=4))
-    assert "Inadimplente · 4 dias" in auth_client.get(reverse("clientes:lista")).content.decode()
+    assert "Inadimplente há 4 dias" in auth_client.get(reverse("clientes:lista")).content.decode()
 
 
 # ── Aviso de bloquear o aparelho a partir de 8 dias de atraso ──

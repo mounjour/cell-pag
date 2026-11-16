@@ -37,7 +37,7 @@
     <div class="lt-corpo">
       <h2>{% if passos.0.feito %}Chave criada{% else %}Crie a sua chave{% endif %}</h2>
       {% if passos.0.feito %}
-        <p class="lt-detalhe">{{ atual.nome }} · termina em …{{ atual.final_da_chave }}, criada em {{ atual.criado_em|date:"d/m/Y" }}.</p>
+        <p class="lt-detalhe">{{ atual.nome }}, termina em …{{ atual.final_da_chave }}, criada em {{ atual.criado_em|date:"d/m/Y" }}.</p>
       {% else %}
         <p class="lt-detalhe">A chave é a sua “identidade” no sistema: tudo o que o Claude gravar fica no seu nome.</p>
         <form method="post" class="lt-form">{% csrf_token %}
@@ -143,7 +143,7 @@
       <li>
         <div class="lt-lista__texto">
           <strong>{{ a.nome }}</strong>
-          <span>termina em …{{ a.final_da_chave }} · criada em {{ a.criado_em|date:"d/m/Y" }}{% if a.ultimo_uso %} · último uso {{ a.ultimo_uso|date:"d/m H:i" }}{% else %} · ainda não usada{% endif %}</span>
+          <span>termina em …{{ a.final_da_chave }}, criada em {{ a.criado_em|date:"d/m/Y" }}{% if a.ultimo_uso %}, último uso {{ a.ultimo_uso|date:"d/m H:i" }}{% else %}, ainda não usada{% endif %}</span>
         </div>
         {% if a.ativo %}<span class="pill pago">ativa</span>
           <form method="post" action="{% url 'assistente:revogar' a.pk %}" data-confirmar="Revogar esta chave? O Claude Desktop que a usa deixa de funcionar.">{% csrf_token %}<button type="submit" class="btn-mini">{% include "_icone.html" with nome="cancelar" %}Revogar</button></form>
@@ -164,7 +164,7 @@
   <ul class="lt-lista">
     {% for o in operacoes %}
       <li>
-        <div class="lt-lista__texto"><strong>{{ o.resumo|default:o.ferramenta }}</strong><span>{{ o.usuario.nome_curto|default:"—" }} · {{ o.criada_em|date:"d/m/Y H:i" }}</span></div>
+        <div class="lt-lista__texto"><strong>{{ o.resumo|default:o.ferramenta }}</strong><span>{{ o.usuario.nome_curto|default:"—" }}, {{ o.criada_em|date:"d/m/Y H:i" }}</span></div>
         {% if o.desfeita_em %}<span class="pill cancelado">desfeito</span>
         {% elif o.ok %}<span class="pill pago">gravado</span>
           {% if o.referencias.pagamento_id and o.usuario_id == request.user.pk %}<form method="post" action="{% url 'assistente:desfazer' o.pk %}" data-confirmar="Desfazer este pagamento? A baixa é estornada e a parcela volta a ficar em aberto.">{% csrf_token %}<button type="submit" class="btn-mini">{% include "_icone.html" with nome="cancelar" %}Desfazer</button></form>{% endif %}

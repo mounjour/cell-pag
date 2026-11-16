@@ -1,0 +1,119 @@
+/* Tela "Cobrar hoje": lista de cobranças em cartões. Tudo sob .cob para não mexer nas outras telas. */
+.cob { --cob-raio: 16px; }
+
+.cob-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.cob-eyebrow { display: block; margin-bottom: 4px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--ink-faint); }
+.cob-topo h1 { margin: 0; }
+.cob-sub { margin: 6px 0 0; color: var(--ink-soft); }
+
+/* Cobranças automáticas */
+.cob-auto { margin: 0 0 18px; padding: 0; border: 0; background: none; box-shadow: none; }
+.cob-auto form { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; padding: 12px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.cob-auto p { margin: 0; }
+.cob-auto-texto { flex: 1 1 320px; min-width: 0; }
+.cob-auto--ativa form { background: var(--ok-wash); border-color: transparent; }
+.cob-auto--pausada form { background: var(--critical-wash); border-color: transparent; }
+.cob-auto--atencao form { background: var(--amber-wash); border-color: transparent; padding: 18px 20px; }
+.cob-auto .btn { white-space: nowrap; }
+.cob-auto .check-linha { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+
+/* Resumo */
+.cob-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0 0 14px; padding: 0; }
+.cob-kpi { position: relative; min-width: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--cob-raio); background: var(--surface); box-shadow: var(--raise); overflow: hidden; }
+.cob-kpi dt { margin: 0; color: var(--ink-soft); font-size: 13px; }
+.cob-kpi dd { margin: 4px 0 0; font-size: clamp(24px, 2.6vw, 32px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; overflow-wrap: anywhere; }
+.cob-kpi--ruim dd { color: var(--critical-ink); }
+.cob-kpi--dinheiro dd { color: var(--money); }
+
+.cob-ajuda { margin: 0 0 16px; font-size: 14px; }
+.cob-ajuda summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent-ink); font-weight: 500; list-style: none; }
+.cob-ajuda summary::-webkit-details-marker { display: none; }
+.cob-ajuda summary::before { content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-wash); font-size: 12px; font-weight: 700; }
+.cob-ajuda p { margin: 8px 0 0; padding: 12px 16px; border-radius: 12px; background: var(--accent-wash); color: var(--ink-soft); max-width: 70ch; }
+
+/* Filtros */
+.cob-filtros { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 14px; }
+
+/* Lista */
+.cob-cabecalho, .cob-item { display: grid; grid-template-columns: minmax(190px, 1.15fr) minmax(0, .85fr) minmax(175px, .8fr) minmax(140px, .75fr) 300px; gap: 20px; align-items: start; }
+.cob-cabecalho { padding: 0 20px 10px; border: 1px solid transparent; border-width: 0 1px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.cob-col-num { text-align: right; }
+.cob-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.cob-item { position: relative; padding: 16px 20px; border: 1px solid var(--line); border-radius: var(--cob-raio); background: var(--surface); box-shadow: var(--raise); }
+
+.cob-quem { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.cob-avatar { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: var(--accent-wash); color: var(--accent-ink); font-weight: 700; font-size: 14px; }
+.cob-quem-texto { display: flex; flex-direction: column; min-width: 0; padding-top: 2px; }
+.cob-cliente { font-weight: 650; font-size: 16px; color: var(--ink); overflow-wrap: anywhere; }
+.cob-cliente:hover { color: var(--accent-ink); text-decoration: underline; }
+.cob-contrato { font-size: 13px; color: var(--ink-faint); overflow-wrap: anywhere; }
+
+.cob-situacao { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.cob-situacao .situacao-selos { display: flex; flex-wrap: wrap; gap: 6px; }
+.cob-situacao .atraso-dias { font-size: 13px; font-weight: 600; color: var(--critical-ink); }
+
+.cob-valor { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 2px; }
+.cob-valor .valor-cobrar { font-size: 22px; font-weight: 700; letter-spacing: -.02em; color: var(--money); }
+.cob-valor .helptext { font-size: 12px; color: var(--ink-faint); }
+
+.cob-envio { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.cob-envio .envio-vias { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+
+.cob-acoes { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.cob-acoes-linha { display: flex; align-items: center; gap: 8px; }
+.cob-acoes-linha .contato-vias { display: inline-flex; gap: 6px; margin-left: auto; }
+.cob-registrar { flex: 1; justify-content: center; white-space: nowrap; }
+.cob-acoes-linha--sec { justify-content: flex-end; }
+.cob-acoes-linha--sec .btn { white-space: nowrap; }
+.cob-acoes-linha--sec form { margin: 0; }
+
+.cob-promessas { margin: 0 0 16px; padding: 16px 20px; border: 1px solid var(--line); border-radius: var(--cob-raio); background: var(--amber-wash); }
+.cob-promessas h2 { margin: 0 0 4px; font-size: 16px; }
+.cob-vazio { padding: 40px 16px; border-radius: var(--cob-raio); }
+
+/* Movimento */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cob-sobe { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .cob-topo, .cob-auto, .cob-kpi, .cob-filtros, .cob-ajuda, .cob-item, .cob-promessas { animation: cob-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .cob-kpi:nth-child(2) { animation-delay: 50ms; }
+  .cob-kpi:nth-child(3) { animation-delay: 100ms; }
+  .cob-kpi:nth-child(4) { animation-delay: 150ms; }
+  .cob-item:nth-child(1) { animation-delay: 120ms; }
+  .cob-item:nth-child(2) { animation-delay: 170ms; }
+  .cob-item:nth-child(3) { animation-delay: 220ms; }
+  .cob-item:nth-child(4) { animation-delay: 270ms; }
+  .cob-item:nth-child(n+5) { animation-delay: 320ms; }
+  .cob-kpi, .cob-item { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .cob-item:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); border-color: var(--line-strong); }
+  .cob-ajuda p { animation: cob-sobe .25s ease-out; }
+}
+
+/* Telas menores: cada cobrança vira um cartão em pilha */
+@media (max-width: 1180px) {
+  .cob-cabecalho { display: none; }
+  .cob-item { grid-template-columns: minmax(0, 1fr) auto; gap: 14px 16px; }
+  .cob-quem { grid-column: 1; }
+  .cob-valor { grid-column: 2; grid-row: 1; }
+  .cob-situacao { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .cob-envio { grid-column: 1 / -1; }
+  .cob-envio .envio-vias { flex-direction: row; flex-wrap: wrap; }
+  .cob-acoes { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+  .cob-acoes-linha { flex: 1 1 auto; }
+  .cob-acoes-linha--sec { justify-content: flex-start; flex-wrap: wrap; }
+  .cob-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .cob-acoes { flex-direction: column; align-items: stretch; }
+  .cob-acoes-linha--sec .btn, .cob-acoes-linha--sec form { flex: 1; }
+  .cob-acoes-linha--sec .btn { width: 100%; justify-content: center; }
+  .cob-kpi { padding: 12px 14px; }
+}
+.cob-acoes .icon-btn { width: 40px; height: 40px; }
+.cob-acoes-linha--sec .btn { padding-inline: 12px; }
+@media (max-width: 700px) {
+  .cob-item { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  .cob-valor { grid-column: 1; grid-row: auto; align-items: flex-start; text-align: left; }
+  .cob-acoes-linha { width: 100%; }
+}
+.cob-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 500; vertical-align: 1px; }
+.cob-apelido { margin-left: 6px; color: var(--ink-faint); font-size: 13px; }

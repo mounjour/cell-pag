@@ -26,7 +26,7 @@
           <div><strong>{{ s.cliente.nome }}</strong> <small>({{ s.motivo }})</small></div>
           <div class="proximas-item__acoes proximas-item__acoes--solto">
           {% for contrato, parcela in s.contratos %}
-            <a class="btn-mini btn-mini--pagar" href="{% url 'pagamentos:novo' contrato.pk %}?recebido={{ r.pk }}">{% include "_icone.html" with nome="quitar" %}{{ contrato.apelido }} · parcela {{ parcela.numero }}</a>
+            <a class="btn-mini btn-mini--pagar" href="{% url 'pagamentos:novo' contrato.pk %}?recebido={{ r.pk }}">{% include "_icone.html" with nome="quitar" %}{{ contrato.apelido }}, parcela {{ parcela.numero }}</a>
           {% empty %}<small>Sem parcela em aberto.</small>{% endfor %}
           </div>
         {% empty %}
@@ -50,7 +50,7 @@
         <span class="proximas-item__cliente">{{ r.nome|default:"—" }}</span>
         <span class="proximas-item__detalhe">recebido em {{ r.recebido_em|date:"d/m H:i" }}</span>
       </div>
-      <div class="proximas-item__selos"><span class="proximas-item__nota">{{ r.get_situacao_display }}{% if r.tratado_por %} · {{ r.tratado_por.nome_curto }}{% endif %}</span></div>
+      <div class="proximas-item__selos"><span class="proximas-item__nota">{{ r.get_situacao_display }}{% if r.tratado_por %}, {{ r.tratado_por.nome_curto }}{% endif %}</span></div>
       <strong class="proximas-item__valor num">R$ {{ r.valor }}</strong>
       <span></span>
     </div>
