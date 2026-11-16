@@ -117,3 +117,8 @@
 }
 .cob-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 500; vertical-align: 1px; }
 .cob-apelido { margin-left: 6px; color: var(--ink-faint); font-size: 13px; }
+
+/* Linha de baixo das ações: os botões dividem a largura por igual; se sobrar um só, ele ocupa a linha toda. */
+.cob-acoes-linha--sec { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; justify-content: stretch; }
+.cob-acoes-linha--sec .btn { width: 100%; justify-content: center; }
+.cob-acoes-linha--sec form { display: contents; }
