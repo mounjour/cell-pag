@@ -1,112 +1,185 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Início{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/inicio.css' %}?v=2">{% endblock %}
 
 {% block content %}
-<div class="painel-entrada">
-<div class="toolbar dashboard-heading">
-  <div>
-    <span class="eyebrow">{{ painel.hoje|date:"l, d/m/Y" }}</span>
-    <h1>{% include "_icone.html" with nome="inicio" %}Hoje</h1>
-    <p class="page-description">O que precisa de você agora.</p>
+<div class="ic">
+  <div class="ic-top">
+    <div>
+      <div class="ic-eyebrow">{{ painel.hoje|date:"l, j \d\e F \d\e Y" }}</div>
+      <h1>Cobranças de hoje</h1>
+      <div class="ic-sub">{% if hoje.a_cobrar_n %}{{ hoje.a_cobrar_n }} cobrança{{ hoje.a_cobrar_n|pluralize }} pendente{{ hoje.a_cobrar_n|pluralize }} · R$ {{ hoje.a_cobrar_valor|floatformat:2 }} para receber{% else %}Tudo em dia por hoje.{% endif %}</div>
+    </div>
+    <div class="ic-top-actions">
+      <a class="ic-btn" href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar todos no WhatsApp</a>
+      <a class="ic-btn primary" href="{% url 'contratos:novo' %}">+ Nova cobrança</a>
+    </div>
   </div>
-  <span class="spacer"></span>
-  <div class="atalhos-topo" aria-label="Atalhos rápidos">
-    <a class="btn secondary" href="{% url 'clientes:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo cliente</a>
-    <a class="btn secondary" href="{% url 'contratos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo contrato</a>
-    <a class="btn secondary" href="{% url 'contratos:importar_previa' %}">{% include "_icone.html" with nome="baixar" %}Importar planilha</a>
+
+  <section class="ic-kpis" aria-label="Indicadores">
+    <div class="ic-kpi"><small>A cobrar hoje</small><b class="num">R$ {{ hoje.a_cobrar_valor|floatformat:2 }}</b><span>{{ ic.vencem_hoje_abertas }} vence{{ ic.vencem_hoje_abertas|pluralize:",m" }} hoje + {{ hoje.n_atraso }} vencida{{ hoje.n_atraso|pluralize }}</span></div>
+    <div class="ic-kpi good"><small>Recebido hoje</small><b class="num">R$ {{ hoje.recebido_hoje|floatformat:2 }}</b><span>{{ hoje.recebido_hoje_n }} pagamento{{ hoje.recebido_hoje_n|pluralize }}</span></div>
+    <div class="ic-kpi{% if painel.total_atrasado %} bad{% endif %}"><small>Em atraso</small><b class="num">R$ {{ painel.total_atrasado|floatformat:2 }}</b><span>{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }} · {{ ic.n_clientes_atraso }} cliente{{ ic.n_clientes_atraso|pluralize }}</span></div>
+    <div class="ic-kpi"><small>Próximos 7 dias</small><b class="num">R$ {{ ic.total_proximos|floatformat:2 }}</b><span>{{ ic.proximas_n }} parcela{{ ic.proximas_n|pluralize }}</span></div>
+    <div class="ic-kpi"><small>Contratos ativos</small><b class="num">{{ painel.contratos_ativos }}</b><span>Ticket médio R$ {{ painel.ticket_medio|floatformat:2 }}</span></div>
+    <div class="ic-kpi"><small>Progresso do dia</small><b class="num">{{ ic.progresso }}%</b><span>recebido ÷ (recebido + a cobrar)</span><div class="ic-goal"><i style="width:{{ ic.progresso }}%"></i></div></div>
+  </section>
+
+  <div class="ic-grid">
+    <div>
+      {% with p=ic.prioridade %}
+      {% if p %}
+      <article class="ic-card ic-priority">
+        <div class="ic-tags">
+          <span class="ic-tag">⏱ {{ p.situacao.dias_atraso }} dia{{ p.situacao.dias_atraso|pluralize }} em atraso</span>
+          {% if p.situacao.status == "inadimplente" %}<span class="ic-tag">Inadimplente</span>{% endif %}
+          {% if p.bloqueado %}<span class="ic-tag warn">Aparelho bloqueado</span>{% elif p.situacao.alertar_bloqueio %}<span class="ic-tag warn">Bloqueio pendente</span>{% endif %}
+        </div>
+        <div class="ic-eyebrow">Cobrança prioritária</div>
+        <div class="ic-pr-row">
+          <div>
+            <h2><a href="{% url 'clientes:detalhe' p.contrato.cliente.pk %}">{{ p.contrato.cliente.nome }}</a></h2>
+            <div class="ic-device">{{ p.contrato.aparelho_modelo|default:p.contrato.apelido }} · <a href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.apelido }}</a></div>
+          </div>
+          <div class="ic-amount num">{% if p.a_cobrar is not None %}R$ {{ p.a_cobrar|floatformat:2 }}{% else %}—{% endif %}<small>com juros até hoje</small></div>
+        </div>
+        <div class="ic-pr-actions">
+          <a class="ic-btn primary" href="{% url 'pagamentos:novo' p.contrato.pk %}">Registrar pagamento</a>
+          <a class="ic-btn" href="{{ p.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="ic-btn" href="tel:{{ p.contrato.cliente.telefone_whatsapp.as_e164 }}">Ligar</a>
+          {% if p.situacao.alertar_bloqueio and not p.bloqueado %}<a class="ic-btn" href="{% url 'aparelhos:bloqueios' %}">Registrar bloqueio</a>{% endif %}
+        </div>
+      </article>
+      {% endif %}
+      {% endwith %}
+
+      <div class="ic-sec-head">
+        <h3>Vence hoje</h3>
+        <div class="ic-tabs" role="tablist" data-ic-abas="venc">
+          <button class="ic-tab" type="button" role="tab" aria-selected="true" data-f="todos">Todas</button>
+          <button class="ic-tab" type="button" role="tab" aria-selected="false" data-f="aberta">Pendentes</button>
+          <button class="ic-tab" type="button" role="tab" aria-selected="false" data-f="paga">Pagas</button>
+        </div>
+      </div>
+      <div class="ic-list" data-ic-lista="venc">
+        {% for v in ic.venceu_hoje %}
+          <div class="ic-item{% if v.paga %} done{% endif %}" data-f="{% if v.paga %}paga{% else %}aberta{% endif %}">
+            <div class="ic-ini">{{ v.contrato.cliente.nome|slice:":2"|upper }}</div>
+            <div class="ic-info"><b><a href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a></b><span>{{ v.contrato.aparelho_modelo|default:v.contrato.apelido }} · parcela {{ v.numero }}/{{ v.contrato.num_parcelas }}</span></div>
+            <span class="ic-when{% if v.paga %} paid{% endif %}">{% if v.paga %}Paga{% else %}Vence hoje{% endif %}</span>
+            <div class="ic-val num">R$ {{ v.valor_exibido|floatformat:2 }}</div>
+            <div class="ic-acts">
+              <a class="ic-btn sm" href="{{ v.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
+              {% if not v.paga %}<a class="ic-btn sm primary" href="{% url 'pagamentos:novo' v.contrato.pk %}">Registrar pagamento</a>{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+        <div class="ic-empty" data-ic-vazio{% if ic.venceu_hoje %} hidden{% endif %}>Nenhuma parcela neste filtro.</div>
+      </div>
+    </div>
+
+    <aside class="ic-side">
+      <section class="ic-card ic-balance">
+        <h3>Saldo do dia</h3>
+        <div class="ic-line"><span>A cobrar<small>{{ hoje.a_cobrar_n }} cobrança{{ hoje.a_cobrar_n|pluralize }}</small></span><b class="num">R$ {{ hoje.a_cobrar_valor|floatformat:2 }}</b></div>
+        <div class="ic-line"><span>Recebido<small>{{ hoje.recebido_hoje_n }} pagamento{{ hoje.recebido_hoje_n|pluralize }}</small></span><b class="num">R$ {{ hoje.recebido_hoje|floatformat:2 }}</b></div>
+      </section>
+      <section class="ic-card ic-integ">
+        <h3>Contratos por situação</h3>
+        <div class="ic-stack">{% for s in ic.situacoes %}{% if s.n %}<i style="width:{{ s.pct|stringformat:'.2f' }}%;background:{{ s.cor }}"></i>{% endif %}{% endfor %}</div>
+        {% for s in ic.situacoes %}<div class="ic-sit"><span><i style="background:{{ s.cor }}"></i>{{ s.rotulo }}</span><b class="num">{{ s.n }}</b></div>{% endfor %}
+        <div class="ic-rule">Atrasado e inadimplente seguem a regra de atraso do sistema.</div>
+      </section>
+      <section class="ic-card ic-integ">
+        <h3>Integrações</h3>
+        <a class="ic-status{% if pix_alertas_n %} alerta{% endif %}" href="{% url 'pagamentos:pix_painel' %}">
+          <span><i class="ic-dot"></i>Pix</span><em>{% if pix_alertas_n %}{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }}{% else %}Em dia{% endif %}</em>
+        </a>
+        <a class="ic-status{% if whatsapp_estado != 'open' and whatsapp_estado != 'simulado' %} alerta{% endif %}" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-tile>
+          <span><i class="ic-dot"></i>WhatsApp</span>
+          <em data-whatsapp-tile-valor>{% if whatsapp_estado == 'open' %}Conectado{% elif whatsapp_estado == 'simulado' %}Simulação{% else %}Desconectado{% endif %}</em>
+        </a>
+      </section>
+    </aside>
   </div>
+
+  <div class="ic-row3">
+    <section class="ic-card ic-panel">
+      <h3>Recebimentos da semana</h3>
+      <div class="ic-hint">{{ ic.grafico.ini|date:"j b"|lower }} a {{ ic.grafico.fim|date:"j b"|lower }} · dias passados mostram o recebido; de hoje em diante, o previsto</div>
+      <div class="ic-chart" role="img" aria-label="Recebido e previsto por dia, de {{ ic.grafico.ini|date:'d/m' }} a {{ ic.grafico.fim|date:'d/m' }}">
+        <div class="ic-yaxis" aria-hidden="true">{% for m in ic.grafico.marcas %}<span style="bottom:{{ m.pct|stringformat:'.2f' }}%">{{ m.rotulo }}</span>{% endfor %}</div>
+        <div class="ic-plot">
+          {% for m in ic.grafico.marcas %}<div class="ic-grid-l" style="bottom:{{ m.pct|stringformat:'.2f' }}%"></div>{% endfor %}
+          <div class="ic-bars">
+            {% for d in ic.grafico.dias %}
+              <div class="ic-col" title="Recebido R$ {{ d.rec|floatformat:2 }} · Previsto R$ {{ d.prev|floatformat:2 }}">
+                <div class="ic-stk" style="height:{{ d.altura|stringformat:'.2f' }}%">
+                  {% if d.rec %}<div class="ic-seg rec" style="height:{{ d.rec_pct|stringformat:'.2f' }}%"></div>{% endif %}
+                  {% if d.prev %}<div class="ic-seg prev" style="height:{{ d.prev_pct|stringformat:'.2f' }}%"></div>{% endif %}
+                </div>
+                <div class="ic-lbl num" style="bottom:calc({{ d.altura|stringformat:'.2f' }}% + 4px)">{{ d.rotulo }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="ic-xaxis" aria-hidden="true">{% for d in ic.grafico.dias %}<div{% if d.hoje %} class="today"{% endif %}>{% if d.hoje %}Hoje{% else %}{{ d.data|date:"D"|lower }}{% endif %}<br>{{ d.data|date:"j" }}</div>{% endfor %}</div>
+      </div>
+      <div class="ic-leg">
+        <span><i class="rec"></i>Recebido <b class="num">R$ {{ ic.grafico.recebido|floatformat:2 }}</b></span>
+        <span><i class="prev"></i>Previsto <b class="num">R$ {{ ic.grafico.previsto|floatformat:2 }}</b></span>
+        <span>Valores em R$</span>
+      </div>
+    </section>
+
+    <section class="ic-card ic-panel">
+      <h3>Próximos vencimentos</h3>
+      <div class="ic-hint">{{ painel.hoje|date:"j b"|lower }} a {{ ic.fim_janela|date:"j b"|lower }} · <b class="num">R$ {{ ic.total_proximos|floatformat:2 }}</b> em {{ ic.proximas_n }} parcela{{ ic.proximas_n|pluralize }}</div>
+      {% for v in ic.proximas %}
+        <div class="ic-mini">
+          <div class="ic-d"><b>{{ v.data_vencimento|date:"j" }}</b><small>{{ v.data_vencimento|date:"b" }}</small></div>
+          <div class="ic-info"><b><a href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a>{% if v.data_vencimento == painel.hoje %}<span class="ic-pill">hoje</span>{% endif %}</b><span>{{ v.contrato.aparelho_modelo|default:v.contrato.apelido }} · parcela {{ v.numero }}/{{ v.contrato.num_parcelas }}</span></div>
+          <div class="ic-v num">R$ {{ v.valor_exibido|floatformat:2 }}</div>
+        </div>
+      {% empty %}<div class="ic-empty">Nenhum vencimento no período.</div>{% endfor %}
+      {% if ic.proximas_restante %}<p class="ic-mais"><a href="{% url 'contratos:lista' %}">+ {{ ic.proximas_restante }} outra{{ ic.proximas_restante|pluralize }} no período</a></p>{% endif %}
+    </section>
+
+    <section class="ic-card ic-panel">
+      <div class="ic-panel-head">
+        <h3>Últimos pagamentos</h3>
+        <div class="ic-tabs" role="tablist" data-ic-abas="metodo">
+          <button class="ic-tab" type="button" role="tab" aria-selected="true" data-f="todos" data-total="{{ ic.ultimos_total|floatformat:2 }}">Todos</button>
+          <button class="ic-tab" type="button" role="tab" aria-selected="false" data-f="pix" data-total="{{ ic.ultimos_pix|floatformat:2 }}">Pix</button>
+          <button class="ic-tab" type="button" role="tab" aria-selected="false" data-f="dinheiro" data-total="{{ ic.ultimos_dinheiro|floatformat:2 }}">Dinheiro</button>
+        </div>
+      </div>
+      <div class="ic-hint">{{ ic.grafico.ini|date:"j b"|lower }} a {{ painel.hoje|date:"j b"|lower }} (mesmo período do gráfico) · <span data-ic-nome>Pix e dinheiro</span>: <b class="num">R$ <span data-ic-total>{{ ic.ultimos_total|floatformat:2 }}</span></b></div>
+      <div data-ic-lista="metodo">
+        {% for p in ic.ultimos %}
+          <div class="ic-mini" data-f="{{ p.forma }}">
+            <div class="ic-ini">{{ p.contrato.cliente.nome|slice:":2"|upper }}</div>
+            <div class="ic-info"><b>{{ p.contrato.cliente.nome }}</b><span>{% if p.data_pagamento == painel.hoje %}Hoje{% else %}{{ p.data_pagamento|date:"D"|lower }} {{ p.data_pagamento|date:"j b"|lower }}{% endif %}, {{ p.hora }} · {{ p.get_forma_display }}</span></div>
+            <div class="ic-v ok num">+R$ {{ p.valor_pago|floatformat:2 }}</div>
+          </div>
+        {% endfor %}
+        <div class="ic-empty" data-ic-vazio{% if ic.ultimos %} hidden{% endif %}>Nenhum pagamento com este método.</div>
+      </div>
+    </section>
+  </div>
+
+  <section class="ic-card ic-summary">
+    <h3>Resumo financeiro</h3>
+    <div class="ic-sum-grid">
+      <div><small>A receber em aberto</small><b class="num">R$ {{ painel.a_receber|floatformat:2 }}</b><span>total da carteira</span></div>
+      <div><small>Em atraso</small><b class="num danger">R$ {{ painel.total_atrasado|floatformat:2 }}</b><span>{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }} vencida{{ painel.qtd_atrasados|pluralize }}</span></div>
+      <div><small>Recebido no mês</small><b class="num">R$ {{ painel.recebido_mes|floatformat:2 }}</b><span>de R$ {{ painel.previsto_mes|floatformat:2 }} previstos</span></div>
+      <div><small>Contratos ativos</small><b class="num">{{ painel.contratos_ativos }}</b><span>Ticket médio R$ {{ painel.ticket_medio|floatformat:2 }}</span></div>
+      <div><small>Inadimplentes / atrasados</small><b class="num">{{ painel.inadimplentes }} / {{ painel.atrasados_contratos }}</b><span>contratos</span></div>
+    </div>
+  </section>
 </div>
-
-<section class="hoje-faixa" aria-label="Hoje">
-  <a class="hoje-tile{% if hoje.a_cobrar_n %} hoje-tile--acao{% endif %}" href="{% url 'pagamentos:cobrar_hoje' %}">
-    <span class="hoje-tile-rotulo">A cobrar hoje</span>
-    <strong class="hoje-tile-valor">{{ hoje.a_cobrar_n }} cobrança{{ hoje.a_cobrar_n|pluralize }}</strong>
-    <span class="hoje-tile-sub">{% if hoje.a_cobrar_n %}R$ {{ hoje.a_cobrar_valor|floatformat:2 }}{% if hoje.n_bloqueio %} · {{ hoje.n_bloqueio }} para bloquear{% endif %}{% else %}Nada para cobrar agora{% endif %}</span>
-  </a>
-  <a class="hoje-tile" href="{% url 'pagamentos:historico' %}">
-    <span class="hoje-tile-rotulo">Recebido hoje</span>
-    <strong class="hoje-tile-valor kpi-dinheiro">R$ {{ hoje.recebido_hoje|floatformat:2 }}</strong>
-    <span class="hoje-tile-sub">{{ hoje.recebido_hoje_n }} pagamento{{ hoje.recebido_hoje_n|pluralize }}</span>
-  </a>
-  <a class="hoje-tile{% if pix_alertas_n %} hoje-tile--alerta{% endif %}" href="{% url 'pagamentos:pix_painel' %}">
-    <span class="hoje-tile-rotulo">Pix</span>
-    {% if pix_alertas_n %}
-      <strong class="hoje-tile-valor">{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix</strong>
-      <span class="hoje-tile-sub">Conferir pendências</span>
-    {% else %}
-      <strong class="hoje-tile-valor">Em dia</strong>
-      <span class="hoje-tile-sub">Nenhuma pendência</span>
-    {% endif %}
-  </a>
-  <a class="hoje-tile{% if whatsapp_estado != 'open' and whatsapp_estado != 'simulado' %} hoje-tile--alerta{% endif %}" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-tile>
-    <span class="hoje-tile-rotulo">WhatsApp</span>
-    {% if whatsapp_estado == 'open' %}
-      <strong class="hoje-tile-valor" data-whatsapp-tile-valor>Conectado</strong>
-      <span class="hoje-tile-sub" data-whatsapp-tile-sub>Cobranças saindo normalmente</span>
-    {% elif whatsapp_estado == 'simulado' %}
-      <strong class="hoje-tile-valor" data-whatsapp-tile-valor>Simulação</strong>
-      <span class="hoje-tile-sub" data-whatsapp-tile-sub>Nenhuma mensagem real é enviada</span>
-    {% else %}
-      <strong class="hoje-tile-valor" data-whatsapp-tile-valor>Desconectado</strong>
-      <span class="hoje-tile-sub" data-whatsapp-tile-sub>Reconectar para voltar a cobrar</span>
-    {% endif %}
-  </a>
-</section>
-
-<section class="fila-acao" aria-labelledby="fila-titulo">
-  <div class="fila-cabecalho">
-    <h2 id="fila-titulo">Quem cobrar agora</h2>
-    {% if hoje.a_cobrar_n %}<a href="{% url 'pagamentos:cobrar_hoje' %}">Ver as {{ hoje.a_cobrar_n }} cobrança{{ hoje.a_cobrar_n|pluralize }}</a>{% endif %}
-  </div>
-  {% if hoje.fila %}
-    <ul class="fila-lista">
-      {% for l in hoje.fila %}
-        <li class="fila-item">
-          <div class="fila-quem">
-            <a class="fila-cliente" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a>
-            <a class="fila-contrato" href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a>
-          </div>
-          <div class="fila-situacao">
-            {% if l.situacao.dias_atraso %}<span class="pill {{ l.situacao.status }}">{{ l.situacao.dias_atraso }} dia{{ l.situacao.dias_atraso|pluralize }} de atraso</span>{% else %}<span class="pill em_dia">Cobrança hoje</span>{% endif %}
-            {% if l.bloqueado %}<span class="pill bloqueado">{% include "_icone.html" with nome="bloqueio" %} bloqueado</span>{% elif l.situacao.alertar_bloqueio %}<a class="pill alerta-bloqueio" href="{% url 'aparelhos:bloqueios' %}">{% include "_icone.html" with nome="bloqueio" %}bloquear aparelho</a>{% endif %}
-          </div>
-          <strong class="fila-valor num">{% if l.a_cobrar is not None %}R$ {{ l.a_cobrar|floatformat:2 }}{% else %}—{% endif %}</strong>
-          <div class="fila-acoes">
-            {% include "_contato_icones.html" with cliente=l.contrato.cliente %}
-            <a class="btn btn-registrar" href="{% url 'pagamentos:novo' l.contrato.pk %}" aria-label="Registrar pagamento de {{ l.contrato.cliente.nome }} — {{ l.contrato.apelido }}">{% include "_icone.html" with nome="dinheiro" %}Registrar</a>
-          </div>
-        </li>
-      {% endfor %}
-    </ul>
-    {% if hoje.fila_restante %}<p class="fila-mais"><a href="{% url 'pagamentos:cobrar_hoje' %}">+ {{ hoje.fila_restante }} outra{{ hoje.fila_restante|pluralize }} em Cobrar hoje</a></p>{% endif %}
-  {% else %}
-    <div class="empty"><p>Nada para cobrar agora. Bom trabalho!</p></div>
-  {% endif %}
-</section>
-
-<dl class="kpi-faixa" aria-label="Números do financeiro">
-  <div>
-    <dt>A receber em aberto</dt>
-    <dd class="num kpi-dinheiro">R$ {{ painel.a_receber|floatformat:2 }}</dd>
-  </div>
-  <div>
-    <dt>Em atraso</dt>
-    <dd class="num{% if painel.total_atrasado %} critical-text{% endif %}">R$ {{ painel.total_atrasado|floatformat:2 }}<span class="kpi-sub">{{ painel.qtd_atrasados }} parcela{{ painel.qtd_atrasados|pluralize }}</span></dd>
-  </div>
-  <div>
-    <dt>Recebido no mês</dt>
-    <dd class="num kpi-dinheiro">R$ {{ painel.recebido_mes|floatformat:2 }}<span class="kpi-sub">de R$ {{ painel.previsto_mes|floatformat:2 }}</span></dd>
-  </div>
-  <div>
-    <dt>Contratos ativos</dt>
-    <dd class="num">{{ painel.contratos_ativos }}<span class="kpi-sub">média R$ {{ painel.ticket_medio|floatformat:2 }}</span></dd>
-  </div>
-  <div>
-    <dt>Inadimplentes</dt>
-    <dd class="num{% if painel.inadimplentes %} critical-text{% endif %}">{{ painel.inadimplentes }}<span class="kpi-sub">{{ painel.atrasados_contratos }} atrasado{{ painel.atrasados_contratos|pluralize }}</span></dd>
-  </div>
-</dl>
-
-</div>
+<script src="{% static 'js/inicio.js' %}?v=1" defer></script>
 {% endblock %}

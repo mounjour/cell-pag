@@ -41,8 +41,11 @@
     if (!tile) return;
     const ok = estado === "open";
     tile.classList.toggle("hoje-tile--alerta", !ok);
-    tile.querySelector("[data-whatsapp-tile-valor]").textContent = ok ? "Conectado" : "Desconectado";
-    tile.querySelector("[data-whatsapp-tile-sub]").textContent = ok ? "Cobranças saindo normalmente" : "Reconectar para voltar a cobrar";
+    tile.classList.toggle("alerta", !ok);
+    const valor = tile.querySelector("[data-whatsapp-tile-valor]");
+    if (valor) valor.textContent = ok ? "Conectado" : "Desconectado";
+    const sub = tile.querySelector("[data-whatsapp-tile-sub]");
+    if (sub) sub.textContent = ok ? "Cobranças saindo normalmente" : "Reconectar para voltar a cobrar";
   };
 
   const atualizarCartao = async () => {

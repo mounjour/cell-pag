@@ -304,3 +304,125 @@ def montar_hoje(hoje: datetime.date | None = None, limite_fila: int = FILA_DE_AC
         "fila": agenda["linhas"][:limite_fila],
         "fila_restante": max(len(agenda["linhas"]) - limite_fila, 0),
     }
+
+
+# ── Tela inicial (layout "Cobranças de hoje") ────────────────────────────────
+
+JANELA_VENCIMENTOS = 7        # "Próximos vencimentos": de hoje até hoje + 7 dias
+GRAFICO_DIAS = 3              # gráfico: 3 dias antes e 3 depois de hoje
+LIMITE_LISTA_INICIO = 8
+
+
+def _escala_do_grafico(maior: Decimal) -> tuple[Decimal, list[Decimal]]:
+    """Máximo "redondo" do eixo e as marcas (0, passo, 2*passo…), como no desenho da tela."""
+    import math
+
+    v = float(maior)
+    if v <= 0:
+        return Decimal("100"), [Decimal(x) for x in range(0, 101, 20)]
+    p = 10 ** math.floor(math.log10(v))
+    n = v / p
+    m = 1 if n <= 1 else 2 if n <= 2 else 2.5 if n <= 2.5 else 5 if n <= 5 else 10
+    maximo = m * p
+    passo = maximo / (4 if m == 2 else 5)
+    marcas = []
+    t = 0.0
+    while t <= maximo + 1e-9:
+        marcas.append(Decimal(str(round(t, 2))))
+        t += passo
+    return Decimal(str(maximo)), marcas
+
+
+def _rotulo_compacto(v: Decimal) -> str:
+    v = float(v)
+    if v >= 1000:
+        return f"{v / 1000:.1f}".replace(".", ",").removesuffix(",0") + " mil"
+    return str(round(v))
+
+
+def montar_inicio_cobrancas(hoje: datetime.date, painel: dict, hoje_dados: dict) -> dict:
+    """Tudo o que a tela inicial mostra além do que já vem de ``montar_painel_inicial`` e ``montar_hoje``."""
+    fim_janela = hoje + datetime.timedelta(days=JANELA_VENCIMENTOS)
+    base = Vencimento.objects.select_related("contrato__cliente")
+
+    venceu_hoje = list(base.filter(data_vencimento=hoje).exclude(contrato__status=Contrato.Status.QUITADO).order_by("contrato__cliente__nome"))
+    for v in venceu_hoje:
+        v.paga = v.status == Vencimento.Status.PAGO
+        v.valor_exibido = v.valor_pago if v.paga else v.saldo
+    proximas_qs = list(base.em_aberto().filter(data_vencimento__gte=hoje, data_vencimento__lte=fim_janela).order_by("data_vencimento", "contrato__cliente__nome"))
+    for v in proximas_qs:
+        v.valor_exibido = v.saldo
+    total_proximos = sum((v.valor_exibido for v in proximas_qs), Decimal("0.00"))
+
+    # Contratos por situação (a barra e as linhas ao lado)
+    ids_vencidos = set(base.em_aberto().filter(data_vencimento__lt=hoje).values_list("contrato_id", flat=True))
+    n_vencendo = len({v.contrato_id for v in proximas_qs} - ids_vencidos)
+    contagem = painel["status_contagem"]
+    n_inad, n_atr = painel["inadimplentes"], painel["atrasados_contratos"]
+    n_dia = max(0, contagem.get("em_dia", 0) - n_vencendo)
+    total_ctr = max(painel["contratos_ativos"], 1)
+    situacoes = [
+        {"rotulo": "Em dia", "n": n_dia, "cor": "var(--ic-ok)"},
+        {"rotulo": f"Vence em até {JANELA_VENCIMENTOS} dias", "n": n_vencendo, "cor": "var(--ic-warn)"},
+        {"rotulo": "Atrasado", "n": n_atr, "cor": "#d97a2b"},
+        {"rotulo": "Inadimplente", "n": n_inad, "cor": "var(--ic-danger)"},
+    ]
+    for s in situacoes:
+        s["pct"] = round(s["n"] / total_ctr * 100, 2)
+
+    # Gráfico: recebido até hoje + previsto de hoje em diante
+    ini = hoje - datetime.timedelta(days=GRAFICO_DIAS)
+    fim = hoje + datetime.timedelta(days=GRAFICO_DIAS)
+    recebido_por_dia = dict(
+        Pagamento.objects.filter(data_pagamento__range=(ini, hoje)).values("data_pagamento").annotate(t=Coalesce(Sum("valor_pago"), ZERO)).values_list("data_pagamento", "t")
+    )
+    previsto_por_dia: dict = {}
+    for v in base.em_aberto().filter(data_vencimento__range=(hoje, fim)):
+        previsto_por_dia[v.data_vencimento] = previsto_por_dia.get(v.data_vencimento, Decimal("0.00")) + v.saldo
+    dias = []
+    for i in range((fim - ini).days + 1):
+        d = ini + datetime.timedelta(days=i)
+        rec = recebido_por_dia.get(d, Decimal("0.00")) if d <= hoje else Decimal("0.00")
+        prev = previsto_por_dia.get(d, Decimal("0.00")) if d >= hoje else Decimal("0.00")
+        dias.append({"data": d, "rec": rec, "prev": prev, "total": rec + prev, "hoje": d == hoje})
+    maximo, marcas = _escala_do_grafico(max(d["total"] for d in dias))
+    for d in dias:
+        d["altura"] = float(d["total"] / maximo * 100)
+        d["rec_pct"] = float(d["rec"] / d["total"] * 100) if d["total"] else 0
+        d["prev_pct"] = float(d["prev"] / d["total"] * 100) if d["total"] else 0
+        d["rotulo"] = _rotulo_compacto(d["total"])
+    marcas = [{"valor": m, "pct": float(m / maximo * 100), "rotulo": _rotulo_compacto(m)} for m in marcas]
+
+    ultimos = list(
+        Pagamento.objects.filter(data_pagamento__range=(ini, hoje)).select_related("contrato__cliente").order_by("-data_pagamento", "-criado_em")
+    )
+    for p in ultimos:
+        p.hora = timezone.localtime(p.criado_em).strftime("%H:%M")
+    total_pix = sum((p.valor_pago for p in ultimos if p.forma == Pagamento.Forma.PIX), Decimal("0.00"))
+    total_dinheiro = sum((p.valor_pago for p in ultimos if p.forma == Pagamento.Forma.DINHEIRO), Decimal("0.00"))
+
+    a_cobrar, recebido = hoje_dados["a_cobrar_valor"], hoje_dados["recebido_hoje"]
+    progresso = round(recebido / (recebido + a_cobrar) * 100) if (recebido + a_cobrar) > 0 else 100
+
+    fila = hoje_dados["fila"]
+    prioridade = fila[0] if fila and fila[0]["situacao"].dias_atraso else None
+
+    return {
+        "fim_janela": fim_janela,
+        "venceu_hoje": venceu_hoje,
+        "proximas": proximas_qs[:LIMITE_LISTA_INICIO],
+        "proximas_n": len(proximas_qs),
+        "proximas_restante": max(len(proximas_qs) - LIMITE_LISTA_INICIO, 0),
+        "total_proximos": total_proximos,
+        "vencem_hoje_abertas": sum(1 for v in venceu_hoje if not v.paga),
+        "n_clientes_atraso": Vencimento.objects.em_aberto().filter(data_vencimento__lt=hoje).values("contrato__cliente").distinct().count(),
+        "progresso": progresso,
+        "situacoes": situacoes,
+        "grafico": {"dias": dias, "marcas": marcas, "ini": ini, "fim": fim,
+                    "recebido": sum((d["rec"] for d in dias), Decimal("0.00")), "previsto": sum((d["prev"] for d in dias), Decimal("0.00"))},
+        "ultimos": ultimos[:LIMITE_LISTA_INICIO + 2],
+        "ultimos_total": sum((p.valor_pago for p in ultimos), Decimal("0.00")),
+        "ultimos_pix": total_pix,
+        "ultimos_dinheiro": total_dinheiro,
+        "prioridade": prioridade,
+    }
