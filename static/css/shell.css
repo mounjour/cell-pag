@@ -366,3 +366,90 @@ h1 > .icone { width: 1.05em; height: 1.05em; margin-right: 0.45rem; vertical-ali
   color: var(--critical-ink);
 }
 .menu-item--sair:hover .icone, .menu-item--sair:focus-visible .icone { color: var(--critical-ink); }
+
+/* ───────────── Menu lateral recolhível + movimento (computador) ───────────── */
+.lateral-toggle { display: none; }
+
+@media (min-width: 1024px) {
+  .lateral-toggle {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    width: 40px; height: 40px; border: 0; border-radius: var(--radius-sm); background: transparent;
+    color: var(--ink-soft); cursor: pointer;
+  }
+  .lateral-toggle:hover { background: var(--surface-2); color: var(--ink); }
+  .lateral-toggle svg { transition: transform .3s cubic-bezier(.2, .8, .2, 1); }
+  :root[data-lateral="recolhida"] .lateral-toggle svg { transform: scaleX(-1); }
+
+  .nav a { position: relative; }
+  .nav-grupo { white-space: nowrap; }
+
+  /* Recolhido: só os ícones (76 px). Tudo o que muda passa por uma transição. */
+  :root[data-lateral="recolhida"] .app-shell { --lateral: 76px; }
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) { width: 76px; }
+  /* Passou o mouse: abre por cima do conteúdo (a página não se mexe) e fecha de novo ao sair. */
+  :root[data-lateral="recolhida"] .sidebar:is(:hover, :has(details[open])) { width: 232px; z-index: 40; box-shadow: 0 10px 30px rgb(0 0 0 / 14%); }
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) { padding-inline: .75rem; }
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .brand { justify-content: center; gap: 0; padding-inline: 0; }
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .nav a { justify-content: center; gap: 0; padding-inline: 0; }
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .nav a > span:not(.selo):not(.sr-only),
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .brand-nome,
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .user-name,
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .chevron { max-width: 0; opacity: 0; margin: 0; }
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .nav-grupo {
+    font-size: 0; height: 1px; margin: .7rem .6rem; padding: 0; background: var(--line); opacity: 1;
+  }
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .nav-grupo:first-child { display: none; }
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .selo {
+    position: absolute; top: 4px; right: 4px; min-width: 16px; height: 16px; margin: 0; padding: 0 4px; font-size: .6rem;
+  }
+  :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .sidebar-rodape .menu-usuario > summary { justify-content: center; gap: 0; padding-inline: 0; }
+
+  /* A lateral e o conteúdo andam juntos, na mesma velocidade. */
+  .sidebar, .app-shell { transition: width .3s cubic-bezier(.2, .8, .2, 1), padding-left .3s cubic-bezier(.2, .8, .2, 1), padding-inline .3s cubic-bezier(.2, .8, .2, 1); }
+  .sidebar .nav a > span:not(.selo):not(.sr-only), .brand-nome, .sidebar .user-name, .sidebar .chevron {
+    display: inline-block; max-width: 14rem; overflow: hidden; white-space: nowrap;
+    transition: max-width .3s cubic-bezier(.2, .8, .2, 1), opacity .2s ease, margin .3s ease;
+  }
+  .sidebar .nav a, .sidebar .brand, .sidebar-rodape .menu-usuario > summary { transition: gap .3s ease, padding .3s ease, background-color .15s ease, color .15s ease; }
+  .sidebar .nav-grupo { transition: font-size .2s ease, height .3s ease, margin .3s ease, background-color .3s ease; overflow: hidden; }
+  .sidebar .selo { transition: top .3s ease, right .3s ease, min-width .3s ease, height .3s ease, padding .3s ease; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Itens do menu: o ícone dá um leve "pulinho" e o item ativo ganha uma barra que desliza. */
+  .nav a .icone { transition: transform .2s cubic-bezier(.2, .8, .2, 1), color .15s ease; }
+  .nav a:hover .icone { transform: scale(1.12); }
+  .nav a:active { transform: scale(.98); }
+  /* A barrinha da página atual é uma só e desliza até o item novo (ver static/js/menu.js). */
+  .nav-marcador { transition: transform .38s cubic-bezier(.3, 1.2, .4, 1), height .3s ease, opacity .2s ease; }
+  .nav-marcador.sem-transicao { transition: none; }
+  .selo { animation: selo-pop .35s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+  @keyframes selo-pop { from { transform: scale(0); } to { transform: scale(1); } }
+  .menu-pop > .menu-painel { animation: menu-abre .18s cubic-bezier(.2, .8, .2, 1) both; transform-origin: bottom left; }
+  @keyframes menu-abre { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+  .menu-pop .chevron { transition: transform .2s ease; }
+  .menu-pop[open] .chevron { transform: rotate(180deg); }
+
+  /* Entre uma página e outra (Chrome/Edge): o menu e a barra de cima ficam parados e só o conteúdo troca. */
+  @view-transition { navigation: auto; }
+  .sidebar { view-transition-name: lateral; }
+  .topo { view-transition-name: topo; }
+  ::view-transition-group(lateral), ::view-transition-group(topo) { animation-duration: 0s; }
+  ::view-transition-old(root) { animation: vt-sai .14s ease-in both; }
+  ::view-transition-new(root) { animation: vt-entra .22s ease-out both; }
+  @keyframes vt-sai { to { opacity: 0; } }
+  @keyframes vt-entra { from { opacity: 0; } }
+}
+
+/* O botão de recolher fica colado na borda do menu lateral; a busca continua alinhada ao conteúdo. */
+@media (min-width: 1024px) {
+  .topo { padding-left: .5rem; }
+  .lateral-toggle { margin-right: .5rem; }
+}
+
+.nav { position: relative; }
+.nav-marcador {
+  position: absolute; left: -.5rem; top: 0; width: 3px; height: 20px; border-radius: 3px;
+  background: var(--accent); opacity: 0; pointer-events: none; will-change: transform;
+}
+@media (min-width: 1024px) { .nav-marcador.visivel { opacity: 1; } }

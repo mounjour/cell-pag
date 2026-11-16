@@ -16,7 +16,7 @@ from apps.usuarios.mixins import DonoRequeridoMixin
 from .dashboard import montar_dashboard
 from .forms import PeriodoForm
 from .pdf import montar_pdf
-from .servicos import montar_hoje, montar_juros_em_aberto, montar_painel_inicial, montar_relatorio
+from .servicos import montar_hoje, montar_inicio_cobrancas, montar_juros_em_aberto, montar_painel_inicial, montar_relatorio
 
 POR_PAGINA_JUROS = 20
 
@@ -74,6 +74,7 @@ class InicioView(LoginRequiredMixin, TemplateView):
         ctx["painel"] = painel
         ctx["hoje"] = montar_hoje(painel["hoje"])
         ctx["whatsapp_estado"] = status_whatsapp()
+        ctx["ic"] = montar_inicio_cobrancas(painel["hoje"], painel, ctx["hoje"])
         return ctx
 
 

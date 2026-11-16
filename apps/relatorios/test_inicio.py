@@ -84,13 +84,13 @@ def test_inicio_mostra_o_que_pede_acao_antes_dos_numeros(auth_client, monkeypatc
     monkeypatch.setattr("apps.pagamentos.whatsapp.obter_status_conexao", lambda: "open")
     _contrato_atrasado("Fila Visivel", 3)
     html = auth_client.get(reverse("relatorios:inicio")).content.decode()
-    assert "Quem cobrar agora" in html and "Fila Visivel" in html
-    assert html.index("hoje-faixa") < html.index("fila-acao") < html.index("kpi-faixa")
-    assert "canvas" not in html and "graficos-recolhiveis" not in html  # os gráficos moram na tela Financeiro
+    assert "Cobranças de hoje" in html and "Cobrança prioritária" in html and "Fila Visivel" in html
+    assert html.index("ic-kpis") < html.index("ic-priority") < html.index("Recebimentos da semana") < html.index("Resumo financeiro")
+    assert "canvas" not in html
     assert "data-whatsapp-tile" in html
 
 
 @pytest.mark.django_db
 def test_inicio_sem_cobrancas_diz_que_esta_tudo_em_dia(auth_client):
     html = auth_client.get(reverse("relatorios:inicio")).content.decode()
-    assert "Nada para cobrar agora" in html
+    assert "Tudo em dia por hoje." in html and "Nenhum vencimento no período." in html

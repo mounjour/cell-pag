@@ -10,14 +10,15 @@
   <title>{% block title %}Acompanhamento de Pagamentos{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{% static favicon_arquivo %}">{# mapeamento em config/context_processors.py #}
   <link rel="preload" href="{% static 'fonts/dm-sans-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <script src="{% static 'js/lateral.js' %}?v=1"></script>
   <script src="{% static 'js/tema.js' %}"></script>{# no <head>, antes da pintura: evita o flash do tema errado #}
   <script src="{% static 'js/notificacoes.js' %}?v=20261006-1" defer></script>
   <script src="{% static 'js/formularios.js' %}?v=4" defer></script>
   <script src="{% static 'js/mascaras.js' %}?v=1" defer></script>
-  {% if user.is_authenticated %}<script src="{% static 'js/conexoes_vivo.js' %}?v=6" defer></script>{% endif %}
+  {% if user.is_authenticated %}<script src="{% static 'js/conexoes_vivo.js' %}?v=7" defer></script>{% endif %}
   <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261104-sem-graficos">
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}?v=20261104-sem-graficos">
-  <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261104-financeiro">
+  <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261116-lateral4">
   {% block extra_styles %}{% endblock %}
   {% block extra_head %}{% endblock %}
 </head>
@@ -28,7 +29,7 @@
   {% with secao=request.resolver_match.app_name pagina=request.resolver_match.url_name %}
 
   {# Menu lateral (computador) #}
-  <aside class="sidebar">
+  <aside class="sidebar" id="menu-lateral">
     <a class="brand" href="{% url 'relatorios:inicio' %}">
       {% include "_marca.html" %}
       <span class="brand-nome">Pagamentos</span>
@@ -78,6 +79,7 @@
 
   {# Barra superior: busca, tema e usuário #}
   <header class="topo">
+    <button type="button" class="lateral-toggle" data-lateral-toggle aria-controls="menu-lateral" aria-expanded="true" aria-label="Recolher o menu lateral" title="Recolher menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/><path d="m15.5 9.5-2.5 2.5 2.5 2.5"/></svg></button>
     <a class="brand brand--topo" href="{% url 'relatorios:inicio' %}" aria-label="Início">
       {% include "_marca.html" %}
       <span class="brand-nome">Pagamentos</span>
@@ -160,7 +162,7 @@
   <script src="{% static 'js/voltar.js' %}" defer></script>
   <script src="{% static 'js/confirmar_envio.js' %}?v=1" defer></script>
   <script src="{% static 'js/linha_clicavel.js' %}?v=1" defer></script>
-  {% if user.is_authenticated %}  <script src="{% static 'js/menu.js' %}" defer></script>
+  {% if user.is_authenticated %}  <script src="{% static 'js/menu.js' %}?v=4" defer></script>
   <script src="{% static 'js/busca.js' %}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>
