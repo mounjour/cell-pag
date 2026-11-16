@@ -4,7 +4,7 @@
   <div><dt>Cliente</dt><dd>{{ contrato.cliente.nome }}</dd></div>
   <div><dt>Contrato</dt><dd>{{ contrato.apelido }} · {{ contrato.get_estrutura_display }}</dd></div>
   <div><dt>Valor da parcela</dt><dd class="num">{% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
-  <div><dt>A cobrar hoje</dt><dd class="num">R$ {{ resumo_cobranca.total|floatformat:2 }}{% include "pagamentos/_composicao.html" with resumo=resumo_cobranca %}</dd></div>
+  <div><dt>A cobrar hoje</dt><dd class="num">R$ {{ resumo_cobranca.total|floatformat:"2g" }}{% include "pagamentos/_composicao.html" with resumo=resumo_cobranca %}</dd></div>
 </dl>
 
 {% if recebimento_cora %}

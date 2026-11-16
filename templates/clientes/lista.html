@@ -59,10 +59,10 @@
             </td>
             <td data-label="A receber" class="a-receber">
               {% if s.estado == "atraso" %}
-                <strong class="valor-atraso">R$ {{ s.devido|floatformat:2 }}</strong>
-                <small>inclui R$ {{ s.juros|floatformat:2 }} de juros</small>
+                <strong class="valor-atraso">R$ {{ s.devido|floatformat:"2g" }}</strong>
+                <small>inclui R$ {{ s.juros|floatformat:"2g" }} de juros</small>
               {% elif s.proximo_vencimento %}
-                <strong>R$ {{ s.proximo_valor|floatformat:2 }}</strong>
+                <strong>R$ {{ s.proximo_valor|floatformat:"2g" }}</strong>
                 <small>{% if s.estado == "hoje" %}cobrança hoje{% else %}cobrança {{ s.proximo_vencimento|date:"d/m" }}{% endif %}</small>
               {% else %}<span class="nada">—</span>{% endif %}
             </td>

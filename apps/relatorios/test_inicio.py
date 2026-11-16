@@ -84,8 +84,8 @@ def test_inicio_mostra_o_que_pede_acao_antes_dos_numeros(auth_client, monkeypatc
     monkeypatch.setattr("apps.pagamentos.whatsapp.obter_status_conexao", lambda: "open")
     _contrato_atrasado("Fila Visivel", 3)
     html = auth_client.get(reverse("relatorios:inicio")).content.decode()
-    assert "Cobranças de hoje" in html and "Cobrança prioritária" in html and "Fila Visivel" in html
-    assert html.index("ic-kpis") < html.index("ic-priority") < html.index("Recebimentos da semana") < html.index("Resumo financeiro")
+    assert "Cobranças de hoje" in html and "Cliente mais atrasado" in html and "Fila Visivel" in html
+    assert html.index("ic-kpis") < html.index("ic-priority") < html.index("Recebido e previsto na semana") < html.index("Resumo financeiro")
     assert "canvas" not in html
     assert "data-whatsapp-tile" in html
 

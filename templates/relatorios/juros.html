@@ -7,7 +7,7 @@
 <h2>Em aberto hoje</h2>
 <p class="count">
   Total em juros de parcelas atrasadas hoje ({{ juros_em_aberto.hoje|date:"d/m/Y" }}):
-  <strong>R$ {{ juros_em_aberto.total|floatformat:2 }}</strong>
+  <strong>R$ {{ juros_em_aberto.total|floatformat:"2g" }}</strong>
   em {{ juros_em_aberto.total_linhas }} contrato{{ juros_em_aberto.total_linhas|pluralize }}.
 </p>
 {% if juros_em_aberto.linhas %}
@@ -21,7 +21,7 @@
           <td data-label="Contrato"><a href="{% url 'contratos:detalhe' item.contrato.pk %}">{{ item.contrato.apelido }}</a></td>
           <td data-label="Parcelas" class="num">{% if item.quantidade_parcelas %}{{ item.quantidade_parcelas }}{% else %}—{% endif %}</td>
           <td data-label="Dias de atraso" class="num">{{ item.dias_atraso }}</td>
-          <td data-label="Juros hoje" class="num critical-text">R$ {{ item.juros|floatformat:2 }}</td>
+          <td data-label="Juros hoje" class="num critical-text">R$ {{ item.juros|floatformat:"2g" }}</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -42,7 +42,7 @@
 {% if relatorio %}
   <p class="count">
     Período de {{ relatorio.inicio|date:"d/m/Y" }} a {{ relatorio.fim|date:"d/m/Y" }}:
-    juros recebidos <strong>R$ {{ relatorio.total_juros|floatformat:2 }}</strong>.
+    juros recebidos <strong>R$ {{ relatorio.total_juros|floatformat:"2g" }}</strong>.
   </p>
   {% if juros_recebimentos %}
     <div class="tbl-wrap cards">
@@ -55,7 +55,7 @@
             <td data-label="Cliente">{{ p.contrato.cliente.nome }}</td>
             <td data-label="Contrato">{{ p.contrato.apelido }}</td>
             <td data-label="Parcela">{% if p.vencimento %}nº {{ p.vencimento.numero }}{% else %}—{% endif %}</td>
-            <td data-label="Juros" class="num">R$ {{ p.juros_pago|floatformat:2 }}</td>
+            <td data-label="Juros" class="num">R$ {{ p.juros_pago|floatformat:"2g" }}</td>
           </tr>
         {% endfor %}
         </tbody>

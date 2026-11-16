@@ -11,7 +11,7 @@
   <div><dt>Atraso</dt><dd>{% if dias_atraso %}{{ dias_atraso }} dia{{ dias_atraso|pluralize }}{% else %}Em dia{% endif %}</dd></div>
   <div><dt>Parcela</dt><dd class="num">R$ {{ vencimento.saldo }}</dd></div>
   <div><dt>Juros hoje</dt><dd class="num">R$ {{ juros_hoje }}{% if juros_perdoados %} <small>(já perdoado R$ {{ juros_perdoados }})</small>{% endif %}</dd></div>
-  <div><dt>Total hoje</dt><dd class="num"><strong>R$ {{ total_hoje|floatformat:2 }}</strong></dd></div>
+  <div><dt>Total hoje</dt><dd class="num"><strong>R$ {{ total_hoje|floatformat:"2g" }}</strong></dd></div>
 </dl>
 
 {% if motivo %}

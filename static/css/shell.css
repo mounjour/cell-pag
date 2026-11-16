@@ -2,7 +2,7 @@
    superior e barra inferior (celular). Carregado por último; o restante das
    telas vive em base.css e workspace.css. */
 
-.app-shell { --lateral: 232px; --topo-h: 60px; --tabbar-h: 62px; }
+.app-shell { --lateral: 252px; --topo-h: 60px; --tabbar-h: 62px; }
 .app-shell { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); }
 
 /* ---------- Marca ---------- */
@@ -387,7 +387,7 @@ h1 > .icone { width: 1.05em; height: 1.05em; margin-right: 0.45rem; vertical-ali
   :root[data-lateral="recolhida"] .app-shell { --lateral: 76px; }
   :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) { width: 76px; }
   /* Passou o mouse: abre por cima do conteúdo (a página não se mexe) e fecha de novo ao sair. */
-  :root[data-lateral="recolhida"] .sidebar:is(:hover, :has(details[open])) { width: 232px; z-index: 40; box-shadow: 0 10px 30px rgb(0 0 0 / 14%); }
+  :root[data-lateral="recolhida"] .sidebar:is(:hover, :has(details[open])) { width: 252px; z-index: 40; box-shadow: 0 10px 30px rgb(0 0 0 / 14%); }
   :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) { padding-inline: .75rem; }
   :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .brand { justify-content: center; gap: 0; padding-inline: 0; }
   :root[data-lateral="recolhida"] .sidebar:not(:hover):not(:has(details[open])) .nav a { justify-content: center; gap: 0; padding-inline: 0; }
@@ -453,3 +453,12 @@ h1 > .icone { width: 1.05em; height: 1.05em; margin-right: 0.45rem; vertical-ali
   background: var(--accent); opacity: 0; pointer-events: none; will-change: transform;
 }
 @media (min-width: 1024px) { .nav-marcador.visivel { opacity: 1; } }
+
+/* ── Marca CellPage ── */
+:root { --marca-1: #0a2a6b; --marca-2: #0a66ff; }
+:root[data-tema="escuro"] { --marca-1: #a9c2f7; --marca-2: #4d94ff; }
+.brand-nome { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; }
+.brand-nome b { color: var(--marca-1); font-weight: inherit; }
+.brand-nome i { color: var(--marca-2); font-style: normal; }
+.brand-mark { transition: transform .35s cubic-bezier(.3, 1.4, .5, 1); }
+.brand:hover .brand-mark { transform: rotate(-8deg) scale(1.06); }

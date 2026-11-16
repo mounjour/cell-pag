@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Saúde das rotinas{% endblock %}
+{% block title %}Tarefas automáticas{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
 
 {% block content %}
 {% url 'pagamentos:conexoes' as conexoes_url %}{% include "_voltar.html" with url=conexoes_url %}
-<h1>{% include "_icone.html" with nome="conexoes" %}Saúde das rotinas</h1>
+<h1>{% include "_icone.html" with nome="conexoes" %}Tarefas automáticas</h1>
 
 <div class="note">
   <p><strong>Para que serve:</strong> várias coisas do sistema acontecem sozinhas, sem ninguém clicar: as cobranças da manhã, a leitura do extrato da Cora e a geração das parcelas. Se uma delas para de rodar ou começa a falhar, ninguém percebe até um cliente deixar de ser cobrado ou um Pix ficar sem baixa. Esta tela mostra a última vez que cada uma rodou e avisa quando alguma parou, falhou ou travou. Mostra também se o que está no ar é a versão mais recente do sistema.</p>

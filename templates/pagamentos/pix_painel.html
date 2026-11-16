@@ -4,7 +4,7 @@
 
 {% block content %}
 <h1>{% include "_icone.html" with nome="pix" %}Acompanhamento Pix · {{ hoje|date:"d/m/Y" }}</h1>
-<p class="acoes-linha"><a class="btn secondary" href="{% url 'pagamentos:recebidos' %}">{% include "_icone.html" with nome="dinheiro" %}Pix recebidos direto na Cora</a>
+<p class="acoes-linha"><a class="btn secondary" href="{% url 'pagamentos:recebidos' %}">{% include "_icone.html" with nome="dinheiro" %}Pix recebidos sem baixa</a>
 <a class="btn secondary" href="{% url 'pagamentos:conferencia_cora' %}">{% include "_icone.html" with nome="quitar" %}Conferência com a Cora</a></p>
 <p class="note">Uma cobrança Pix pode reunir várias parcelas vencidas e a de hoje, sem juros. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
 
@@ -46,7 +46,7 @@
   <ul class="duplicidade-lista">
     {% for c in duplicadas %}
       <li>
-        <span><a href="{% url 'clientes:detalhe' c.vencimento.contrato.cliente.pk %}">{{ c.vencimento.contrato.cliente.nome }}</a> · {{ c.vencimento.contrato.apelido }} · parcela {{ c.vencimento.numero }} · <strong class="num">R$ {{ c.total_pago|floatformat:2 }}</strong>{% if c.pago_em %} · pago em {{ c.pago_em|date:"d/m/Y H:i" }}{% endif %}</span>
+        <span><a href="{% url 'clientes:detalhe' c.vencimento.contrato.cliente.pk %}">{{ c.vencimento.contrato.cliente.nome }}</a> · {{ c.vencimento.contrato.apelido }} · parcela {{ c.vencimento.numero }} · <strong class="num">R$ {{ c.total_pago|floatformat:"2g" }}</strong>{% if c.pago_em %} · pago em {{ c.pago_em|date:"d/m/Y H:i" }}{% endif %}</span>
         <form method="post" action="{% url 'pagamentos:pix_duplicidade_resolvida' c.pk %}">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
@@ -77,7 +77,7 @@
         <td data-label="Contrato"><a href="{% url 'contratos:detalhe' c.contrato.pk %}">{{ c.contrato.apelido }}</a></td>
         <td data-label="Parcela" class="num">{{ c.rotulo_parcelas }}</td>
         <td data-label="Data de cobrança" class="num">{{ c.data_vencimento|date:"d/m/Y" }}</td>
-        <td data-label="Valor" class="num">R$ {{ c.valor|floatformat:2 }}</td>
+        <td data-label="Valor" class="num">R$ {{ c.valor|floatformat:"2g" }}</td>
         <td data-label="Status">
           <span class="pill pill-pix {{ c.status }}">{% if c.status == 'pago' %}✅{% elif c.status == 'vencido' %}❌{% endif %} {{ c.get_status_display }}</span>
           {% if c.erro %}<span class="helptext">{{ c.erro }}</span>{% endif %}
