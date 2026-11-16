@@ -196,6 +196,6 @@ def test_tela_de_pendencias_corta_o_texto_longo_e_mantem_o_botao_resolver_visive
     html = auth_client.get(reverse("contratos:importacao_pendencias")).content.decode()
     assert 'class="pend-texto"' in html and "2 avisos" in html
     # o texto completo fica acessível ao passar o mouse
-    assert 'title="CPF ou telefone ausente nesta linha. · IMEI ausente' in html
+    assert 'title="CPF ou telefone ausente nesta linha. IMEI ausente' in html
     assert reverse("contratos:resolver_importacao", args=[p.pk]) in html and "Resolver" in html
     assert ImportacaoContratoPendente.objects.count() == 1

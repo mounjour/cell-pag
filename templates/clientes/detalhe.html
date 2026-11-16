@@ -104,7 +104,7 @@
           <tr>
             <td class="num">{{ c.criado_em|date:"d/m/Y" }}</td>
             <td data-label="Contrato"><a href="{% url 'contratos:detalhe' c.contrato.pk %}#contatos">{{ c.contrato.apelido }}</a></td>
-            <td data-label="Contato">{{ c.get_tipo_display }}{% if c.autor %} · {{ c.autor.nome_curto }}{% endif %}</td>
+            <td data-label="Contato">{{ c.get_tipo_display }}{% if c.autor %}, {{ c.autor.nome_curto }}{% endif %}</td>
             <td data-label="Resultado">{{ c.get_resultado_display }}{% if c.promessa_para %} até {{ c.promessa_para|date:"d/m" }}{% endif %}</td>
             <td data-label="Anotação" class="wrap-cell">{{ c.nota|default:"—" }}</td>
           </tr>
@@ -143,8 +143,8 @@
 {% if pagamentos %}
   <p class="count">
     {{ pagamentos_total }} pagamento{{ pagamentos_total|pluralize }} no total
-    {% if pagamentos_total > 50 %}· mostrando os 50 mais recentes{% endif %}
-    · <a href="{% url 'pagamentos:historico' %}?cliente={{ cliente.pk }}">ver histórico</a>
+    {% if pagamentos_total > 50 %} mostrando os 50 mais recentes{% endif %}
+   , <a href="{% url 'pagamentos:historico' %}?cliente={{ cliente.pk }}">ver histórico</a>
   </p>
   <div class="tbl-wrap cards">
     <table>

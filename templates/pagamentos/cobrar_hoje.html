@@ -1,40 +1,54 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Cobrar hoje{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/cobrar_hoje.css' %}?v=7">{% endblock %}
 
 {% block content %}
-<div class="toolbar">
-  <h1>{% include "_icone.html" with nome="cobrar" %}Cobrar hoje · {{ hoje|date:"d/m/Y" }}</h1>
-</div>
+<div class="cob">
+<header class="cob-topo">
+  <div>
+    <span class="cob-eyebrow">{{ hoje|date:"l, j \d\e F \d\e Y" }}</span>
+    <h1>{% include "_icone.html" with nome="cobrar" %}Cobrar hoje</h1>
+    <p class="cob-sub">{% if total_linhas %}{{ total_linhas }} cliente{{ total_linhas|pluralize }} para cobrar agora, do mais atrasado ao menos atrasado.{% else %}Quem está atrasado ou tem cobrança no dia aparece aqui.{% endif %}</p>
+  </div>
+</header>
 
-<section class="card pausa-cobrancas{% if config_cobranca.pausada %} pausa-cobrancas--ativa{% endif %}">
+{# Cobranças automáticas: quando está tudo certo, só uma faixa; quando precisa de atenção, um cartão maior. #}
+<section class="cob-auto{% if config_cobranca.nunca_iniciada %} cob-auto--atencao{% elif config_cobranca.pausada %} cob-auto--pausada{% else %} cob-auto--ativa{% endif %} pausa-cobrancas{% if config_cobranca.pausada %} pausa-cobrancas--ativa{% endif %}">
   <form method="post" action="{% url 'pagamentos:cobrancas_pausa' %}">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
     {% if config_cobranca.nunca_iniciada %}
-      <p><span class="pill aberto">Ainda não começaram</span> As cobranças automáticas estão paradas: a rotina não manda mensagem nem gera Pix para os clientes. Comece só quando tudo estiver conferido (WhatsApp conectado, clientes e contratos importados, Pix testado).</p>
-      <label class="check-linha"><input type="checkbox" name="conferido" value="1" required> Conferi que está tudo certo para começar a cobrar os clientes.</label>
+      <div class="cob-auto-texto">
+        <p><span class="pill aberto">Ainda não começaram</span> As cobranças automáticas estão paradas: a rotina não manda mensagem nem gera Pix para os clientes. Comece só quando tudo estiver conferido (WhatsApp conectado, clientes e contratos importados, Pix testado).</p>
+        <label class="check-linha"><input type="checkbox" name="conferido" value="1" required> Conferi que está tudo certo para começar a cobrar os clientes.</label>
+      </div>
       <button type="submit" name="acao" value="comecar" class="btn">{% include "_icone.html" with nome="retomar" %}Começar cobranças</button>
     {% elif config_cobranca.pausada %}
-      <p><span class="pill inadimplente">Pausadas</span> As cobranças automáticas estão pausadas
-        {% if config_cobranca.pausada_em %}desde {{ config_cobranca.pausada_em|date:"d/m/Y H:i" }}{% endif %}{% if config_cobranca.pausada_por %} por {{ config_cobranca.pausada_por.get_username }}{% endif %}.
-        A rotina não gera Pix nem envia mensagem aos clientes; pagamentos já feitos continuam sendo baixados.</p>
+      <div class="cob-auto-texto">
+        <p><span class="pill inadimplente">Pausadas</span> As cobranças automáticas estão pausadas
+          {% if config_cobranca.pausada_em %}desde {{ config_cobranca.pausada_em|date:"d/m/Y H:i" }}{% endif %}{% if config_cobranca.pausada_por %} por {{ config_cobranca.pausada_por.get_username }}{% endif %}.
+          A rotina não gera Pix nem envia mensagem aos clientes; pagamentos já feitos continuam sendo baixados.</p>
+      </div>
       <button type="submit" name="acao" value="retomar" class="btn">{% include "_icone.html" with nome="retomar" %}Retomar cobranças automáticas</button>
     {% else %}
-      <p><span class="pill pago">Ativas</span> A rotina das 8h30 cobra os clientes automaticamente (mensagem e Pix).</p>
-      <button type="submit" name="acao" value="pausar" class="btn cancelar">{% include "_icone.html" with nome="suspender" %}Pausar cobranças automáticas</button>
+      <div class="cob-auto-texto">
+        <p><span class="pill pago">Ativas</span> A rotina das 8h30 cobra os clientes automaticamente (mensagem e Pix).</p>
+      </div>
+      <button type="submit" name="acao" value="pausar" class="btn cancelar cob-pausar">{% include "_icone.html" with nome="suspender" %}Pausar cobranças automáticas</button>
     {% endif %}
   </form>
 </section>
 
 {% if promessas %}
-<section class="card promessas-card">
+<section class="cob-promessas promessas-card">
   <h2>{% include "_icone.html" with nome="historico" %}Promessas de pagamento <span class="count">{{ promessas|length }}</span></h2>
   <p class="helptext">Clientes que prometeram pagar até hoje (ou antes) e ainda não pagaram. Fale com eles de novo e anote o resultado.</p>
-  <ul class="promessas-lista">
+  <ul class="cob-promessas-lista promessas-lista">
     {% for p in promessas %}
       <li>
-        <a href="{% url 'contratos:detalhe' p.contato.contrato.pk %}#contatos"><strong>{{ p.contato.contrato.cliente.nome }}</strong> · {{ p.contato.contrato.apelido }}</a>
+        <a href="{% url 'contratos:detalhe' p.contato.contrato.pk %}#contatos"><strong>{{ p.contato.contrato.cliente.nome }}</strong> <span class="cob-apelido">{{ p.contato.contrato.apelido }}</span></a>
         {% if p.estado == "hoje" %}<span class="pill aberto">prometeu pagar hoje</span>{% else %}<span class="pill inadimplente">prometeu {{ p.contato.promessa_para|date:"d/m" }} e não pagou</span>{% endif %}
         {% if p.contato.nota %}<small>{{ p.contato.nota }}</small>{% endif %}
       </li>
@@ -43,7 +57,7 @@
 </section>
 {% endif %}
 
-<div class="filtro-pills">
+<div class="cob-filtros filtro-pills">
   <a class="filtro-pill{% if not estrutura_atual %} ativo{% endif %}" href="?">Todas as frequências</a>
   {% for valor, rotulo in estrutura_opcoes %}
     <a class="filtro-pill{% if valor == estrutura_atual %} ativo{% endif %}" href="?estrutura={{ valor }}">{{ rotulo }}</a>
@@ -51,4 +65,5 @@
 </div>
 
 {% include "pagamentos/_cobrar_hoje_painel.html" %}
+</div>
 {% endblock %}

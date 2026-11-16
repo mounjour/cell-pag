@@ -535,6 +535,6 @@ def test_cobrar_hoje_mostra_valor_mesmo_sem_valor_parcela(auth_client, cliente):
     assert linha["a_cobrar"] > 0
     # a célula "A cobrar" traz o valor (só juros) em vez de "—"
     corpo = resp.content.decode()
-    celula = corpo.split("SemParcela", 1)[1].split("</tr>", 1)[0]
+    celula = corpo.split("SemParcela", 1)[1].split("</li>", 1)[0]
     assert "só juros" in celula
     assert 'class="valor-cobrar' in celula

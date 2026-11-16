@@ -5,7 +5,7 @@
 {% block content %}
 {% url 'clientes:detalhe' contrato.cliente.pk as cliente_url %}{% include "_voltar.html" with url=cliente_url %}
 <div class="toolbar">
-  <h1>{{ contrato.numero_interno }} · <a href="{% url 'clientes:detalhe' contrato.cliente.pk %}">{{ contrato.cliente.nome }}</a> — {{ contrato.apelido }}</h1>
+  <h1>{{ contrato.numero_interno }}, <a href="{% url 'clientes:detalhe' contrato.cliente.pk %}">{{ contrato.cliente.nome }}</a> — {{ contrato.apelido }}</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Ver cliente</a>
   <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
@@ -86,7 +86,7 @@
         <p>
           <span class="pill {{ s.status }}">{{ contrato.status_efetivo_label }}</span>
           {{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }} de atraso
-          {% if p %}(parcela nº {{ p.numero }}){% endif %} ·
+          {% if p %}(parcela nº {{ p.numero }}){% endif %} 
           juros da parcela mais antiga <strong class="num">R$ {{ s.juros }}</strong>
         </p>
         {% if s.alertar_bloqueio and not bloqueio_ativo %}
@@ -109,7 +109,7 @@
 <h2>Parcelas</h2>
 {% with vencimentos=contrato.vencimentos.all total_venc=contrato.vencimentos.count %}
   {% if vencimentos %}
-    <p class="count">{{ total_venc }} parcela{{ total_venc|pluralize }} gerada{{ total_venc|pluralize }}{% if total_venc > vencimentos_exibidos|length %} · mostrando {{ vencimentos_exibidos|length }} (a partir da primeira em aberto) · <a href="?todas=1">ver todas</a>{% elif ver_todas and total_venc > 24 %} · <a href="?">mostrar menos</a>{% endif %}.</p>
+    <p class="count">{{ total_venc }} parcela{{ total_venc|pluralize }} gerada{{ total_venc|pluralize }}{% if total_venc > vencimentos_exibidos|length %}, mostrando {{ vencimentos_exibidos|length }} (a partir da primeira em aberto), <a href="?todas=1">ver todas</a>{% elif ver_todas and total_venc > 24 %}, <a href="?">mostrar menos</a>{% endif %}.</p>
     {% if not contrato.quitado and contrato.valor_parcela %}
       <form method="post" action="{% url 'contratos:gerar_vencimentos' contrato.pk %}" style="margin:-0.35rem 0 1rem">
         {% csrf_token %}
@@ -124,10 +124,10 @@
             <tr class="{% if v.status == 'pago' %}parcela-paga{% elif parcela_proxima and v.pk == parcela_proxima.pk %}parcela-proxima{% endif %}{% if v.status != 'pago' and v.data_vencimento < hoje %} parcela-atrasada{% endif %}{% if request.GET.pago == v.numero|stringformat:"s" %} linha-pagamento-confirmado{% endif %}">
               <td class="parcela-numero">{{ v.numero }}</td>
               <td class="num" data-label="Data de cobrança">{{ v.data_vencimento|date:"d/m/Y" }}{% if v.data_original %}<br><small>era {{ v.data_original|date:"d/m/Y" }}</small>{% endif %}</td>
-              <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}{% with dif=v.diferenca_do_original %}{% if dif %}<br><small title="Valor original da parcela: R$ {{ contrato.valor_parcela }}" class="parcela-diferenca{% if dif < 0 %} parcela-diferenca--menos{% endif %}">R$ {{ dif|floatformat:"2g"|cut:"-" }} {% if dif < 0 %}abaixo{% else %}acima{% endif %} do original{% if v.acrescimo_motivo %} · {{ v.acrescimo_motivo }}{% endif %}</small>{% endif %}{% endwith %}</td>
+              <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}{% with dif=v.diferenca_do_original %}{% if dif %}<br><small title="Valor original da parcela: R$ {{ contrato.valor_parcela }}" class="parcela-diferenca{% if dif < 0 %} parcela-diferenca--menos{% endif %}">R$ {{ dif|floatformat:"2g"|cut:"-" }} {% if dif < 0 %}abaixo{% else %}acima{% endif %} do original{% if v.acrescimo_motivo %}, {{ v.acrescimo_motivo }}{% endif %}</small>{% endif %}{% endwith %}</td>
               <td class="num" data-label="Pago">R$ {{ v.valor_pago }}</td>
               <td class="num parcela-saldo{% if v.saldo > 0 %} parcela-saldo--devido{% endif %}" data-label="Saldo">R$ {{ v.saldo }}</td>
-              <td data-label="Status">{% with atraso=v.dias_em_atraso %}{% if atraso %}<span class="pill pill--icone atrasado">{% include "_icone.html" with nome="alerta" %}Atrasada · {{ atraso }} dia{{ atraso|pluralize }}</span>{% else %}<span class="pill pill--icone {{ v.status }}">{% if v.status == "pago" %}{% include "_icone.html" with nome="quitar" %}{% elif v.status == "parcial" %}{% include "_icone.html" with nome="parcial" %}{% else %}{% include "_icone.html" with nome="historico" %}{% endif %}{{ v.get_status_display }}</span>{% endif %}{% endwith %}{% if v.ultima_baixa %}<br><small class="parcela-baixa" title="Baixa registrada por {{ v.ultima_baixa.usuario_baixa|default:'—' }}">{{ v.ultima_baixa.get_forma_display }} · {{ v.ultima_baixa.data_pagamento|date:"d/m/Y" }}{% if v.status == "parcial" %} (parcial){% endif %}</small>{% elif v.status == "pago" %}<br><small class="parcela-baixa" title="A parcela foi marcada como paga sem um pagamento registrado (ex.: importada ou ajustada à mão).">sem baixa registrada</small>{% endif %}{% if v.juros_abonado %}<br><small>juros perdoados: R$ {{ v.juros_abonado }}</small>{% endif %}</td>
+              <td data-label="Status">{% with atraso=v.dias_em_atraso %}{% if atraso %}<span class="pill pill--icone atrasado">{% include "_icone.html" with nome="alerta" %}Atrasada, {{ atraso }} dia{{ atraso|pluralize }}</span>{% else %}<span class="pill pill--icone {{ v.status }}">{% if v.status == "pago" %}{% include "_icone.html" with nome="quitar" %}{% elif v.status == "parcial" %}{% include "_icone.html" with nome="parcial" %}{% else %}{% include "_icone.html" with nome="historico" %}{% endif %}{{ v.get_status_display }}</span>{% endif %}{% endwith %}{% if v.ultima_baixa %}<br><small class="parcela-baixa" title="Baixa registrada por {{ v.ultima_baixa.usuario_baixa|default:'—' }}">{{ v.ultima_baixa.get_forma_display }}, {{ v.ultima_baixa.data_pagamento|date:"d/m/Y" }}{% if v.status == "parcial" %} (parcial){% endif %}</small>{% elif v.status == "pago" %}<br><small class="parcela-baixa" title="A parcela foi marcada como paga sem um pagamento registrado (ex.: importada ou ajustada à mão).">sem baixa registrada</small>{% endif %}{% if v.juros_abonado %}<br><small>juros perdoados: R$ {{ v.juros_abonado }}</small>{% endif %}</td>
               <td data-label="" class="parcela-acoes-celula">
                 {% if not contrato.quitado and v.status != 'pago' %}
                   <div class="parcela-acoes">
@@ -185,7 +185,7 @@
               <td class="num" data-label="Valor">R$ {{ p.valor_pago }}</td>
               <td class="num" data-label="Juros">{% if p.juros_pago %}R$ {{ p.juros_pago }}{% else %}—{% endif %}</td>
               <td data-label="Forma">{{ p.get_forma_display }}</td>
-              <td data-label="Baixa">{{ p.usuario_baixa|default:"—" }} · {{ p.criado_em|date:"d/m/Y H:i" }}</td>
+              <td data-label="Baixa">{{ p.usuario_baixa|default:"—" }}, {{ p.criado_em|date:"d/m/Y H:i" }}</td>
               <td data-label="Comprovante">{% if p.comprovante %}<a href="{% url 'pagamentos:comprovante' p.pk %}">baixar</a>{% else %}—{% endif %}</td>
               <td data-label="" class="num">
                 <a class="btn-mini btn-mini--editar" href="{% url 'pagamentos:pagamento_editar' contrato.pk p.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
@@ -201,7 +201,7 @@
       </table>
     </div>
     {% if total_pagamentos > pagamentos|length %}
-      <p class="count">Mostrando os {{ pagamentos|length }} mais recentes de {{ total_pagamentos }} · <a href="?todas=1">ver todos</a></p>
+      <p class="count">Mostrando os {{ pagamentos|length }} mais recentes de {{ total_pagamentos }}, <a href="?todas=1">ver todos</a></p>
     {% endif %}
   {% else %}
     <p class="empty">Nenhum pagamento registrado neste contrato.</p>
@@ -221,7 +221,7 @@
             <td>{{ d.get_tipo_display }}</td>
             <td data-label="Descrição">{{ d.descricao|default:"—" }}</td>
             <td data-label="Arquivo"><a href="{% url 'contratos:documento_baixar' d.pk %}">baixar</a></td>
-            <td data-label="Enviado">{{ d.enviado_em|date:"d/m/Y H:i" }}{% if d.enviado_por %} · {{ d.enviado_por }}{% endif %}</td>
+            <td data-label="Enviado">{{ d.enviado_em|date:"d/m/Y H:i" }}{% if d.enviado_por %}, {{ d.enviado_por }}{% endif %}</td>
           </tr>
         {% endfor %}
       </tbody>

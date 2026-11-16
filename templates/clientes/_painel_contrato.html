@@ -8,7 +8,7 @@
   <header class="painel-contrato__topo">
     <div>
       <h3><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></h3>
-      <span class="helptext">{{ ct.aparelho_modelo }} · {{ ct.get_estrutura_display }} · {{ ct.numero_interno }}</span>
+      <span class="helptext">{{ ct.aparelho_modelo }}, {{ ct.get_estrutura_display }}, {{ ct.numero_interno }}</span>
     </div>
     <span class="pill {{ ct.status_efetivo }}">{{ ct.status_efetivo_label }}</span>
   </header>
@@ -27,7 +27,7 @@
       </div>
       <div>
         <dt>Parcela em aberto</dt>
-        <dd class="num">{% if p.parcela %}nº {{ p.parcela.numero }} · cobrança {{ p.parcela.data_vencimento|date:"d/m/Y" }}{% else %}—{% endif %}</dd>
+        <dd class="num">{% if p.parcela %}nº {{ p.parcela.numero }}, cobrança {{ p.parcela.data_vencimento|date:"d/m/Y" }}{% else %}—{% endif %}</dd>
       </div>
       <div>
         <dt>A cobrar</dt>
@@ -53,7 +53,7 @@
           {% else %}<span class="pill pago">Parcela paga</span>{% endif %}
           <span class="helptext">
             Pix: {% if p.pix %}{{ p.pix.get_status_display|lower }}{% else %}ainda não gerado{% endif %}
-            {% if p.ultima_mensagem %} · última mensagem: {{ p.ultima_mensagem.data_alvo|date:"d/m" }}, {{ p.ultima_mensagem.get_status_display|lower }}{% endif %}
+            {% if p.ultima_mensagem %}, última mensagem: {{ p.ultima_mensagem.data_alvo|date:"d/m" }}, {{ p.ultima_mensagem.get_status_display|lower }}{% endif %}
           </span>
         </div>
 

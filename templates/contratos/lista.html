@@ -24,7 +24,7 @@
 </div>
 
 {% if contratos %}
-  <p class="count">{{ page_obj.paginator.count }} contrato{{ page_obj.paginator.count|pluralize }}{% if status_atual or estrutura_atual %} · filtro ativo{% endif %}</p>
+  <p class="count">{{ page_obj.paginator.count }} contrato{{ page_obj.paginator.count|pluralize }}{% if status_atual or estrutura_atual %}, filtro ativo{% endif %}</p>
   <div class="tbl-wrap cards">
     <table>
       <thead>

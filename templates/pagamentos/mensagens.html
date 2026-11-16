@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="toolbar">
-  <h1>{% include "_icone.html" with nome="whatsapp" %}Mensagens de cobrança · {{ dia|date:"d/m/Y" }}</h1>
+  <h1>{% include "_icone.html" with nome="whatsapp" %}Mensagens de cobrança, {{ dia|date:"d/m/Y" }}</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="?data={{ dia_anterior|date:'Y-m-d' }}{% if grupo %}&grupo={{ grupo }}{% endif %}">Dia anterior</a>
   {% if not eh_hoje %}<a class="btn secondary" href="?{% if grupo %}grupo={{ grupo }}{% endif %}">Hoje</a>

@@ -31,7 +31,7 @@
   {% if erro %}Sem o extrato da Cora não dá para conferir tudo; abaixo está só o que o sistema sabe.
   {% elif problemas %}<strong>{{ problemas }} ponto{{ problemas|pluralize:"s" }} pede{{ problemas|pluralize:"m" }} atenção.</strong> Veja os blocos marcados abaixo.
   {% else %}<strong>Tudo certo:</strong> o sistema e a Cora batem nos últimos {{ dias }} dias.{% endif %}
-  <small class="proximas-item__nota"> · lido em {{ gerado_em|date:"d/m H:i" }}</small>
+  <small class="proximas-item__nota">, lido em {{ gerado_em|date:"d/m H:i" }}</small>
 </p>
 
 <dl class="meta meta--4col">
@@ -61,7 +61,7 @@
   {% for p in baixas_sem_credito %}
     <div class="proximas-item proximas-item--leve">
       <div class="proximas-item__quem"><a class="proximas-item__cliente" href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.cliente.nome }}</a>
-        <span class="proximas-item__detalhe">{{ p.contrato.apelido }} · parcela {{ p.vencimento.numero }} · baixa em {{ p.data_pagamento|date:"d/m/Y" }}</span></div>
+        <span class="proximas-item__detalhe">{{ p.contrato.apelido }}, parcela {{ p.vencimento.numero }}, baixa em {{ p.data_pagamento|date:"d/m/Y" }}</span></div>
       <div class="proximas-item__selos"><span class="pill inadimplente">sem crédito no extrato</span></div>
       <strong class="proximas-item__valor num">R$ {{ p.valor_pago }}</strong><span></span>
     </div>
@@ -74,8 +74,8 @@
   {% for d in pix_desatualizados %}
     <div class="proximas-item proximas-item--leve">
       <div class="proximas-item__quem"><a class="proximas-item__cliente" href="{% url 'contratos:detalhe' d.pix.vencimento.contrato.pk %}">{{ d.pix.vencimento.contrato.cliente.nome }}</a>
-        <span class="proximas-item__detalhe">{{ d.pix.vencimento.contrato.apelido }} · parcela {{ d.pix.vencimento.numero }}</span></div>
-      <div class="proximas-item__selos"><span class="proximas-item__nota">Pix guardado R$ {{ d.pix.valor }} · hoje a parcela cobra R$ {{ d.esperado }}</span></div>
+        <span class="proximas-item__detalhe">{{ d.pix.vencimento.contrato.apelido }}, parcela {{ d.pix.vencimento.numero }}</span></div>
+      <div class="proximas-item__selos"><span class="proximas-item__nota">Pix guardado R$ {{ d.pix.valor }}, hoje a parcela cobra R$ {{ d.esperado }}</span></div>
       <strong class="proximas-item__valor num">R$ {{ d.esperado }}</strong>
       <a class="btn-mini btn-mini--editar proximas-item__acoes" href="{% url 'pagamentos:parcela_editar' d.pix.vencimento.pk %}">{% include "_icone.html" with nome="editar" %}Abrir parcela</a>
     </div>
@@ -87,7 +87,7 @@
   <header class="proximas-dia__topo"><h2>Taxas, mensalidade e faturas</h2></header>
   <div class="proximas-item proximas-item--leve">
     <div class="proximas-item__quem"><span class="proximas-item__cliente">Taxas debitadas</span>
-      <span class="proximas-item__detalhe">{{ taxas|length }} no período{% if taxas_de_cancelamento %} · {{ taxas_de_cancelamento }} de R$ 0,30 (cancelamento de fatura){% endif %}</span></div>
+      <span class="proximas-item__detalhe">{{ taxas|length }} no período{% if taxas_de_cancelamento %}, {{ taxas_de_cancelamento }} de R$ 0,30 (cancelamento de fatura){% endif %}</span></div>
     <div class="proximas-item__selos"></div><strong class="proximas-item__valor num">R$ {{ total_taxas|floatformat:"2g" }}</strong><span></span>
   </div>
   <div class="proximas-item proximas-item--leve">

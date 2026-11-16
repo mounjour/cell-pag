@@ -4,7 +4,7 @@
 {% block content %}
 {% url 'contratos:detalhe' contrato.pk as volta_url %}{% include "_voltar.html" with url=volta_url %}
 <h1>Editar pagamento</h1>
-<p class="note">{{ contrato.cliente.nome }} · {{ contrato.apelido }}. Aqui você corrige a data, o juros, a forma e a observação. O valor da parcela recebido não muda por aqui: se ele estiver errado, estorne a baixa e lance de novo.</p>
+<p class="note">{{ contrato.cliente.nome }}, {{ contrato.apelido }}. Aqui você corrige a data, o juros, a forma e a observação. O valor da parcela recebido não muda por aqui: se ele estiver errado, estorne a baixa e lance de novo.</p>
 
 <dl class="meta meta--4col">
   <div><dt>Parcela</dt><dd class="num">{% if pagamento.vencimento %}nº {{ pagamento.vencimento.numero }}{% else %}Entrada{% endif %}</dd></div>

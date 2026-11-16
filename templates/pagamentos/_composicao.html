@@ -1,2 +1,2 @@
-<span class="helptext">{{ resumo.quantidade }} parcela{{ resumo.quantidade|pluralize }}: R$ {{ resumo.principal|floatformat:"2g" }}{% if resumo.juros %} · juros: R$ {{ resumo.juros|floatformat:"2g" }}{% endif %}</span>
+<span class="helptext">{{ resumo.quantidade }} parcela{{ resumo.quantidade|pluralize }}: R$ {{ resumo.principal|floatformat:"2g" }}</span>{% if resumo.juros %}<span class="helptext">juros: R$ {{ resumo.juros|floatformat:"2g" }}</span>{% endif %}
 <span class="helptext">Pix sem juros: R$ {{ resumo.principal|floatformat:"2g" }}</span>

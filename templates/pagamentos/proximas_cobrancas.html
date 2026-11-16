@@ -25,7 +25,7 @@
     <a class="filtro-pill{% if n == dias %} ativo{% endif %}" href="?dias={{ n }}">Próximos {{ n }} dias</a>
   {% endfor %}
 </div>
-  {% if grupos %}<p class="semana-resumo"><strong>{{ quantidade }}</strong> cobrança{{ quantidade|pluralize }} · <strong class="num">R$ {{ total|floatformat:"2g" }}</strong></p>{% endif %}
+  {% if grupos %}<p class="semana-resumo"><strong>{{ quantidade }}</strong> cobrança{{ quantidade|pluralize }}, <strong class="num">R$ {{ total|floatformat:"2g" }}</strong></p>{% endif %}
 </div>
 
 {% if grupos %}
@@ -34,7 +34,7 @@
       <button type="button" class="faixa-todos ativo" data-dia="todos" aria-pressed="true">Todos<small>{{ quantidade }}</small></button>
       {% for c in calendario %}
         {% if c.mes and not forloop.first %}<span class="faixa-mes">{{ c.mes }}</span>{% endif %}
-        <button type="button" class="faixa-dia{% if c.qtd %} tem{% endif %}{% if c.data.weekday > 4 %} fim-de-semana{% endif %}" data-dia="{{ c.data|date:'Y-m-d' }}"{% if not c.qtd %} disabled{% endif %} aria-pressed="false" title="{{ c.data|date:'l, d/m' }}{% if c.qtd %} · {{ c.qtd }} cobrança{{ c.qtd|pluralize }}{% endif %}">
+        <button type="button" class="faixa-dia{% if c.qtd %} tem{% endif %}{% if c.data.weekday > 4 %} fim-de-semana{% endif %}" data-dia="{{ c.data|date:'Y-m-d' }}"{% if not c.qtd %} disabled{% endif %} aria-pressed="false" title="{{ c.data|date:'l, d/m' }}{% if c.qtd %}, {{ c.qtd }} cobrança{{ c.qtd|pluralize }}{% endif %}">
           <small>{{ c.data|date:"D"|lower }}</small><b>{{ c.data|date:"d" }}</b>{% if c.qtd %}<i>R$ {{ c.total|floatformat:"0g" }}</i>{% endif %}
         </button>
       {% endfor %}
@@ -43,14 +43,14 @@
       <section class="proximas-lista semana-lista" data-dia="{{ g.data|date:'Y-m-d' }}">
         <header class="proximas-dia__topo">
           <h2>{{ g.data|date:"l, d/m"|capfirst }}<span class="proximas-dia__quando">{% if g.em_dias == 1 %}amanhã{% else %}em {{ g.em_dias }} dias{% endif %}</span></h2>
-          <span class="proximas-dia__soma">{{ g.itens|length }} cobrança{{ g.itens|length|pluralize }} · <strong class="num">R$ {{ g.total|floatformat:"2g" }}</strong></span>
+          <span class="proximas-dia__soma">{{ g.itens|length }} cobrança{{ g.itens|length|pluralize }}, <strong class="num">R$ {{ g.total|floatformat:"2g" }}</strong></span>
         </header>
         {% for item in g.itens %}
           {% with v=item.parcela %}
           <div class="proximas-item">
             <div class="proximas-item__quem">
               <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a>
-              <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }} · parcela {{ v.numero }} · {{ v.contrato.get_estrutura_display }}</a>
+              <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }}, parcela {{ v.numero }}, {{ v.contrato.get_estrutura_display }}</a>
             </div>
             <div class="proximas-item__selos">
               {% if item.suspensa %}<span class="pill aberto">cobrança suspensa</span>{% endif %}

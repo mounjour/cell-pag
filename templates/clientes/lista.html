@@ -50,7 +50,7 @@
             </td>
             <td data-label="Situação">
               {% if s.estado == "atraso" %}
-                <span class="pill {% if s.inadimplente %}inadimplente{% else %}atrasado{% endif %}">{% if s.inadimplente %}Inadimplente · {% else %}Atrasado · {% endif %}{{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }}</span>
+                <span class="pill {% if s.inadimplente %}inadimplente{% else %}atrasado{% endif %}">{% if s.inadimplente %}Inadimplente há {% else %}Atrasado há {% endif %}{{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }}</span>
                 {% if s.alertar_bloqueio %}<span class="pill alerta-bloqueio">{% include "_icone.html" with nome="bloqueio" %}bloquear aparelho</span>{% endif %}
               {% elif s.estado == "hoje" %}<span class="pill parcial">Cobrança hoje</span>
               {% elif s.estado == "em_dia" %}<span class="pill em_dia">Em dia</span>

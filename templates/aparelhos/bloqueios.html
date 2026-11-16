@@ -12,7 +12,7 @@
     <div class="proximas-item proximas-item--auto">
       <div class="proximas-item__quem">
         <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a>
-        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }} · IMEI {{ l.contrato.imei|default:"—" }}</a>
+        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}, IMEI {{ l.contrato.imei|default:"—" }}</a>
       </div>
       <div class="proximas-item__selos"><span class="pill inadimplente">{{ l.situacao.dias_atraso }} dias de atraso</span></div>
       <strong class="proximas-item__valor num" title="A cobrar">R$ {{ l.a_cobrar|floatformat:"2g" }}</strong>
@@ -52,11 +52,11 @@
     <div class="proximas-item proximas-item--auto">
       <div class="proximas-item__quem">
         <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' b.contrato.cliente.pk %}">{{ b.contrato.cliente.nome }}</a>
-        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}{% if b.observacao %} · {{ b.observacao }}{% endif %}</a>
+        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}{% if b.observacao %}, {{ b.observacao }}{% endif %}</a>
       </div>
       <div class="proximas-item__selos">
         <span class="pill inadimplente">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize }} de atraso</span>
-        <span class="proximas-item__nota">desde {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %} · {{ b.bloqueado_por.nome_curto }}{% endif %}</span>
+        <span class="proximas-item__nota">desde {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %}, {{ b.bloqueado_por.nome_curto }}{% endif %}</span>
       </div>
       <strong class="proximas-item__valor num" title="Para liberar">R$ {{ item.a_cobrar|floatformat:"2g" }}</strong>
       <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}" class="proximas-item__acoes">{% csrf_token %}
@@ -76,9 +76,9 @@
         <span class="proximas-item__cliente">{{ b.contrato.cliente.nome }}</span>
         <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a>
       </div>
-      <div class="proximas-item__selos"><span class="proximas-item__nota">bloqueado {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %} · {{ b.bloqueado_por.nome_curto }}{% endif %}</span></div>
+      <div class="proximas-item__selos"><span class="proximas-item__nota">bloqueado {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %}, {{ b.bloqueado_por.nome_curto }}{% endif %}</span></div>
       <span></span>
-      <div class="proximas-item__selos"><span class="proximas-item__nota">liberado {{ b.desbloqueado_em|date:"d/m/Y" }}{% if b.desbloqueado_por %} · {{ b.desbloqueado_por.nome_curto }}{% endif %}</span></div>
+      <div class="proximas-item__selos"><span class="proximas-item__nota">liberado {{ b.desbloqueado_em|date:"d/m/Y" }}{% if b.desbloqueado_por %}, {{ b.desbloqueado_por.nome_curto }}{% endif %}</span></div>
     </div>
   {% endfor %}
 </section>

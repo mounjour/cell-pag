@@ -50,7 +50,7 @@
       <div><dt>Primeira cobrança</dt><dd>{{ contrato.primeira_cobranca|date:"d/m/Y"|default:"Um período depois da compra" }}</dd></div>
       <div><dt>Primeira parcela a cobrar</dt><dd>{% if todas_pagas %}Todas as parcelas já estão pagas{% else %}Parcela {{ parcelas_ja_pagas|add:1 }} em {{ primeira|date:"d/m/Y" }}{% endif %}</dd></div>
       <div><dt>Parcelas já pagas</dt><dd>{{ parcelas_ja_pagas }} (ficam fora da cobrança)</dd></div>
-      <div><dt>Entrada recebida</dt><dd>{% if entrada %}R$ {{ entrada|floatformat:"2g" }} · {{ entrada_forma }}{% else %}Sem entrada{% endif %}</dd></div>
+      <div><dt>Entrada recebida</dt><dd>{% if entrada %}R$ {{ entrada|floatformat:"2g" }}, {{ entrada_forma }}{% else %}Sem entrada{% endif %}</dd></div>
       <div><dt>Juros diário</dt><dd>R$ {{ contrato.juros_diario|floatformat:"2g" }} por dia de atraso</dd></div>
       <div><dt>Status informado</dt><dd>{{ contrato.get_status_display }}</dd></div>
       <div><dt>Observações</dt><dd>{{ contrato.observacoes|default:"Nenhuma"|linebreaksbr }}</dd></div>

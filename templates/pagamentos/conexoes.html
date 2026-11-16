@@ -75,7 +75,7 @@
   <dl class="meta meta--4col">
     <div><dt>Modo</dt><dd>{{ cora_provider }}</dd></div>
     <div><dt>Webhook</dt><dd>{% if cora_webhook_configurado %}<span class="pill pago">configurado</span>{% else %}<span class="pill inadimplente">sem token</span>{% endif %}</dd></div>
-    <div><dt>Último evento recebido</dt><dd>{% if ultimo_evento_cora %}{{ ultimo_evento_cora.tipo }} · {{ ultimo_evento_cora.recebido_em|date:"d/m/Y H:i" }}{% else %}—{% endif %}</dd></div>
+    <div><dt>Último evento recebido</dt><dd>{% if ultimo_evento_cora %}{{ ultimo_evento_cora.tipo }}, {{ ultimo_evento_cora.recebido_em|date:"d/m/Y H:i" }}{% else %}—{% endif %}</dd></div>
   </dl>
   <p class="helptext">A confirmação de pagamento chega na hora pelo webhook; se ele falhar por qualquer motivo, a rotina diária das 8h30 reconcilia sozinha mais tarde.</p>
 </section>
