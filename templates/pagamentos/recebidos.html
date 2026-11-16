@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Pix recebidos na Cora{% endblock %}
+{% block title %}Pix recebidos sem baixa{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
 
 {% block content %}
 {% url 'pagamentos:pix_painel' as pix_url %}{% include "_voltar.html" with url=pix_url %}
 <div class="toolbar">
-  <h1>{% include "_icone.html" with nome="dinheiro" %}Pix recebidos direto na Cora</h1>
+  <h1>{% include "_icone.html" with nome="dinheiro" %}Pix recebidos sem baixa</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="?atualizar=1">{% include "_icone.html" with nome="gerar" %}Atualizar agora</a>
 </div>

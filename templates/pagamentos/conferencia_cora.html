@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Conferência com a Cora{% endblock %}
+{% block title %}Conferir pagamentos com a Cora{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
 
 {% block content %}
 {% url 'pagamentos:pix_painel' as pix_url %}{% include "_voltar.html" with url=pix_url %}
 <div class="toolbar">
-  <h1>{% include "_icone.html" with nome="quitar" %}Conferência com a Cora</h1>
+  <h1>{% include "_icone.html" with nome="quitar" %}Conferir pagamentos com a Cora</h1>
   <span class="spacer"></span>
   <a class="btn secondary" href="?dias={{ dias }}&atualizar=1">{% include "_icone.html" with nome="gerar" %}Atualizar agora</a>
 </div>
@@ -35,15 +35,15 @@
 </p>
 
 <dl class="meta meta--4col">
-  <div><dt>Pix recebidos na Cora</dt><dd class="num">R$ {{ total_creditos|floatformat:2 }} <small>({{ qtd_creditos }})</small></dd></div>
+  <div><dt>Pix recebidos na Cora</dt><dd class="num">R$ {{ total_creditos|floatformat:"2g" }} <small>({{ qtd_creditos }})</small></dd></div>
   <div><dt>Já ligados a uma baixa</dt><dd class="num">{{ qtd_vinculados }}</dd></div>
-  <div><dt>Para conferir</dt><dd class="num">R$ {{ total_para_conferir|floatformat:2 }} <small>({{ para_conferir|length }})</small></dd></div>
-  <div><dt>Taxas + mensalidade</dt><dd class="num">R$ {{ total_taxas|add:total_assinaturas|floatformat:2 }}</dd></div>
+  <div><dt>Para conferir</dt><dd class="num">R$ {{ total_para_conferir|floatformat:"2g" }} <small>({{ para_conferir|length }})</small></dd></div>
+  <div><dt>Taxas + mensalidade</dt><dd class="num">R$ {{ total_taxas|add:total_assinaturas|floatformat:"2g" }}</dd></div>
 </dl>
 
 <section class="proximas-lista painel-lista">
   <header class="proximas-dia__topo"><h2>Dinheiro que entrou e ainda não foi registrado <span class="count">{{ para_conferir|length }}</span></h2>
-    <span class="proximas-dia__soma"><a href="{% url 'pagamentos:recebidos' %}">Abrir Pix recebidos</a></span></header>
+    <span class="proximas-dia__soma"><a href="{% url 'pagamentos:recebidos' %}">Abrir Pix recebidos sem baixa</a></span></header>
   {% for r in para_conferir|slice:":15" %}
     <div class="proximas-item proximas-item--leve">
       <div class="proximas-item__quem"><span class="proximas-item__cliente">{{ r.nome|default:"Quem pagou não informado" }}</span>
@@ -52,7 +52,7 @@
       <strong class="proximas-item__valor num">R$ {{ r.valor }}</strong><span></span>
     </div>
   {% empty %}<p class="empty painel-vazio">Todo Pix recebido já foi registrado ou ignorado.</p>{% endfor %}
-  {% if para_conferir|length > 15 %}<p class="painel-vazio proximas-item__nota">Mostrando 15 de {{ para_conferir|length }}. Veja o resto em Pix recebidos.</p>{% endif %}
+  {% if para_conferir|length > 15 %}<p class="painel-vazio proximas-item__nota">Mostrando 15 de {{ para_conferir|length }}. Veja o resto em Pix recebidos sem baixa.</p>{% endif %}
   {% if sem_registro %}<p class="painel-vazio proximas-item__nota">{{ sem_registro|length }} entrada{{ sem_registro|length|pluralize }} nova{{ sem_registro|length|pluralize }} no extrato ainda não lida{{ sem_registro|length|pluralize }} pelo sistema (entram na próxima leitura).</p>{% endif %}
 </section>
 
@@ -88,12 +88,12 @@
   <div class="proximas-item proximas-item--leve">
     <div class="proximas-item__quem"><span class="proximas-item__cliente">Taxas debitadas</span>
       <span class="proximas-item__detalhe">{{ taxas|length }} no período{% if taxas_de_cancelamento %} · {{ taxas_de_cancelamento }} de R$ 0,30 (cancelamento de fatura){% endif %}</span></div>
-    <div class="proximas-item__selos"></div><strong class="proximas-item__valor num">R$ {{ total_taxas|floatformat:2 }}</strong><span></span>
+    <div class="proximas-item__selos"></div><strong class="proximas-item__valor num">R$ {{ total_taxas|floatformat:"2g" }}</strong><span></span>
   </div>
   <div class="proximas-item proximas-item--leve">
     <div class="proximas-item__quem"><span class="proximas-item__cliente">Mensalidade da Cora</span>
       <span class="proximas-item__detalhe">{{ assinaturas|length }} cobrança{{ assinaturas|length|pluralize }} no período</span></div>
-    <div class="proximas-item__selos"></div><strong class="proximas-item__valor num">R$ {{ total_assinaturas|floatformat:2 }}</strong><span></span>
+    <div class="proximas-item__selos"></div><strong class="proximas-item__valor num">R$ {{ total_assinaturas|floatformat:"2g" }}</strong><span></span>
   </div>
   <div class="proximas-item proximas-item--leve">
     <div class="proximas-item__quem"><span class="proximas-item__cliente">Faturas reais abertas na Cora</span>

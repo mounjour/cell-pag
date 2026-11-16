@@ -15,7 +15,7 @@
         <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }} · IMEI {{ l.contrato.imei|default:"—" }}</a>
       </div>
       <div class="proximas-item__selos"><span class="pill inadimplente">{{ l.situacao.dias_atraso }} dias de atraso</span></div>
-      <strong class="proximas-item__valor num" title="A cobrar">R$ {{ l.a_cobrar|floatformat:2 }}</strong>
+      <strong class="proximas-item__valor num" title="A cobrar">R$ {{ l.a_cobrar|floatformat:"2g" }}</strong>
       <form method="post" action="{% url 'aparelhos:bloquear' l.contrato.pk %}" class="proximas-item__acoes bloqueio-form">
         {% csrf_token %}
         <input type="text" name="observacao" maxlength="200" placeholder="Como? (opcional)" aria-label="Como foi bloqueado">
@@ -58,7 +58,7 @@
         <span class="pill inadimplente">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize }} de atraso</span>
         <span class="proximas-item__nota">desde {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %} · {{ b.bloqueado_por.nome_curto }}{% endif %}</span>
       </div>
-      <strong class="proximas-item__valor num" title="Para liberar">R$ {{ item.a_cobrar|floatformat:2 }}</strong>
+      <strong class="proximas-item__valor num" title="Para liberar">R$ {{ item.a_cobrar|floatformat:"2g" }}</strong>
       <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}" class="proximas-item__acoes">{% csrf_token %}
         <button type="submit" class="btn-mini">{% include "_icone.html" with nome="bloqueio" %}Desbloqueei</button>
       </form>
