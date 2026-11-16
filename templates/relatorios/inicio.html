@@ -95,7 +95,7 @@
       <section class="ic-card ic-integ">
         <h3>Integrações</h3>
         <a class="ic-status{% if pix_alertas_n %} alerta{% endif %}" href="{% url 'pagamentos:pix_painel' %}">
-          <span><i class="ic-dot"></i>Pix</span><em>{% if pix_alertas_n %}{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }}{% else %}Em dia{% endif %}</em>
+          <span><i class="ic-dot"></i>Pix</span><em>{% if pix_alertas_n %}{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix · Conferir pendências{% else %}Em dia{% endif %}</em>
         </a>
         <a class="ic-status{% if whatsapp_estado != 'open' and whatsapp_estado != 'simulado' %} alerta{% endif %}" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-tile>
           <span><i class="ic-dot"></i>WhatsApp</span>
