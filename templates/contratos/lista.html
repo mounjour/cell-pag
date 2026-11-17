@@ -1,55 +1,63 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Contratos{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/contratos_lista.css' %}?v=1">{% endblock %}
 
 {% block content %}
-<div class="toolbar">
-  <h1>{% include "_icone.html" with nome="contratos" %}Contratos</h1>
-  <span class="spacer"></span>
-  {% if importacoes_pendentes_n %}<a class="btn secondary" href="{% url 'contratos:importacao_pendencias' %}">{% include "_icone.html" with nome="alerta" %}Pendências de importação ({{ importacoes_pendentes_n }})</a>{% endif %}
-  <a class="btn secondary" href="{% url 'contratos:importar_previa' %}">{% include "_icone.html" with nome="baixar" %}Importar planilha</a>
-  <a class="btn" href="{% url 'contratos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo contrato</a>
-</div>
+<div class="cl">
+<header class="cl-topo">
+  <div>
+    <h1>{% include "_icone.html" with nome="contratos" %}Contratos</h1>
+    <p class="cl-sub">{{ page_obj.paginator.count }} contrato{{ page_obj.paginator.count|pluralize }}{% if status_atual or estrutura_atual %} neste filtro{% else %} na lista, com a situação de cada um{% endif %}.</p>
+  </div>
+  <div class="cl-acoes">
+    {% if importacoes_pendentes_n %}<a class="btn secondary" href="{% url 'contratos:importacao_pendencias' %}">{% include "_icone.html" with nome="alerta" %}Pendências de importação ({{ importacoes_pendentes_n }})</a>{% endif %}
+    <a class="btn secondary" href="{% url 'contratos:importar_previa' %}">{% include "_icone.html" with nome="baixar" %}Importar planilha</a>
+    <a class="btn" href="{% url 'contratos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo contrato</a>
+  </div>
+</header>
 
-<div class="filtro-pills">
-  <a class="filtro-pill{% if not estrutura_atual %} ativo{% endif %}" href="?{% if status_atual %}status={{ status_atual }}{% endif %}">Todos os tipos</a>
-  {% for valor, rotulo in estrutura_opcoes %}
-    <a class="filtro-pill{% if valor == estrutura_atual %} ativo{% endif %}" href="?estrutura={{ valor }}{% if status_atual %}&status={{ status_atual }}{% endif %}">{{ rotulo }}</a>
-  {% endfor %}
-</div>
-<div class="filtro-pills">
-  <a class="filtro-pill{% if not status_atual %} ativo{% endif %}" href="?{% if estrutura_atual %}estrutura={{ estrutura_atual }}{% endif %}">Todos os status</a>
-  {% for valor, rotulo in status_opcoes %}
-    <a class="filtro-pill{% if valor == status_atual %} ativo{% endif %}" href="?status={{ valor }}{% if estrutura_atual %}&estrutura={{ estrutura_atual }}{% endif %}">{{ rotulo }}</a>
-  {% endfor %}
+<div class="cl-filtros">
+  <nav class="cl-abas" aria-label="Filtrar por frequência">
+    <a class="cl-aba{% if not estrutura_atual %} ativo{% endif %}" href="?{% if status_atual %}status={{ status_atual }}{% endif %}">Todos os tipos</a>
+    {% for valor, rotulo in estrutura_opcoes %}
+      <a class="cl-aba{% if valor == estrutura_atual %} ativo{% endif %}" href="?estrutura={{ valor }}{% if status_atual %}&status={{ status_atual }}{% endif %}">{{ rotulo }}</a>
+    {% endfor %}
+  </nav>
+  <nav class="cl-abas" aria-label="Filtrar por situação">
+    <a class="cl-aba{% if not status_atual %} ativo{% endif %}" href="?{% if estrutura_atual %}estrutura={{ estrutura_atual }}{% endif %}">Todos os status</a>
+    {% for valor, rotulo in status_opcoes %}
+      <a class="cl-aba{% if valor == status_atual %} ativo{% endif %}" href="?status={{ valor }}{% if estrutura_atual %}&estrutura={{ estrutura_atual }}{% endif %}">{{ rotulo }}</a>
+    {% endfor %}
+  </nav>
 </div>
 
 {% if contratos %}
-  <p class="count">{{ page_obj.paginator.count }} contrato{{ page_obj.paginator.count|pluralize }}{% if status_atual or estrutura_atual %}, filtro ativo{% endif %}</p>
-  <div class="tbl-wrap cards">
-    <table>
-      <thead>
-        <tr><th>Nº</th><th>Contrato</th><th>Cliente</th><th>Frequência</th><th class="num">Valor da parcela</th><th class="num">Compra</th><th>Status</th></tr>
-      </thead>
-      <tbody>
-        {% for ct in contratos %}
-          <tr class="row-acento row-acento--{{ ct.status_efetivo }}" data-href="{% url 'contratos:detalhe' ct.pk %}">
-            <td data-label="Nº">{{ ct.numero_interno }}</td>
-            <td data-label="Aparelho"><a href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a></td>
-            <td data-label="Cliente"><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></td>
-            <td data-label="Frequência">{{ ct.get_estrutura_display }}</td>
-            <td class="num" data-label="Valor da parcela">{% if ct.valor_parcela %}R$ {{ ct.valor_parcela }}{% else %}—{% endif %}</td>
-            <td class="num" data-label="Compra">{{ ct.data_inicio|date:"d/m/Y" }}</td>
-            <td class="status-cell" data-label="Status"><span class="pill {{ ct.status_efetivo }}">{{ ct.status_efetivo_label }}</span></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <div class="cl-cabecalho" aria-hidden="true"><span>Contrato</span><span>Cliente</span><span class="cl-col-num">Parcela</span><span class="cl-col-num">Compra</span><span class="cl-col-num">Situação</span></div>
+  <ul class="cl-lista">
+    {% for ct in contratos %}
+      <li class="cl-item" data-href="{% url 'contratos:detalhe' ct.pk %}">
+        <div class="cl-quem">
+          <span class="cl-icone" aria-hidden="true">{% include "_icone.html" with nome="contratos" %}</span>
+          <div>
+            <a class="cl-nome" href="{% url 'contratos:detalhe' ct.pk %}">{{ ct.apelido }}</a>
+            <span class="cl-detalhe"><span class="num">{{ ct.numero_interno }}</span><span class="cl-tag">{{ ct.get_estrutura_display }}</span></span>
+          </div>
+        </div>
+        <div class="cl-cliente"><a href="{% url 'clientes:detalhe' ct.cliente.pk %}">{{ ct.cliente.nome }}</a></div>
+        <div class="cl-valor">{% if ct.valor_parcela %}R$ {{ ct.valor_parcela }}{% else %}—{% endif %}</div>
+        <div class="cl-data">{{ ct.data_inicio|date:"d/m/Y" }}</div>
+        <div class="cl-status"><span class="pill {{ ct.status_efetivo }}">{{ ct.status_efetivo_label }}</span></div>
+      </li>
+    {% endfor %}
+  </ul>
   {% include "_pagination.html" %}
 {% else %}
-  <div class="empty">
+  <div class="cl-vazio">
     <p>Nenhum contrato {% if status_atual or estrutura_atual %}com esse filtro{% else %}cadastrado ainda{% endif %}.</p>
     {% if not status_atual and not estrutura_atual %}<a class="btn" href="{% url 'contratos:novo' %}">Cadastrar o primeiro contrato</a>{% endif %}
   </div>
 {% endif %}
+</div>
 {% endblock %}

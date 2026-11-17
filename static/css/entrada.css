@@ -132,3 +132,49 @@
   .entrada-sub { display: none; }
   .entrada-titulo { font-size: 34px; }
 }
+
+/* Adaptação à tela de cada pessoa: tudo escala pela altura (svh) e pela largura da janela,
+   para o cartão de acesso caber sem rolar em notebooks e monitores baixos. */
+.entrada-topo { padding: clamp(10px, 2.4svh, 20px) 0; }
+.entrada-corpo { padding: clamp(12px, 3.4svh, 64px) 0; gap: clamp(24px, 6vw, 112px); }
+.entrada-titulo { font-size: clamp(32px, min(5.6vw, 9.5svh), 76px); }
+.entrada-sub { margin-top: clamp(10px, 2.2svh, 20px); }
+.entrada-palco { margin-top: clamp(14px, 3.6svh, 36px); height: clamp(190px, min(28vw, 32svh), 350px); }
+.entrada-form { padding: clamp(18px, min(3.4vw, 4.6svh), 52px); }
+.entrada-traco { margin-bottom: clamp(12px, 3svh, 28px); }
+.entrada-form h1 { font-size: clamp(24px, min(3vw, 5.4svh), 40px); }
+.entrada-descricao { margin: clamp(6px, 1.2svh, 10px) 0 clamp(14px, 3svh, 26px); }
+.entrada .login-form { gap: clamp(10px, 2svh, 16px); }
+.entrada .login-input input { min-height: clamp(44px, 6.6svh, 54px); padding-top: 8px; padding-bottom: 8px; }
+.entrada .login-input > svg { top: 50%; margin-top: -9.5px; }
+.entrada .login-submit { min-height: clamp(44px, 6.6svh, 54px); }
+.entrada .entrada-olho { top: 50%; margin-top: -20px; }
+.entrada .login-termos { margin-top: clamp(6px, 1.4svh, 12px); }
+.entrada-rodape { padding: clamp(10px, 2.2svh, 20px) 0 clamp(12px, 2.6svh, 28px); }
+
+/* Janela baixa (notebook com barras do navegador): sai a prévia do painel. */
+@media (min-width: 961px) and (max-height: 760px) {
+  .entrada-palco { display: none; }
+}
+/* Muito baixa: também sai o texto de apoio e o rodapé. */
+@media (min-width: 961px) and (max-height: 620px) {
+  .entrada-sub, .entrada-rodape { display: none; }
+}
+/* Tela alta e larga (monitor grande): o conteúdo não estica demais nem fica perdido no meio. */
+@media (min-height: 1000px) {
+  .entrada-corpo { align-content: center; }
+}
+/* Celular deitado ou janela estreita e baixa: volta a rolar normalmente, sem cortar nada. */
+@media (max-width: 960px) and (max-height: 560px) {
+  .entrada-pagina { min-height: 0; }
+}
+
+/* Ajuste fino para notebooks (janela de uns 600 a 760 px de altura). */
+@media (min-width: 961px) and (max-height: 760px) {
+  .entrada-traco, .entrada-rodape { display: none; }
+  .entrada .login-termos { font-size: 12px; }
+}
+@media (min-width: 961px) and (max-height: 620px) {
+  .entrada-descricao { display: none; }
+  .entrada-form h1 { margin-bottom: 14px; }
+}

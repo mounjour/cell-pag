@@ -2,11 +2,15 @@
 {% load static %}
 {% block wrap_class %}wrap--wide{% endblock %}
 {% block title %}{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/contratos_form.css' %}?v=1">{% endblock %}
 
 {% block content %}
-<div class="form-centered">
+<div class="form-centered cf">
 {% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk as volta_url %}{% else %}{% url 'contratos:lista' as volta_url %}{% endif %}{% include "_voltar.html" with url=volta_url %}
-<h1>{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}</h1>
+<header class="cf-topo">
+  <h1>{% include "_icone.html" with nome="contratos" %}{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}</h1>
+  <p class="cf-sub">{% if form.instance.pk %}{{ form.instance.apelido }}, de {{ form.instance.cliente.nome }}.{% else %}Preencha os dados e acompanhe o resumo da cobrança enquanto digita.{% endif %}</p>
+</header>
 
 <details class="balao">
   <summary>Como funcionam as parcelas e o dia de cobrança</summary>

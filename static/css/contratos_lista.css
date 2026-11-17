@@ -1,0 +1,65 @@
+/* Lista de contratos: mesmo desenho da lista de Clientes. Tudo sob .cl. */
+.cl-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 14px; }
+.cl-topo h1 { margin: 0; }
+.cl-sub { margin: 6px 0 0; color: var(--ink-soft); }
+.cl-acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Filtros: dois grupos de abas na mesma linha */
+.cl-filtros { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; margin: 0 0 14px; }
+.cl-abas { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.cl-aba { display: inline-flex; align-items: center; padding: 7px 13px; border-radius: 9px; color: var(--ink-soft); font-size: 14px; font-weight: 600; text-decoration: none; }
+.cl-aba:hover { color: var(--ink); text-decoration: none; background: var(--surface-2); }
+.cl-aba.ativo { background: var(--accent); color: var(--on-accent); }
+.cl-resultado { margin: 0 0 10px; font-size: 14px; color: var(--ink-soft); }
+
+/* Lista: linhas direto na página, separadas por uma linha fina */
+.cl-cabecalho, .cl-item { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.1fr) 130px 110px 150px; gap: 18px; align-items: center; }
+.cl-cabecalho { padding: 0 18px 8px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.cl-col-num { text-align: right; }
+.cl-lista { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.cl-item { position: relative; padding: 16px 18px; border-radius: 12px; cursor: pointer; }
+.cl-item::after { content: ""; position: absolute; left: 18px; right: 18px; bottom: 0; border-bottom: 1px solid var(--line); }
+.cl-item:last-child::after { left: 0; right: 0; }
+.cl-quem { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cl-quem > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.cl-icone { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-wash); color: var(--accent-ink); }
+.cl-icone .icone { width: 20px; height: 20px; }
+.cl-nome { font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+.cl-nome:hover { color: var(--accent-ink); text-decoration: underline; }
+.cl-detalhe { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-faint); }
+.cl-tag { padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.cl-cliente { min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
+.cl-valor { text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; }
+.cl-data { text-align: right; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.cl-status { display: flex; justify-content: flex-end; }
+.cl-vazio { display: grid; justify-items: center; gap: 12px; padding: 28px 16px; border: 1px dashed var(--line-strong); border-radius: 16px; text-align: center; color: var(--ink-faint); background: var(--surface); }
+.cl-vazio p { margin: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cl-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .cl-topo, .cl-filtros, .cl-lista { animation: cl-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .cl-filtros { animation-delay: 40ms; }
+  .cl-lista { animation-delay: 90ms; }
+  .cl-aba { transition: color .2s ease, background-color .2s ease; }
+  .cl-item { transition: background-color .15s ease; }
+  .cl-item:hover { background: var(--surface-2); }
+  .cl-item:hover::after { opacity: 0; }
+}
+
+@media (max-width: 1100px) {
+  .cl-cabecalho { display: none; }
+  .cl-item { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; }
+  .cl-quem { grid-column: 1; }
+  .cl-status { grid-column: 2; grid-row: 1; }
+  .cl-cliente { grid-column: 1; }
+  .cl-valor { grid-column: 2; }
+  .cl-data { grid-column: 1; text-align: left; }
+  .cl-data::before { content: "Compra em "; }
+}
+@media (max-width: 560px) {
+  .cl-abas { display: flex; width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .cl-aba { flex: none; }
+  .cl-item { padding: 14px; }
+  .cl-acoes { width: 100%; }
+  .cl-acoes .btn { flex: 1 1 auto; justify-content: center; }
+}

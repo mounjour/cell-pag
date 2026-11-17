@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Mensagens de cobrança{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/mensagens.css' %}?v=2">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/mensagens.css' %}?v=3">{% endblock %}
 
 {% block content %}
 <div class="msg-tela">
@@ -52,7 +52,7 @@
   <div class="msg-cabecalho" aria-hidden="true"><span>Cliente</span><span>Situação</span><span>Enviada</span><span></span></div>
   <ul class="msg-lista">
     {% for c in mensagens %}
-      <li class="msg-item">
+      <li class="msg-item" data-href="{% url 'contratos:detalhe' c.contrato.pk %}">
         <div class="msg-quem">
           <span class="msg-avatar" aria-hidden="true">{{ c.contrato.cliente.nome|slice:":2"|upper }}</span>
           <div>
@@ -86,7 +86,7 @@
       </li>
     {% endfor %}
     {% for l in sem_mensagem %}
-      <li class="msg-item">
+      <li class="msg-item" data-href="{% url 'contratos:detalhe' l.contrato.pk %}">
         <div class="msg-quem">
           <span class="msg-avatar" aria-hidden="true">{{ l.contrato.cliente.nome|slice:":2"|upper }}</span>
           <div>

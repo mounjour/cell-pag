@@ -2,17 +2,38 @@
 {% load static %}
 {% block title %}{{ contrato }}{% endblock %}
 
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/contrato_detalhe.css' %}?v=6">{% endblock %}
+
 {% block content %}
+<div class="ct">
 {% url 'clientes:detalhe' contrato.cliente.pk as cliente_url %}{% include "_voltar.html" with url=cliente_url %}
-<div class="toolbar">
-  <h1>{{ contrato.numero_interno }}, <a href="{% url 'clientes:detalhe' contrato.cliente.pk %}">{{ contrato.cliente.nome }}</a> — {{ contrato.apelido }}</h1>
-  <span class="spacer"></span>
-  <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">Ver cliente</a>
-  <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
-  {% if not contrato.quitado %}
-    <a class="btn" href="{% url 'pagamentos:novo' contrato.pk %}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>
-  {% endif %}
-</div>
+<header class="ct-topo">
+  <div>
+    <h1>{% include "_icone.html" with nome="contratos" %}{{ contrato.apelido }}</h1>
+    <p class="ct-sub">
+      <span class="pill {{ contrato.status_efetivo }}">{{ contrato.status_efetivo_label }}</span>
+      <span>Contrato {{ contrato.numero_interno }}</span>
+      <a href="{% url 'clientes:detalhe' contrato.cliente.pk %}">{{ contrato.cliente.nome }}</a>
+    </p>
+  </div>
+  <div class="ct-acoes">
+    <a class="btn secondary" href="{% url 'clientes:detalhe' contrato.cliente.pk %}">{% include "_icone.html" with nome="clientes" %}Ver cliente</a>
+    <a class="btn secondary" href="{% url 'contratos:editar' contrato.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
+    {% if not contrato.quitado %}
+      <a class="btn" href="{% url 'pagamentos:novo' contrato.pk %}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>
+    {% endif %}
+  </div>
+</header>
+
+{% with s=contrato.situacao_atraso %}
+<dl class="ct-kpis">
+  <div class="ct-kpi{% if s and s.dias_atraso %} ct-kpi--alerta{% endif %}"><dt>A cobrar hoje</dt><dd>{% if s %}R$ {{ resumo_cobranca.total|floatformat:"2g" }}{% if s.dias_atraso %}<small> {{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }} de atraso</small>{% endif %}{% else %}—{% endif %}</dd></div>
+  <div class="ct-kpi"><dt>Próxima cobrança</dt><dd>{{ contrato.data_referencia_atraso|date:"d/m/Y"|default:"—" }}</dd></div>
+  <div class="ct-kpi"><dt>Parcelas</dt><dd>{{ contrato.num_parcelas|default:"—" }} × {% if contrato.valor_parcela %}R$ {{ contrato.valor_parcela }}{% else %}—{% endif %}</dd></div>
+  <div class="ct-kpi"><dt>Valor total</dt><dd>R$ {{ contrato.valor_total }}</dd></div>
+</dl>
+{% endwith %}
 
 {% if pode_quitar %}
   <div class="note">
@@ -24,8 +45,8 @@
   </div>
 {% endif %}
 
-<div class="contrato-dados">
-  <section class="card">
+<div class="ct-dados">
+  <section class="ct-bloco">
     <h2>Aparelho e cliente</h2>
     <dl class="lista-dados">
       <div><dt>Aparelho</dt><dd>{{ contrato.aparelho_modelo }}</dd></div>
@@ -39,7 +60,7 @@
     </dl>
   </section>
 
-  <section class="card">
+  <section class="ct-bloco">
     <h2>Valores</h2>
     <dl class="lista-dados">
       <div><dt>Valor total</dt><dd class="num">R$ {{ contrato.valor_total }}</dd></div>
@@ -54,7 +75,7 @@
     </dl>
   </section>
 
-  <section class="card">
+  <section class="ct-bloco">
     <h2>Datas e cobrança</h2>
     <dl class="lista-dados">
       <div><dt>Frequência de pagamento</dt><dd>{{ contrato.get_estrutura_display }}</dd></div>
@@ -77,9 +98,9 @@
 {% with s=contrato.situacao_atraso p=contrato.parcela_em_aberto ref=contrato.data_referencia_atraso %}
   {% include "aparelhos/_bloqueio_do_contrato.html" %}
   {% if s %}
-    <div class="card">
+    <section class="ct-situacao{% if s.dias_atraso %} ct-situacao--atraso{% endif %}">
       <h2>Situação hoje</h2>
-      <p><strong>A cobrar: R$ {{ resumo_cobranca.total|floatformat:"2g" }}</strong>
+      <p class="ct-situacao-total"><strong>A cobrar: R$ {{ resumo_cobranca.total|floatformat:"2g" }}</strong>
         {% include "pagamentos/_composicao.html" with resumo=resumo_cobranca %}
       </p>
       {% if s.dias_atraso %}
@@ -98,20 +119,20 @@
           {% if p %}Parcela nº {{ p.numero }} é cobrada em {{ ref|date:"d/m/Y" }}.{% else %}Próxima cobrança em {{ ref|date:"d/m/Y" }}.{% endif %}
         </p>
       {% endif %}
-    </div>
+    </section>
   {% else %}
     <p class="note">Informe a <strong>próxima cobrança</strong> no contrato para acompanhar atraso e juros.</p>
   {% endif %}
 {% endwith %}
 
-{% if contrato.observacoes %}<p class="card">{{ contrato.observacoes|linebreaksbr }}</p>{% endif %}
+{% if contrato.observacoes %}<p class="ct-obs">{{ contrato.observacoes|linebreaksbr }}</p>{% endif %}
 
-<h2>Parcelas</h2>
+<div class="ct-secao"><h2>Parcelas</h2></div>
 {% with vencimentos=contrato.vencimentos.all total_venc=contrato.vencimentos.count %}
   {% if vencimentos %}
     <p class="count">{{ total_venc }} parcela{{ total_venc|pluralize }} gerada{{ total_venc|pluralize }}{% if total_venc > vencimentos_exibidos|length %}, mostrando {{ vencimentos_exibidos|length }} (a partir da primeira em aberto), <a href="?todas=1">ver todas</a>{% elif ver_todas and total_venc > 24 %}, <a href="?">mostrar menos</a>{% endif %}.</p>
     {% if not contrato.quitado and contrato.valor_parcela %}
-      <form method="post" action="{% url 'contratos:gerar_vencimentos' contrato.pk %}" style="margin:-0.35rem 0 1rem">
+      <form method="post" action="{% url 'contratos:gerar_vencimentos' contrato.pk %}" class="ct-gerar">
         {% csrf_token %}
         <button type="submit" class="btn secondary">{% include "_icone.html" with nome="gerar" %}Gerar parcelas seguintes</button>
       </form>
@@ -171,7 +192,7 @@
 {% include "pagamentos/_acordos_do_contrato.html" %}
 {% include "pagamentos/_pix_cancelados_do_contrato.html" %}
 
-<h2>Pagamentos</h2>
+<div class="ct-secao"><h2>Pagamentos</h2></div>
 {% with pagamentos=pagamentos_exibidos %}
   {% if pagamentos %}
     <div class="tbl-wrap cards">
@@ -210,7 +231,7 @@
 
 {% include "pagamentos/_contatos_do_contrato.html" %}
 
-<h2>Documentos</h2>
+<div class="ct-secao"><h2>Documentos</h2></div>
 {% if contrato.documentos.all %}
   <div class="tbl-wrap cards">
     <table>
@@ -231,12 +252,13 @@
   <p class="empty">Nenhum documento anexado.</p>
 {% endif %}
 
-<form class="form-grid form-grid--full" style="margin-top:1rem" method="post"
+<form class="form-grid form-grid--full ct-doc-form" method="post"
       action="{% url 'contratos:documento_novo' contrato.pk %}" enctype="multipart/form-data">
   {% csrf_token %}
   {% include "_form.html" with form=form_documento %}
   <div class="form-actions"><button type="submit" class="btn">{% include "_icone.html" with nome="anexo" %}Anexar documento</button></div>
 </form>
+</div>
 {% endblock %}
 {% block scripts %}
   <script src="{% static 'js/contato_cobranca.js' %}" defer></script>

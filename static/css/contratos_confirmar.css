@@ -1,0 +1,47 @@
+/* Confirmação do contrato (conferência em passos). Tudo sob .cc. */
+.cc { max-width: 900px; }
+.cc-topo { margin: 4px 0 12px; }
+.cc-topo h1 { margin: 0; }
+.cc > .note { margin: 0 0 18px; padding: 12px 16px; border-radius: 14px; }
+
+/* Trilha de passos: pílulas numeradas */
+.cc .passos-trilha { gap: 8px; margin: 0 0 20px; padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.cc .passos-trilha button { padding: 9px 12px; border: 0; border-radius: 10px; color: var(--ink-soft); font-size: 14px; font-weight: 600; }
+.cc .passos-trilha button:not(:disabled):hover { background: var(--surface-2); color: var(--ink); }
+.cc .passos-trilha .n { width: 26px; height: 26px; font-size: 13px; }
+.cc .passos-trilha .feito button { border: 0; color: var(--ink); }
+.cc .passos-trilha .feito .n { background: var(--ok-wash); border-color: var(--ok); color: var(--ok-ink); }
+.cc .passos-trilha .atual button { border: 0; background: var(--accent); color: var(--on-accent); }
+.cc .passos-trilha .atual .n { background: color-mix(in srgb, var(--on-accent) 22%, transparent); border-color: transparent; color: var(--on-accent); }
+
+/* Blocos de dados: sem cartão, com linhas finas */
+.cc-bloco { margin: 0; padding: 0; }
+.cc-bloco h2 { margin: 0 0 6px; font-size: 18px; font-weight: 650; text-transform: none; letter-spacing: -.01em; color: var(--ink); line-height: 1.25; }
+.cc .passo .lista-dados { margin-top: 0; border-top: 1px solid var(--line); }
+.cc .lista-dados > div { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.cc .lista-dados dt { font-size: 13px; color: var(--ink-soft); }
+.cc .lista-dados dd { font-size: 15px; }
+.cc .passo > .card, .cc .passo .resumo-cobranca { margin: 0 0 16px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--raise); }
+.cc .resumo-cobranca h2 { margin: 0 0 10px; font-size: 17px; font-weight: 650; text-transform: none; letter-spacing: -.01em; color: var(--ink); }
+.cc .passo > a, .cc-bloco > a { display: inline-block; margin-top: 12px; font-weight: 600; }
+.cc .note { margin: 0 0 14px; border-radius: 14px; }
+.cc .resumo-alerta { border-radius: 12px; }
+
+/* Responsabilidade: painel âmbar de borda fina, sem a moldura grossa */
+.cc .confirmacao-responsabilidade { margin: 18px 0 0; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--amber) 45%, var(--line)); border-radius: 16px; background: var(--amber-wash); }
+.cc .confirmacao-titulo { font-size: 16px; }
+.cc .check-linha { align-items: flex-start; gap: 10px; }
+
+/* Rodapé */
+.cc .passos-rodape { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cc-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .cc-topo, .cc .passos-trilha { animation: cc-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .cc .passos-trilha { animation-delay: 50ms; }
+}
+
+@media (max-width: 639px) {
+  .cc .passos-trilha { gap: 4px; padding: 4px; }
+  .cc .passos-rodape { position: sticky; bottom: 0; margin: 18px -16px 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--surface); }
+}
