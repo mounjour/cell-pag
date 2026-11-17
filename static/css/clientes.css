@@ -1,0 +1,102 @@
+/* Lista de clientes: mesmo desenho das outras telas. Tudo sob .cli. */
+.cli-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 14px; }
+.cli-topo h1 { margin: 0; }
+.cli-sub { margin: 6px 0 0; color: var(--ink-soft); }
+.cli-acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cli-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 10px; color: var(--ink-soft); font-size: 14px; font-weight: 500; }
+.cli-link .icone { width: 18px; height: 18px; }
+.cli-link:hover { background: var(--surface-2); color: var(--ink); text-decoration: none; }
+
+/* Busca e abas na mesma linha */
+.cli-controles { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 14px; }
+.cli-busca { position: relative; flex: 1 1 280px; max-width: 420px; margin: 0; }
+.cli-busca .icone { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--ink-faint); pointer-events: none; }
+.cli-busca input { width: 100%; min-height: 44px; padding: 10px 14px 10px 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; }
+.cli-busca input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+
+.cli-abas { position: relative; display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.cli-aba { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 9px; color: var(--ink-soft); font-size: 14px; font-weight: 600; text-decoration: none; }
+.cli-aba:hover { color: var(--ink); text-decoration: none; background: var(--surface-2); }
+.cli-aba.ativo { background: var(--accent); color: var(--on-accent); }
+.segmentos-pronto .cli-aba.ativo { background: transparent; }
+.cli-n { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cli-aba.ativo .cli-n { background: color-mix(in srgb, var(--on-accent) 22%, transparent); color: var(--on-accent); }
+.cli-aba--alerta:not(.ativo) .cli-n { background: var(--critical); color: #fff; }
+.cli-abas .segmentos-fundo { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 9px; background: var(--accent); box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--accent) 60%, transparent); pointer-events: none; }
+.cli-abas .segmentos-fundo.sem-transicao { transition: none !important; }
+.cli-resultado { margin: 0 0 10px; font-size: 14px; color: var(--ink-soft); }
+
+/* Lista */
+.cli-cabecalho, .cli-item { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr) 170px 110px; gap: 18px; align-items: center; }
+.cli-cabecalho { padding: 0 18px 8px; border: solid transparent; border-width: 0 1px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.cli-col-num { text-align: right; }
+.cli-lista { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--raise); overflow: hidden; }
+.cli-item { padding: 12px 18px; cursor: pointer; }
+.cli-item + .cli-item { border-top: 1px solid var(--line); }
+.cli-quem { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cli-quem > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cli-avatar { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-wash); color: var(--accent-ink); font-weight: 700; font-size: 13px; }
+.cli-nome { font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+.cli-nome:hover { color: var(--accent-ink); text-decoration: underline; }
+.cli-detalhe { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-faint); }
+.cli-tag { padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.cli-tag--zero { opacity: .7; }
+.cli-situacao { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.cli-valor { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.cli-valor strong { font-size: 16px; color: var(--ink); }
+.cli-valor .cli-valor--atraso { color: var(--critical-ink); }
+.cli-valor small { font-size: 12px; color: var(--ink-faint); }
+.cli-nada { font-size: 13px; color: var(--ink-faint); }
+.cli-contato { display: flex; justify-content: flex-end; }
+.cli-vazio { display: grid; justify-items: center; gap: 12px; padding: 28px 16px; border: 1px dashed var(--line-strong); border-radius: 16px; text-align: center; color: var(--ink-faint); background: var(--surface); }
+.cli-vazio p { margin: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cli-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .cli-topo, .cli-controles, .cli-lista { animation: cli-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .cli-controles { animation-delay: 40ms; }
+  .cli-lista { animation-delay: 90ms; }
+  .cli-abas .segmentos-fundo { transition: transform .32s cubic-bezier(.3, 1.1, .4, 1), width .32s cubic-bezier(.3, 1.1, .4, 1); }
+  .cli-aba, .cli-n { transition: color .2s ease, background-color .2s ease; }
+  .cli-item { transition: background-color .15s ease; }
+  .cli-item:hover { background: var(--surface-2); }
+}
+
+@media (max-width: 1000px) {
+  .cli-cabecalho { display: none; }
+  .cli-item { grid-template-columns: minmax(0, 1fr) auto; gap: 10px 14px; }
+  .cli-quem { grid-column: 1; }
+  .cli-valor { grid-column: 2; grid-row: 1; }
+  .cli-situacao { grid-column: 1; }
+  .cli-contato { grid-column: 2; }
+}
+@media (max-width: 560px) {
+  .cli-busca { max-width: none; flex-basis: 100%; }
+  .cli-abas { display: flex; width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .cli-aba { flex: none; }
+  .cli-item { padding: 12px 14px; }
+}
+
+/* Mais respiro sem separar em caixas: um bloco só, linhas mais altas e a divisória começando depois das iniciais. */
+.cli-item { position: relative; padding: 16px 18px; }
+.cli-item + .cli-item { border-top: 0; }
+.cli-item + .cli-item::before { content: ""; position: absolute; top: 0; left: 70px; right: 18px; border-top: 1px solid var(--line); }
+.cli-quem > div { gap: 4px; }
+
+/* Sem o cartão em volta: os clientes ficam direto na página, separados por uma linha fina.
+   Ao passar o mouse, a linha ganha um fundo claro arredondado. */
+.cli-lista { border: 0; border-radius: 0; background: transparent; box-shadow: none; overflow: visible; border-top: 1px solid var(--line); }
+.cli-item { border-radius: 12px; }
+.cli-item::after { content: ""; position: absolute; left: 18px; right: 18px; bottom: 0; border-bottom: 1px solid var(--line); }
+.cli-item:last-child::after { left: 0; right: 0; }
+.cli-item + .cli-item::before { content: none; }
+.cli-cabecalho { border: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .cli-item:hover { background: var(--surface-2); }
+  .cli-item:hover::after { opacity: 0; }
+}
+
+/* Linha da busca fechada de ponta a ponta: a busca cresce e as abas vão para o canto direito. */
+.cli-busca { max-width: none; }
+.cli-abas { margin-left: auto; }
+@media (max-width: 700px) { .cli-abas { margin-left: 0; } }

@@ -163,6 +163,8 @@ class BloqueiosView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         painel = bloqueios.montar_painel()
         ctx.update(painel)
+        ctx["total_a_bloquear"] = sum((l["a_cobrar"] for l in painel["a_bloquear"] if l.get("a_cobrar")), 0)
+        ctx["total_bloqueados"] = sum((i["a_cobrar"] for i in painel["bloqueados"] if i.get("a_cobrar")), 0)
         if painel["a_bloquear"]:
             n = len(painel["a_bloquear"])
             messages.warning(

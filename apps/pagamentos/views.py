@@ -948,6 +948,8 @@ class MensagensView(LoginRequiredMixin, TemplateView):
             dia_anterior=dia - datetime.timedelta(days=1), dia_seguinte=dia + datetime.timedelta(days=1),
             config_cobranca=ConfiguracaoCobranca.obter(),
         )
+        # Para a barra de andamento: as mensagens do dia mais quem ainda vai receber a dele.
+        ctx["previstas"] = ctx["contagem"]["todas"] + len(ctx["sem_mensagem"])
         n = ctx["contagem"]["erro"]
         if dia == hoje and n:
             messages.warning(

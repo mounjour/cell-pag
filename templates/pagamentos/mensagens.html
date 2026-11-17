@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Mensagens de cobrança{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/mensagens.css' %}?v=1">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/mensagens.css' %}?v=2">{% endblock %}
 
 {% block content %}
 <div class="msg-tela">
@@ -35,12 +35,18 @@
   </div>
 </header>
 
+<div class="msg-controles">
 <nav class="msg-abas" aria-label="Filtrar mensagens" data-segmentos="mensagens">
   <a class="msg-aba{% if not grupo %} ativo{% endif %}" href="?data={{ dia|date:'Y-m-d' }}"{% if not grupo %} aria-current="page"{% endif %}>Todas <span class="msg-n">{{ contagem.todas }}</span></a>
   <a class="msg-aba{% if grupo == 'enviadas' %} ativo{% endif %}" href="?data={{ dia|date:'Y-m-d' }}&grupo=enviadas"{% if grupo == 'enviadas' %} aria-current="page"{% endif %}>Enviadas <span class="msg-n">{{ contagem.enviadas }}</span></a>
   <a class="msg-aba{% if grupo == 'erro' %} ativo{% endif %}{% if contagem.erro %} msg-aba--alerta{% endif %}" href="?data={{ dia|date:'Y-m-d' }}&grupo=erro"{% if grupo == 'erro' %} aria-current="page"{% endif %}>Com erro <span class="msg-n">{{ contagem.erro }}</span></a>
   <a class="msg-aba{% if grupo == 'pendentes' %} ativo{% endif %}" href="?data={{ dia|date:'Y-m-d' }}&grupo=pendentes"{% if grupo == 'pendentes' %} aria-current="page"{% endif %}>Pendentes <span class="msg-n">{{ contagem.pendentes }}</span></a>
 </nav>
+  <div class="msg-progresso" aria-label="{{ contagem.enviadas }} de {{ previstas }} mensagens enviadas">
+    <span><strong class="num">{{ contagem.enviadas }}</strong> de <span class="num">{{ previstas }}</span> enviada{{ previstas|pluralize }}{% if eh_hoje %} hoje{% endif %}</span>
+    <span class="msg-barra" aria-hidden="true"><i style="width:{% widthratio contagem.enviadas previstas|default:1 100 %}%"></i></span>
+  </div>
+</div>
 
 {% if mensagens or sem_mensagem %}
   <div class="msg-cabecalho" aria-hidden="true"><span>Cliente</span><span>Situação</span><span>Enviada</span><span></span></div>
