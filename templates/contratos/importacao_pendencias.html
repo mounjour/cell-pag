@@ -1,16 +1,20 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Pendências de importação{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/contratos_importacao.css' %}?v=3">{% endblock %}
 {% block content %}
-<div class="toolbar">
-  <h1>{% include "_icone.html" with nome="alerta" %}Pendências de importação</h1>
-  <span class="spacer"></span>
-  <a class="btn secondary" href="{% url 'contratos:importar_previa' %}">{% include "_icone.html" with nome="baixar" %}Importar planilha</a>
-</div>
+<div class="ci">
+<header class="ci-topo">
+  <div>
+    <h1>{% include "_icone.html" with nome="alerta" %}Pendências de importação</h1>
+    <p class="ci-sub">{% if pendencias %}{{ pendencias|length }} linha{{ pendencias|length|pluralize }} para resolver.{% else %}Nada a resolver agora.{% endif %}</p>
+  </div>
+  <div class="ci-acoes">
+    <a class="btn secondary" href="{% url 'contratos:importar_previa' %}">{% include "_icone.html" with nome="baixar" %}Importar planilha</a>
+  </div>
+</header>
 <p class="note">Resolva os dados de cada linha antes de criar o contrato e liberar a cobrança automática.</p>
-{% if pendencias %}
-  <p class="count">{{ pendencias|length }} linha{{ pendencias|length|pluralize }} para resolver</p>
-{% endif %}
 <div class="tbl-wrap cards">
   <table class="tabela-pendencias">
     <thead>
@@ -31,9 +35,10 @@
           <td class="pend-acao"><a class="btn secondary" href="{% url 'contratos:resolver_importacao' p.pk %}">{% include "_icone.html" with nome="editar" %}Resolver</a></td>
         </tr>
       {% empty %}
-        <tr><td colspan="5">Nenhuma pendência aberta.</td></tr>
+        <tr><td colspan="5" class="ci-vazio">Nenhuma pendência aberta.</td></tr>
       {% endfor %}
     </tbody>
   </table>
+</div>
 </div>
 {% endblock %}

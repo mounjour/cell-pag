@@ -1,0 +1,83 @@
+/* Detalhe do contrato: mesmo desenho das outras telas. Tudo sob .ct. */
+.ct-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px 20px; flex-wrap: wrap; margin: 4px 0 18px; }
+.ct-topo h1 { margin: 0; }
+.ct-sub { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin: 8px 0 0; color: var(--ink-soft); }
+.ct-sub a { font-weight: 600; }
+.ct-acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Faixa de números */
+.ct-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0 0 22px; padding: 0; }
+.ct-kpi { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--raise); min-width: 0; }
+.ct-kpi dt { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.ct-kpi dd { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ct-kpi small { display: block; margin-top: 2px; font-size: 12px; font-weight: 500; color: var(--ink-faint); letter-spacing: 0; }
+.ct-kpi--alerta { border-color: color-mix(in srgb, var(--critical) 35%, var(--line)); background: var(--critical-wash); }
+.ct-kpi--alerta dd { color: var(--critical-ink); }
+
+/* Situação hoje */
+.ct-situacao { display: grid; gap: 8px; margin: 0 0 22px; padding: 16px 18px; border: 1px solid var(--line); border-left: 4px solid var(--ok); border-radius: 16px; background: var(--surface); box-shadow: var(--raise); }
+.ct-situacao--atraso { border-left-color: var(--critical); }
+.ct-situacao h2 { margin: 0; font-size: 16px; }
+.ct-situacao p { margin: 0; }
+.ct-situacao-total { font-size: 15px; }
+
+/* Dados do contrato: um bloco só, divididos por linhas finas, sem cartões */
+.ct-dados { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 36px; margin: 0 0 26px; padding-top: 4px; border-top: 1px solid var(--line); }
+.ct-bloco h2 { margin: 16px 0 6px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); }
+.ct .lista-dados > div { padding: 9px 0; border-bottom: 1px solid var(--line); }
+.ct .lista-dados > div:last-child { border-bottom: 0; }
+.ct .lista-dados dt { font-size: 13px; color: var(--ink-soft); }
+.ct .lista-dados dd { font-size: 14px; }
+
+/* Seções */
+.ct-secao { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin: 30px 0 10px; }
+.ct-secao h2 { margin: 0; font-size: 18px; }
+.ct-secao .count { margin: 0; color: var(--ink-soft); font-size: 14px; }
+.ct h2 { margin-top: 28px; }
+.ct .ct-bloco h2, .ct .ct-secao h2, .ct .ct-situacao h2 { margin-top: 0; }
+.ct .ct-bloco h2 { margin-top: 16px; }
+
+/* Tabelas sem moldura de cartão: linhas finas, hover arredondado */
+.ct .tbl-wrap { border: 0; border-radius: 0; background: transparent; box-shadow: none; border-top: 1px solid var(--line); }
+.ct .tbl-wrap table { background: transparent; }
+.ct .tbl-wrap thead th { background: transparent; color: var(--ink-soft); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--line); }
+.ct .tbl-wrap tbody td { border-bottom: 1px solid var(--line); }
+.ct .tbl-wrap tbody tr:last-child td { border-bottom: 0; }
+.ct .parcelas-tabela tr.parcela-proxima td { background: var(--accent-wash); }
+.ct .parcelas-tabela tr.parcela-proxima td:first-child { border-radius: 12px 0 0 12px; }
+.ct .parcelas-tabela tr.parcela-proxima td:last-child { border-radius: 0 12px 12px 0; }
+.ct .parcelas-tabela tr.parcela-paga { opacity: .82; }
+
+.ct-gerar { margin: 0 0 12px; }
+.ct-obs { margin: 0 0 22px; padding: 12px 16px; border-radius: 12px; background: var(--surface-2); color: var(--ink-soft); }
+.ct .note { border-radius: 14px; }
+.ct-doc-form { margin-top: 16px; padding: 16px 18px; border: 1px dashed var(--line-strong); border-radius: 16px; background: var(--surface); }
+.ct .empty { border: 1px dashed var(--line-strong); border-radius: 16px; background: var(--surface); box-shadow: none; text-align: center; color: var(--ink-faint); }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ct-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .ct-topo, .ct-kpis, .ct-situacao, .ct-dados { animation: ct-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .ct-kpis { animation-delay: 40ms; }
+  .ct-situacao { animation-delay: 80ms; }
+  .ct-dados { animation-delay: 110ms; }
+}
+
+@media (max-width: 1000px) {
+}
+@media (max-width: 640px) {
+  .ct-kpi dd { font-size: 19px; }
+  .ct-acoes { width: 100%; }
+  .ct-acoes .btn { flex: 1 1 auto; justify-content: center; }
+}
+
+.ct .lista-dados dd .zap { margin-left: .5rem; font-size: 12px; }
+
+/* Títulos de seção em tamanho normal (o h2 global é pequeno, azul e em maiúsculas). */
+.ct .ct-secao h2 { font-size: 18px; font-weight: 650; text-transform: none; letter-spacing: -.01em; color: var(--ink); line-height: 1.25; }
+.ct .ct-situacao h2 { text-transform: none; letter-spacing: 0; font-size: 16px; color: var(--ink); }
+.ct .card > h2:first-child { margin-top: 0; }
+
+/* Sem faixa grossa colorida no lado esquerdo: o tom fica na borda fina. */
+.ct-situacao { border-left: 1px solid var(--line); border-color: color-mix(in srgb, var(--ok) 35%, var(--line)); }
+.ct-situacao--atraso { border-color: color-mix(in srgb, var(--critical) 35%, var(--line)); }
+.ct .bloqueio-card { border-left-width: 1px; }

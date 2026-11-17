@@ -95,3 +95,6 @@
   @keyframes msg-enche { from { transform: scaleX(0); } }
 }
 @media (max-width: 700px) { .msg-progresso { width: 100%; } .msg-barra { flex: 1; } }
+
+/* O card inteiro abre o contrato (links, botões e balões de dentro seguem funcionando). */
+.msg-item[data-href] { cursor: pointer; }

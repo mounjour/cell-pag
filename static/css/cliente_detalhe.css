@@ -1,0 +1,89 @@
+/* Detalhe do cliente: mesmo desenho das outras telas. Tudo sob .cd. */
+.cd-topo { display: flex; align-items: center; justify-content: space-between; gap: 14px 20px; flex-wrap: wrap; margin: 4px 0 18px; }
+.cd-quem { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.cd-avatar { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--accent-wash); color: var(--accent-ink); font-weight: 700; font-size: 18px; }
+.cd-topo h1 { margin: 0; overflow-wrap: anywhere; }
+.cd-sub { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin: 6px 0 0; color: var(--ink-soft); font-size: 14px; }
+.cd-tag { padding: 1px 9px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.cd-acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Avisos e recados */
+.cd .note, .cd .aviso { border-radius: 14px; }
+.cd .note { margin: 0 0 18px; }
+.cd .avisos { margin: 0 0 18px; }
+.cd-reativar { display: inline; }
+
+/* Dados do cadastro: um bloco só, divisórias finas, sem cartões */
+.cd-dados { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 32px; margin: 0 0 8px; padding: 0; border-top: 1px solid var(--line); }
+.cd-dados > div { padding: 14px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.cd-dados dt { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.cd-dados dd { margin: 0; font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+.cd-dados .helptext { display: block; margin-top: 2px; font-size: 12px; color: var(--ink-faint); }
+
+/* Seções */
+.cd-secao { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin: 32px 0 12px; }
+.cd-secao h2 { margin: 0; font-size: 18px; }
+.cd-secao .count { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.cd > .count { margin: 0 0 10px; color: var(--ink-soft); font-size: 14px; }
+
+/* Painéis de contrato */
+.cd .painel-contrato { display: grid; gap: 14px; margin: 0 0 14px; padding: 18px 20px; border: 1px solid var(--line); border-left-width: 4px; border-radius: 16px; background: var(--surface); box-shadow: var(--raise); cursor: pointer; }
+.cd .painel-contrato__topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; }
+.cd .painel-contrato__topo h3 { margin: 0; font-size: 17px; letter-spacing: -.01em; }
+.cd .painel-contrato__topo h3 a { color: var(--ink); }
+.cd .painel-contrato__topo h3 a:hover { color: var(--accent-ink); }
+.cd .painel-contrato__topo .helptext { display: block; margin-top: 3px; font-size: 13px; color: var(--ink-faint); }
+.cd .painel-contrato__dados { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 24px; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.cd .painel-contrato__dados > div { padding: 12px 0 0; min-width: 0; }
+.cd .painel-contrato__dados dt { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.cd .painel-contrato__dados dd { margin: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.cd .painel-contrato__acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.cd .cobranca-auto { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); }
+.cd .cobranca-auto__estado { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; min-width: 0; }
+
+/* Tabelas sem moldura de cartão: linhas finas */
+.cd .tbl-wrap { border: 0; border-radius: 0; background: transparent; box-shadow: none; border-top: 1px solid var(--line); }
+.cd .tbl-wrap table { background: transparent; }
+.cd .tbl-wrap thead th { background: transparent; color: var(--ink-soft); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--line); }
+.cd .tbl-wrap tbody td { border-bottom: 1px solid var(--line); }
+.cd .tbl-wrap tbody tr:last-child td { border-bottom: 0; }
+.cd .empty { border: 1px dashed var(--line-strong); border-radius: 16px; background: var(--surface); box-shadow: none; text-align: center; color: var(--ink-faint); }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cd-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .cd-topo, .cd-dados, .cd .painel-contrato { animation: cd-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .cd-dados { animation-delay: 40ms; }
+  .cd .painel-contrato { transition: box-shadow .18s ease, border-color .18s ease; }
+  .cd .painel-contrato:hover { border-color: var(--line-strong); }
+}
+
+@media (max-width: 800px) {
+  .cd .painel-contrato__dados { grid-template-columns: 1fr; }
+  .cd .painel-contrato__dados > div { padding-top: 10px; }
+}
+@media (max-width: 640px) {
+  .cd-avatar { width: 46px; height: 46px; font-size: 15px; }
+  .cd-acoes { width: 100%; }
+  .cd-acoes .btn { flex: 1 1 auto; justify-content: center; }
+  .cd .painel-contrato { padding: 16px; }
+  .cd .painel-contrato__acoes .btn { flex: 1 1 auto; justify-content: center; }
+}
+
+/* Títulos de seção em tamanho normal (o h2 global é pequeno, azul e em maiúsculas). */
+.cd .cd-secao h2 { font-size: 18px; font-weight: 650; text-transform: none; letter-spacing: -.01em; color: var(--ink); line-height: 1.25; }
+/* Dados do contrato sem as caixas antigas: só texto, com a cobrança em destaque. */
+.cd .painel-contrato__dados { gap: 0 24px; margin-bottom: 0; }
+.cd .painel-contrato__dados > div,
+.cd .painel-contrato__dados > div:last-child { padding: 12px 0 0; border: 0; border-radius: 0; background: transparent; gap: 4px; }
+.cd .painel-contrato__dados dt { font-size: 13px; color: var(--ink-soft); }
+.cd .painel-contrato__dados dd { font-size: 15px; font-weight: 600; }
+.cd .painel-contrato__dados > div:last-child dd { font-size: 22px; font-weight: 700; letter-spacing: -.02em; color: var(--accent-ink); }
+@media (max-width: 640px) { .cd .painel-contrato__dados > div { padding: 10px 0 0; } }
+
+/* Sem faixa grossa colorida no lado esquerdo: o tom fica no fundo e na borda fina. */
+.cd .aviso { border-left-width: 1px; }
+.cd .aviso--critico { border-color: color-mix(in srgb, var(--critical) 30%, var(--line)); }
+.cd .aviso--atencao { border-color: color-mix(in srgb, var(--amber) 35%, var(--line)); }
+.cd .aviso--info { border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); }
+.cd .painel-contrato { border-left-width: 1px; }
+.cd .cobranca-auto--ativa, .cd .cobranca-auto--suspensa { border-left: 0; }

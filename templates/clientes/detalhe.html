@@ -2,15 +2,21 @@
 {% load static %}
 {% block title %}{{ cliente.nome }}{% endblock %}
 {% block extra_head %}<script src="{% static 'js/confirmar_exclusao.js' %}?v=1" defer></script>{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/cliente_detalhe.css' %}?v=3">{% endblock %}
 
 {% block content %}
+<div class="cd">
 {% url 'clientes:lista' as lista_url %}{% include "_voltar.html" with url=lista_url %}
-<div class="toolbar cliente-cabecalho">
-  <div>
-    <span class="eyebrow">Cliente</span>
-    <h1>{{ cliente.nome }}</h1>
+<header class="cd-topo">
+  <div class="cd-quem">
+    <span class="cd-avatar" aria-hidden="true">{{ cliente.nome|slice:":2"|upper }}</span>
+    <div>
+      <h1>{{ cliente.nome }}</h1>
+      <p class="cd-sub"><span class="num">{{ cliente.cpf_formatado }}</span>{% if not cliente.ativo %}<span class="cd-tag">Arquivado</span>{% endif %}</p>
+    </div>
   </div>
-  <span class="spacer"></span>
+  <div class="cd-acoes">
   <span class="contato-vias">
     <a class="icon-btn icon-btn--phone" href="tel:{{ cliente.telefone_whatsapp.as_e164 }}"
        title="Ligar para {{ cliente.telefone_exibicao }}" aria-label="Ligar para {{ cliente.nome }}">
@@ -22,13 +28,14 @@
     </a>
   </span>
   <a class="btn secondary" href="{% url 'clientes:editar' cliente.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
-  <a class="btn" href="{% url 'contratos:novo' %}?cliente={{ cliente.pk }}">Novo contrato</a>
-</div>
+  <a class="btn" href="{% url 'contratos:novo' %}?cliente={{ cliente.pk }}">{% include "_icone.html" with nome="adicionar" %}Novo contrato</a>
+  </div>
+</header>
 
 {% if not cliente.ativo %}
   <p class="note">
     <strong>Cliente arquivado.</strong> Some da lista principal, mas o cadastro e o histórico continuam aqui.
-    <form method="post" action="{% url 'clientes:reativar' cliente.pk %}" style="display:inline">
+    <form method="post" action="{% url 'clientes:reativar' cliente.pk %}" class="cd-reativar">
       {% csrf_token %}
       <button type="submit" class="linkish">Reativar</button>
     </form>
@@ -38,7 +45,7 @@
     <strong>Todos os contratos deste cliente estão quitados.</strong>
     Não há mais nada a cobrar. Você pode arquivar o cadastro — ele some da lista
     principal, mas o histórico de pagamentos continua guardado.
-    <div class="form-actions" style="margin-top:0.6rem">
+    <div class="form-actions">
       <form method="post" action="{% url 'clientes:arquivar' cliente.pk %}">
         {% csrf_token %}
         <button type="submit" class="btn secondary">{% include "_icone.html" with nome="arquivar" %}Arquivar cliente</button>
@@ -49,7 +56,7 @@
   <div class="note">
     <strong>Este cliente ainda não tem nenhum contrato.</strong>
     <p>O cadastro do cliente não inicia cobranças. Adicione um contrato, confira o resumo e confirme para liberar a cobrança automática.</p>
-    <div class="form-actions" style="margin-top:0.6rem">
+    <div class="form-actions">
       <form id="form-excluir-cliente" method="post" action="{% url 'clientes:excluir' cliente.pk %}">
         {% csrf_token %}
         <button type="button" class="btn-cancelar-pix" data-confirmar-exclusao>{% include "_icone.html" with nome="excluir" %}Excluir cadastro</button>
@@ -77,7 +84,7 @@
   </ul>
 {% endif %}
 
-<dl class="meta meta--4col">
+<dl class="cd-dados">
   <div><dt>CPF</dt><dd class="num">{{ cliente.cpf_formatado }}</dd></div>
   <div><dt>Telefone / WhatsApp</dt><dd>
     <a class="num" href="tel:{{ cliente.telefone_whatsapp.as_e164 }}">{{ cliente.telefone_exibicao }}</a>
@@ -87,14 +94,14 @@
   <div><dt>Cadastrado em</dt><dd class="num">{{ cliente.criado_em|date:"d/m/Y" }}</dd></div>
 </dl>
 
-<h2>Contratos</h2>
+<div class="cd-secao"><h2>Contratos</h2></div>
 {% for p in paineis %}
   {% include "clientes/_painel_contrato.html" %}
 {% empty %}
   <p class="empty">Nenhum contrato para este cliente.</p>
 {% endfor %}
 
-<h2>Contatos de cobrança</h2>
+<div class="cd-secao"><h2>Contatos de cobrança</h2></div>
 {% if contatos %}
   <div class="tbl-wrap cards">
     <table>
@@ -116,7 +123,7 @@
   <p class="empty">Nenhum contato de cobrança anotado. Registre pela tela de cada contrato.</p>
 {% endif %}
 
-<h2>Cobranças enviadas no WhatsApp</h2>
+<div class="cd-secao"><h2>Cobranças enviadas no WhatsApp</h2></div>
 {% if mensagens %}
   <div class="tbl-wrap cards">
     <table>
@@ -139,7 +146,7 @@
   <p class="empty">Nenhuma mensagem de cobrança enviada a este cliente.</p>
 {% endif %}
 
-<h2>Pagamentos</h2>
+<div class="cd-secao"><h2>Pagamentos</h2></div>
 {% if pagamentos %}
   <p class="count">
     {{ pagamentos_total }} pagamento{{ pagamentos_total|pluralize }} no total
@@ -168,4 +175,5 @@
 {% else %}
   <p class="empty">Nenhum pagamento registrado para este cliente.</p>
 {% endif %}
+</div>
 {% endblock %}

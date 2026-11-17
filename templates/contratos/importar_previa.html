@@ -1,21 +1,42 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Importar contratos{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/contratos_importacao.css' %}?v=3">{% endblock %}
 {% block content %}
+<div class="ci">
 {% url 'contratos:lista' as contratos_url %}{% include "_voltar.html" with url=contratos_url %}
-<div class="toolbar"><h1>Importar contratos (planilha)</h1></div>
+<header class="ci-topo">
+  <div>
+    <h1>{% include "_icone.html" with nome="baixar" %}Importar contratos (planilha)</h1>
+    <p class="ci-sub">Envie a planilha para ler e validar as linhas antes de criar qualquer coisa.</p>
+  </div>
+</header>
 <p class="note">Esta tela apenas lê e valida a planilha. Nenhum cliente, contrato, pagamento ou cobrança é criado.</p>
-<form method="post" enctype="multipart/form-data" class="form-grid form-grid--full">
+<form method="post" enctype="multipart/form-data" class="form-grid form-grid--full ci-envio">
   {% csrf_token %}{% include "_form.html" with form=form %}
-  <div class="form-actions"><button class="btn" type="submit">Analisar planilha</button></div>
+  <div class="form-actions"><button class="btn" type="submit">{% include "_icone.html" with nome="baixar" %}Analisar planilha</button></div>
 </form>
 {% if avisos %}{% for aviso in avisos %}<p class="note">{{ aviso }}</p>{% endfor %}{% endif %}
 {% if linhas is not None %}
-  <h2>Resultado</h2>
-  <dl class="meta importacao-resumo"><div><dt>Linhas lidas</dt><dd>{{ resumo.total }}</dd></div><div><dt>Clientes diferentes</dt><dd>{{ resumo.clientes }}</dd></div><div><dt>Com erro</dt><dd>{{ resumo.com_erro }}</dd></div><div><dt>Para revisão</dt><dd>{{ resumo.revisao }}</dd></div></dl>
+  <div class="ci-secao"><h2>Resultado</h2></div>
+  <dl class="ci-kpis">
+    <div class="ci-kpi"><dt>Linhas lidas</dt><dd>{{ resumo.total }}</dd></div>
+    <div class="ci-kpi"><dt>Clientes diferentes</dt><dd>{{ resumo.clientes }}</dd></div>
+    <div class="ci-kpi{% if resumo.com_erro %} ci-kpi--erro{% endif %}"><dt>Com erro</dt><dd>{{ resumo.com_erro }}</dd></div>
+    <div class="ci-kpi{% if resumo.revisao %} ci-kpi--revisao{% endif %}"><dt>Para revisão</dt><dd>{{ resumo.revisao }}</dd></div>
+  </dl>
   {% if resumo.contratos_extras %}<p class="note">São {{ resumo.total }} linhas para {{ resumo.clientes }} clientes: {{ resumo.contratos_extras }} linha{{ resumo.contratos_extras|pluralize }} {{ resumo.contratos_extras|pluralize:"é,são" }} de clientes que já aparecem em outra linha (mesmo CPF ou telefone) e viram contratos a mais do mesmo cliente, não clientes novos.</p>{% endif %}
   <div class="tbl-wrap cards"><table><thead><tr><th>Linha</th><th>Cliente / aparelho</th><th>Plano</th><th>Próxima cobrança</th><th>Revisão necessária</th></tr></thead><tbody>
-  {% for linha in linhas %}<tr><td>{{ linha.linha }}</td><td>{% if linha.erros %}—{% else %}{{ linha.cliente }}, {{ linha.modelo }}{% if linha.contratos_do_cliente > 1 %}<br><small>mesmo cliente de outras {{ linha.contratos_do_cliente|add:"-1" }} linha{{ linha.contratos_do_cliente|add:"-1"|pluralize }}</small>{% endif %}{% endif %}</td><td>{% if linha.erros %}—{% else %}{{ linha.parcelas }} × R$ {{ linha.valor }}, {{ linha.estrutura }}{% endif %}</td><td>{% if linha.vencimento %}{{ linha.vencimento|date:"d/m/Y" }}{% else %}—{% endif %}</td><td>{% if linha.erros %}{{ linha.erros|join:", " }}{% else %}{% for alerta in linha.alertas %}{{ alerta }}{% if not forloop.last %}<br>{% endif %}{% endfor %}{% endif %}</td></tr>{% empty %}<tr><td colspan="5">Nenhuma linha de contrato encontrada.</td></tr>{% endfor %}
+  {% for linha in linhas %}<tr>
+    <td data-label="Linha">{{ linha.linha }}</td>
+    <td data-label="Cliente / aparelho">{% if linha.erros %}—{% else %}{{ linha.cliente }}, {{ linha.modelo }}{% if linha.contratos_do_cliente > 1 %}<br><small>mesmo cliente de outras {{ linha.contratos_do_cliente|add:"-1" }} linha{{ linha.contratos_do_cliente|add:"-1"|pluralize }}</small>{% endif %}{% endif %}</td>
+    <td data-label="Plano">{% if linha.erros %}—{% else %}{{ linha.parcelas }} × R$ {{ linha.valor }}, {{ linha.estrutura }}{% endif %}</td>
+    <td data-label="Próxima cobrança">{% if linha.vencimento %}{{ linha.vencimento|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+    <td data-label="Revisão necessária">{% if linha.erros %}<span class="ci-erro">{{ linha.erros|join:", " }}</span>{% else %}{% for alerta in linha.alertas %}<span class="ci-alerta">{{ alerta }}</span>{% if not forloop.last %}<br>{% endif %}{% endfor %}{% endif %}</td>
+  </tr>{% empty %}<tr><td colspan="5" class="ci-vazio">Nenhuma linha de contrato encontrada.</td></tr>{% endfor %}
   </tbody></table></div>
-  {% if linhas %}<form method="post" action="{% url 'contratos:importar_pendencias' %}" style="margin-top:1rem">{% csrf_token %}<button class="btn" type="submit">Enviar linhas para revisão</button></form>{% endif %}
+  {% if linhas %}<form method="post" action="{% url 'contratos:importar_pendencias' %}" class="ci-enviar">{% csrf_token %}<button class="btn" type="submit">{% include "_icone.html" with nome="proximo" %}Enviar linhas para revisão</button></form>{% endif %}
 {% endif %}
+</div>
 {% endblock %}
