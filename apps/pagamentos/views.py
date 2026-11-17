@@ -264,6 +264,12 @@ class ProximasCobrancasView(LoginRequiredMixin, TemplateView):
         dias = dias if dias in JANELAS else 14
         ctx.update(proximas_cobrancas(dias), janelas=JANELAS, hoje=timezone.localdate())
         ctx["config_cobranca"] = ConfiguracaoCobranca.obter()
+        if ctx["sem_parcelas"]:
+            n = len(ctx["sem_parcelas"])
+            messages.warning(
+                self.request,
+                f"{n} contrato{'s' if n != 1 else ''} com parcelas ainda não geradas: as cobranças {'deles' if n != 1 else 'dele'} não aparecem aqui.",
+            )
         return ctx
 
 

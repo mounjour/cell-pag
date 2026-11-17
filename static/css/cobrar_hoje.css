@@ -26,10 +26,6 @@
 .cob-kpi--dinheiro dd { color: var(--money); }
 
 .cob-ajuda { margin: 0 0 16px; font-size: 14px; }
-.cob-ajuda summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent-ink); font-weight: 500; list-style: none; }
-.cob-ajuda summary::-webkit-details-marker { display: none; }
-.cob-ajuda summary::before { content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-wash); font-size: 12px; font-weight: 700; }
-.cob-ajuda p { margin: 8px 0 0; padding: 12px 16px; border-radius: 12px; background: var(--accent-wash); color: var(--ink-soft); max-width: 70ch; }
 
 /* Filtros */
 .cob-filtros { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 14px; }
@@ -85,7 +81,6 @@
   .cob-item:nth-child(n+5) { animation-delay: 320ms; }
   .cob-kpi, .cob-item { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
   .cob-item:hover { transform: translateY(-2px); box-shadow: var(--raise-hover); border-color: var(--line-strong); }
-  .cob-ajuda p { animation: cob-sobe .25s ease-out; }
 }
 
 /* Telas menores: cada cobrança vira um cartão em pilha */
@@ -122,3 +117,16 @@
 .cob-acoes-linha--sec { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; justify-content: stretch; }
 .cob-acoes-linha--sec .btn { width: 100%; justify-content: center; }
 .cob-acoes-linha--sec form { display: contents; }
+
+/* Aviso das cobranças automáticas (desligadas ou pausadas): selo em cima, texto embaixo e a caixa de marcação por último. */
+.cob-auto-selo { display: inline-flex; margin-bottom: 8px; }
+.cob-auto--atencao .cob-auto-texto, .cob-auto--pausada .cob-auto-texto { display: flex; flex-direction: column; align-items: flex-start; }
+.cob-auto--atencao .cob-auto-texto p, .cob-auto--pausada .cob-auto-texto p { line-height: 1.55; max-width: 80ch; }
+.cob-auto .check-linha { margin-top: 12px; cursor: pointer; }
+.cob-auto .check-linha input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--accent); }
+
+/* Aviso mais compacto: o texto ocupa a largura até o botão e o espaço interno diminui. */
+.cob-auto--atencao .cob-auto-texto p, .cob-auto--pausada .cob-auto-texto p { max-width: none; }
+.cob-auto--atencao form, .cob-auto--pausada form { padding: 12px 18px; gap: 10px 24px; }
+.cob-auto-selo { margin-bottom: 6px; }
+.cob-auto .check-linha { margin-top: 8px; }

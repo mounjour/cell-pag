@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
@@ -76,3 +77,18 @@ def termos_aceitar(request):
     usuario.termos_aceitos_em = timezone.now()
     usuario.save(update_fields=["termos_aceitos_versao", "termos_aceitos_em"])
     return redirect(_destino_seguro(request))
+
+
+class AjudaView(LoginRequiredMixin, TemplateView):
+    """Ajuda do sistema: as explicações completas que não cabem nos balões de "Como funciona"."""
+
+    template_name = "usuarios/ajuda.html"
+
+    def get_context_data(self, **kwargs):
+        from urllib.parse import quote
+
+        ctx = super().get_context_data(**kwargs)
+        numero = "".join(c for c in settings.SUPORTE_WHATSAPP if c.isdigit())
+        texto = quote(f"Olá! Sou {self.request.user.nome_curto} e preciso de ajuda com o CellPage.")
+        ctx["suporte_whatsapp_url"] = f"https://wa.me/{numero}?text={texto}" if numero else ""
+        return ctx

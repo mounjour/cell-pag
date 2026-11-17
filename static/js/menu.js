@@ -2,7 +2,7 @@
    - Clicar fora ou apertar Esc fecha os menus; abrir um fecha o outro.
    - A tecla "/" leva o cursor para a busca (fora de campos de texto). */
 (function () {
-  function menus() { return document.querySelectorAll("details.menu-pop"); }
+  function menus() { return document.querySelectorAll("details.menu-pop, details.balao, details.prox-pendencia"); }
 
   document.addEventListener("click", function (ev) {
     menus().forEach(function (d) {

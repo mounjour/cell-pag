@@ -6,7 +6,7 @@
     <div class="cob-kpi{% if n_bloqueio %} cob-kpi--aviso{% endif %}"><dt>Alerta de bloqueio</dt><dd class="num">{{ n_bloqueio }}</dd></div>
     <div class="cob-kpi cob-kpi--dinheiro"><dt>Total previsto (parcela + juros)</dt><dd class="num kpi-dinheiro">R$ {{ total_previsto|floatformat:"2g" }}</dd></div>
   </dl>
-  <details class="cob-ajuda cobrar-ajuda"><summary>Como funciona</summary><p>Confira as parcelas e os juros antes de cobrar. O Pix reúne as parcelas vencidas e a de hoje, sem juros. Registre pagamentos por fora em “Registrar pagamento”; em “Abrir cliente” você vê o histórico e pode suspender a cobrança.</p></details>
+  <details class="balao cob-ajuda cobrar-ajuda"><summary>Como funciona</summary><div class="balao-conteudo" role="note"><p>Aqui estão os clientes atrasados e os que têm cobrança hoje, do mais atrasado para o menos.</p><a class="balao-mais" href="{% url 'usuarios:ajuda' %}#cobrar-hoje">Ainda com dúvidas? Saiba mais</a></div></details>
 
   <div class="cob-cabecalho" aria-hidden="true">
     <span>Cliente</span><span>Situação</span><span class="cob-col-num">Valor a cobrar</span><span>Status do envio</span><span>Ações</span>

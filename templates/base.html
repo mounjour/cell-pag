@@ -18,7 +18,7 @@
   {% if user.is_authenticated %}<script src="{% static 'js/conexoes_vivo.js' %}?v=7" defer></script>{% endif %}
   <link rel="stylesheet" href="{% static 'css/base.css' %}?v=20261104-sem-graficos">
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}?v=20261104-sem-graficos">
-  <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261116-logo4">
+  <link rel="stylesheet" href="{% static 'css/shell.css' %}?v=20261117-ajuda">
   {% block extra_styles %}{% endblock %}
   {% block extra_head %}{% endblock %}
 </head>
@@ -67,6 +67,7 @@
         <div class="menu-painel">
           <div class="menu-quem"><strong>{{ user.nome_completo }}</strong><span>{{ user.email }}</span></div>
           {% if user.is_staff %}<a class="menu-item" href="/admin/">{% include "_icone.html" with nome="admin" %}<span>Administração</span></a>{% endif %}
+          <a class="menu-item" href="{% url 'usuarios:ajuda' %}">{% include "_icone.html" with nome="busca" %}<span>Ajuda</span></a>
           <a class="menu-item" href="{% url 'usuarios:termos' %}">{% include "_icone.html" with nome="termos" %}<span>Termos e privacidade</span></a>
           <form method="post" action="{% url 'usuarios:logout' %}">
             {% csrf_token %}
@@ -93,6 +94,7 @@
     </form>
     <a class="topo-busca" href="{% url 'buscar' %}" aria-label="Buscar">{% include "_icone.html" with nome="busca" %}</a>
     <div class="topo-acoes">
+      <a class="topo-ajuda" href="{% url 'usuarios:ajuda' %}" aria-label="Ajuda" title="Ajuda"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></a>
       {% include "_tema.html" %}
       <details class="menu-pop menu-notificacoes">
         <summary aria-label="Notificações">{% include "_icone.html" with nome="notificacoes" %}<span class="selo selo--alerta" data-notificacoes-selo{% if not notificacoes_n %} hidden{% endif %}><span class="sr-only">notificações pendentes:</span><span data-notificacoes-n>{{ notificacoes_n|default:0 }}</span></span></summary>
@@ -105,9 +107,10 @@
           {% if aparelhos_a_bloquear_n %}<a class="menu-item menu-item--erro" href="{% url 'aparelhos:bloqueios' %}">{% include "_icone.html" with nome="bloqueio" %}<span>{{ aparelhos_a_bloquear_n }} {{ aparelhos_a_bloquear_rotulo }} (8+ dias de atraso)</span></a>{% endif %}
           {% if aparelhos_a_desbloquear_n %}<a class="menu-item menu-item--aviso" href="{% url 'aparelhos:bloqueios' %}">{% include "_icone.html" with nome="bloqueio" %}<span>{{ aparelhos_a_desbloquear_n }} {{ aparelhos_a_desbloquear_rotulo }} (cliente regularizou)</span></a>{% endif %}
           {% if promessas_a_retornar_n %}<a class="menu-item menu-item--aviso" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="cobrar" %}<span>{{ promessas_a_retornar_n }} {{ promessas_a_retornar_rotulo }} para hoje ou vencida{{ promessas_a_retornar_n|pluralize }}</span></a>{% endif %}
+          {% if parcelas_nao_geradas_n %}<a class="menu-item menu-item--aviso" href="{% url 'pagamentos:proximas_cobrancas' %}?dias=30">{% include "_icone.html" with nome="proximas" %}<span>{{ parcelas_nao_geradas_n }} {{ parcelas_nao_geradas_rotulo }}</span></a>{% endif %}
           {% if rotinas_com_problema_n %}<a class="menu-item menu-item--erro" href="{% url 'pagamentos:rotinas' %}">{% include "_icone.html" with nome="alerta" %}<span>{{ rotinas_com_problema_n }} rotina{{ rotinas_com_problema_n|pluralize }} agendada{{ rotinas_com_problema_n|pluralize }} com problema</span></a>{% endif %}
           {% if cobrancas_pausadas %}<a class="menu-item menu-item--aviso" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="cobrar" %}<span>Cobranças automáticas desligadas</span></a>{% endif %}
-          <p class="menu-quem" data-notificacoes-vazio{% if importacoes_pendentes_n or pix_alertas_n or rotinas_com_problema_n or mensagens_com_erro_n or whatsapp_desconectado or cobrancas_pausadas or aparelhos_a_bloquear_n or aparelhos_a_desbloquear_n or promessas_a_retornar_n %} hidden{% endif %}>Nenhuma notificação pendente.</p>
+          <p class="menu-quem" data-notificacoes-vazio{% if importacoes_pendentes_n or pix_alertas_n or rotinas_com_problema_n or mensagens_com_erro_n or whatsapp_desconectado or cobrancas_pausadas or aparelhos_a_bloquear_n or aparelhos_a_desbloquear_n or promessas_a_retornar_n or parcelas_nao_geradas_n %} hidden{% endif %}>Nenhuma notificação pendente.</p>
         </div>
       </details>
       <details class="menu-pop menu-usuario menu-usuario--topo">
@@ -119,6 +122,7 @@
         <div class="menu-painel">
           <div class="menu-quem"><strong>{{ user.nome_completo }}</strong><span>{{ user.email }}</span></div>
           {% if user.is_staff %}<a class="menu-item" href="/admin/">{% include "_icone.html" with nome="admin" %}<span>Administração</span></a>{% endif %}
+          <a class="menu-item" href="{% url 'usuarios:ajuda' %}">{% include "_icone.html" with nome="busca" %}<span>Ajuda</span></a>
           <a class="menu-item" href="{% url 'usuarios:termos' %}">{% include "_icone.html" with nome="termos" %}<span>Termos e privacidade</span></a>
           <form method="post" action="{% url 'usuarios:logout' %}">
             {% csrf_token %}
@@ -162,7 +166,7 @@
   <script src="{% static 'js/voltar.js' %}" defer></script>
   <script src="{% static 'js/confirmar_envio.js' %}?v=1" defer></script>
   <script src="{% static 'js/linha_clicavel.js' %}?v=1" defer></script>
-  {% if user.is_authenticated %}  <script src="{% static 'js/menu.js' %}?v=4" defer></script>
+  {% if user.is_authenticated %}  <script src="{% static 'js/menu.js' %}?v=5" defer></script>
   <script src="{% static 'js/busca.js' %}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>

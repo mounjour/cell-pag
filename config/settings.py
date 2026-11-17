@@ -249,6 +249,8 @@ YSLANE_WHATSAPP_NUMERO = env("YSLANE_WHATSAPP_NUMERO", default="")
 # prepara a fila sem enviar; "evolution" dispara as mensagens de verdade quando
 # EVOLUTION_API_URL / _API_KEY / _INSTANCE estiverem preenchidos.
 WHATSAPP_PROVIDER = env("WHATSAPP_PROVIDER", default="log")
+# Número do suporte (com DDI e DDD, só dígitos, ex.: 5588999990000). Sem ele, o botão "Falar com o suporte" da Ajuda não aparece.
+SUPORTE_WHATSAPP = env("SUPORTE_WHATSAPP", default="")
 # Quando uma parcela é paga por outro meio (dinheiro etc.), a mensagem de cobrança
 # já enviada é apagada do WhatsApp do cliente — só dentro desta janela, que é o
 # limite do próprio WhatsApp para "apagar para todos". False = só avisa.

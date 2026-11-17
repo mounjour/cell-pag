@@ -8,20 +8,12 @@
 {% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk as volta_url %}{% else %}{% url 'contratos:lista' as volta_url %}{% endif %}{% include "_voltar.html" with url=volta_url %}
 <h1>{% if form.instance.pk %}Editar contrato{% else %}Novo contrato{% endif %}</h1>
 
-<details class="note">
+<details class="balao">
   <summary>Como funcionam as parcelas e o dia de cobrança</summary>
-  <p>
-    Informe o valor total e a quantidade de parcelas: o valor de cada parcela é calculado
-    sozinho (total ÷ quantidade, arredondado para R$ 0,10). Escolha a <strong>frequência</strong> e o
-    <strong>dia de cobrança</strong> (dia da semana ou do mês): o sistema sugere a
-    <strong>primeira cobrança</strong>, que você pode alterar, e gera as datas de cobrança e a
-    previsão de quitação a partir dela.
-    Contrato que já estava em andamento antes de entrar no sistema: informe a
-    <strong>primeira cobrança real</strong> e quantas parcelas já foram pagas — elas
-    saem da cobrança automática. As demais, vencidas ou não, entram na cobrança
-    normalmente. A <strong>entrada</strong> é um valor à parte, recebido no
-    fechamento — não conta como parcela nem entra no valor total financiado.
-  </p>
+  <div class="balao-conteudo" role="note">
+    <p>O valor de cada parcela é o total dividido pela quantidade. As datas de cobrança saem da primeira cobrança e da frequência.</p>
+    <a class="balao-mais" href="{% url 'usuarios:ajuda' %}#parcelas">Ainda com dúvidas? Saiba mais</a>
+  </div>
 </details>
 
 <div class="contrato-layout">
