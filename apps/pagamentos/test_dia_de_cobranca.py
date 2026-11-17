@@ -88,7 +88,7 @@ def test_mensal_sem_dia_usa_o_dia_da_primeira_cobranca():
     ({"estrutura": "quinzenal", "quinzena": "dias_mes", "dia_mes": 5}, "dois dias"),
     ({"estrutura": "quinzenal", "quinzena": "dias_mes", "dia_mes": 5, "dia_mes_2": 5}, "diferentes"),
     ({"estrutura": "quinzenal", "quinzena": "dias_mes", "dia_mes": 5, "dia_mes_2": 20, "primeira_cobranca": D(2026, 10, 6)}, "5 e 20"),
-    ({"estrutura": "diaria"}, "frequência"),
+    ({"estrutura": "dezena"}, "frequência"),
 ])
 def test_interpretar_recusa_escolhas_incoerentes_com_mensagem_clara(kwargs, trecho):
     with pytest.raises(ValueError, match=trecho):

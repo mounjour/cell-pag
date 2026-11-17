@@ -800,6 +800,6 @@ def test_formulario_recusa_frequencias_que_sairam(auth_client, cliente, removida
 
 
 @pytest.mark.django_db
-def test_formulario_so_oferece_semanal_quinzenal_e_mensal(auth_client):
+def test_formulario_oferece_diaria_semanal_quinzenal_e_mensal(auth_client):
     opcoes = [valor for valor, _ in auth_client.get(reverse("contratos:novo")).context["form"].fields["estrutura"].choices if valor]
-    assert opcoes == ["semanal", "quinzenal", "mensal"]
+    assert opcoes == ["diaria", "semanal", "quinzenal", "mensal"]
