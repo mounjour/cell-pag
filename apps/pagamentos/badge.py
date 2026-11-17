@@ -120,3 +120,18 @@ def status_whatsapp_ao_vivo() -> str:
         cache.set(chave, estado, TTL_WHATSAPP_AO_VIVO_SEGUNDOS)
         cache.set("whatsapp_status", estado, TTL_WHATSAPP_SEGUNDOS)
     return estado
+
+
+def contagem_sem_parcelas() -> int:
+    """Contratos cujas parcelas geradas acabam antes de 30 dias (a rotina precisa gerar mais). Cache de 5 minutos."""
+    import datetime
+
+    hoje = timezone.localdate()
+    chave = f"contratos_sem_parcelas_n:{hoje.isoformat()}"
+    n = cache.get(chave)
+    if n is None:
+        from .proximas import contratos_sem_parcelas
+
+        n = len(contratos_sem_parcelas(hoje + datetime.timedelta(days=30)))
+        cache.set(chave, n, 300)
+    return n

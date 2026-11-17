@@ -462,3 +462,70 @@ h1 > .icone { width: 1.05em; height: 1.05em; margin-right: 0.45rem; vertical-ali
 .brand-nome i { color: var(--marca-2); font-style: normal; }
 .brand-mark { transition: transform .35s cubic-bezier(.3, 1.4, .5, 1); }
 .brand:hover .brand-mark { transform: rotate(-8deg) scale(1.06); }
+
+/* ── Balão de ajuda: "Como funciona" e afins abrem um balão por cima da página, sem empurrar nada. ── */
+details.balao { position: relative; display: inline-block; margin: 0 0 16px; font-size: 14px; }
+details.balao > summary {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; list-style: none;
+  color: var(--accent-ink); font-weight: 500; border-radius: 6px;
+}
+details.balao > summary::-webkit-details-marker { display: none; }
+details.balao > summary::before {
+  content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent-wash); font-size: 12px; font-weight: 700;
+}
+details.balao > summary:hover { text-decoration: underline; }
+details.balao > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.balao-conteudo {
+  position: absolute; left: 0; top: calc(100% + 10px); z-index: 30; width: min(380px, calc(100vw - 32px));
+  padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+  box-shadow: var(--raise-hover); color: var(--ink-soft); line-height: 1.55; font-size: 14px;
+}
+.balao-conteudo--largo { width: min(520px, calc(100vw - 32px)); }
+.balao-conteudo::before {
+  content: ""; position: absolute; left: 18px; top: -7px; width: 12px; height: 12px; background: var(--surface);
+  border-left: 1px solid var(--line); border-top: 1px solid var(--line); transform: rotate(45deg);
+}
+.balao-conteudo p { margin: 0; }
+.balao-conteudo p + p { margin-top: 8px; }
+@media (prefers-reduced-motion: no-preference) {
+  details.balao[open] .balao-conteudo { animation: balao-abre .18s cubic-bezier(.2, .8, .2, 1); transform-origin: 24px 0; }
+  @keyframes balao-abre { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
+}
+.balao-mais { display: inline-block; margin-top: 10px; font-weight: 600; color: var(--accent-ink); }
+.balao-mais::after { content: " →"; }
+
+/* Página de ajuda */
+.ajuda { max-width: 760px; }
+.ajuda-sub { margin: 6px 0 24px; color: var(--ink-soft); }
+.ajuda-indice { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; padding: 0; list-style: none; }
+.ajuda-indice a { display: inline-block; padding: 6px 14px; border-radius: 999px; background: var(--accent-wash); color: var(--accent-ink); font-weight: 500; font-size: 14px; }
+.ajuda-secao { margin: 0 0 20px; padding: 22px 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--raise); scroll-margin-top: calc(var(--topo-h) + 16px); }
+.ajuda-secao:target { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+.ajuda-secao h2 { margin: 0 0 12px; padding: 0; border: 0; font-size: 19px; text-transform: none; letter-spacing: -.01em; color: var(--ink); }
+.ajuda-secao h3 { margin: 18px 0 6px; font-size: 15px; color: var(--ink); }
+.ajuda-secao p, .ajuda-secao li { color: var(--ink-soft); line-height: 1.6; }
+.ajuda-secao p { margin: 0 0 10px; }
+.ajuda-secao ul { margin: 0 0 10px; padding-left: 1.2rem; }
+.ajuda-secao li + li { margin-top: 4px; }
+
+/* ── Regra geral de espaço: telas mais compactas, sem vazios grandes. ──
+   Vale para o sistema todo (este arquivo é carregado por último). Telas novas devem seguir estes valores. */
+:root { --space-3: 1.25rem; --space-4: 1.5rem; --space-5: 2rem; }
+.app-shell .wrap { max-width: 1360px; }
+.app-shell .wrap.wrap--wide { max-width: 1600px; }
+@media (min-width: 640px) { .app-shell .wrap { padding: 1.25rem 1.25rem 2.25rem; } }
+@media (min-width: 1024px) { .app-shell .wrap { padding: 1.25rem 1.75rem 2.5rem; } }
+h1 { margin-bottom: .75rem; }
+h2 { margin: 1.4rem 0 .65rem; }
+.card { margin: .75rem 0; padding: 1rem 1.15rem; }
+.empty { padding: 1.5rem 1.25rem; gap: .5rem; }
+.toolbar { margin-bottom: .65rem; }
+
+/* Botão de ajuda na barra de cima, ao lado do tema */
+.topo-ajuda {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 40px; height: 40px; border-radius: var(--radius-sm); color: var(--ink-soft);
+}
+.topo-ajuda:hover { background: var(--surface-2); color: var(--ink); text-decoration: none; }
+.topo-ajuda:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }

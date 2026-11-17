@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Cobrar hoje{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/cobrar_hoje.css' %}?v=8">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/cobrar_hoje.css' %}?v=11">{% endblock %}
 
 {% block content %}
 <div class="cob">
@@ -21,13 +21,15 @@
     <input type="hidden" name="next" value="{{ request.get_full_path }}">
     {% if config_cobranca.nunca_iniciada %}
       <div class="cob-auto-texto">
-        <p><span class="pill aberto">Ainda não começaram</span> As cobranças automáticas estão paradas: a rotina não manda mensagem nem gera Pix para os clientes. Comece só quando tudo estiver conferido (WhatsApp conectado, clientes e contratos importados, Pix testado).</p>
+        <span class="pill aberto cob-auto-selo">Ainda não começaram</span>
+        <p>As cobranças automáticas estão paradas: a rotina não manda mensagem nem gera Pix para os clientes. Comece só quando tudo estiver conferido (WhatsApp conectado, clientes e contratos importados, Pix testado).</p>
         <label class="check-linha"><input type="checkbox" name="conferido" value="1" required> Conferi que está tudo certo para começar a cobrar os clientes.</label>
       </div>
       <button type="submit" name="acao" value="comecar" class="btn">{% include "_icone.html" with nome="retomar" %}Começar cobranças</button>
     {% elif config_cobranca.pausada %}
       <div class="cob-auto-texto">
-        <p><span class="pill inadimplente">Pausadas</span> As cobranças automáticas estão pausadas
+        <span class="pill inadimplente cob-auto-selo">Pausadas</span>
+        <p>As cobranças automáticas estão pausadas
           {% if config_cobranca.pausada_em %}desde {{ config_cobranca.pausada_em|date:"d/m/Y H:i" }}{% endif %}{% if config_cobranca.pausada_por %} por {{ config_cobranca.pausada_por.get_username }}{% endif %}.
           A rotina não gera Pix nem envia mensagem aos clientes; pagamentos já feitos continuam sendo baixados.</p>
       </div>

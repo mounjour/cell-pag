@@ -1,0 +1,106 @@
+/* Próximas cobranças: mesmo desenho do Cobrar hoje. Tudo sob .prox. */
+.prox { --prox-raio: 16px; }
+
+.prox-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 18px; }
+.prox-topo h1 { margin: 0; }
+.prox-sub { margin: 6px 0 0; color: var(--ink-soft); }
+.prox-estado {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-soft); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap;
+}
+.prox-estado i { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+.prox-estado:hover { border-color: var(--line-strong); color: var(--ink); text-decoration: none; }
+
+/* Janela de dias e pendência discreta, na mesma linha */
+.prox-controles { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; margin: 0 0 16px; }
+.prox-controles .filtro-pills { margin: 0; }
+.prox-pendencia { position: relative; font-size: 13px; }
+.prox-pendencia summary {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; cursor: pointer; list-style: none;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); font-weight: 500;
+}
+.prox-pendencia summary::-webkit-details-marker { display: none; }
+.prox-pendencia summary::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+.prox-pendencia summary::after { content: ""; width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); }
+.prox-pendencia[open] summary { border-color: var(--line-strong); color: var(--ink); }
+.prox-pendencia-painel {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 10; width: min(360px, 90vw); padding: 14px 16px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--raise-hover);
+}
+.prox-pendencia-painel p { margin: 0 0 10px; color: var(--ink-soft); line-height: 1.5; }
+.prox-pendencia-painel ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.prox-pendencia-painel li a { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--accent-wash); color: var(--accent-ink); font-weight: 500; }
+
+/* Resumo */
+.prox-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0 0 18px; padding: 0; }
+.prox-kpi { min-width: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--prox-raio); background: var(--surface); box-shadow: var(--raise); }
+.prox-kpi dt { margin: 0; color: var(--ink-soft); font-size: 13px; }
+.prox-kpi dd { margin: 4px 0 0; font-size: clamp(24px, 2.6vw, 32px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+.prox-dinheiro { color: var(--money); }
+
+/* Faixa de dias no azul do sistema */
+.prox .faixa { gap: 8px; margin-bottom: 14px; }
+.prox .faixa-dia, .prox .faixa-todos { border-radius: 12px; }
+.prox .faixa-dia.tem { background: var(--accent-wash); border-color: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--accent-ink); }
+.prox .faixa-dia.tem:hover { background: color-mix(in srgb, var(--accent) 16%, var(--accent-wash)); }
+.prox .faixa-dia.ativo, .prox .faixa-todos.ativo { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--accent) 60%, transparent); }
+.prox .faixa-dia.tem.ativo:hover, .prox .faixa-todos.ativo:hover { background: var(--accent-ink); color: var(--on-accent); }
+.prox .faixa-todos.ativo small { color: var(--on-accent); }
+.prox .faixa-seta { color: var(--accent-ink); }
+.prox .faixa-seta:hover { background: var(--accent-wash); }
+
+/* Cada dia é um cartão */
+.prox .prox-dia { margin: 0 0 14px; padding: 0; border: 1px solid var(--line); border-radius: var(--prox-raio); background: var(--surface); box-shadow: var(--raise); overflow: hidden; }
+.prox-dia-topo { display: flex; align-items: center; gap: 14px; padding: 14px 20px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.prox-data { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); line-height: 1; }
+.prox-data b { font-size: 19px; }
+.prox-data small { margin-top: 2px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); }
+.prox-dia-topo h2 { flex: 1; display: flex; align-items: center; gap: 10px; margin: 0; padding: 0; border: 0; font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--ink); }
+.prox-quando { padding: 2px 10px; border-radius: 999px; background: var(--accent-wash); color: var(--accent-ink); font-size: 12px; font-weight: 600; }
+.prox-soma { display: flex; align-items: baseline; gap: 10px; color: var(--ink-faint); font-size: 13px; white-space: nowrap; }
+.prox-soma strong { font-size: 16px; color: var(--ink); }
+
+.prox-itens { list-style: none; margin: 0; padding: 0; }
+.prox .prox-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, auto) 130px auto; align-items: center; gap: 16px;
+  padding: 14px 20px; border: 0; background: none;
+}
+.prox .prox-item + .prox-item { border-top: 1px solid var(--line); }
+.prox-avatar { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-wash); color: var(--accent-ink); font-weight: 700; font-size: 13px; }
+.prox-quem { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.prox-cliente { font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+.prox-cliente:hover { color: var(--accent-ink); text-decoration: underline; }
+.prox-detalhe { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--ink-faint); }
+.prox-tag { padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.prox-selos { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.prox-valor { text-align: right; font-size: 17px; white-space: nowrap; }
+.prox-acoes { display: flex; gap: 8px; }
+.prox-btn { padding: 7px 12px; font-size: 13px; white-space: nowrap; }
+.prox-vazio { padding: 40px 16px; border-radius: var(--prox-raio); }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes prox-sobe { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .prox-topo, .prox-controles, .prox-kpi, .prox .faixa { animation: prox-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .prox-kpi:nth-child(2) { animation-delay: 50ms; }
+  .prox-kpi:nth-child(3) { animation-delay: 100ms; }
+  .prox .prox-item { transition: background-color .15s ease; }
+  .prox .prox-item:hover { background: var(--surface-2); }
+  .prox-pendencia[open] .prox-pendencia-painel { animation: prox-sobe .2s ease-out; }
+  .prox-pendencia summary::after { transition: transform .2s ease; }
+  .prox-pendencia[open] summary::after { transform: rotate(-135deg) translateY(-2px); }
+}
+
+@media (max-width: 900px) {
+  .prox .prox-item { grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px 14px; }
+  .prox-selos { grid-column: 2 / -1; justify-content: flex-start; }
+  .prox-valor { grid-column: 3; grid-row: 1; }
+  .prox-acoes { grid-column: 2 / -1; }
+  .prox-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+}
+@media (max-width: 560px) {
+  .prox-kpis { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .prox-kpi:last-child { grid-column: 1 / -1; }
+  .prox-dia-topo { flex-wrap: wrap; padding: 12px 14px; }
+  .prox .prox-item { padding: 12px 14px; }
+  .prox-pendencia-painel { right: auto; left: 0; }
+}

@@ -30,7 +30,7 @@ def shell(request):
     from django.utils.functional import SimpleLazyObject
 
     from apps.pagamentos.badge import (
-        contagem_a_bloquear, contagem_a_desbloquear, contagem_cobrar_hoje, contagem_promessas,
+        contagem_a_bloquear, contagem_a_desbloquear, contagem_cobrar_hoje, contagem_promessas, contagem_sem_parcelas,
     )
 
     def pix_alertas():
@@ -75,6 +75,12 @@ def shell(request):
     def aparelhos_bloqueio_pendente():
         return contagem_a_bloquear() + contagem_a_desbloquear()
 
+    def parcelas_nao_geradas():
+        return contagem_sem_parcelas()
+
+    def parcelas_nao_geradas_rotulo():
+        return "contrato com parcelas ainda não geradas" if contagem_sem_parcelas() == 1 else "contratos com parcelas ainda não geradas"
+
     def importacoes_pendentes():
         from apps.contratos.models import ImportacaoContratoPendente
         return ImportacaoContratoPendente.objects.filter(resolvida_em__isnull=True).count()
@@ -101,6 +107,7 @@ def shell(request):
             + (1 if aparelhos_a_bloquear() else 0)
             + (1 if aparelhos_a_desbloquear() else 0)
             + (1 if promessas_a_retornar() else 0)
+            + (1 if parcelas_nao_geradas() else 0)
         )
 
     def rotulo_importacoes_pendentes():
@@ -119,6 +126,8 @@ def shell(request):
         "aparelhos_a_desbloquear_n": SimpleLazyObject(aparelhos_a_desbloquear),
         "aparelhos_a_desbloquear_rotulo": SimpleLazyObject(aparelhos_a_desbloquear_rotulo),
         "bloqueios_pendentes_n": SimpleLazyObject(aparelhos_bloqueio_pendente),
+        "parcelas_nao_geradas_n": SimpleLazyObject(parcelas_nao_geradas),
+        "parcelas_nao_geradas_rotulo": SimpleLazyObject(parcelas_nao_geradas_rotulo),
         "importacoes_pendentes_n": SimpleLazyObject(importacoes_pendentes),
         "rotinas_com_problema_n": SimpleLazyObject(rotinas_com_problema_n),
         "mensagens_com_erro_n": SimpleLazyObject(mensagens_com_erro),

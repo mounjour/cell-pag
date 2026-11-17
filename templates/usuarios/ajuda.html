@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Ajuda{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/ajuda.css' %}?v=4">{% endblock %}
+
+{% block content %}
+<div class="ajd">
+  <header class="ajd-topo">
+    <span class="ajd-eyebrow">Ajuda</span>
+    <h1>Como podemos ajudar?</h1>
+    <p class="ajd-sub">Explicações de cada parte do sistema, em linguagem simples.</p>
+    <label class="ajd-busca">
+      {% include "_icone.html" with nome="busca" %}
+      <input type="search" placeholder="Procure uma dúvida, por exemplo: juros, Pix, bloqueio" aria-label="Procurar na ajuda" data-ajuda-busca autocomplete="off">
+    </label>
+  </header>
+
+  <div class="ajd-corpo">
+    <nav class="ajd-indice" aria-label="Assuntos">
+      <a href="#cobrar-hoje">{% include "_icone.html" with nome="cobrar" %}Cobrar hoje</a>
+      <a href="#proximas">{% include "_icone.html" with nome="proximas" %}Próximas cobranças</a>
+      <a href="#automaticas">{% include "_icone.html" with nome="retomar" %}Cobranças automáticas</a>
+      <a href="#pagamentos">{% include "_icone.html" with nome="dinheiro" %}Pagamentos</a>
+      <a href="#pix">{% include "_icone.html" with nome="pix" %}Pix</a>
+      <a href="#bloqueios">{% include "_icone.html" with nome="bloqueio" %}Bloqueios</a>
+      <a href="#whatsapp">{% include "_icone.html" with nome="whatsapp" %}WhatsApp</a>
+      <a href="#parcelas">{% include "_icone.html" with nome="contratos" %}Parcelas e contratos</a>
+      {% if suporte_whatsapp_url %}
+      <div class="ajd-suporte">
+        <strong>Não achou sua dúvida?</strong>
+        <span>Fale direto com o suporte.</span>
+        <a class="ajd-suporte-btn" href="{{ suporte_whatsapp_url }}" target="_blank" rel="noopener">
+          <svg viewBox="0 0 32 32" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false"><path d="M16.004 0h-.008C7.174 0 .002 7.174.002 16c0 3.5 1.13 6.744 3.05 9.38L1.06 31.26l6.08-1.944A15.9 15.9 0 0 0 16.004 32C24.83 32 32 24.826 32 16S24.83 0 16.004 0zm9.32 22.598c-.386 1.09-1.92 1.994-3.142 2.258-.836.178-1.928.32-5.604-1.204-4.7-1.948-7.726-6.724-7.962-7.034-.226-.31-1.9-2.53-1.9-4.826 0-2.296 1.166-3.424 1.636-3.904.386-.394.844-.574 1.324-.574.156 0 .296.008.424.014.386.016.58.038.834.646.316.764 1.09 2.66 1.182 2.854.094.194.156.42.028.73-.12.31-.226.45-.42.694-.194.244-.408.542-.582.73-.194.21-.396.436-.17.826.226.39.998 1.646 2.144 2.664 1.474 1.314 2.72 1.72 3.16 1.914.44.194.694.162.95-.098.32-.32 1.006-1.146 1.33-1.542.32-.396.6-.34 1.006-.194.408.146 2.594 1.224 3.04 1.446.446.222.742.33.85.516.108.192.108 1.09-.278 2.18z"/></svg>
+          Falar no WhatsApp
+        </a>
+      </div>
+      {% endif %}
+    </nav>
+
+    <div class="ajd-conteudo">
+      <p class="ajd-nada" data-ajuda-nada hidden>Nada encontrado. Tente outra palavra{% if suporte_whatsapp_url %} ou <a href="{{ suporte_whatsapp_url }}" target="_blank" rel="noopener">fale com o suporte no WhatsApp</a>{% endif %}.</p>
+
+      <section class="ajd-secao" id="cobrar-hoje" data-ajuda-secao>
+        <header class="ajd-secao-topo">
+          <span class="ajd-ico">{% include "_icone.html" with nome="cobrar" %}</span>
+          <div><h2>Cobrar hoje</h2><p>Quem precisa ser cobrado agora.</p></div>
+          <a class="ajd-abrir" href="{% url 'pagamentos:cobrar_hoje' %}">Abrir a tela</a>
+        </header>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O que aparece nesta tela?</h3>
+          <p>Os clientes atrasados e os que têm cobrança no dia, do mais atrasado para o menos atrasado.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Como é calculado o valor a cobrar?</h3>
+          <p>É a soma das parcelas em aberto mais os juros de cada uma. Os juros contam por dia, a partir da data de cobrança de cada parcela.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O que fazer em cada cliente?</h3>
+          <ul>
+            <li><strong>Registrar pagamento</strong> quando o cliente pagou por fora, em dinheiro ou Pix direto na chave.</li>
+            <li><strong>Enviar cobrança</strong> para mandar a mensagem na hora, sem esperar a rotina.</li>
+            <li><strong>Abrir cliente</strong> para ver o histórico e suspender a cobrança de uma parcela.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="ajd-secao" id="proximas" data-ajuda-secao>
+        <header class="ajd-secao-topo">
+          <span class="ajd-ico">{% include "_icone.html" with nome="proximas" %}</span>
+          <div><h2>Próximas cobranças</h2><p>O que vai ser cobrado a partir de amanhã.</p></div>
+          <a class="ajd-abrir" href="{% url 'pagamentos:proximas_cobrancas' %}">Abrir a tela</a>
+        </header>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O que aparece nesta tela?</h3>
+          <p>As parcelas que a rotina vai cobrar nos próximos 7, 14 ou 30 dias, separadas por dia. As atrasadas e as de hoje ficam em Cobrar hoje.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Um cliente não aparece. Por quê?</h3>
+          <p>As parcelas dele ainda não foram geradas para esse período. Abra o contrato e clique em <strong>Gerar parcelas seguintes</strong>. O sino avisa quando isso acontece.</p>
+        </div>
+      </section>
+
+      <section class="ajd-secao" id="automaticas" data-ajuda-secao>
+        <header class="ajd-secao-topo">
+          <span class="ajd-ico">{% include "_icone.html" with nome="retomar" %}</span>
+          <div><h2>Cobranças automáticas</h2><p>A rotina que manda mensagem e Pix sozinha.</p></div>
+        </header>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Como funciona?</h3>
+          <p>Todo dia, às 8h30, o sistema manda a mensagem de cobrança e o Pix para quem precisa pagar.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O que acontece se eu pausar?</h3>
+          <p>Nenhuma mensagem sai e nenhum Pix é gerado. Os pagamentos que chegarem continuam recebendo baixa normalmente. Para voltar, use <strong>Retomar cobranças automáticas</strong> em Cobrar hoje.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Quando começar pela primeira vez?</h3>
+          <p>Só depois de conferir que o WhatsApp está conectado, que clientes e contratos foram importados e que o Pix foi testado.</p>
+        </div>
+      </section>
+
+      <section class="ajd-secao" id="pagamentos" data-ajuda-secao>
+        <header class="ajd-secao-topo">
+          <span class="ajd-ico">{% include "_icone.html" with nome="dinheiro" %}</span>
+          <div><h2>Pagamentos</h2><p>Como cada valor recebido é lançado.</p></div>
+          <a class="ajd-abrir" href="{% url 'pagamentos:historico' %}">Abrir o histórico</a>
+        </header>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O cliente pagou menos que a parcela</h3>
+          <p>O valor é abatido da parcela e o que faltar continua sendo cobrado até ela ser quitada.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O cliente pagou mais que a parcela</h3>
+          <p>A parcela é quitada e o que sobrar abate a parcela seguinte.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Lancei um pagamento errado</h3>
+          <p>Abra o contrato e use <strong>Estornar</strong> no pagamento. O valor sai da parcela e ela volta a ser cobrada.</p>
+        </div>
+      </section>
+
+      <section class="ajd-secao" id="pix" data-ajuda-secao>
+        <header class="ajd-secao-topo">
+          <span class="ajd-ico">{% include "_icone.html" with nome="pix" %}</span>
+          <div><h2>Pix</h2><p>Cobranças pela Cora e pagamentos na chave.</p></div>
+          <a class="ajd-abrir" href="{% url 'pagamentos:pix_painel' %}">Abrir a tela</a>
+        </header>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O que o Pix enviado cobra?</h3>
+          <p>Reúne as parcelas vencidas e a de hoje, <strong>sem os juros</strong>. Quando a Cora confirma o pagamento, a baixa acontece sozinha.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O que significa "Não pago"?</h3>
+          <p>O Pix venceu sem pagamento. Vale falar com o cliente.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O cliente pagou direto na chave Pix</h3>
+          <p>Esse pagamento não recebe baixa sozinho. Ele aparece em <a href="{% url 'pagamentos:recebidos' %}">Pix recebidos sem baixa</a>, onde você registra na parcela certa ou ignora se não for de parcela.</p>
+        </div>
+      </section>
+
+      <section class="ajd-secao" id="bloqueios" data-ajuda-secao>
+        <header class="ajd-secao-topo">
+          <span class="ajd-ico">{% include "_icone.html" with nome="bloqueio" %}</span>
+          <div><h2>Bloqueios</h2><p>Quando bloquear e liberar o aparelho.</p></div>
+          <a class="ajd-abrir" href="{% url 'aparelhos:bloqueios' %}">Abrir a tela</a>
+        </header>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Quando o sistema avisa para bloquear?</h3>
+          <p>Com 8 dias de atraso. Quem bloqueia é você, no próprio celular (iCloud, MDM). No sistema você só registra que bloqueou.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>E para liberar?</h3>
+          <p>Quando o cliente regulariza, o sistema avisa para desbloquear. Depois de liberar o aparelho, registre aqui.</p>
+        </div>
+      </section>
+
+      <section class="ajd-secao" id="whatsapp" data-ajuda-secao>
+        <header class="ajd-secao-topo">
+          <span class="ajd-ico">{% include "_icone.html" with nome="whatsapp" %}</span>
+          <div><h2>WhatsApp</h2><p>Mensagens, grupos e conexão.</p></div>
+          <a class="ajd-abrir" href="{% url 'pagamentos:conexoes' %}">Abrir Conexões</a>
+        </header>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Para onde vão as mensagens?</h3>
+          <p>Para o grupo do cliente com o financeiro, quando ele tem um grupo cadastrado. Sem grupo, vão para o número do cliente.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Comprovante enviado no grupo</h3>
+          <p>Só vale se for mandado pelo número do próprio cliente. Comprovante enviado por outra pessoa do grupo não é conferido.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>A mensagem falhou com "Connection Closed"</h3>
+          <p>A conexão do WhatsApp caiu. Em Conexões, use <strong>Reiniciar a conexão</strong>. Não precisa ler o QR de novo.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Como saber se as mensagens saíram?</h3>
+          <p>Na tela <a href="{% url 'pagamentos:mensagens' %}">Mensagens</a> aparece cada envio do dia, com o erro quando falhou.</p>
+        </div>
+      </section>
+
+      <section class="ajd-secao" id="parcelas" data-ajuda-secao>
+        <header class="ajd-secao-topo">
+          <span class="ajd-ico">{% include "_icone.html" with nome="contratos" %}</span>
+          <div><h2>Parcelas e contratos</h2><p>Valores, datas e contratos antigos.</p></div>
+          <a class="ajd-abrir" href="{% url 'contratos:novo' %}">Novo contrato</a>
+        </header>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Como é calculado o valor da parcela?</h3>
+          <p>É o valor total dividido pela quantidade de parcelas, arredondado para R$ 0,10.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>Como são definidas as datas de cobrança?</h3>
+          <p>Escolha a <strong>frequência</strong> e o <strong>dia de cobrança</strong>. O sistema sugere a primeira cobrança, que você pode mudar, e calcula as datas seguintes e a previsão de quitação a partir dela.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>O contrato já estava em andamento</h3>
+          <p>Informe a primeira cobrança real e quantas parcelas já foram pagas. Essas ficam fora da cobrança automática. As demais, vencidas ou não, são cobradas normalmente.</p>
+        </div>
+        <div class="ajd-item" data-ajuda-item>
+          <h3>E a entrada?</h3>
+          <p>É um valor à parte, recebido no fechamento. Não conta como parcela nem entra no valor financiado.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/ajuda.js' %}?v=3" defer></script>
+{% endblock %}

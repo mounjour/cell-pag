@@ -2,33 +2,48 @@
 {% load static %}
 {% block title %}Próximas cobranças{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/proximas.css' %}?v=1">{% endblock %}
 
 {% block content %}
-<div class="toolbar">
-  <h1>{% include "_icone.html" with nome="proximas" %}Próximas cobranças</h1>
-</div>
-<p class="note">O que a rotina das 8h30 vai cobrar nos próximos dias, por data de cobrança. Parcelas atrasadas e as de hoje ficam em <a href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar hoje</a>.</p>
+<div class="prox">
+<header class="prox-topo">
+  <div>
+    <h1>{% include "_icone.html" with nome="proximas" %}Próximas cobranças</h1>
+    <p class="prox-sub">O que a rotina das 8h30 vai cobrar a partir de amanhã. Atrasadas e as de hoje ficam em <a href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar hoje</a>.</p>
+  </div>
+  {% if config_cobranca.pausada %}
+    <a class="prox-estado" href="{% url 'pagamentos:cobrar_hoje' %}" title="Nada desta lista sai sozinho até as cobranças automáticas serem ligadas em Cobrar hoje.">
+      <i aria-hidden="true"></i>Cobranças automáticas {% if config_cobranca.nunca_iniciada %}desligadas{% else %}pausadas{% endif %}
+    </a>
+  {% endif %}
+</header>
 
-{% if config_cobranca.pausada %}
-  <p class="msg warning">As cobranças automáticas estão <strong>{% if config_cobranca.nunca_iniciada %}desligadas (ainda não começaram){% else %}pausadas{% endif %}</strong>: nada abaixo será enviado até você ligá-las em <a href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar hoje</a>.</p>
-{% endif %}
-
-{% if sem_parcelas %}
-  <p class="msg warning"><strong>{{ sem_parcelas|length }} contrato{{ sem_parcelas|length|pluralize }}</strong> com parcelas ainda não geradas dentro desta janela; por isso as cobranças não aparecem aqui:
-    {% for c in sem_parcelas|slice:":6" %}<a href="{% url 'contratos:detalhe' c.pk %}">{{ c.cliente.nome }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% if sem_parcelas|length > 6 %}…{% endif %}.
-    Abra o contrato e clique em <em>Gerar parcelas seguintes</em>.</p>
-{% endif %}
-
-<div class="semana-topo">
+<div class="prox-controles">
   <div class="filtro-pills">
-  {% for n in janelas %}
-    <a class="filtro-pill{% if n == dias %} ativo{% endif %}" href="?dias={{ n }}">Próximos {{ n }} dias</a>
-  {% endfor %}
-</div>
-  {% if grupos %}<p class="semana-resumo"><strong>{{ quantidade }}</strong> cobrança{{ quantidade|pluralize }}, <strong class="num">R$ {{ total|floatformat:"2g" }}</strong></p>{% endif %}
+    {% for n in janelas %}
+      <a class="filtro-pill{% if n == dias %} ativo{% endif %}" href="?dias={{ n }}">Próximos {{ n }} dias</a>
+    {% endfor %}
+  </div>
+  {% if sem_parcelas %}
+    <details class="prox-pendencia">
+      <summary>{{ sem_parcelas|length }} contrato{{ sem_parcelas|length|pluralize }} sem parcelas geradas</summary>
+      <div class="prox-pendencia-painel">
+        <p>Contratos com parcelas ainda não geradas dentro desta janela, por isso as cobranças não aparecem aqui. Abra o contrato e clique em <em>Gerar parcelas seguintes</em>.</p>
+        <ul>
+          {% for c in sem_parcelas %}<li><a href="{% url 'contratos:detalhe' c.pk %}">{{ c.cliente.nome }}</a></li>{% endfor %}
+        </ul>
+      </div>
+    </details>
+  {% endif %}
 </div>
 
 {% if grupos %}
+  <dl class="prox-kpis">
+    <div class="prox-kpi"><dt>Cobranças previstas</dt><dd class="num">{{ quantidade }}</dd></div>
+    <div class="prox-kpi"><dt>Valor total</dt><dd class="num prox-dinheiro">R$ {{ total|floatformat:"2g" }}</dd></div>
+    <div class="prox-kpi"><dt>Dias com cobrança</dt><dd class="num">{{ grupos|length }}</dd></div>
+  </dl>
+
   <div class="semana" id="semana">
     <div class="faixa" role="group" aria-label="Filtrar por dia">
       <button type="button" class="faixa-todos ativo" data-dia="todos" aria-pressed="true">Todos<small>{{ quantidade }}</small></button>
@@ -39,36 +54,42 @@
         </button>
       {% endfor %}
     </div>
+
     {% for g in grupos %}
-      <section class="proximas-lista semana-lista" data-dia="{{ g.data|date:'Y-m-d' }}">
-        <header class="proximas-dia__topo">
-          <h2>{{ g.data|date:"l, d/m"|capfirst }}<span class="proximas-dia__quando">{% if g.em_dias == 1 %}amanhã{% else %}em {{ g.em_dias }} dias{% endif %}</span></h2>
-          <span class="proximas-dia__soma">{{ g.itens|length }} cobrança{{ g.itens|length|pluralize }}, <strong class="num">R$ {{ g.total|floatformat:"2g" }}</strong></span>
+      <section class="prox-dia proximas-lista semana-lista" data-dia="{{ g.data|date:'Y-m-d' }}">
+        <header class="prox-dia-topo">
+          <div class="prox-data" aria-hidden="true"><b>{{ g.data|date:"d" }}</b><small>{{ g.data|date:"b" }}</small></div>
+          <h2>{{ g.data|date:"l"|capfirst }}<span class="prox-quando">{% if g.em_dias == 1 %}amanhã{% else %}em {{ g.em_dias }} dias{% endif %}</span></h2>
+          <span class="prox-soma">{{ g.itens|length }} cobrança{{ g.itens|length|pluralize }}<strong class="num">R$ {{ g.total|floatformat:"2g" }}</strong></span>
         </header>
-        {% for item in g.itens %}
-          {% with v=item.parcela %}
-          <div class="proximas-item">
-            <div class="proximas-item__quem">
-              <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a>
-              <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }}, parcela {{ v.numero }}, {{ v.contrato.get_estrutura_display }}</a>
-            </div>
-            <div class="proximas-item__selos">
-              {% if item.suspensa %}<span class="pill aberto">cobrança suspensa</span>{% endif %}
-              {% if item.promessa %}<span class="pill aberto">prometeu pagar {{ item.promessa.contato.promessa_para|date:"d/m" }}</span>{% endif %}
-            </div>
-            <strong class="proximas-item__valor num">R$ {{ v.saldo }}</strong>
-            <div class="proximas-item__acoes">
-              <a class="btn-mini btn-mini--editar" href="{% url 'pagamentos:parcela_editar' v.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
-              <a class="btn-mini btn-mini--negociar" href="{% url 'pagamentos:acordo' v.pk %}">{% include "_icone.html" with nome="negociar" %}Negociar</a>
-            </div>
-          </div>
-          {% endwith %}
-        {% endfor %}
+        <ul class="prox-itens">
+          {% for item in g.itens %}
+            {% with v=item.parcela %}
+            <li class="prox-item proximas-item">
+              <span class="prox-avatar" aria-hidden="true">{{ v.contrato.cliente.nome|slice:":2"|upper }}</span>
+              <div class="prox-quem">
+                <a class="prox-cliente" href="{% url 'clientes:detalhe' v.contrato.cliente.pk %}">{{ v.contrato.cliente.nome }}</a>
+                <span class="prox-detalhe"><a href="{% url 'contratos:detalhe' v.contrato.pk %}">{{ v.contrato.apelido }}</a><span class="prox-tag">Parcela {{ v.numero }}</span><span class="prox-tag">{{ v.contrato.get_estrutura_display }}</span></span>
+              </div>
+              <div class="prox-selos">
+                {% if item.suspensa %}<span class="pill aberto">cobrança suspensa</span>{% endif %}
+                {% if item.promessa %}<span class="pill aberto">prometeu pagar {{ item.promessa.contato.promessa_para|date:"d/m" }}</span>{% endif %}
+              </div>
+              <strong class="prox-valor num">R$ {{ v.saldo|floatformat:"2g" }}</strong>
+              <div class="prox-acoes">
+                <a class="btn secondary prox-btn" href="{% url 'pagamentos:parcela_editar' v.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
+                <a class="btn secondary prox-btn" href="{% url 'pagamentos:acordo' v.pk %}">{% include "_icone.html" with nome="negociar" %}Negociar</a>
+              </div>
+            </li>
+            {% endwith %}
+          {% endfor %}
+        </ul>
       </section>
     {% endfor %}
   </div>
 {% else %}
-  <p class="empty">Nenhuma cobrança prevista nos próximos {{ dias }} dias.</p>
+  <div class="empty prox-vazio"><p>Nenhuma cobrança prevista nos próximos {{ dias }} dias.</p></div>
 {% endif %}
+</div>
 {% endblock %}
 {% block scripts %}<script src="{% static 'js/semana_cobrancas.js' %}" defer></script>{% endblock %}
