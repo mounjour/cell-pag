@@ -353,6 +353,13 @@ class ContratoDetailView(LoginRequiredMixin, DetailView):
         ctx["ver_todas"] = ver_todas
         ctx["total_venc"] = len(vencimentos)
         ctx["vencimentos_exibidos"] = _parcelas_relevantes(vencimentos, todas=ver_todas)
+        # Juros de atraso de cada parcela vencida e o total a cobrar hoje (mesma conta do Cobrar hoje e da mensagem).
+        from apps.pagamentos import acordos
+
+        hoje_local = timezone.localdate()
+        for v in ctx["vencimentos_exibidos"]:
+            v.juros_hoje = acordos.juros_a_cobrar(v, hoje_local) if v.status != v.Status.PAGO and v.data_vencimento < hoje_local else 0
+            v.total_hoje = v.saldo + v.juros_hoje
         ctx["parcela_proxima"] = contrato.parcela_em_aberto()  # a próxima a pagar: ganha destaque na tabela
         ctx["hoje"] = timezone.localdate()
         pagamentos = list(contrato.pagamentos.all())

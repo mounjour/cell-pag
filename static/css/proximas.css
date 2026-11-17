@@ -62,7 +62,7 @@
 
 .prox-itens { list-style: none; margin: 0; padding: 0; }
 .prox .prox-item {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, auto) 130px auto; align-items: center; gap: 16px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, auto) 230px auto; align-items: center; gap: 16px;
   padding: 14px 20px; border: 0; background: none;
 }
 .prox .prox-item + .prox-item { border-top: 1px solid var(--line); }
@@ -108,3 +108,6 @@
 /* Data do dia: número e mês centralizados juntos no quadrado. */
 .prox-data { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
 .prox-data b, .prox-data small { display: block; line-height: 1; margin: 0; }
+
+.prox-valor-col { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 2px; }
+.prox-valor-col small { font-size: 12px; color: var(--critical-ink); }

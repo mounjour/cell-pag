@@ -39,6 +39,16 @@ def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None) -> dic
         .values_list("vencimento_id", flat=True)
     )
     promessas = promessas_em_aberto(hoje, contrato_ids={p.contrato_id for p in parcelas})
+    # Cliente que já está em atraso: a cobrança da primeira parcela futura leva junto as atrasadas e o juros
+    # (mesma conta do "Cobrar hoje" e da mensagem), senão o valor da lista engana.
+    from .agenda import parcelas_a_cobrar, resumo_cobranca
+
+    primeira_do_contrato: dict[int, Vencimento] = {}
+    for parcela in parcelas:
+        primeira_do_contrato.setdefault(parcela.contrato_id, parcela)
+    com_atraso = {
+        cid for cid, p in primeira_do_contrato.items() if parcelas_a_cobrar(p.contrato, hoje)
+    }
     grupos: list[dict] = []
     for parcela in parcelas:
         if not grupos or grupos[-1]["data"] != parcela.data_vencimento:
@@ -46,10 +56,15 @@ def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None) -> dic
                 "data": parcela.data_vencimento, "itens": [], "total": Decimal("0.00"),
                 "em_dias": (parcela.data_vencimento - hoje).days,
             })
-        grupos[-1]["itens"].append(
-            {"parcela": parcela, "suspensa": parcela.pk in suspensas, "promessa": promessas.get(parcela.contrato_id)}
-        )
-        grupos[-1]["total"] += parcela.saldo
+        item = {
+            "parcela": parcela, "suspensa": parcela.pk in suspensas, "promessa": promessas.get(parcela.contrato_id),
+            "valor": parcela.saldo, "em_atraso": Decimal("0.00"), "atrasadas_n": 0,
+        }
+        if parcela.contrato_id in com_atraso and primeira_do_contrato[parcela.contrato_id] is parcela:
+            r = resumo_cobranca(parcela.contrato, parcela.data_vencimento)
+            item.update(valor=r["total"], em_atraso=r["total"] - parcela.saldo, atrasadas_n=max(r["quantidade"] - 1, 0))
+        grupos[-1]["itens"].append(item)
+        grupos[-1]["total"] += item["valor"]
     por_data = {g["data"]: g for g in grupos}
     calendario = []
     for n in range(1, dias + 1):

@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Próximas cobranças{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/proximas.css' %}?v=2">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/proximas.css' %}?v=4">{% endblock %}
 
 {% block content %}
 <div class="prox">
@@ -75,7 +75,7 @@
                 {% if item.suspensa %}<span class="pill aberto">cobrança suspensa</span>{% endif %}
                 {% if item.promessa %}<span class="pill aberto">prometeu pagar {{ item.promessa.contato.promessa_para|date:"d/m" }}</span>{% endif %}
               </div>
-              <strong class="prox-valor num">R$ {{ v.saldo|floatformat:"2g" }}</strong>
+              <div class="prox-valor-col"><strong class="prox-valor num">R$ {{ item.valor|floatformat:"2g" }}</strong>{% if item.atrasadas_n %}<small>inclui R$ {{ item.em_atraso|floatformat:"2g" }} de {{ item.atrasadas_n }} parcela{{ item.atrasadas_n|pluralize }} em atraso e juros</small>{% endif %}</div>
               <div class="prox-acoes">
                 <a class="btn secondary prox-btn" href="{% url 'pagamentos:parcela_editar' v.pk %}">{% include "_icone.html" with nome="editar" %}Editar</a>
                 <a class="btn secondary prox-btn" href="{% url 'pagamentos:acordo' v.pk %}">{% include "_icone.html" with nome="negociar" %}Negociar</a>
