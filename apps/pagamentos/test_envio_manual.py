@@ -152,7 +152,7 @@ def test_tela_de_mensagens_mostra_enviadas_erros_e_quem_ficou_sem_mensagem(auth_
     html = auth_client.get(reverse("pagamentos:mensagens")).content.decode()
     assert "Connection Closed" in html and "Tentar de novo" in html
     assert "Joao Souza" in html and "Pedro Lima" in html and "Ainda sem mensagem" in html
-    assert "Com erro (1)" in html and "Enviadas (1)" in html
+    assert "Com erro <span class=\"msg-n\">1</span>" in html and "Enviadas <span class=\"msg-n\">1</span>" in html
 
     so_erro = auth_client.get(reverse("pagamentos:mensagens"), {"grupo": "erro"}).content.decode()
     assert "Maria da Silva" in so_erro and "Joao Souza" not in so_erro and "Pedro Lima" not in so_erro

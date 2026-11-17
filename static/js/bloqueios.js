@@ -53,4 +53,11 @@
     const ativo = botoes.find((b) => b.getAttribute("aria-selected") === "true");
     if (ativo) moverFundo(ativo, false);
   });
+  // A fonte pode terminar de carregar depois e mudar a largura das abas.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      const ativo = botoes.find((b) => b.getAttribute("aria-selected") === "true");
+      if (ativo) moverFundo(ativo, true);
+    });
+  }
 })();

@@ -104,3 +104,7 @@
   .prox .prox-item { padding: 12px 14px; }
   .prox-pendencia-painel { right: auto; left: 0; }
 }
+
+/* Data do dia: número e mês centralizados juntos no quadrado. */
+.prox-data { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.prox-data b, .prox-data small { display: block; line-height: 1; margin: 0; }

@@ -1,48 +1,67 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Histórico de pagamentos{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/historico.css' %}?v=2">{% endblock %}
 
 {% block content %}
-<h1>{% include "_icone.html" with nome="historico" %}Histórico de pagamentos</h1>
-
-{% if filtrado %}
-  <p class="count">Filtrado, <a href="{% url 'pagamentos:historico' %}">ver todos</a></p>
-{% endif %}
-
-{% if pagamentos %}
-  <div class="tbl-wrap cards">
-    <table>
-      <thead>
-        <tr><th class="num">Data</th><th>Cliente</th><th>Contrato</th><th>Parcela</th><th class="num">Valor</th><th class="num">Juros</th><th>Forma</th><th>Baixa</th></tr>
-      </thead>
-      <tbody>
-        {% for p in pagamentos %}
-          <tr>
-            <td class="num">{{ p.data_pagamento|date:"d/m/Y" }}</td>
-            <td data-label="Cliente"><a href="{% url 'clientes:detalhe' p.contrato.cliente.pk %}">{{ p.contrato.cliente.nome }}</a></td>
-            <td data-label="Contrato"><a href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.apelido }}</a></td>
-            <td data-label="Parcela">{% if p.vencimento %}nº {{ p.vencimento.numero }}{% else %}—{% endif %}</td>
-            <td class="num" data-label="Valor">R$ {{ p.valor_pago }}</td>
-            <td class="num" data-label="Juros">{% if p.juros_pago %}R$ {{ p.juros_pago }}{% else %}—{% endif %}</td>
-            <td data-label="Forma">{{ p.get_forma_display }}</td>
-            <td data-label="Baixa">{{ p.usuario_baixa|default:"—" }}, {{ p.criado_em|date:"d/m/Y H:i" }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="hst">
+<header class="hst-topo">
+  <div>
+    <h1>{% include "_icone.html" with nome="historico" %}Histórico de pagamentos</h1>
+    <p class="hst-sub">Cada pagamento registrado, do mais recente para o mais antigo.</p>
   </div>
-
-  {% if is_paginated %}
-    <div class="pagination">
-      {% if page_obj.has_previous %}
-        <a class="btn secondary" href="?{% if request.GET.cliente %}cliente={{ request.GET.cliente }}&{% endif %}{% if request.GET.contrato %}contrato={{ request.GET.contrato }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
-      {% endif %}
-      <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-      {% if page_obj.has_next %}
-        <a class="btn secondary" href="?{% if request.GET.cliente %}cliente={{ request.GET.cliente }}&{% endif %}{% if request.GET.contrato %}contrato={{ request.GET.contrato }}&{% endif %}page={{ page_obj.next_page_number }}">Próxima</a>
-      {% endif %}
+  {% if filtrado %}
+    <div class="hst-filtro">
+      <span>Mostrando {% if filtro_nome %}<strong>{{ filtro_nome }}</strong>{% else %}um filtro{% endif %}</span>
+      <a href="{% url 'pagamentos:historico' %}" aria-label="Tirar o filtro e ver todos">Ver todos<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></a>
     </div>
   {% endif %}
+</header>
+
+<dl class="hst-kpis">
+  {% for k in resumo %}
+    <div class="hst-kpi"><dt>{{ k.rotulo }}</dt><dd class="num{% if k.dinheiro %} hst-dinheiro{% endif %}">{% if k.dinheiro %}R$ {{ k.valor|floatformat:"2g" }}{% else %}{{ k.valor }}{% endif %}</dd>{% if k.sub %}<span class="hst-kpi-sub">{{ k.sub }}</span>{% endif %}</div>
+  {% endfor %}
+</dl>
+
+{% if pagamentos %}
+  {% for d in dias %}
+    <section class="hst-dia">
+      <header class="hst-dia-topo">
+        <div class="hst-data" aria-hidden="true"><b>{{ d.data|date:"d" }}</b><small>{{ d.data|date:"b" }}</small></div>
+        <h2>{% if d.rotulo %}{{ d.rotulo }}{% else %}{{ d.data|date:"l"|capfirst }}{% endif %}<span class="hst-dia-data">{{ d.data|date:"d/m/Y" }}</span></h2>
+        <span class="hst-soma">{{ d.itens|length }} pagamento{{ d.itens|length|pluralize }}<strong class="num">R$ {{ d.total|floatformat:"2g" }}</strong></span>
+      </header>
+      <ul class="hst-lista">
+        {% for p in d.itens %}
+          <li class="hst-item">
+            <span class="hst-avatar" aria-hidden="true">{{ p.contrato.cliente.nome|slice:":2"|upper }}</span>
+            <div class="hst-quem">
+              <a class="hst-cliente" href="{% url 'clientes:detalhe' p.contrato.cliente.pk %}">{{ p.contrato.cliente.nome }}</a>
+              <span class="hst-detalhe"><a href="{% url 'contratos:detalhe' p.contrato.pk %}">{{ p.contrato.apelido }}</a>{% if p.vencimento %}<span class="hst-tag">Parcela {{ p.vencimento.numero }}</span>{% endif %}</span>
+            </div>
+            <span class="hst-forma hst-forma--{{ p.forma }}">{{ p.get_forma_display }}</span>
+            <div class="hst-valor">
+              <strong class="num">R$ {{ p.valor_pago|floatformat:"2g" }}</strong>
+              {% if p.juros_pago %}<small>inclui R$ {{ p.juros_pago|floatformat:"2g" }} de juros</small>{% endif %}
+            </div>
+            <span class="hst-baixa">Baixa {% if p.usuario_baixa %}por {{ p.usuario_baixa }} {% endif %}em {{ p.criado_em|date:"d/m" }} às {{ p.criado_em|date:"H:i" }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endfor %}
+
+  {% if is_paginated %}
+    <nav class="hst-paginas" aria-label="Páginas">
+      {% if page_obj.has_previous %}<a class="btn secondary" href="?{% if consulta %}{{ consulta }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>{% else %}<span></span>{% endif %}
+      <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a class="btn secondary" href="?{% if consulta %}{{ consulta }}&{% endif %}page={{ page_obj.next_page_number }}">Próxima</a>{% else %}<span></span>{% endif %}
+    </nav>
+  {% endif %}
 {% else %}
-  <p class="empty">Nenhum pagamento registrado.</p>
+  <p class="hst-vazio">Nenhum pagamento registrado.</p>
 {% endif %}
+</div>
 {% endblock %}
