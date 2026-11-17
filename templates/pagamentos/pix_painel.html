@@ -1,119 +1,165 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Acompanhamento Pix{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/pix.css' %}?v=5">{% endblock %}
 
 {% block content %}
-<h1>{% include "_icone.html" with nome="pix" %}Acompanhamento Pix, {{ hoje|date:"d/m/Y" }}</h1>
-<p class="acoes-linha"><a class="btn secondary" href="{% url 'pagamentos:recebidos' %}">{% include "_icone.html" with nome="dinheiro" %}Pix recebidos sem baixa</a>
-<a class="btn secondary" href="{% url 'pagamentos:conferencia_cora' %}">{% include "_icone.html" with nome="quitar" %}Conferência com a Cora</a></p>
-<p class="note">Uma cobrança Pix pode reunir várias parcelas vencidas e a de hoje, sem juros. Pagamentos confirmados pela Cora recebem baixa automática. “Não pago” indica que a cobrança venceu e o financeiro deve entrar em contato.</p>
+<div class="pix">
+<header class="pix-topo">
+  <div>
+    <span class="pix-eyebrow">{{ hoje|date:"l, j \d\e F \d\e Y" }}</span>
+    <h1>{% include "_icone.html" with nome="pix" %}Acompanhamento Pix</h1>
+    <p class="pix-sub">{% if total %}{{ total }} cobrança{{ total|pluralize }} Pix de hoje: quem já pagou, quem falta e o que deu erro.{% else %}As cobranças Pix do dia aparecem aqui.{% endif %}</p>
+    <details class="balao pix-ajuda">
+      <summary>Como funciona</summary>
+      <div class="balao-conteudo" role="note">
+        <p>O Pix reúne as parcelas vencidas e a de hoje, sem juros. Quando a Cora confirma, a baixa é automática.</p>
+        <a class="balao-mais" href="{% url 'usuarios:ajuda' %}#pix">Ainda com dúvidas? Saiba mais</a>
+      </div>
+    </details>
+  </div>
+  <div class="pix-atalhos">
+    <a class="btn secondary" href="{% url 'pagamentos:recebidos' %}">{% include "_icone.html" with nome="dinheiro" %}Pix recebidos sem baixa</a>
+    <a class="btn secondary" href="{% url 'pagamentos:conferencia_cora' %}">{% include "_icone.html" with nome="quitar" %}Conferir com a Cora</a>
+  </div>
+</header>
 
-{% if comprovantes %}
-<section class="alerta-comprovante" role="alert">
-  <h2>Comprovantes recebidos, conferir na Cora</h2>
-  <p>O cliente mandou um arquivo pelo WhatsApp, mas o Pix ainda não aparece na Cora. <strong>O arquivo não prova o pagamento</strong> (pode ser qualquer foto): abra a conversa para ver, confira a Cora e, se for falso, descarte. Quando o Pix cair, o sistema dá a baixa e avisa o cliente sozinho.</p>
-  <ul class="duplicidade-lista">
-    {% for c in comprovantes %}
-      <li>
-        <span>
-          <a href="{% url 'clientes:detalhe' c.cliente.pk %}">{{ c.cliente.nome }}</a>
-         , {{ c.get_tipo_display }}{% if c.nome_arquivo %} “{{ c.nome_arquivo }}”{% endif %}
-         , {% if c.vencimento %}parcela {{ c.vencimento.numero }} de {{ c.vencimento.contrato.apelido }}{% else %}<em>sem parcela em aberto</em>{% endif %}
-         , recebido em {{ c.recebido_em|date:"d/m/Y H:i" }}
-          {% if c.legenda %}<span class="helptext">“{{ c.legenda }}”</span>{% endif %}
-        </span>
-        <span class="comprovante-acoes">
-          <a class="btn secondary" href="{{ c.cliente.whatsapp_url }}" target="_blank" rel="noopener">{% include "_icone.html" with nome="whatsapp" %}Abrir WhatsApp</a>
-          <form method="post" action="{% url 'pagamentos:comprovante_conferir' c.pk %}">
-            {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="submit" class="btn">{% include "_icone.html" with nome="quitar" %}Conferir na Cora</button>
-          </form>
-          <form method="post" action="{% url 'pagamentos:comprovante_descartar' c.pk %}">
-            {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="submit" class="btn cancelar">{% include "_icone.html" with nome="cancelar" %}Descartar</button>
-          </form>
-        </span>
-      </li>
-    {% endfor %}
-  </ul>
+{% if comprovantes or duplicadas %}
+<section class="pix-atencao" aria-labelledby="pix-atencao-titulo">
+  <h2 id="pix-atencao-titulo">{% include "_icone.html" with nome="alerta" %}Precisa da sua atenção</h2>
+
+  {% if comprovantes %}
+  <div class="pix-grupo">
+    <div class="pix-grupo-topo">
+      <h3>Comprovantes recebidos, conferir na Cora <span class="pix-n">{{ comprovantes|length }}</span></h3>
+      <details class="balao">
+        <summary>Por que conferir?</summary>
+        <div class="balao-conteudo" role="note">
+          <p>O cliente mandou um arquivo pelo WhatsApp, mas o Pix ainda não aparece na Cora. <strong>O arquivo não prova o pagamento</strong> (pode ser qualquer foto): abra a conversa para ver, confira a Cora e, se for falso, descarte. Quando o Pix cair, o sistema dá a baixa e avisa o cliente sozinho.</p>
+        </div>
+      </details>
+    </div>
+    <ul class="pix-lista">
+      {% for c in comprovantes %}
+        <li class="pix-item pix-item--atencao">
+          <span class="pix-avatar" aria-hidden="true">{{ c.cliente.nome|slice:":2"|upper }}</span>
+          <div class="pix-quem">
+            <a class="pix-cliente" href="{% url 'clientes:detalhe' c.cliente.pk %}">{{ c.cliente.nome }}</a>
+            <span class="pix-detalhe">
+              <span class="pix-tag">{{ c.get_tipo_display }}{% if c.nome_arquivo %} “{{ c.nome_arquivo }}”{% endif %}</span>
+              {% if c.vencimento %}<span class="pix-tag">Parcela {{ c.vencimento.numero }} de {{ c.vencimento.contrato.apelido }}</span>{% else %}<span class="pix-tag">Sem parcela em aberto</span>{% endif %}
+            </span>
+            {% if c.legenda %}<span class="pix-legenda">“{{ c.legenda }}”</span>{% endif %}
+          </div>
+          <span class="pix-nota">Recebido em {{ c.recebido_em|date:"d/m/Y H:i" }}</span>
+          <div class="pix-acoes">
+            <a class="btn secondary pix-btn" href="{{ c.cliente.whatsapp_url }}" target="_blank" rel="noopener">{% include "_icone.html" with nome="whatsapp" %}Abrir WhatsApp</a>
+            <form method="post" action="{% url 'pagamentos:comprovante_conferir' c.pk %}">
+              {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn pix-btn">{% include "_icone.html" with nome="quitar" %}Conferir na Cora</button>
+            </form>
+            <form method="post" action="{% url 'pagamentos:comprovante_descartar' c.pk %}">
+              {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn cancelar pix-btn">{% include "_icone.html" with nome="cancelar" %}Descartar</button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if duplicadas %}
+  <div class="pix-grupo">
+    <div class="pix-grupo-topo">
+      <h3>Pix recebido para revisão manual <span class="pix-n">{{ duplicadas|length }}</span></h3>
+      <details class="balao">
+        <summary>O que fazer?</summary>
+        <div class="balao-conteudo" role="note">
+          <p>Há pagamento em duplicidade ou divergência entre o Pix recebido e as parcelas em aberto. O valor entrou na Cora e <strong>não foi lançado no sistema</strong>. Confira as baixas do contrato e providencie o lançamento correto ou a devolução antes de marcar como resolvido. Este botão apenas encerra o aviso.</p>
+        </div>
+      </details>
+    </div>
+    <ul class="pix-lista">
+      {% for c in duplicadas %}
+        <li class="pix-item pix-item--atencao">
+          <span class="pix-avatar" aria-hidden="true">{{ c.vencimento.contrato.cliente.nome|slice:":2"|upper }}</span>
+          <div class="pix-quem">
+            <a class="pix-cliente" href="{% url 'clientes:detalhe' c.vencimento.contrato.cliente.pk %}">{{ c.vencimento.contrato.cliente.nome }}</a>
+            <span class="pix-detalhe"><a href="{% url 'contratos:detalhe' c.vencimento.contrato.pk %}">{{ c.vencimento.contrato.apelido }}</a><span class="pix-tag">Parcela {{ c.vencimento.numero }}</span></span>
+          </div>
+          <span class="pix-nota">{% if c.pago_em %}Pago em {{ c.pago_em|date:"d/m/Y H:i" }}{% endif %}</span>
+          <div class="pix-acoes">
+            <strong class="pix-valor num">R$ {{ c.total_pago|floatformat:"2g" }}</strong>
+            <form method="post" action="{% url 'pagamentos:pix_duplicidade_resolvida' c.pk %}">
+              {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn secondary pix-btn">{% include "_icone.html" with nome="quitar" %}Marcar como resolvido</button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
 </section>
 {% endif %}
 
-{% if duplicadas %}
-<section class="alerta-duplicidade" role="alert">
-  <h2>Pix recebido para revisão manual</h2>
-  <p>Há pagamento em duplicidade ou divergência entre o Pix recebido e as parcelas em aberto. O valor entrou na Cora e <strong>não foi lançado no sistema</strong>. Confira as baixas do contrato e providencie o lançamento correto ou a devolução antes de marcar como resolvido. Este botão apenas encerra o aviso.</p>
-  <ul class="duplicidade-lista">
-    {% for c in duplicadas %}
-      <li>
-        <span><a href="{% url 'clientes:detalhe' c.vencimento.contrato.cliente.pk %}">{{ c.vencimento.contrato.cliente.nome }}</a>, {{ c.vencimento.contrato.apelido }}, parcela {{ c.vencimento.numero }}, <strong class="num">R$ {{ c.total_pago|floatformat:"2g" }}</strong>{% if c.pago_em %}, pago em {{ c.pago_em|date:"d/m/Y H:i" }}{% endif %}</span>
-        <form method="post" action="{% url 'pagamentos:pix_duplicidade_resolvida' c.pk %}">
-          {% csrf_token %}
-          <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit" class="btn secondary">{% include "_icone.html" with nome="quitar" %}Marcar como resolvido</button>
-        </form>
-      </li>
-    {% endfor %}
-  </ul>
-</section>
-{% endif %}
-
-<dl class="meta report-metrics meta--5col">
-  <div><dt>Na tela</dt><dd class="num">{{ total }}</dd></div>
-  <div><dt>✅ Pagos hoje</dt><dd class="num">{{ pagas }}</dd></div>
-  <div><dt>⏳ Aguardando</dt><dd class="num">{{ aguardando }}</dd></div>
-  <div><dt>❌ Não pagos</dt><dd class="num critical-text">{{ nao_pagas }}</dd></div>
-  <div><dt>⚠ Erros</dt><dd class="num critical-text">{{ erros }}</dd></div>
+<dl class="pix-kpis">
+  <div class="pix-kpi pix-kpi--ok"><dt>Pagos hoje</dt><dd class="num">{{ pagas }}</dd></div>
+  <div class="pix-kpi"><dt>Aguardando pagamento</dt><dd class="num">{{ aguardando }}</dd></div>
+  <div class="pix-kpi{% if nao_pagas %} pix-kpi--ruim{% endif %}"><dt>Não pagos</dt><dd class="num">{{ nao_pagas }}</dd></div>
+  <div class="pix-kpi{% if erros %} pix-kpi--ruim{% endif %}"><dt>Com erro</dt><dd class="num">{{ erros }}</dd></div>
 </dl>
 
 {% if cobrancas_cora %}
-<div class="tbl-wrap cards">
-  <table>
-    <thead><tr><th>Cliente</th><th>Contrato</th><th>Parcela</th><th>Data de cobrança</th><th class="num">Valor</th><th>Status</th><th>Mensagem</th><th>Pix</th></tr></thead>
-    <tbody>
-    {% for c in cobrancas_cora %}
-      <tr>
-        <td><a href="{% url 'clientes:detalhe' c.contrato.cliente.pk %}">{{ c.contrato.cliente.nome }}</a></td>
-        <td data-label="Contrato"><a href="{% url 'contratos:detalhe' c.contrato.pk %}">{{ c.contrato.apelido }}</a></td>
-        <td data-label="Parcela" class="num">{{ c.rotulo_parcelas }}</td>
-        <td data-label="Data de cobrança" class="num">{{ c.data_vencimento|date:"d/m/Y" }}</td>
-        <td data-label="Valor" class="num">R$ {{ c.valor|floatformat:"2g" }}</td>
-        <td data-label="Status">
-          <span class="pill pill-pix {{ c.status }}">{% if c.status == 'pago' %}✅{% elif c.status == 'vencido' %}❌{% endif %} {{ c.get_status_display }}</span>
-          {% if c.erro %}<span class="helptext">{{ c.erro }}</span>{% endif %}
-          <br><small class="proximas-item__nota" title="Última vez que o código Pix foi gerado ou atualizado">código atualizado {{ c.atualizado_em|date:"d/m H:i" }}</small>
-        </td>
-        <td data-label="Mensagem">
-          {% with m=c.mensagem_cobranca %}
-            {% if not m %}
-              <span class="pill aberto">Não enviada</span>
-            {% elif m.status == "erro" %}
-              <span class="pill erro" title="{{ m.erro }}">Erro no envio</span>
-            {% elif m.status == "pendente" %}
-              <span class="pill aberto">Na fila</span>
-            {% elif m.status == "cancelado" or m.status == "apagado" %}
-              <span class="pill cancelado">{{ m.get_status_display }}</span>
-            {% else %}
-              <span class="pill pill-msg {{ m.status }}">{{ m.get_status_display }}</span>
-              {% if m.enviado_em %}<br><small class="proximas-item__nota">enviada {{ m.enviado_em|date:"d/m H:i" }}</small>{% endif %}
-            {% endif %}
-          {% endwith %}
-        </td>
-        <td data-label="Pix">
-          {% if c.pix_copia_e_cola %}
-            <button type="button" class="btn-copiar-pix" data-pix="{{ c.pix_copia_e_cola }}">{% include "_icone.html" with nome="copiar" %}<span>Copiar código</span></button>
-          {% else %}—{% endif %}
-          {% include "pagamentos/_pix_cancelar.html" with pix=c %}
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
+<div class="pix-cabecalho" aria-hidden="true"><span>Cliente</span><span class="pix-col-num">Valor</span><span>Status do Pix</span><span>Mensagem</span><span>Código Pix</span></div>
+<ul class="pix-lista pix-lista--principal">
+  {% for c in cobrancas_cora %}
+    <li class="pix-item pix-item--{{ c.status }}">
+      <div class="pix-quem pix-quem--com-avatar">
+        <span class="pix-avatar" aria-hidden="true">{{ c.contrato.cliente.nome|slice:":2"|upper }}</span>
+        <div>
+          <a class="pix-cliente" href="{% url 'clientes:detalhe' c.contrato.cliente.pk %}">{{ c.contrato.cliente.nome }}</a>
+          <span class="pix-detalhe"><a href="{% url 'contratos:detalhe' c.contrato.pk %}">{{ c.contrato.apelido }}</a><span class="pix-tag">{% if "," in c.rotulo_parcelas %}Parcelas{% else %}Parcela{% endif %} {{ c.rotulo_parcelas }}</span></span>
+        </div>
+      </div>
+      <div class="pix-valor-col"><strong class="pix-valor num">R$ {{ c.valor|floatformat:"2g" }}</strong><small>Cobrança {{ c.data_vencimento|date:"d/m/Y" }}</small></div>
+      <div class="pix-status">
+        <span class="pill pill-pix {{ c.status }}">{{ c.get_status_display }}</span>
+        {% if c.erro %}<span class="pix-erro">{{ c.erro }}</span>{% endif %}
+        <small class="pix-nota" title="Última vez que o código Pix foi gerado ou atualizado">código atualizado {{ c.atualizado_em|date:"d/m H:i" }}</small>
+      </div>
+      <div class="pix-status">
+        {% with m=c.mensagem_cobranca %}
+          {% if not m %}
+            <span class="pill aberto">Não enviada</span>
+          {% elif m.status == "erro" %}
+            <span class="pill erro" title="{{ m.erro }}">Erro no envio</span>
+          {% elif m.status == "pendente" %}
+            <span class="pill aberto">Na fila</span>
+          {% elif m.status == "cancelado" or m.status == "apagado" %}
+            <span class="pill cancelado">{{ m.get_status_display }}</span>
+          {% else %}
+            <span class="pill pill-msg {{ m.status }}">{{ m.get_status_display }}</span>
+            {% if m.enviado_em %}<small class="pix-nota">enviada {{ m.enviado_em|date:"d/m H:i" }}</small>{% endif %}
+          {% endif %}
+        {% endwith %}
+      </div>
+      <div class="pix-acoes">
+        {% if c.pix_copia_e_cola %}
+          <button type="button" class="btn secondary pix-btn btn-copiar-pix" data-pix="{{ c.pix_copia_e_cola }}">{% include "_icone.html" with nome="copiar" %}<span>Copiar código</span></button>
+        {% endif %}
+        {% include "pagamentos/_pix_cancelar.html" with pix=c %}
+      </div>
+    </li>
+  {% endfor %}
+</ul>
 {% include "_pagination.html" %}
 {% else %}
-<div class="empty"><p>Nenhuma cobrança Pix pendente ou paga hoje.</p></div>
+<div class="pix-vazio"><p>Nenhuma cobrança Pix pendente ou paga hoje.</p></div>
 {% endif %}
+</div>
 {% endblock %}
 
 {% block scripts %}

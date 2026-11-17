@@ -1,86 +1,127 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Bloqueios{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/bloqueios.css' %}?v=5">{% endblock %}
 
 {% block content %}
-<h1>{% include "_icone.html" with nome="bloqueio" %}Bloqueios</h1>
-<p class="note">Com <strong>8 dias de atraso</strong> o sistema avisa para bloquear o aparelho. Quem bloqueia é você, no próprio celular (iCloud, MDM…): aqui você registra que bloqueou, e quando o cliente pagar o sistema avisa para liberar.</p>
-
-<section class="proximas-lista painel-lista">
-  <header class="proximas-dia__topo"><h2>Para bloquear <span class="count">{{ a_bloquear|length }}</span></h2></header>
-  {% for l in a_bloquear %}
-    <div class="proximas-item proximas-item--auto">
-      <div class="proximas-item__quem">
-        <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a>
-        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}, IMEI {{ l.contrato.imei|default:"—" }}</a>
-      </div>
-      <div class="proximas-item__selos"><span class="pill inadimplente">{{ l.situacao.dias_atraso }} dias de atraso</span></div>
-      <strong class="proximas-item__valor num" title="A cobrar">R$ {{ l.a_cobrar|floatformat:"2g" }}</strong>
-      <form method="post" action="{% url 'aparelhos:bloquear' l.contrato.pk %}" class="proximas-item__acoes bloqueio-form">
-        {% csrf_token %}
-        <input type="text" name="observacao" maxlength="200" placeholder="Como? (opcional)" aria-label="Como foi bloqueado">
-        <button type="submit" class="btn-mini btn-mini--bloquear">{% include "_icone.html" with nome="bloqueio" %}Bloqueei</button>
-      </form>
+<div class="blq">
+<header class="blq-topo">
+  <div>
+    <h1>{% include "_icone.html" with nome="bloqueio" %}Bloqueios</h1>
+    <p class="blq-sub">Aparelhos para bloquear por atraso e para liberar quando o cliente paga.</p>
+    <details class="balao blq-ajuda">
+    <summary>Como funciona</summary>
+    <div class="balao-conteudo" role="note">
+      <p>Com 8 dias de atraso o sistema avisa para bloquear. Você bloqueia no próprio celular (iCloud, MDM) e registra aqui.</p>
+      <a class="balao-mais" href="{% url 'usuarios:ajuda' %}#bloqueios">Ainda com dúvidas? Saiba mais</a>
     </div>
-  {% empty %}<p class="empty painel-vazio">Nenhum aparelho esperando bloqueio.</p>{% endfor %}
+  </details>
+  </div>
+</header>
+
+<div class="blq-abas" role="tablist" aria-label="Situação dos aparelhos" data-blq-abas>
+  <button type="button" role="tab" class="blq-aba{% if a_bloquear %} blq-aba--alerta{% endif %}" data-alvo="bloquear" aria-controls="blq-bloquear">Para bloquear <span class="blq-n">{{ a_bloquear|length }}</span></button>
+  <button type="button" role="tab" class="blq-aba{% if para_desbloquear %} blq-aba--ok{% endif %}" data-alvo="desbloquear" aria-controls="blq-desbloquear">Para desbloquear <span class="blq-n">{{ para_desbloquear|length }}</span></button>
+  <button type="button" role="tab" class="blq-aba" data-alvo="bloqueados" aria-controls="blq-bloqueados">Bloqueados agora <span class="blq-n">{{ bloqueados|length }}</span></button>
+  {% if historico %}<button type="button" role="tab" class="blq-aba" data-alvo="historico" aria-controls="blq-historico">Últimos desbloqueios</button>{% endif %}
+</div>
+
+<section class="blq-painel" id="blq-bloquear" role="tabpanel" data-painel="bloquear" data-qtd="{{ a_bloquear|length }}">
+  <h2 class="blq-titulo">Para bloquear</h2>
+  {% if a_bloquear %}
+  <ul class="blq-lista">
+    {% for l in a_bloquear %}
+      <li class="blq-item">
+        <span class="blq-avatar" aria-hidden="true">{{ l.contrato.cliente.nome|slice:":2"|upper }}</span>
+        <div class="blq-quem">
+          <a class="blq-cliente" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}">{{ l.contrato.cliente.nome }}</a>
+          <span class="blq-detalhe"><a href="{% url 'contratos:detalhe' l.contrato.pk %}">{{ l.contrato.apelido }}</a><span class="blq-tag">IMEI {{ l.contrato.imei|default:"não informado" }}</span></span>
+        </div>
+        <span class="pill inadimplente">{{ l.situacao.dias_atraso }} dias de atraso</span>
+        <div class="blq-valor"><small>A cobrar</small><strong class="num">R$ {{ l.a_cobrar|floatformat:"2g" }}</strong></div>
+        <form method="post" action="{% url 'aparelhos:bloquear' l.contrato.pk %}" class="blq-form bloqueio-form">
+          {% csrf_token %}
+          <input type="text" name="observacao" maxlength="200" placeholder="Como bloqueou? (opcional)" title="Opcional: como o aparelho foi bloqueado" aria-label="Como foi bloqueado">
+          <button type="submit" class="btn blq-btn blq-btn--bloquear">{% include "_icone.html" with nome="bloqueio" %}Bloqueei</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="blq-vazio">Nenhum aparelho esperando bloqueio.</p>{% endif %}
 </section>
 
-<section class="proximas-lista painel-lista">
-  <header class="proximas-dia__topo"><h2>Para desbloquear <span class="count">{{ para_desbloquear|length }}</span></h2>
-    {% if para_desbloquear %}<span class="proximas-dia__soma">O cliente regularizou: libere o aparelho e registre aqui.</span>{% endif %}</header>
-  {% for item in para_desbloquear %}
-    {% with b=item.bloqueio %}
-    <div class="proximas-item proximas-item--auto">
-      <div class="proximas-item__quem">
-        <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' b.contrato.cliente.pk %}">{{ b.contrato.cliente.nome }}</a>
-        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a>
-      </div>
-      <div class="proximas-item__selos">{% if item.quitado %}<span class="pill quitado">quitado</span>{% endif %}<span class="proximas-item__nota">bloqueado desde {{ b.bloqueado_em|date:"d/m/Y" }}</span></div>
-      <span></span>
-      <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}" class="proximas-item__acoes">{% csrf_token %}
-        <button type="submit" class="btn-mini btn-mini--pagar">{% include "_icone.html" with nome="bloqueio" %}Desbloqueei</button>
-      </form>
-    </div>
-    {% endwith %}
-  {% empty %}<p class="empty painel-vazio">Nenhum cliente esperando liberação.</p>{% endfor %}
+<section class="blq-painel" id="blq-desbloquear" role="tabpanel" data-painel="desbloquear" data-qtd="{{ para_desbloquear|length }}">
+  <h2 class="blq-titulo">Para desbloquear</h2>
+  {% if para_desbloquear %}
+  <p class="blq-dica">O cliente regularizou: libere o aparelho e registre aqui.</p>
+  <ul class="blq-lista">
+    {% for item in para_desbloquear %}
+      {% with b=item.bloqueio %}
+      <li class="blq-item">
+        <span class="blq-avatar" aria-hidden="true">{{ b.contrato.cliente.nome|slice:":2"|upper }}</span>
+        <div class="blq-quem">
+          <a class="blq-cliente" href="{% url 'clientes:detalhe' b.contrato.cliente.pk %}">{{ b.contrato.cliente.nome }}</a>
+          <span class="blq-detalhe"><a href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a></span>
+        </div>
+        <span class="blq-selos">{% if item.quitado %}<span class="pill quitado">quitado</span>{% endif %}<span class="blq-nota">Bloqueado desde {{ b.bloqueado_em|date:"d/m/Y" }}</span></span>
+        <span></span>
+        <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}" class="blq-form">{% csrf_token %}
+          <button type="submit" class="btn blq-btn blq-btn--liberar">{% include "_icone.html" with nome="bloqueio" %}Desbloqueei</button>
+        </form>
+      </li>
+      {% endwith %}
+    {% endfor %}
+  </ul>
+  {% else %}<p class="blq-vazio">Nenhum cliente esperando liberação.</p>{% endif %}
 </section>
 
-<section class="proximas-lista painel-lista">
-  <header class="proximas-dia__topo"><h2>Bloqueados agora <span class="count">{{ bloqueados|length }}</span></h2></header>
-  {% for item in bloqueados %}
-    {% with b=item.bloqueio %}
-    <div class="proximas-item proximas-item--auto">
-      <div class="proximas-item__quem">
-        <a class="proximas-item__cliente" href="{% url 'clientes:detalhe' b.contrato.cliente.pk %}">{{ b.contrato.cliente.nome }}</a>
-        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}{% if b.observacao %}, {{ b.observacao }}{% endif %}</a>
-      </div>
-      <div class="proximas-item__selos">
-        <span class="pill inadimplente">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize }} de atraso</span>
-        <span class="proximas-item__nota">desde {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %}, {{ b.bloqueado_por.nome_curto }}{% endif %}</span>
-      </div>
-      <strong class="proximas-item__valor num" title="Para liberar">R$ {{ item.a_cobrar|floatformat:"2g" }}</strong>
-      <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}" class="proximas-item__acoes">{% csrf_token %}
-        <button type="submit" class="btn-mini">{% include "_icone.html" with nome="bloqueio" %}Desbloqueei</button>
-      </form>
-    </div>
-    {% endwith %}
-  {% empty %}<p class="empty painel-vazio">Nenhum aparelho bloqueado no momento.</p>{% endfor %}
+<section class="blq-painel" id="blq-bloqueados" role="tabpanel" data-painel="bloqueados" data-qtd="{{ bloqueados|length }}">
+  <h2 class="blq-titulo">Bloqueados agora</h2>
+  {% if bloqueados %}
+  <ul class="blq-lista">
+    {% for item in bloqueados %}
+      {% with b=item.bloqueio %}
+      <li class="blq-item">
+        <span class="blq-avatar" aria-hidden="true">{{ b.contrato.cliente.nome|slice:":2"|upper }}</span>
+        <div class="blq-quem">
+          <a class="blq-cliente" href="{% url 'clientes:detalhe' b.contrato.cliente.pk %}">{{ b.contrato.cliente.nome }}</a>
+          <span class="blq-detalhe"><a href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a>{% if b.observacao %}<span class="blq-tag">{{ b.observacao }}</span>{% endif %}</span>
+        </div>
+        <span class="blq-selos">
+          <span class="pill inadimplente">{{ item.dias_atraso }} dia{{ item.dias_atraso|pluralize }} de atraso</span>
+          <span class="blq-nota">Desde {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %} por {{ b.bloqueado_por.nome_curto }}{% endif %}</span>
+        </span>
+        <div class="blq-valor"><small>Para liberar</small><strong class="num">R$ {{ item.a_cobrar|floatformat:"2g" }}</strong></div>
+        <form method="post" action="{% url 'aparelhos:desbloquear' b.pk %}" class="blq-form">{% csrf_token %}
+          <button type="submit" class="btn secondary blq-btn">{% include "_icone.html" with nome="bloqueio" %}Desbloqueei</button>
+        </form>
+      </li>
+      {% endwith %}
+    {% endfor %}
+  </ul>
+  {% else %}<p class="blq-vazio">Nenhum aparelho bloqueado no momento.</p>{% endif %}
 </section>
 
 {% if historico %}
-<section class="proximas-lista painel-lista">
-  <header class="proximas-dia__topo"><h2>Últimos desbloqueios</h2></header>
-  {% for b in historico %}
-    <div class="proximas-item proximas-item--leve">
-      <div class="proximas-item__quem">
-        <span class="proximas-item__cliente">{{ b.contrato.cliente.nome }}</span>
-        <a class="proximas-item__detalhe" href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a>
-      </div>
-      <div class="proximas-item__selos"><span class="proximas-item__nota">bloqueado {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %}, {{ b.bloqueado_por.nome_curto }}{% endif %}</span></div>
-      <span></span>
-      <div class="proximas-item__selos"><span class="proximas-item__nota">liberado {{ b.desbloqueado_em|date:"d/m/Y" }}{% if b.desbloqueado_por %}, {{ b.desbloqueado_por.nome_curto }}{% endif %}</span></div>
-    </div>
-  {% endfor %}
+<section class="blq-painel" id="blq-historico" role="tabpanel" data-painel="historico" data-qtd="{{ historico|length }}">
+  <h2 class="blq-titulo">Últimos desbloqueios</h2>
+  <ul class="blq-lista">
+    {% for b in historico %}
+      <li class="blq-item blq-item--leve">
+        <span class="blq-avatar" aria-hidden="true">{{ b.contrato.cliente.nome|slice:":2"|upper }}</span>
+        <div class="blq-quem">
+          <span class="blq-cliente">{{ b.contrato.cliente.nome }}</span>
+          <span class="blq-detalhe"><a href="{% url 'contratos:detalhe' b.contrato.pk %}">{{ b.contrato.apelido }}</a></span>
+        </div>
+        <span class="blq-nota">Bloqueado em {{ b.bloqueado_em|date:"d/m/Y" }}{% if b.bloqueado_por %} por {{ b.bloqueado_por.nome_curto }}{% endif %}</span>
+        <span></span>
+        <span class="blq-nota">Liberado em {{ b.desbloqueado_em|date:"d/m/Y" }}{% if b.desbloqueado_por %} por {{ b.desbloqueado_por.nome_curto }}{% endif %}</span>
+      </li>
+    {% endfor %}
+  </ul>
 </section>
 {% endif %}
+</div>
+<script src="{% static 'js/bloqueios.js' %}?v=2" defer></script>
 {% endblock %}

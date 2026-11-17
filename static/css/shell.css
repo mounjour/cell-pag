@@ -529,3 +529,6 @@ h2 { margin: 1.4rem 0 .65rem; }
 }
 .topo-ajuda:hover { background: var(--surface-2); color: var(--ink); text-decoration: none; }
 .topo-ajuda:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Balão aberto fica por cima dos cartões que vêm depois dele. */
+details.balao[open] { z-index: 40; }
