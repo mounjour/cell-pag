@@ -532,3 +532,7 @@ h2 { margin: 1.4rem 0 .65rem; }
 
 /* Balão aberto fica por cima dos cartões que vêm depois dele. */
 details.balao[open] { z-index: 40; }
+
+/* Ícone do título: centralizado na altura das letras (antes ficava 2px acima do texto). */
+h1:has(> .icone) { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+h1 > .icone { width: 1em; height: 1em; margin: 0; vertical-align: baseline; flex: none; }

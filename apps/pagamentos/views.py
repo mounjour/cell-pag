@@ -772,8 +772,48 @@ class HistoricoPagamentosView(LoginRequiredMixin, ListView):
         return qs
 
     def get_context_data(self, **kwargs):
+        from itertools import groupby
+
+        from django.db.models import Count, Sum
+
         ctx = super().get_context_data(**kwargs)
         ctx["filtrado"] = bool(self.cliente_id or self.contrato_id)
+        hoje = timezone.localdate()
+        zero = Decimal("0.00")
+
+        # Resumo: com filtro, o total daquele cliente/contrato; sem filtro, hoje e o mês corrente.
+        if ctx["filtrado"]:
+            tot = self.get_queryset().aggregate(v=Sum("valor_pago"), j=Sum("juros_pago"), n=Count("pk"))
+            ctx["resumo"] = [
+                {"rotulo": "Total pago", "valor": tot["v"] or zero, "dinheiro": True},
+                {"rotulo": "Juros pagos", "valor": tot["j"] or zero, "dinheiro": True},
+                {"rotulo": "Pagamentos", "valor": tot["n"]},
+            ]
+            primeiro = next(iter(ctx["pagamentos"]), None)
+            if primeiro:
+                ctx["filtro_nome"] = primeiro.contrato.apelido if self.contrato_id else primeiro.contrato.cliente.nome
+        else:
+            base = Pagamento.objects.all()
+            dia = base.filter(data_pagamento=hoje).aggregate(v=Sum("valor_pago"), n=Count("pk"))
+            mes = base.filter(data_pagamento__year=hoje.year, data_pagamento__month=hoje.month).aggregate(v=Sum("valor_pago"), n=Count("pk"))
+            ctx["resumo"] = [
+                {"rotulo": "Recebido hoje", "valor": dia["v"] or zero, "dinheiro": True, "sub": f"{dia['n']} pagamento{'s' if dia['n'] != 1 else ''}"},
+                {"rotulo": "Recebido no mês", "valor": mes["v"] or zero, "dinheiro": True, "sub": f"{mes['n']} pagamento{'s' if mes['n'] != 1 else ''}"},
+            ]
+
+        # A página agrupada por dia, com o total de cada dia.
+        dias = []
+        for data, itens in groupby(ctx["pagamentos"], key=lambda pg: pg.data_pagamento):
+            itens = list(itens)
+            dias.append({
+                "data": data, "itens": itens,
+                "total": sum((pg.valor_pago for pg in itens), zero),
+                "rotulo": "Hoje" if data == hoje else "Ontem" if data == hoje - datetime.timedelta(days=1) else "",
+            })
+        ctx["dias"] = dias
+        consulta = self.request.GET.copy()
+        consulta.pop("page", None)
+        ctx["consulta"] = consulta.urlencode()
         return ctx
 
 
