@@ -267,7 +267,7 @@ def test_painel_pix_mostra_as_parcelas_que_o_pix_cobre(auth_client, settings, mo
     monkeypatch.setattr(timezone, "localdate", lambda: HOJE)
 
     html = auth_client.get(reverse("pagamentos:pix_painel")).content.decode()
-    assert '<td data-label="Parcela" class="num">1, 2, 3</td>' in html
+    assert '<span class="pix-tag">Parcelas 1, 2, 3</span>' in html
 
 
 # ── Cobrança sempre com juros (parcela + juros; não existe pagar só a parcela) ──
