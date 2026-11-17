@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Bloqueios{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/bloqueios.css' %}?v=3">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/bloqueios.css' %}?v=5">{% endblock %}
 
 {% block content %}
 <div class="blq">
@@ -10,14 +10,14 @@
   <div>
     <h1>{% include "_icone.html" with nome="bloqueio" %}Bloqueios</h1>
     <p class="blq-sub">Aparelhos para bloquear por atraso e para liberar quando o cliente paga.</p>
-  </div>
-  <details class="balao blq-ajuda">
+    <details class="balao blq-ajuda">
     <summary>Como funciona</summary>
     <div class="balao-conteudo" role="note">
       <p>Com 8 dias de atraso o sistema avisa para bloquear. Você bloqueia no próprio celular (iCloud, MDM) e registra aqui.</p>
       <a class="balao-mais" href="{% url 'usuarios:ajuda' %}#bloqueios">Ainda com dúvidas? Saiba mais</a>
     </div>
   </details>
+  </div>
 </header>
 
 <div class="blq-abas" role="tablist" aria-label="Situação dos aparelhos" data-blq-abas>

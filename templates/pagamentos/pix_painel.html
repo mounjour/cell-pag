@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Acompanhamento Pix{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/pix.css' %}?v=3">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/pix.css' %}?v=5">{% endblock %}
 
 {% block content %}
 <div class="pix">
@@ -11,10 +11,6 @@
     <span class="pix-eyebrow">{{ hoje|date:"l, j \d\e F \d\e Y" }}</span>
     <h1>{% include "_icone.html" with nome="pix" %}Acompanhamento Pix</h1>
     <p class="pix-sub">{% if total %}{{ total }} cobrança{{ total|pluralize }} Pix de hoje: quem já pagou, quem falta e o que deu erro.{% else %}As cobranças Pix do dia aparecem aqui.{% endif %}</p>
-  </div>
-  <div class="pix-atalhos">
-    <a class="btn secondary" href="{% url 'pagamentos:recebidos' %}">{% include "_icone.html" with nome="dinheiro" %}Pix recebidos sem baixa</a>
-    <a class="btn secondary" href="{% url 'pagamentos:conferencia_cora' %}">{% include "_icone.html" with nome="quitar" %}Conferir com a Cora</a>
     <details class="balao pix-ajuda">
       <summary>Como funciona</summary>
       <div class="balao-conteudo" role="note">
@@ -22,6 +18,10 @@
         <a class="balao-mais" href="{% url 'usuarios:ajuda' %}#pix">Ainda com dúvidas? Saiba mais</a>
       </div>
     </details>
+  </div>
+  <div class="pix-atalhos">
+    <a class="btn secondary" href="{% url 'pagamentos:recebidos' %}">{% include "_icone.html" with nome="dinheiro" %}Pix recebidos sem baixa</a>
+    <a class="btn secondary" href="{% url 'pagamentos:conferencia_cora' %}">{% include "_icone.html" with nome="quitar" %}Conferir com a Cora</a>
   </div>
 </header>
 

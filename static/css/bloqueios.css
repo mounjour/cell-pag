@@ -87,3 +87,9 @@ a.blq-cliente:hover { color: var(--accent-ink); text-decoration: underline; }
   .blq-indicador { transition: transform .32s cubic-bezier(.3, 1.1, .4, 1), width .32s cubic-bezier(.3, 1.1, .4, 1); }
   .blq-aba, .blq-n { transition: color .2s ease, background-color .2s ease; }
 }
+
+/* "Como funciona" logo abaixo da frase do topo, alinhado à esquerda como nas outras telas. */
+.blq-topo .blq-ajuda.balao { display: block; margin: 8px 0 0; }
+.blq-topo .blq-ajuda .balao-conteudo { left: 0; right: auto; }
+.blq-topo .blq-ajuda .balao-conteudo::before { left: 18px; right: auto; }
+.blq-topo { position: relative; z-index: 5; }

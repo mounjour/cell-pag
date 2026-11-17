@@ -87,3 +87,9 @@
   .pix-lista--principal .pix-item { grid-template-columns: minmax(0, 1fr); }
   .pix-lista--principal .pix-valor-col { grid-column: 1; grid-row: auto; align-items: flex-start; text-align: left; }
 }
+
+/* "Como funciona" logo abaixo da frase do topo, alinhado à esquerda como nas outras telas. */
+.pix-topo .pix-ajuda.balao { display: block; margin: 8px 0 0; }
+.pix-topo .pix-ajuda .balao-conteudo { left: 0; right: auto; }
+.pix-topo .pix-ajuda .balao-conteudo::before { left: 18px; right: auto; }
+.pix-topo { position: relative; z-index: 5; }
