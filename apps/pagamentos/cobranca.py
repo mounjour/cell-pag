@@ -289,7 +289,8 @@ def processar_cobrancas(hoje: datetime.date | None = None, *, somente_preparar=F
 
 
 GRUPOS_DE_MENSAGENS = {
-    "enviadas": [Cobranca.Status.ENVIADO, Cobranca.Status.ENTREGUE, Cobranca.Status.LIDO],
+    # Apagada do WhatsApp também saiu: foi enviada e depois apagada (ex.: parcela paga), então conta como enviada.
+    "enviadas": [Cobranca.Status.ENVIADO, Cobranca.Status.ENTREGUE, Cobranca.Status.LIDO, Cobranca.Status.APAGADO],
     "erro": [Cobranca.Status.ERRO],
     "pendentes": [Cobranca.Status.PENDENTE],
 }
