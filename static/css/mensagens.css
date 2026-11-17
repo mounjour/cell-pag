@@ -82,3 +82,16 @@
   .msg-abas { display: flex; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
   .msg-aba { flex: none; }
 }
+
+/* Linha das abas fechada de ponta a ponta: abas à esquerda, andamento do dia à direita. */
+.msg-controles { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; margin: 0 0 14px; }
+.msg-controles .msg-abas { margin: 0; }
+.msg-progresso { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--ink-soft); }
+.msg-progresso strong { color: var(--ink); }
+.msg-barra { display: block; width: 180px; height: 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.msg-barra i { display: block; height: 100%; border-radius: 99px; background: var(--ok); }
+@media (prefers-reduced-motion: no-preference) {
+  .msg-barra i { animation: msg-enche .8s cubic-bezier(.2, .8, .2, 1) .2s backwards; transform-origin: left; }
+  @keyframes msg-enche { from { transform: scaleX(0); } }
+}
+@media (max-width: 700px) { .msg-progresso { width: 100%; } .msg-barra { flex: 1; } }

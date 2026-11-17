@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Bloqueios{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/bloqueios.css' %}?v=5">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/bloqueios.css' %}?v=6">{% endblock %}
 
 {% block content %}
 <div class="blq">
@@ -20,11 +20,14 @@
   </div>
 </header>
 
+<div class="blq-controles">
 <div class="blq-abas" role="tablist" aria-label="Situação dos aparelhos" data-blq-abas>
   <button type="button" role="tab" class="blq-aba{% if a_bloquear %} blq-aba--alerta{% endif %}" data-alvo="bloquear" aria-controls="blq-bloquear">Para bloquear <span class="blq-n">{{ a_bloquear|length }}</span></button>
   <button type="button" role="tab" class="blq-aba{% if para_desbloquear %} blq-aba--ok{% endif %}" data-alvo="desbloquear" aria-controls="blq-desbloquear">Para desbloquear <span class="blq-n">{{ para_desbloquear|length }}</span></button>
   <button type="button" role="tab" class="blq-aba" data-alvo="bloqueados" aria-controls="blq-bloqueados">Bloqueados agora <span class="blq-n">{{ bloqueados|length }}</span></button>
   {% if historico %}<button type="button" role="tab" class="blq-aba" data-alvo="historico" aria-controls="blq-historico">Últimos desbloqueios</button>{% endif %}
+</div>
+<p class="blq-resumo">{% if a_bloquear %}<strong class="num">R$ {{ total_a_bloquear|floatformat:"2g" }}</strong> a cobrar de quem espera bloqueio{% elif bloqueados %}<strong class="num">R$ {{ total_bloqueados|floatformat:"2g" }}</strong> a cobrar de quem está bloqueado{% else %}Nenhum aparelho com atraso para bloquear{% endif %}</p>
 </div>
 
 <section class="blq-painel" id="blq-bloquear" role="tabpanel" data-painel="bloquear" data-qtd="{{ a_bloquear|length }}">

@@ -2,84 +2,85 @@
 {% load static %}
 {% block title %}Clientes{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/clientes.css' %}?v=5">{% endblock %}
 
 {% block content %}
-<h1>{% include "_icone.html" with nome="clientes" %}{% if arquivados %}Clientes arquivados{% else %}Clientes{% endif %}</h1>
+<div class="cli">
+<header class="cli-topo">
+  <div>
+    <h1>{% include "_icone.html" with nome="clientes" %}{% if arquivados %}Clientes arquivados{% else %}Clientes{% endif %}</h1>
+    <p class="cli-sub">{% if arquivados %}Clientes que saíram da lista principal. O histórico deles continua guardado.{% else %}{{ contagens.todos }} cliente{{ contagens.todos|pluralize }} na lista, com a situação de cada um.{% endif %}</p>
+  </div>
+  <div class="cli-acoes">
+    {% if arquivados %}
+      <a class="btn secondary" href="{% url 'clientes:lista' %}">{% include "_icone.html" with nome="voltar" %}Ver ativos</a>
+    {% else %}
+      <a class="cli-link" href="?arquivados=1">{% include "_icone.html" with nome="arquivar" %}Ver arquivados</a>
+      <a class="btn secondary" href="{% url 'clientes:importar' %}">{% include "_icone.html" with nome="baixar" %}Importar CSV</a>
+      <a class="btn" href="{% url 'clientes:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo cliente</a>
+    {% endif %}
+  </div>
+</header>
 
-<div class="toolbar clientes-toolbar">
-  <form method="get" class="clientes-busca" role="search">
+<div class="cli-controles">
+  <form method="get" class="cli-busca clientes-busca" role="search">
     {% if arquivados %}<input type="hidden" name="arquivados" value="1">{% endif %}
     {% if filtro_atual %}<input type="hidden" name="situacao" value="{{ filtro_atual }}">{% endif %}
     {% include "_icone.html" with nome="busca" %}
     <input type="search" name="q" value="{{ busca }}" placeholder="Buscar por nome ou CPF" aria-label="Buscar cliente por nome ou CPF" data-busca-clientes autocomplete="off">
   </form>
-  <span class="spacer"></span>
-  {% if arquivados %}
-    <a class="btn secondary" href="{% url 'clientes:lista' %}">Ver ativos</a>
-  {% else %}
-    <a class="btn secondary" href="?arquivados=1">Ver arquivados</a>
-    <a class="btn secondary" href="{% url 'clientes:importar' %}">{% include "_icone.html" with nome="baixar" %}Importar CSV</a>
-    <a class="btn" href="{% url 'clientes:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo cliente</a>
-  {% endif %}
-</div>
-
-<div class="filtro-pills" role="group" aria-label="Filtrar por situação">
-  <a class="filtro-pill{% if not filtro_atual %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}{% endif %}">Todos <span class="filtro-n">{{ contagens.todos }}</span></a>
-  <a class="filtro-pill{% if filtro_atual == 'atraso' %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}&{% endif %}situacao=atraso">Em atraso <span class="filtro-n">{{ contagens.atraso|default:0 }}</span></a>
-  <a class="filtro-pill{% if filtro_atual == 'em_dia' %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}&{% endif %}situacao=em_dia">Em dia <span class="filtro-n">{{ contagens.em_dia|default:0 }}</span></a>
-  <a class="filtro-pill{% if filtro_atual == 'sem_contrato' %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}&{% endif %}situacao=sem_contrato">Sem contrato <span class="filtro-n">{{ contagens.sem_contrato|default:0 }}</span></a>
+  <nav class="cli-abas" aria-label="Filtrar por situação" data-segmentos="clientes">
+    <a class="cli-aba{% if not filtro_atual %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}{% endif %}">Todos <span class="cli-n">{{ contagens.todos }}</span></a>
+    <a class="cli-aba{% if filtro_atual == 'atraso' %} ativo{% endif %}{% if contagens.atraso %} cli-aba--alerta{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}&{% endif %}situacao=atraso">Em atraso <span class="cli-n">{{ contagens.atraso|default:0 }}</span></a>
+    <a class="cli-aba{% if filtro_atual == 'em_dia' %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}&{% endif %}situacao=em_dia">Em dia <span class="cli-n">{{ contagens.em_dia|default:0 }}</span></a>
+    <a class="cli-aba{% if filtro_atual == 'sem_contrato' %} ativo{% endif %}" href="?{% if arquivados %}arquivados=1&{% endif %}{% if busca %}q={{ busca|urlencode }}&{% endif %}situacao=sem_contrato">Sem contrato <span class="cli-n">{{ contagens.sem_contrato|default:0 }}</span></a>
+  </nav>
 </div>
 
 {% if clientes %}
-  <p class="count">{{ page_obj.paginator.count }} cliente{{ page_obj.paginator.count|pluralize }}{% if busca %} para “{{ busca }}”{% endif %}</p>
-  <div class="tbl-wrap cards">
-    <table class="tabela-clientes">
-      <thead>
-        <tr><th>Cliente</th><th>Situação</th><th>A receber</th><th>Contato</th><th class="num">Contratos</th></tr>
-      </thead>
-      <tbody>
-        {% for c in clientes %}
-          {% with s=c.situacao %}
-          <tr class="linha-link">
-            <td class="cliente-celula">
-              <span class="avatar-ini" aria-hidden="true">{{ c.nome|slice:":1"|upper }}</span>
-              <span class="cliente-textos">
-                <a class="link-linha" href="{% url 'clientes:detalhe' c.pk %}">{{ c.nome }}</a>
-                <small>{{ c.cpf_formatado }}</small>
-              </span>
-            </td>
-            <td data-label="Situação">
-              {% if s.estado == "atraso" %}
-                <span class="pill {% if s.inadimplente %}inadimplente{% else %}atrasado{% endif %}">{% if s.inadimplente %}Inadimplente há {% else %}Atrasado há {% endif %}{{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }}</span>
-                {% if s.alertar_bloqueio %}<span class="pill alerta-bloqueio">{% include "_icone.html" with nome="bloqueio" %}bloquear aparelho</span>{% endif %}
-              {% elif s.estado == "hoje" %}<span class="pill parcial">Cobrança hoje</span>
-              {% elif s.estado == "em_dia" %}<span class="pill em_dia">Em dia</span>
-              {% elif s.estado == "quitado" %}<span class="pill quitado">Quitado</span>
-              {% else %}<span class="pill aberto">Sem contrato</span>{% endif %}
-            </td>
-            <td data-label="A receber" class="a-receber">
-              {% if s.estado == "atraso" %}
-                <strong class="valor-atraso">R$ {{ s.devido|floatformat:"2g" }}</strong>
-                <small>inclui R$ {{ s.juros|floatformat:"2g" }} de juros</small>
-              {% elif s.proximo_vencimento %}
-                <strong>R$ {{ s.proximo_valor|floatformat:"2g" }}</strong>
-                <small>{% if s.estado == "hoje" %}cobrança hoje{% else %}cobrança {{ s.proximo_vencimento|date:"d/m" }}{% endif %}</small>
-              {% else %}<span class="nada">—</span>{% endif %}
-            </td>
-            <td data-label="Contato">{% include "_contato_icones.html" with cliente=c %}</td>
-            <td class="num{% if not c.num_contratos %} zero{% endif %}" data-label="Contratos">{{ c.num_contratos }}</td>
-          </tr>
-          {% endwith %}
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {% if busca %}<p class="cli-resultado">{{ page_obj.paginator.count }} cliente{{ page_obj.paginator.count|pluralize }} para “{{ busca }}”</p>{% endif %}
+  <div class="cli-cabecalho" aria-hidden="true"><span>Cliente</span><span>Situação</span><span class="cli-col-num">A receber</span><span class="cli-col-num">Contato</span></div>
+  <ul class="cli-lista">
+    {% for c in clientes %}
+      {% with s=c.situacao %}
+      <li class="cli-item" data-href="{% url 'clientes:detalhe' c.pk %}">
+        <div class="cli-quem">
+          <span class="cli-avatar" aria-hidden="true">{{ c.nome|slice:":2"|upper }}</span>
+          <div>
+            <a class="cli-nome" href="{% url 'clientes:detalhe' c.pk %}">{{ c.nome }}</a>
+            <span class="cli-detalhe"><span class="num">{{ c.cpf_formatado }}</span><span class="cli-tag{% if not c.num_contratos %} cli-tag--zero{% endif %}">{{ c.num_contratos }} contrato{{ c.num_contratos|pluralize }}</span></span>
+          </div>
+        </div>
+        <div class="cli-situacao">
+          {% if s.estado == "atraso" %}
+            <span class="pill {% if s.inadimplente %}inadimplente{% else %}atrasado{% endif %}">{% if s.inadimplente %}Inadimplente há {% else %}Atrasado há {% endif %}{{ s.dias_atraso }} dia{{ s.dias_atraso|pluralize }}</span>
+            {% if s.alertar_bloqueio %}<span class="pill alerta-bloqueio">{% include "_icone.html" with nome="bloqueio" %}bloquear aparelho</span>{% endif %}
+          {% elif s.estado == "hoje" %}<span class="pill parcial">Cobrança hoje</span>
+          {% elif s.estado == "em_dia" %}<span class="pill em_dia">Em dia</span>
+          {% elif s.estado == "quitado" %}<span class="pill quitado">Quitado</span>
+          {% else %}<span class="pill aberto">Sem contrato</span>{% endif %}
+        </div>
+        <div class="cli-valor">
+          {% if s.estado == "atraso" %}
+            <strong class="num cli-valor--atraso">R$ {{ s.devido|floatformat:"2g" }}</strong>
+            <small>inclui R$ {{ s.juros|floatformat:"2g" }} de juros</small>
+          {% elif s.proximo_vencimento %}
+            <strong class="num">R$ {{ s.proximo_valor|floatformat:"2g" }}</strong>
+            <small>{% if s.estado == "hoje" %}cobrança hoje{% else %}cobrança {{ s.proximo_vencimento|date:"d/m" }}{% endif %}</small>
+          {% else %}<span class="cli-nada">Nada a receber</span>{% endif %}
+        </div>
+        <div class="cli-contato">{% include "_contato_icones.html" with cliente=c %}</div>
+      </li>
+      {% endwith %}
+    {% endfor %}
+  </ul>
   {% include "_pagination.html" %}
 {% else %}
-  <div class="empty">
+  <div class="cli-vazio">
     <p>Nenhum cliente {% if busca or filtro_atual %}encontrado{% if busca %} para “{{ busca }}”{% endif %}{% if filtro_atual %} neste filtro{% endif %}{% else %}cadastrado ainda{% endif %}.</p>
     {% if not busca and not filtro_atual %}<a class="btn" href="{% url 'clientes:novo' %}">Cadastrar o primeiro cliente</a>{% endif %}
   </div>
 {% endif %}
+</div>
 {% endblock %}
-{% block scripts %}<script src="{% static 'js/lista_clientes.js' %}?v=1" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/lista_clientes.js' %}?v=1" defer></script><script src="{% static 'js/segmentos.js' %}?v=2" defer></script>{% endblock %}

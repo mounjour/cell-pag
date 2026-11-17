@@ -93,3 +93,9 @@ a.blq-cliente:hover { color: var(--accent-ink); text-decoration: underline; }
 .blq-topo .blq-ajuda .balao-conteudo { left: 0; right: auto; }
 .blq-topo .blq-ajuda .balao-conteudo::before { left: 18px; right: auto; }
 .blq-topo { position: relative; z-index: 5; }
+
+/* Linha das abas fechada de ponta a ponta: abas à esquerda, resumo em dinheiro à direita. */
+.blq-controles { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; margin: 0 0 14px; }
+.blq-controles .blq-abas { margin: 0; }
+.blq-resumo { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.blq-resumo strong { color: var(--ink); font-size: 16px; }

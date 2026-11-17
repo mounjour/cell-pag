@@ -7,7 +7,7 @@
 .hst-filtro a { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: var(--surface); color: var(--accent-ink); font-weight: 600; }
 .hst-filtro a:hover { text-decoration: none; filter: brightness(.97); }
 
-.hst-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 260px)); gap: 12px; margin: 0 0 16px; padding: 0; }
+.hst-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0 0 16px; padding: 0; }
 .hst-kpi { min-width: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--raise); }
 .hst-kpi dt { margin: 0; color: var(--ink-soft); font-size: 13px; }
 .hst-kpi dd { margin: 4px 0 0; font-size: clamp(22px, 2.4vw, 28px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
