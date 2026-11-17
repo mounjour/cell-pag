@@ -20,7 +20,7 @@
 <div class="acordo-opcoes">
   <section class="card">
     <h2>Perdoar juros</h2>
-    <p class="helptext">O cliente paga a parcela com menos juros. O juros dos dias seguintes continua correndo.</p>
+    <p class="helptext">O cliente paga a parcela com menos juros. {% if contrato.estrutura == 'diaria' %}O acréscimo desta diária é único e não aumenta nos dias seguintes.{% else %}O juros dos dias seguintes continua correndo.{% endif %}</p>
     {% if juros_hoje > 0 %}
       <form method="post" class="form-grid">
         {% csrf_token %}<input type="hidden" name="tipo" value="perdao_juros">

@@ -239,8 +239,8 @@ def test_painel_inicial_soma_todas_as_parcelas_vencidas(dados_relatorio):
     painel = montar_painel_inicial(hoje=date(2026, 9, 3))
     item = painel["atencao"][0]
     assert item["n_parcelas"] == 2
-    # 200 de parcelas + juros de cada uma: 2 dias (R$ 10) + 1 dia (R$ 5)
-    assert item["em_aberto"] == Decimal("215.00")
+    # 200 de parcelas + acréscimo único de R$ 5 por diária vencida
+    assert item["em_aberto"] == Decimal("210.00")
 
 
 @pytest.mark.django_db
@@ -269,8 +269,8 @@ def test_juros_em_aberto_lista_contratos_atrasados(dados_relatorio):
     item = resultado["linhas"][0]
     assert item["contrato"] == contrato
     assert item["dias_atraso"] == 3
-    assert item["juros"] == Decimal("15.00")  # R$5/dia x 3 dias
-    assert resultado["total"] == Decimal("15.00")
+    assert item["juros"] == Decimal("5.00")  # acréscimo único da diária vencida
+    assert resultado["total"] == Decimal("5.00")
 
 
 @pytest.mark.django_db

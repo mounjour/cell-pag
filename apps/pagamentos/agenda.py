@@ -38,9 +38,9 @@ class ParcelaACobrar(NamedTuple):
 def parcelas_a_cobrar(contrato, hoje: datetime.date) -> list[ParcelaACobrar]:
     """Cada parcela em aberto vencida (ou que vence hoje), do nº mais antigo ao mais novo.
 
-    O atraso e o juros são **de cada parcela** (contados a partir do próprio
-    vencimento), não do contrato. Parcela com pagamento parcial continua aqui, com o
-    saldo que falta (e o juros do atraso, que segue contando desde o vencimento dela).
+    O atraso é contado a partir do vencimento de cada parcela. No regime diário,
+    o acréscimo é único por diária vencida; nos demais, acumula por dia de atraso.
+    Parcela com pagamento parcial continua aqui, com o saldo que falta.
     Vazia quando o contrato ainda não tem vencimentos gerados.
     """
     from apps.pagamentos import atraso
@@ -59,7 +59,7 @@ def parcelas_a_cobrar(contrato, hoje: datetime.date) -> list[ParcelaACobrar]:
                 saldo=venc.saldo,
                 juros=max(
                     Decimal("0.00"),
-                    atraso.juros_acumulados(dias, contrato.juros_diario) - venc.juros_abonado,
+                    atraso.juros_acumulados(dias, contrato.juros_diario, estrutura=contrato.estrutura) - venc.juros_abonado,
                 ),
             )
         )

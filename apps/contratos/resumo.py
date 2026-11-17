@@ -38,7 +38,7 @@ def resumo_do_cadastro(contrato, parcelas_ja_pagas: int, hoje: datetime.date) ->
             atrasadas += 1
             max_dias = max(max_dias, dias)
             principal_atrasado += valor
-            juros_atrasado += atraso.juros_acumulados(dias, juros_dia)
+            juros_atrasado += atraso.juros_acumulados(dias, juros_dia, estrutura=contrato.estrutura)
             cobradas_na_primeira.append((numero, vence, dias))
         elif vence == hoje:
             vencem_hoje += 1

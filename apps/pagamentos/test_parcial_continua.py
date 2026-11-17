@@ -35,8 +35,8 @@ def test_parcela_com_pagamento_parcial_segue_na_cobranca_com_o_saldo_e_o_juros_d
 
     (item,) = parcelas_a_cobrar(contrato, hoje)
     assert item.numero == 1 and item.saldo == Decimal("60.00")
-    assert item.juros == Decimal("10.00")  # 2 dias × R$ 5,00: o juros segue contando desde o vencimento da parcela
-    assert resumo_cobranca(contrato, hoje)["total"] == Decimal("70.00")
+    assert item.juros == Decimal("5.00")  # acréscimo único da diária, mesmo após dois dias
+    assert resumo_cobranca(contrato, hoje)["total"] == Decimal("65.00")
 
     _paga(contrato, venc, "60.00")
     assert parcelas_a_cobrar(contrato, hoje) == []  # quitada: sai da cobrança

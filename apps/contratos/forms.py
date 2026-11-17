@@ -54,6 +54,7 @@ class ContratoForm(forms.ModelForm):
     juros_diario = forms.CharField(
         label="Juros diário", required=False, initial="5,00",
         widget=forms.TextInput(attrs={"inputmode": "decimal", "placeholder": "5,00", "class": "money"}),
+        help_text="Na diária, cobrado uma única vez por parcela vencida. Nos demais regimes, por dia de atraso.",
     )
 
     class Meta:

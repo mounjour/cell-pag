@@ -13,7 +13,9 @@ deploy, integrações e segurança: [`docs/`](docs/README.md).
 - **Clientes, contratos e aparelhos:** cadastro, importação por planilha, geração automática
   das parcelas (`Vencimento`) ao salvar o contrato, estoque e catálogo de aparelhos.
 - **Cobrança:** painel "Cobrar hoje", próximas cobranças, promessas de pagamento, contatos
-  registrados e acordos (renegociação). Atraso com juros diários por contrato, **sem multa**;
+  registrados e acordos (renegociação). No regime diário, acréscimo único de R$ 5 por
+  diária vencida (ou o valor configurado), sem multiplicar pelos dias de atraso de cada
+  parcela. Nos demais regimes, juros por dia de atraso, **sem multa**;
   alerta de bloqueio no 8º dia de atraso.
 - **Pagamentos:** baixa manual (inclusive parcial, com troco e juros separados), edição e
   estorno, histórico por cliente/contrato.

@@ -145,11 +145,16 @@ Na tela de cada **contrato** (seção **Contatos de cobrança**) você anota o q
 
 ### Acordo: negociar uma parcela atrasada
 
+No **regime diário**, cada diária vencida recebe o acréscimo configurado uma única vez
+(padrão R$ 5,00). Uma diária de R$ 27,50 fica em R$ 32,50; duas vencidas somam R$ 65,00.
+O acréscimo da mesma diária não aumenta nos dias seguintes. Parcelas que vencem hoje
+ainda não têm juros. Nos demais regimes, o cálculo continua por dia de atraso.
+
 Na tela do contrato, na lista de **Parcelas**, o link **negociar** (parcela em aberto, sem pagamento) abre a tela de acordo. Há dois tipos:
 
 | Acordo | O que muda | Detalhes |
 |---|---|---|
-| **Perdoar juros** | o juros cobrado cai pelo valor perdoado | pode perdoar tudo ou só parte (nunca mais que o juros de hoje). **O juros dos dias seguintes continua correndo** |
+| **Perdoar juros** | o juros cobrado cai pelo valor perdoado | pode perdoar tudo ou só parte (nunca mais que o juros de hoje). Na diária, o acréscimo é único; nos demais regimes, os dias seguintes continuam acumulando juros |
 | **Nova data de cobrança** | a parcela passa a vencer na nova data e o juros recomeça a contar dela | a data nova precisa ser depois da data de cobrança atual, não pode estar no passado e não passa do data de cobrança da parcela seguinte. A data antiga fica visível ("era 03/10/2026") |
 
 O acordo vale para tudo de uma vez: a **mensagem de WhatsApp**, o **Pix** e as telas (Cobrar hoje, contrato, cliente) já cobram o valor combinado. Se já existia um QR de Pix aberto, o sistema o cancela na Cora e a próxima rotina gera outro com o valor novo (se não conseguir cancelar, avisa para cancelar no painel Pix).
