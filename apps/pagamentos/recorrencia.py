@@ -208,6 +208,10 @@ def interpretar_dia_de_cobranca(
     def sugerir(dias=(), semana=None):
         return sugerir_primeira_cobranca(data_inicio, estrutura, dia_semana=semana, dias_do_mes=dias)
 
+    if estrutura == Contrato.Estrutura.DIARIA:
+        # Todo dia: não há dia da semana nem do mês para escolher. A 1ª cobrança é o dia seguinte à compra.
+        return (primeira_cobranca or sugerir()), ""
+
     if estrutura not in (Contrato.Estrutura.SEMANAL, Contrato.Estrutura.QUINZENAL, Contrato.Estrutura.MENSAL):
         raise ValueError("Escolha a frequência de pagamento.")
 
@@ -284,6 +288,8 @@ def descrever_dia_de_cobranca(
     """O dia de cobrança em linguagem simples ("Toda segunda-feira", "Dias 5 e 20 de cada mês")."""
     dias = _dias(dias_do_mes) if dias_do_mes else []
     base = primeira_cobranca or data_inicio
+    if estrutura == Contrato.Estrutura.DIARIA:
+        return "Todo dia, inclusive domingo"
     if estrutura == Contrato.Estrutura.SEMANAL:
         return f"Toda {DIAS_DA_SEMANA[base.weekday()]}"
     if estrutura == Contrato.Estrutura.MENSAL:

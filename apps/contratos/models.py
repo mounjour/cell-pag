@@ -34,10 +34,11 @@ class Contrato(models.Model):
         QUINZENAL = "quinzenal", "Quinzenal"
         MENSAL = "mensal", "Mensal"
 
-    #: O que se pode escolher hoje: semanal, quinzenal e mensal. Diária e "por dezena" saíram do
-    #: produto — continuam no enum só para ler contratos antigos e para a lógica de datas, mas não
-    #: aparecem no formulário, nos filtros nem na importação.
+    #: O que se pode escolher hoje: diária, semanal, quinzenal e mensal. "Por dezena" saiu do
+    #: produto: continua no enum só para ler contratos antigos e para a lógica de datas, mas não
+    #: aparece no formulário, nos filtros nem na importação.
     ESTRUTURAS_ATIVAS = [
+        ("diaria", "Diária"),
         ("semanal", "Semanal"),
         ("quinzenal", "Quinzenal"),
         ("mensal", "Mensal"),

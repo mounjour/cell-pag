@@ -791,7 +791,7 @@ def test_formulario_nao_mostra_datas_automaticas(auth_client, cliente):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("removida", ["diaria", "dezena"])
+@pytest.mark.parametrize("removida", ["dezena"])
 def test_formulario_recusa_frequencias_que_sairam(auth_client, cliente, removida):
     resp = cadastrar_contrato(auth_client, dados_form(cliente, estrutura=removida))
     assert resp.status_code == 200
