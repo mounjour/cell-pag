@@ -53,6 +53,7 @@
     var compra = lerData(el.data_inicio.value);
     var m = modo();
     if (!compra || !m.estrutura) return '';
+    if (m.estrutura === 'diaria') return formatar(somarDias(compra, 1)); // todo dia: a 1ª cobrança é o dia seguinte
     if (m.semana) {
       if (el.dia_semana.value === '') return '';
       var marco = somarDias(compra, m.estrutura === 'semanal' ? 7 : 14);

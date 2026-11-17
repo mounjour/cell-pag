@@ -19,10 +19,10 @@ _COLUNAS = {
     "observacoes": "observacoes",
     "diadecobranca": "dia_cobranca", "diacobranca": "dia_cobranca", "diasdecobranca": "dia_cobranca",
 }
-_FREQUENCIA = re.compile(r"^(semanal|quinzenal|mensal)(?:\s*[-–]\s*(\d{1,2}))?$")
+_FREQUENCIA = re.compile(r"^(di[aá]ri[oa]|semanal|quinzenal|mensal)(?:\s*[-–]\s*(\d{1,2}))?$")
 _DOIS_DIAS = re.compile(r"dias?\s*(\d{1,2})\s*(?:e|/|,|&)\s*(\d{1,2})")
 # Frequências que deixaram de existir: a linha é recusada com um motivo claro.
-_ESTRUTURAS_REMOVIDAS = {"diário", "diario", "diária", "diaria", "por dezena", "dezena"}
+_ESTRUTURAS_REMOVIDAS = {"por dezena", "dezena"}
 
 
 def _texto(valor):
@@ -34,7 +34,8 @@ def _frequencia(valor):
     acho = _FREQUENCIA.match(re.sub(r"\s+", " ", _texto(valor).lower()))
     if not acho:
         return None, None
-    return acho.group(1), int(acho.group(2)) if acho.group(2) else None
+    nome = "diaria" if acho.group(1).startswith("di") else acho.group(1)
+    return nome, int(acho.group(2)) if acho.group(2) else None
 
 
 def _dia_de_cobranca(estrutura, sufixo, vencimento, texto_livre):
@@ -127,7 +128,7 @@ def analisar(arquivo):
             if not estrutura:
                 if _texto(bruto.get("estrutura")).lower() in _ESTRUTURAS_REMOVIDAS:
                     resultado.append({"linha": numero, "erros": [
-                        "Frequência não aceita: o sistema trabalha só com semanal, quinzenal e mensal."]})
+                        "Frequência não aceita: o sistema trabalha com diária, semanal, quinzenal e mensal."]})
                     continue
                 raise ValueError("frequência não reconhecida")
             imei_bruto = re.sub(r"\D", "", _texto(bruto.get("imei")))

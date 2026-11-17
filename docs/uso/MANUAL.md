@@ -47,12 +47,13 @@ vale. O perfil de cada usuário é definido no Admin (campo **perfil**).
 
 ### Frequência e dia de cobrança
 
-Como as parcelas se repetem no tempo: **semanal, quinzenal ou mensal** (diária e por dezena
-não existem mais). Além da frequência, você escolhe o **dia de cobrança** e, se precisar, a
+Como as parcelas se repetem no tempo: **diária, semanal, quinzenal ou mensal** (por dezena
+não existe mais). Além da frequência, você escolhe o **dia de cobrança** e, se precisar, a
 data da **primeira cobrança**. As demais parcelas seguem a partir dela.
 
 | Frequência | Dia de cobrança | Como vencem as parcelas |
 |---|---|---|
+| **Diária** | não tem: cobra todo dia, domingo incluído | uma parcela por dia. A primeira é o dia seguinte à compra (dá para alterar) |
 | **Semanal** | um dia da semana (ex.: segunda) | toda semana nesse dia. O atraso só começa **na segunda-feira** depois do domingo que fecha a semana |
 | **Quinzenal — a cada 14 dias** | um dia da semana (ex.: quarta) | de 14 em 14 dias, sempre no mesmo dia da semana |
 | **Quinzenal — dois dias do mês** | dois dias (ex.: 5 e 20) | todo mês nesses dois dias |
@@ -380,7 +381,7 @@ Ao **editar o contrato** os campos de entrada aparecem preenchidos: corrija o va
 | Campo | Obrigatório | Observação |
 |---|---|---|
 | **Data da compra** | Sim | dia em que o aparelho foi vendido |
-| **Frequência de pagamento** | Sim | semanal / quinzenal / mensal |
+| **Frequência de pagamento** | Sim | diária / semanal / quinzenal / mensal |
 | **Como é a cobrança quinzenal?** | Só no quinzenal | "a cada 14 dias, no mesmo dia da semana" ou "dois dias fixos do mês" |
 | **Dia da semana** / **Dia do mês** | Sim | o dia de cobrança (um ou dois dias, conforme a frequência) |
 | **Primeira cobrança** | Sugerida | data da parcela 1; o sistema sugere, você pode alterar |
