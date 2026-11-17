@@ -93,3 +93,12 @@
 .pix-topo .pix-ajuda .balao-conteudo { left: 0; right: auto; }
 .pix-topo .pix-ajuda .balao-conteudo::before { left: 18px; right: auto; }
 .pix-topo { position: relative; z-index: 5; }
+
+/* Erro do Pix: o motivo fica escondido no selo "Erro" e abre num balão ao clicar. */
+.pix-erro-balao.balao { margin: 0; font-size: 13px; }
+.pix-erro-balao.balao > summary { color: inherit; font-weight: 600; cursor: pointer; }
+.pix-erro-balao.balao > summary::before { content: none; }
+.pix-erro-balao.balao > summary:hover { text-decoration: none; filter: brightness(.97); }
+.pix-erro-info { margin-left: 5px; opacity: .85; }
+.pix-erro-balao summary:hover .pix-erro-info { opacity: 1; }
+.pix-erro-balao .balao-conteudo { width: min(340px, calc(100vw - 32px)); color: var(--critical-ink); }

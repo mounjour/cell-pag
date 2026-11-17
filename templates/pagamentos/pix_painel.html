@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Acompanhamento Pix{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/pix.css' %}?v=5">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/pix.css' %}?v=11">{% endblock %}
 
 {% block content %}
 <div class="pix">
@@ -126,8 +126,14 @@
       </div>
       <div class="pix-valor-col"><strong class="pix-valor num">R$ {{ c.valor|floatformat:"2g" }}</strong><small>Cobrança {{ c.data_vencimento|date:"d/m/Y" }}</small></div>
       <div class="pix-status">
-        <span class="pill pill-pix {{ c.status }}">{{ c.get_status_display }}</span>
-        {% if c.erro %}<span class="pix-erro">{{ c.erro }}</span>{% endif %}
+        {% if c.erro %}
+          <details class="balao pix-erro-balao">
+            <summary title="Ver o motivo do erro" aria-label="Erro. Ver o motivo"><span class="pill pill-pix {{ c.status }}">{{ c.get_status_display }}<svg class="pix-erro-info" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5"/><circle cx="12" cy="16.5" r=".7" fill="currentColor"/></svg></span></summary>
+            <div class="balao-conteudo" role="note"><p>{{ c.erro }}</p></div>
+          </details>
+        {% else %}
+          <span class="pill pill-pix {{ c.status }}">{{ c.get_status_display }}</span>
+        {% endif %}
         <small class="pix-nota" title="Última vez que o código Pix foi gerado ou atualizado">código atualizado {{ c.atualizado_em|date:"d/m H:i" }}</small>
       </div>
       <div class="pix-status">
