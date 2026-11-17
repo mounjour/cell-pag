@@ -262,7 +262,7 @@ class ProximasCobrancasView(LoginRequiredMixin, TemplateView):
         except ValueError:
             dias = 14
         dias = dias if dias in JANELAS else 14
-        ctx.update(proximas_cobrancas(dias), janelas=JANELAS, hoje=timezone.localdate())
+        ctx.update(proximas_cobrancas(dias, com_atraso=True), janelas=JANELAS, hoje=timezone.localdate())
         ctx["config_cobranca"] = ConfiguracaoCobranca.obter()
         if ctx["sem_parcelas"]:
             n = len(ctx["sem_parcelas"])

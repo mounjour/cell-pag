@@ -23,8 +23,12 @@ JANELAS = (7, 14, 30)
 MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
 
 
-def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None) -> dict:
-    """``{"dias", "grupos": [{"data", "itens", "total"}], "total", "quantidade"}`` agrupado por data."""
+def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None, com_atraso: bool = False) -> dict:
+    """``{"dias", "grupos": [{"data", "itens", "total"}], "total", "quantidade"}`` agrupado por data.
+
+    Com ``com_atraso`` (a tela Próximas cobranças), a primeira parcela futura de quem já está em atraso leva
+    junto as parcelas atrasadas e o juros, que é o que o cliente de fato vai receber. Sem ele (relatório
+    financeiro e lembrete) o valor é só o saldo da parcela, para não contar duas vezes o que já está em atraso."""
     hoje = hoje or timezone.localdate()
     fim = hoje + datetime.timedelta(days=dias)
     parcelas = list(
@@ -46,8 +50,8 @@ def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None) -> dic
     primeira_do_contrato: dict[int, Vencimento] = {}
     for parcela in parcelas:
         primeira_do_contrato.setdefault(parcela.contrato_id, parcela)
-    com_atraso = {
-        cid for cid, p in primeira_do_contrato.items() if parcelas_a_cobrar(p.contrato, hoje)
+    contratos_em_atraso = {
+        cid for cid, p in primeira_do_contrato.items() if com_atraso and parcelas_a_cobrar(p.contrato, hoje)
     }
     grupos: list[dict] = []
     for parcela in parcelas:
@@ -60,7 +64,7 @@ def proximas_cobrancas(dias: int = 14, hoje: datetime.date | None = None) -> dic
             "parcela": parcela, "suspensa": parcela.pk in suspensas, "promessa": promessas.get(parcela.contrato_id),
             "valor": parcela.saldo, "em_atraso": Decimal("0.00"), "atrasadas_n": 0,
         }
-        if parcela.contrato_id in com_atraso and primeira_do_contrato[parcela.contrato_id] is parcela:
+        if parcela.contrato_id in contratos_em_atraso and primeira_do_contrato[parcela.contrato_id] is parcela:
             r = resumo_cobranca(parcela.contrato, parcela.data_vencimento)
             item.update(valor=r["total"], em_atraso=r["total"] - parcela.saldo, atrasadas_n=max(r["quantidade"] - 1, 0))
         grupos[-1]["itens"].append(item)
