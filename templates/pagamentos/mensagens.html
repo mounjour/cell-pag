@@ -81,6 +81,13 @@
               <input type="hidden" name="next" value="{{ request.get_full_path }}">
               <button type="submit" class="btn secondary msg-btn">{% include "_icone.html" with nome="gerar" %}{% if c.status == 'erro' %}Tentar de novo{% else %}Enviar agora{% endif %}</button>
             </form>
+          {% elif eh_hoje and c.status == 'enviado' or eh_hoje and c.status == 'entregue' or eh_hoje and c.status == 'lido' %}
+            <form method="post" action="{% url 'pagamentos:cobranca_enviar' c.contrato.pk %}" data-confirmar-envio="Reenviar agora a cobrança de {{ c.contrato.cliente.nome|escapejs }} no WhatsApp? Ela já foi enviada hoje; a mensagem sai de novo de verdade para o cliente.">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <input type="hidden" name="reenviar" value="1">
+              <button type="submit" class="btn secondary msg-btn">{% include "_icone.html" with nome="gerar" %}Reenviar</button>
+            </form>
           {% endif %}
         </div>
       </li>

@@ -1044,7 +1044,7 @@ class CobrancaEnviarView(LoginRequiredMixin, View):
         from .cobranca import enviar_agora
 
         contrato = get_object_or_404(Contrato.objects.select_related("cliente"), pk=contrato_pk)
-        nivel, texto = enviar_agora(contrato)
+        nivel, texto = enviar_agora(contrato, reenviar=request.POST.get("reenviar") == "1")
         getattr(messages, nivel)(request, texto)
         return _voltar_para_origem(request, padrao="pagamentos:cobrar_hoje")
 
