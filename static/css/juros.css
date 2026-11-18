@@ -1,0 +1,67 @@
+/* Juros: resumo em dois números e duas listas sem moldura (mesmo desenho de Clientes e Histórico). Tudo sob .jur. */
+.jur-topo { margin-bottom: 14px; }
+.jur-topo h1 { margin: 0; }
+.jur-sub { margin: 6px 0 0; color: var(--ink-soft); }
+
+.jur-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 0 0 20px; padding: 0; }
+.jur-kpi { min-width: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--raise); }
+.jur-kpi dt { margin: 0; color: var(--ink-soft); font-size: 13px; }
+.jur-kpi dd { margin: 4px 0 0; font-size: clamp(24px, 2.6vw, 32px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+.jur-kpi--ruim dd { color: var(--critical-ink); }
+.jur-kpi--ok dd { color: var(--money); }
+.jur-kpi-sub { display: block; margin-top: 4px; font-size: 12px; color: var(--ink-faint); }
+
+.jur-secao { margin: 0 0 24px; }
+.jur-secao-topo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; }
+.jur-secao-topo h2 { margin: 0; padding: 0; border: 0; font-size: 17px; text-transform: none; letter-spacing: -.01em; color: var(--ink); }
+.jur-contagem { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 600; }
+.jur-periodo { margin-left: auto; }
+.jur-periodo .report-filter { margin: 0; }
+
+/* Lista sem cartão em volta, separada por linhas finas */
+.jur-cabecalho, .jur-item { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 160px; gap: 18px; align-items: center; }
+.jur-cabecalho { padding: 0 18px 8px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.jur-col-num { text-align: right; }
+.jur-lista { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.jur-item { position: relative; padding: 14px 18px; border-radius: 12px; }
+.jur-item[data-href] { cursor: pointer; }
+.jur-item::after { content: ""; position: absolute; left: 18px; right: 18px; bottom: 0; border-bottom: 1px solid var(--line); }
+.jur-item:last-child::after { left: 0; right: 0; }
+.jur-quem { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.jur-quem > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.jur-avatar { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-wash); color: var(--accent-ink); font-weight: 700; font-size: 13px; }
+.jur-nome { font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+a.jur-nome:hover { color: var(--accent-ink); text-decoration: underline; }
+.jur-detalhe { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-faint); }
+.jur-tag { padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.jur-data { font-size: 14px; color: var(--ink-soft); }
+.jur-valor { display: flex; justify-content: flex-end; text-align: right; }
+.jur-valor strong { font-size: 16px; }
+.jur-valor--ruim { color: var(--critical-ink); }
+.jur-valor--ok { color: var(--money); }
+.jur-vazio { margin: 0; padding: 22px 16px; border: 1px dashed var(--line-strong); border-radius: 16px; text-align: center; color: var(--ink-faint); background: var(--surface); }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes jur-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .jur-topo, .jur-kpi, .jur-secao { animation: jur-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .jur-kpi:nth-child(2) { animation-delay: 50ms; }
+  .jur-secao:nth-of-type(1) { animation-delay: 90ms; }
+  .jur-secao:nth-of-type(2) { animation-delay: 140ms; }
+  .jur-item { transition: background-color .15s ease; }
+  .jur-item:hover { background: var(--surface-2); }
+  .jur-item:hover::after { opacity: 0; }
+}
+
+@media (max-width: 900px) {
+  .jur-cabecalho { display: none; }
+  .jur-item { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; }
+  .jur-quem { grid-column: 1; }
+  .jur-valor { grid-column: 2; grid-row: 1; }
+  .jur-atraso, .jur-data { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .jur-kpis { grid-template-columns: minmax(0, 1fr); }
+  .jur-periodo { margin-left: 0; width: 100%; }
+}
+
+.jur-periodo .report-filter { margin: 0; padding: 0; border: 0; background: none; box-shadow: none; }

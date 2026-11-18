@@ -17,7 +17,8 @@
 
 {% if d %}
 <p class="fin-periodo">{{ d.inicio|date:"d/m/Y" }} a {{ d.fim|date:"d/m/Y" }}, comparado com {{ d.inicio_anterior|date:"d/m" }} a {{ d.fim_anterior|date:"d/m/Y" }}.
-  <a href="{% url 'relatorios:painel' %}?{{ querystring }}">Ver relatório detalhado</a></p>
+  <a href="{% url 'relatorios:excel' %}?{{ querystring }}">Baixar Excel</a>
+  <a href="{% url 'relatorios:pdf' %}?{{ querystring }}">Baixar PDF</a></p>
 
 {# ── 1. O período: quanto entrou, quanto era para entrar e quanto está atrasado ── #}
 <h2 class="fin-resumo-titulo">Indicadores do período</h2>

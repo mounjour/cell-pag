@@ -52,7 +52,6 @@
       {% if user.is_dono %}
       <p class="nav-grupo">Análise</p>
       <a href="{% url 'relatorios:financeiro' %}"{% if pagina == 'financeiro' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="financeiro" %}<span>Financeiro</span></a>
-      <a href="{% url 'relatorios:painel' %}"{% if secao == 'relatorios' and pagina != 'inicio' and pagina != 'juros' and pagina != 'financeiro' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="relatorios" %}<span>Relatórios</span></a>
       <a href="{% url 'relatorios:juros' %}"{% if pagina == 'juros' %} class="active" aria-current="page"{% endif %}>{% include "_icone.html" with nome="juros" %}<span>Juros</span></a>
       {% endif %}
     </nav>
@@ -150,7 +149,6 @@
         <a class="menu-item" href="{% url 'aparelhos:lista' %}">{% include "_icone.html" with nome="aparelhos" %}<span>Aparelhos</span></a>
         <a class="menu-item" href="{% url 'pagamentos:conexoes' %}">{% include "_icone.html" with nome="conexoes" %}<span>Conexões</span><span class="selo selo--alerta" data-whatsapp-selo{% if not whatsapp_desconectado %} hidden{% endif %}><span class="sr-only">WhatsApp desconectado</span><span aria-hidden="true">!</span></span></a>
         {% if user.is_dono %}<a class="menu-item" href="{% url 'relatorios:financeiro' %}">{% include "_icone.html" with nome="financeiro" %}<span>Financeiro</span></a>
-        <a class="menu-item" href="{% url 'relatorios:painel' %}">{% include "_icone.html" with nome="relatorios" %}<span>Relatórios</span></a>
         <a class="menu-item" href="{% url 'relatorios:juros' %}">{% include "_icone.html" with nome="juros" %}<span>Juros</span></a>{% endif %}
       </div>
     </details>

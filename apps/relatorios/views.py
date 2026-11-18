@@ -78,13 +78,6 @@ class InicioView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class RelatorioView(DonoRequeridoMixin, TemplateView):
-    template_name = "relatorios/painel.html"
-
-    def get_context_data(self, **kwargs):
-        return {**super().get_context_data(**kwargs), **_contexto(self.request)}
-
-
 class FinanceiroView(DonoRequeridoMixin, TemplateView):
     """Dashboard financeiro: recebido, previsto, atraso, carteira, Pix e o que vem pela frente, num só lugar.
 
