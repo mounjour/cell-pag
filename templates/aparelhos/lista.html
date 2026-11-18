@@ -1,54 +1,62 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Aparelhos{% endblock %}
+{% block wrap_class %}wrap--wide{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/aparelhos.css' %}?v=1">{% endblock %}
 
 {% block content %}
-<div class="toolbar">
-  <h1>{% include "_icone.html" with nome="aparelhos" %}Aparelhos</h1>
-  <span class="spacer"></span>
-  <a class="btn secondary" href="{% url 'aparelhos:importar' %}">{% include "_icone.html" with nome="baixar" %}Importar CSV</a>
-  <a class="btn" href="{% url 'aparelhos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo aparelho</a>
+<div class="apa">
+<header class="apa-topo">
+  <div>
+    <h1>{% include "_icone.html" with nome="aparelhos" %}Aparelhos</h1>
+    <p class="apa-sub">{{ total_disponiveis }} dispon{{ total_disponiveis|pluralize:"ível,íveis" }} no estoque agora, com a situação de cada aparelho.</p>
+  </div>
+  <div class="apa-acoes">
+    <a class="btn secondary" href="{% url 'aparelhos:importar' %}">{% include "_icone.html" with nome="baixar" %}Importar CSV</a>
+    <a class="btn" href="{% url 'aparelhos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Novo aparelho</a>
+  </div>
+</header>
+
+<div class="apa-controles">
+  <form method="get" class="apa-busca clientes-busca" role="search">
+    {% if status_atual %}<input type="hidden" name="status" value="{{ status_atual }}">{% endif %}
+    {% include "_icone.html" with nome="busca" %}
+    <input type="search" name="q" value="{{ busca }}" placeholder="Buscar por modelo ou IMEI" aria-label="Buscar aparelho por modelo ou IMEI" data-busca-clientes autocomplete="off">
+  </form>
+  <nav class="apa-abas" aria-label="Filtrar por situação" data-segmentos="aparelhos">
+    <a class="apa-aba{% if not status_atual %} ativo{% endif %}" href="?{% if busca %}q={{ busca|urlencode }}{% endif %}">Todos <span class="apa-n">{{ contagens.todos }}</span></a>
+    {% for valor, rotulo in status_opcoes %}
+      <a class="apa-aba{% if valor == status_atual %} ativo{% endif %}" href="?status={{ valor }}{% if busca %}&q={{ busca|urlencode }}{% endif %}">{{ rotulo }} <span class="apa-n">{% if valor == "disponivel" %}{{ contagens.disponivel }}{% elif valor == "alocado" %}{{ contagens.alocado }}{% else %}{{ contagens.vendido }}{% endif %}</span></a>
+    {% endfor %}
+  </nav>
 </div>
-
-<form method="get" class="toolbar">
-  {% if status_atual %}<input type="hidden" name="status" value="{{ status_atual }}">{% endif %}
-  <input type="search" name="q" value="{{ busca }}" placeholder="Buscar por modelo ou IMEI">
-  <button class="btn secondary" type="submit">{% include "_icone.html" with nome="busca" %}Buscar</button>
-</form>
-
-<div class="filtro-pills">
-  <a class="filtro-pill{% if not status_atual %} ativo{% endif %}" href="?{% if busca %}q={{ busca|urlencode }}{% endif %}">Todos</a>
-  {% for valor, rotulo in status_opcoes %}
-    <a class="filtro-pill{% if valor == status_atual %} ativo{% endif %}" href="?status={{ valor }}{% if busca %}&q={{ busca|urlencode }}{% endif %}">{{ rotulo }}</a>
-  {% endfor %}
-</div>
-
-<p class="count">{{ total_disponiveis }} dispon{{ total_disponiveis|pluralize:"ível,íveis" }} no estoque agora.</p>
 
 {% if aparelhos %}
-  <p class="count">{{ page_obj.paginator.count }} aparelho{{ page_obj.paginator.count|pluralize }}{% if busca %} para “{{ busca }}”{% endif %}</p>
-  <div class="tbl-wrap cards">
-    <table>
-      <thead>
-        <tr><th>Modelo</th><th>IMEI</th><th>Status</th><th>Cliente</th><th class="num">Custo</th></tr>
-      </thead>
-      <tbody>
-        {% for a in aparelhos %}
-          <tr class="linha-link">
-            <td><a class="link-linha" href="{% url 'aparelhos:detalhe' a.pk %}">{{ a.modelo }}</a></td>
-            <td data-label="IMEI" class="num">{{ a.imei|default:"—" }}</td>
-            <td data-label="Status"><span class="pill {{ a.status }}">{{ a.status_label }}</span></td>
-            <td data-label="Cliente">{% if a.com_contrato %}<a href="{% url 'clientes:detalhe' a.contrato.cliente.pk %}">{{ a.contrato.cliente.nome }}</a>{% else %}—{% endif %}</td>
-            <td data-label="Custo" class="num">{% if a.custo %}R$ {{ a.custo }}{% else %}—{% endif %}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {% if busca %}<p class="apa-resultado">{{ page_obj.paginator.count }} aparelho{{ page_obj.paginator.count|pluralize }} para “{{ busca }}”</p>{% endif %}
+  <div class="apa-cabecalho" aria-hidden="true"><span>Aparelho</span><span>Situação</span><span>Cliente</span><span class="apa-col-num">Custo</span></div>
+  <ul class="apa-lista">
+    {% for a in aparelhos %}
+      <li class="apa-item" data-href="{% url 'aparelhos:detalhe' a.pk %}">
+        <div class="apa-quem">
+          <span class="apa-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg></span>
+          <div>
+            <a class="apa-nome" href="{% url 'aparelhos:detalhe' a.pk %}">{{ a.modelo }}</a>
+            <span class="apa-detalhe">{% if a.imei %}<span class="apa-tag num">IMEI {{ a.imei }}</span>{% else %}<span class="apa-tag apa-tag--zero">Sem IMEI</span>{% endif %}</span>
+          </div>
+        </div>
+        <div class="apa-situacao"><span class="pill {{ a.status }}">{{ a.status_label }}</span></div>
+        <div class="apa-cliente">{% if a.com_contrato %}<a href="{% url 'clientes:detalhe' a.contrato.cliente.pk %}">{{ a.contrato.cliente.nome }}</a><small>{{ a.contrato.apelido }}</small>{% else %}<span class="apa-nada">Sem cliente</span>{% endif %}</div>
+        <div class="apa-custo">{% if a.custo %}<strong class="num">R$ {{ a.custo|floatformat:"2g" }}</strong>{% else %}<span class="apa-nada">Sem custo</span>{% endif %}</div>
+      </li>
+    {% endfor %}
+  </ul>
   {% include "_pagination.html" %}
 {% else %}
-  <div class="empty">
+  <div class="apa-vazio">
     <p>Nenhum aparelho {% if busca %}encontrado para “{{ busca }}”{% else %}cadastrado ainda{% endif %}.</p>
     {% if not busca and not status_atual %}<a class="btn" href="{% url 'aparelhos:novo' %}">Cadastrar o primeiro aparelho</a>{% endif %}
   </div>
 {% endif %}
+</div>
 {% endblock %}
+{% block scripts %}<script src="{% static 'js/lista_clientes.js' %}?v=1" defer></script><script src="{% static 'js/segmentos.js' %}?v=2" defer></script>{% endblock %}

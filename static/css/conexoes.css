@@ -1,0 +1,28 @@
+/* Conexões: atalhos em cartões, iguais aos cartões do WhatsApp e da Cora. */
+.conexoes-atalhos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 0 0 14px; }
+.conexoes-atalhos .card { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.conexoes-atalhos .card h2 { margin: 0; }
+.conexao-atalho > p { flex: 1; margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.5; }
+.conexao-abrir {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+  font-weight: 600; font-size: 14px; color: var(--ink); text-decoration: none;
+}
+.conexao-abrir .icone { width: 18px; height: 18px; color: var(--accent-ink); flex: none; }
+.conexao-abrir > span { flex: 1; }
+.conexao-seta { flex: none; color: var(--ink-faint); }
+/* Hover: o cartão inteiro responde (sobe um pouco e mostra a borda azul); o botão só clareia e a seta avança. */
+.conexao-atalho:hover, .conexao-atalho:focus-within { border-color: var(--accent); box-shadow: 0 14px 28px -16px color-mix(in srgb, var(--accent) 55%, transparent); }
+.conexao-atalho:hover .conexao-abrir, .conexao-abrir:focus-visible { border-color: var(--accent); background: var(--accent-wash); color: var(--accent-ink); }
+.conexao-atalho:hover .conexao-seta, .conexao-abrir:focus-visible .conexao-seta { color: var(--accent-ink); }
+.conexao-abrir:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  .conexao-atalho { transition: transform .22s cubic-bezier(.2, .8, .2, 1), border-color .2s ease, box-shadow .22s ease; }
+  .conexao-abrir { transition: border-color .2s ease, background-color .2s ease, color .2s ease; }
+  .conexao-seta { transition: transform .22s cubic-bezier(.2, .8, .2, 1), color .2s ease; }
+  .conexao-atalho:hover { transform: translateY(-3px); }
+  .conexao-atalho:hover .conexao-seta { transform: translateX(4px); }
+}
+
+/* Sem sublinhado no botão, em nenhum estado. */
+.conexao-abrir, .conexao-abrir:hover, .conexao-abrir:focus, .conexao-abrir:focus-visible, .conexao-abrir:active, .conexao-abrir span { text-decoration: none; }

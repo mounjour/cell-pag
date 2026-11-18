@@ -1,16 +1,35 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Conexões{% endblock %}
 
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/conexoes.css' %}?v=5">{% endblock %}
+
 {% block content %}
-<div class="toolbar">
-  <h1>{% include "_icone.html" with nome="conexoes" %}Conexões</h1>
-  <span class="spacer"></span>
-  <a class="btn secondary" href="{% url 'assistente:desktop' %}">{% include "_icone.html" with nome="assistente" %}Claude Desktop</a>
-  <a class="btn secondary" href="{% url 'pagamentos:grupos_whatsapp' %}">{% include "_icone.html" with nome="whatsapp" %}Grupos do WhatsApp</a>
-  <a class="btn secondary" href="{% url 'pagamentos:mensagens' %}">{% include "_icone.html" with nome="whatsapp" %}Mensagens enviadas</a>
-  <a class="btn secondary" href="{% url 'pagamentos:rotinas' %}">{% include "_icone.html" with nome="alerta" %}Tarefas automáticas</a>
-</div>
+<h1>{% include "_icone.html" with nome="conexoes" %}Conexões</h1>
 <p class="note">Status das integrações externas. A conexão do WhatsApp cai de vez em quando (o celular ficou sem internet, alguém removeu o aparelho da lista de conectados, ou o WhatsApp exigiu reconexão) — quando isso acontece, as cobranças automáticas param de sair até reconectar aqui.</p>
+
+<div class="conexoes-atalhos">
+  <section class="card conexao-atalho">
+    <h2>Claude Desktop</h2>
+    <p>Use o assistente do Claude para consultar e lançar cobranças por conversa.</p>
+    <a class="conexao-abrir" href="{% url 'assistente:desktop' %}">{% include "_icone.html" with nome="assistente" %}<span>Abrir</span><svg class="conexao-seta" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></a>
+  </section>
+  <section class="card conexao-atalho">
+    <h2>Grupos do WhatsApp</h2>
+    <p>Veja os grupos em que o número está e quais clientes usam cada um.</p>
+    <a class="conexao-abrir" href="{% url 'pagamentos:grupos_whatsapp' %}">{% include "_icone.html" with nome="whatsapp" %}<span>Abrir</span><svg class="conexao-seta" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></a>
+  </section>
+  <section class="card conexao-atalho">
+    <h2>Mensagens enviadas</h2>
+    <p>{% if mensagens_com_erro_n %}<span class="pill inadimplente">{{ mensagens_com_erro_n }} com erro hoje</span>{% else %}<span class="pill pago">Sem erros hoje</span>{% endif %}</p>
+    <a class="conexao-abrir" href="{% url 'pagamentos:mensagens' %}">{% include "_icone.html" with nome="whatsapp" %}<span>Abrir</span><svg class="conexao-seta" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></a>
+  </section>
+  <section class="card conexao-atalho">
+    <h2>Tarefas automáticas</h2>
+    <p>{% if rotinas_com_problema_n %}<span class="pill inadimplente">{{ rotinas_com_problema_n }} com problema</span>{% else %}<span class="pill pago">Tudo rodando</span>{% endif %}</p>
+    <a class="conexao-abrir" href="{% url 'pagamentos:rotinas' %}">{% include "_icone.html" with nome="alerta" %}<span>Abrir</span><svg class="conexao-seta" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></a>
+  </section>
+</div>
 
 <section class="card{% if quer_qr %} card--cronometro{% endif %}" data-conexoes-card>
   {% if quer_qr %}<div class="card-cronometro" style="animation-duration: {{ qr_renova_segundos }}s; animation-delay: {{ qr_atraso_css }};" aria-hidden="true"></div>{% endif %}
