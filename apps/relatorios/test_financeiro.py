@@ -64,10 +64,10 @@ def test_numeros_do_periodo_atraso_por_faixa_e_extrato():
     assert d["recebido"] == Decimal("40.00") and d["juros_recebidos"] == Decimal("5.00") and d["entrou"] == Decimal("45.00")
     faixas = {f["rotulo"]: f for f in d["atraso"]["faixas"]}
     assert faixas["1 a 7 dias"]["parcelas"] == 1 and faixas["16 a 30 dias"]["parcelas"] == 1
-    # Ana: saldo 60 + acréscimo único de 5; Bia: 100 + acréscimo único de 5
-    assert faixas["1 a 7 dias"]["saldo"] == Decimal("60.00") and faixas["1 a 7 dias"]["juros"] == Decimal("5.00")
+    # Ana: saldo 60, sem juros (pagou os 5 do atraso); Bia: 100 + acréscimo único de 5
+    assert faixas["1 a 7 dias"]["saldo"] == Decimal("60.00") and faixas["1 a 7 dias"]["juros"] == Decimal("0.00")
     assert faixas["16 a 30 dias"]["total"] == Decimal("105.00")
-    assert d["atraso"]["total"] == Decimal("170.00") and d["atraso"]["contratos_em_atraso"] == 2
+    assert d["atraso"]["total"] == Decimal("165.00") and d["atraso"]["contratos_em_atraso"] == 2
     assert [x["contrato"].cliente.nome for x in d["atraso"]["devedores"]] == ["Bia Muito Atrasada", "Ana Atrasada"]  # maior primeiro
     assert d["extrato_sem_baixa_n"] == 1 and d["extrato_sem_baixa_valor"] == Decimal("77.00")
     assert [f[0] for f in FAIXAS_DE_ATRASO][0] == "1 a 7 dias" and d["por_forma"][0]["forma_label"] == "Pix"
