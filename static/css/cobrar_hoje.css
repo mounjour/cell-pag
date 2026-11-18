@@ -130,3 +130,7 @@
 .cob-auto--atencao form, .cob-auto--pausada form { padding: 12px 18px; gap: 10px 24px; }
 .cob-auto-selo { margin-bottom: 6px; }
 .cob-auto .check-linha { margin-top: 8px; }
+
+/* Botões da linha de baixo: o ícone nunca sai do botão e o texto não quebra. */
+.cob-acoes-linha--sec .btn { min-width: 0; gap: 8px; padding-inline: 12px; white-space: nowrap; }
+.cob-acoes-linha--sec .btn .icone, .cob-acoes-linha--sec .btn svg { flex: none; width: 18px; height: 18px; }

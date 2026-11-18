@@ -124,7 +124,7 @@ def test_botoes_aparecem_nas_telas(auth_client, cliente_cobranca, evolution, mon
     assert reverse("pagamentos:cobranca_enviar", args=[contrato.pk]) in cliente
     auth_client.post(reverse("pagamentos:cobranca_enviar", args=[contrato.pk]))
     depois = auth_client.get(reverse("pagamentos:cobrar_hoje")).content.decode()
-    assert "Enviar cobrança</button>" not in depois and "Reenviar cobrança</button>" in depois  # já enviada: some o "Enviar" e fica o "Reenviar"
+    assert "Enviar cobrança</button>" not in depois and "Reenviar</button>" in depois  # já enviada: some o "Enviar" e fica o "Reenviar"
     monkeypatch.setattr("apps.pagamentos.badge.status_whatsapp_ao_vivo", lambda: "open")
     conexoes = auth_client.get(reverse("pagamentos:conexoes")).content.decode()
     assert reverse("pagamentos:conexoes_reiniciar") in conexoes and "Reiniciar a conexão" in conexoes

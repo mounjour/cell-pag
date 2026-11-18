@@ -91,7 +91,7 @@
               {% csrf_token %}
               <input type="hidden" name="next" value="{{ request.get_full_path }}">
               <input type="hidden" name="reenviar" value="1">
-              <button type="submit" class="btn secondary" aria-label="Reenviar a cobrança de {{ l.contrato.cliente.nome }}">{% include "_icone.html" with nome="whatsapp" %}Reenviar cobrança</button>
+              <button type="submit" class="btn secondary" aria-label="Reenviar a cobrança de {{ l.contrato.cliente.nome }}" title="Reenviar a cobrança no WhatsApp">{% include "_icone.html" with nome="gerar" %}Reenviar</button>
             </form>
             {% endif %}
             <a class="btn secondary cob-abrir" href="{% url 'clientes:detalhe' l.contrato.cliente.pk %}" aria-label="Abrir {{ l.contrato.cliente.nome }}">
