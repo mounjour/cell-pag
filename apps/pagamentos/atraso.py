@@ -2,7 +2,8 @@
 
 Regras fixadas (PLANO-DO-PROJETO.md, seções 4.6 e 10):
 
-* Juros: **R$ 5,00 fixos por dia de atraso** (valor/dia × dias de atraso).
+* Regime diário: **R$ 5,00 uma única vez por diária vencida**, sem acumular
+  novamente na mesma parcela nos dias seguintes. Demais regimes: valor/dia × dias.
 * **8 dias de atraso (o 8º dia) → alerta de bloqueio** do aparelho. O sistema só sinaliza;
   o bloqueio em si é ação manual do vendedor.
 * No atraso, a cobrança continua todos os dias.
@@ -99,10 +100,17 @@ def dias_de_atraso(
     return max(0, (hoje - referencia).days)
 
 
-def juros_acumulados(dias_atraso: int, valor_diario: Decimal = VALOR_JUROS_DIA) -> Decimal:
-    """Juros totais para ``dias_atraso`` dias (R$ 5,00 por dia)."""
+def juros_acumulados(
+    dias_atraso: int, valor_diario: Decimal = VALOR_JUROS_DIA, *, estrutura: str | None = None,
+) -> Decimal:
+    """Na diária, aplica o valor uma vez após vencer; nos demais regimes, por dia.
+
+    Os dias reais de atraso continuam sendo usados para status e bloqueio.
+    """
     if dias_atraso < 0:
         raise ValueError("dias_atraso não pode ser negativo")
+    if estrutura == Contrato.Estrutura.DIARIA:
+        dias_atraso = min(dias_atraso, 1)
     return (valor_diario * dias_atraso).quantize(_CENTAVOS)
 
 
@@ -154,7 +162,7 @@ def avaliar(
     status = classificar_status(dias)
     return SituacaoAtraso(
         dias_atraso=dias,
-        juros=juros_acumulados(dias, valor_juros_diario),
+        juros=juros_acumulados(dias, valor_juros_diario, estrutura=estrutura),
         status=status,
         cor=cor_do_status(status),
         alertar_bloqueio=precisa_alertar_bloqueio(dias),

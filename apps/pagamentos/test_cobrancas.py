@@ -95,16 +95,16 @@ def test_mensagem_lista_cada_parcela_com_o_atraso_dela(cliente_cobranca):
     msg = dados_da_mensagem(linha)["mensagem"]
 
     assert "3 parcelas em aberto" in msg
-    assert "*Parcela 1* (venceu 26/09, 2 dias de atraso): R$ 100,00 + R$ 10,00 de juros" in msg
+    assert "*Parcela 1* (venceu 26/09, 2 dias de atraso): R$ 100,00 + R$ 5,00 de juros" in msg
     assert "*Parcela 2* (venceu 27/09, 1 dia de atraso): R$ 100,00 + R$ 5,00 de juros" in msg
     assert "*Parcela 3* (cobrança hoje): R$ 100,00" in msg
     assert "Total das parcelas: R$ 300,00" in msg
-    assert "Juros pelo atraso: R$ 15,00" in msg
-    assert "Total a pagar: R$ 315,00" in msg
-    assert "pagar o total — *R$ 315,00* (parcelas + juros)" in msg
+    assert "Juros pelo atraso: R$ 10,00" in msg
+    assert "Total a pagar: R$ 310,00" in msg
+    assert "pagar o total — *R$ 310,00* (parcelas + juros)" in msg
     assert "combina à parte" not in msg
-    # o painel cobra o conjunto: 300 de parcelas + 15 de juros
-    assert linha["a_cobrar"] == Decimal("315.00")
+    # o painel cobra o conjunto: 300 de parcelas + 10 de juros
+    assert linha["a_cobrar"] == Decimal("310.00")
 
 
 @pytest.mark.django_db
@@ -372,6 +372,6 @@ def test_mensagem_de_uma_parcela_atrasada_mostra_o_total_com_juros_sem_combinar_
     hoje = date(2026, 9, 10)
     _contrato(cliente_cobranca, hoje, atraso=2)
     msg = dados_da_mensagem(montar_agenda_do_dia(hoje)["linhas"][0])["mensagem"]
-    assert "Juros pelo atraso: R$ 10,00" in msg
-    assert "Total a pagar: R$ 110,00" in msg and "o Pix já vem com esse valor" in msg
+    assert "Juros pelo atraso: R$ 5,00" in msg
+    assert "Total a pagar: R$ 105,00" in msg and "o Pix já vem com esse valor" in msg
     assert "combina à parte" not in msg

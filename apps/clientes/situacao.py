@@ -3,7 +3,8 @@
 Calcula tudo em poucas consultas (os contratos e as parcelas em aberto de uma vez),
 com as mesmas regras da tela Cobrar hoje: a parcela atrasa no dia seguinte ao
 vencimento (na semanal, depois do domingo que fecha a semana), os juros são por
-dia de atraso de cada parcela; parcela com pagamento parcial continua contando (só sai ao quitar).
+dia de atraso de cada parcela, exceto na diária (acréscimo único por diária vencida).
+Parcela com pagamento parcial continua contando (só sai ao quitar).
 """
 
 import datetime
@@ -91,7 +92,7 @@ def situacoes_dos_clientes(cliente_ids, hoje: datetime.date | None = None) -> di
 
 def _acumula(sit: Situacao, contrato, vencimento, valor, dias, hoje, juros_abonado=ZERO) -> None:
     if dias > 0:
-        juros = max(ZERO, atraso.juros_acumulados(dias, contrato.juros_diario) - juros_abonado)
+        juros = max(ZERO, atraso.juros_acumulados(dias, contrato.juros_diario, estrutura=contrato.estrutura) - juros_abonado)
         sit.devido += valor + juros
         sit.juros += juros
         sit.dias_atraso = max(sit.dias_atraso, dias)

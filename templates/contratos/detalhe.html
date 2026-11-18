@@ -71,7 +71,7 @@
       {% if contrato.total_das_parcelas != None %}
         <div><dt>Total das parcelas</dt><dd class="num">R$ {{ contrato.total_das_parcelas }}</dd></div>
       {% endif %}
-      <div><dt>Juros por dia de atraso</dt><dd class="num">R$ {{ contrato.juros_diario }}</dd></div>
+      <div><dt>{% if contrato.estrutura == 'diaria' %}Acréscimo único por diária vencida{% else %}Juros por dia de atraso{% endif %}</dt><dd class="num">R$ {{ contrato.juros_diario }}</dd></div>
     </dl>
   </section>
 
@@ -147,7 +147,7 @@
               <td class="num" data-label="Data de cobrança">{{ v.data_vencimento|date:"d/m/Y" }}{% if v.data_original %}<br><small>era {{ v.data_original|date:"d/m/Y" }}</small>{% endif %}</td>
               <td class="num" data-label="Previsto">R$ {{ v.valor_previsto }}{% with dif=v.diferenca_do_original %}{% if dif %}<br><small title="Valor original da parcela: R$ {{ contrato.valor_parcela }}" class="parcela-diferenca{% if dif < 0 %} parcela-diferenca--menos{% endif %}">R$ {{ dif|floatformat:"2g"|cut:"-" }} {% if dif < 0 %}abaixo{% else %}acima{% endif %} do original{% if v.acrescimo_motivo %}, {{ v.acrescimo_motivo }}{% endif %}</small>{% endif %}{% endwith %}</td>
               <td class="num" data-label="Pago">R$ {{ v.valor_pago }}</td>
-              <td class="num parcela-saldo{% if v.saldo > 0 %} parcela-saldo--devido{% endif %}" data-label="Saldo">R$ {{ v.saldo }}</td>
+              <td class="num parcela-saldo{% if v.saldo > 0 %} parcela-saldo--devido{% endif %}" data-label="Saldo">R$ {{ v.saldo }}{% if v.juros_hoje %}<br><small class="parcela-juros" title="{% if contrato.estrutura == 'diaria' %}Acréscimo único por diária vencida{% else %}Juros por dia de atraso{% endif %}: R$ {{ contrato.juros_diario }}">+ R$ {{ v.juros_hoje|floatformat:"2g" }} de juros</small><br><strong class="parcela-total-hoje">R$ {{ v.total_hoje|floatformat:"2g" }} hoje</strong>{% endif %}</td>
               <td data-label="Status">{% with atraso=v.dias_em_atraso %}{% if atraso %}<span class="pill pill--icone atrasado">{% include "_icone.html" with nome="alerta" %}Atrasada, {{ atraso }} dia{{ atraso|pluralize }}</span>{% else %}<span class="pill pill--icone {{ v.status }}">{% if v.status == "pago" %}{% include "_icone.html" with nome="quitar" %}{% elif v.status == "parcial" %}{% include "_icone.html" with nome="parcial" %}{% else %}{% include "_icone.html" with nome="historico" %}{% endif %}{{ v.get_status_display }}</span>{% endif %}{% endwith %}{% if v.ultima_baixa %}<br><small class="parcela-baixa" title="Baixa registrada por {{ v.ultima_baixa.usuario_baixa|default:'—' }}">{{ v.ultima_baixa.get_forma_display }}, {{ v.ultima_baixa.data_pagamento|date:"d/m/Y" }}{% if v.status == "parcial" %} (parcial){% endif %}</small>{% elif v.status == "pago" %}<br><small class="parcela-baixa" title="A parcela foi marcada como paga sem um pagamento registrado (ex.: importada ou ajustada à mão).">sem baixa registrada</small>{% endif %}{% if v.juros_abonado %}<br><small>juros perdoados: R$ {{ v.juros_abonado }}</small>{% endif %}</td>
               <td data-label="" class="parcela-acoes-celula">
                 {% if not contrato.quitado and v.status != 'pago' %}

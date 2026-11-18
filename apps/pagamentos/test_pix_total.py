@@ -92,9 +92,9 @@ def test_pix_cobra_o_total_das_parcelas_vencidas(settings, monkeypatch):
     monkeypatch.setattr("apps.pagamentos.cora_api.criar_fatura", criar)
     cobranca = obter_ou_criar_cobranca(contrato.vencimentos.get(numero=1), hoje=HOJE)
 
-    assert enviado["services"][0]["amount"] == 4500  # 3 x R$ 10 + R$ 15 de juros (2 + 1 dias a R$ 5)
+    assert enviado["services"][0]["amount"] == 4000  # 3 x R$ 10 + R$ 5 de juros (duas diárias vencidas)
     assert enviado["services"][0]["name"] == "Parcelas 1, 2, 3 + juros"
-    assert cobranca.valor == Decimal("45.00") and cobranca.juros == Decimal("15.00")
+    assert cobranca.valor == Decimal("40.00") and cobranca.juros == Decimal("10.00")
     assert cobranca.vencimento.numero == 1  # preso à mais antiga
 
 
@@ -108,7 +108,7 @@ def test_uma_parcela_so_continua_cobrando_so_ela(settings, monkeypatch):
         lambda payload, chave: enviado.update(payload) or _fatura("inv_1"),
     )
     obter_ou_criar_cobranca(contrato.vencimentos.get(numero=1), hoje=HOJE)
-    assert enviado["services"][0]["amount"] == 2000  # R$ 10 + 2 dias de juros (R$ 10)
+    assert enviado["services"][0]["amount"] == 1500  # R$ 10 + acréscimo único de R$ 5
     assert enviado["services"][0]["name"] == "Parcela 1 + juros"
 
 
@@ -127,7 +127,7 @@ def test_total_que_mudou_troca_o_pix_antigo_por_um_novo(settings, monkeypatch):
     antigo = obter_ou_criar_cobranca(v1, hoje=date(2026, 9, 27))  # 2 parcelas (R$ 20) + R$ 5 de juros
     assert antigo.valor == Decimal("25.00") and antigo.cora_id == "inv_1"
 
-    # No dia seguinte entra a parcela 3 e o total passa a R$ 45 (R$ 30 + R$ 15 de juros).
+    # No dia seguinte entra a parcela 3 e o total passa a R$ 40 (R$ 30 + R$ 10 de juros).
     Vencimento.objects.create(
         contrato=contrato, numero=3, data_vencimento=HOJE, valor_previsto=Decimal("10.00")
     )
@@ -144,9 +144,9 @@ def test_total_que_mudou_troca_o_pix_antigo_por_um_novo(settings, monkeypatch):
     novo = obter_ou_criar_cobranca(v1, hoje=HOJE)
 
     assert canceladas == ["inv_1"]
-    assert criadas == [2500, 4500]
+    assert criadas == [2500, 4000]
     assert novo.pk == antigo.pk  # mesmo registro, nova fatura
-    assert novo.cora_id == "inv_2" and novo.valor == Decimal("45.00") and novo.juros == Decimal("15.00")
+    assert novo.cora_id == "inv_2" and novo.valor == Decimal("40.00") and novo.juros == Decimal("10.00")
     assert novo.pix_copia_e_cola == "PIX-inv_2"
 
 
@@ -241,15 +241,15 @@ def test_pagar_o_pix_total_quita_todas_as_parcelas(settings, monkeypatch):
 
     monkeypatch.setattr(
         "apps.pagamentos.cora_api.consultar_fatura",
-        lambda cora_id: _fatura(cora_id, "PAID", pago=4500),
+        lambda cora_id: _fatura(cora_id, "PAID", pago=4000),
     )
     monkeypatch.setattr("apps.pagamentos.pix_cora.ao_confirmar_pix", lambda *a, **k: None)
     sincronizar_cobranca(cobranca)
 
     assert Pagamento.objects.count() == 1
     pagamento = Pagamento.objects.get()
-    # R$ 45 pagos no Pix = R$ 30 das parcelas + R$ 15 de juros (campo próprio)
-    assert pagamento.valor_pago == Decimal("30.00") and pagamento.juros_pago == Decimal("15.00")
+    # R$ 40 pagos no Pix = R$ 30 das parcelas + R$ 10 de juros (campo próprio)
+    assert pagamento.valor_pago == Decimal("30.00") and pagamento.juros_pago == Decimal("10.00")
     status = list(contrato.vencimentos.order_by("numero").values_list("status", flat=True))
     assert status == ["pago", "pago", "pago"]  # as duas seguintes quitadas pelo crédito
     assert contrato.parcela_em_aberto() is None  # nada mais a cobrar amanhã
@@ -278,7 +278,7 @@ def test_pix_de_uma_parcela_atrasada_cobra_parcela_mais_juros(settings, monkeypa
     contrato = _contrato_com_parcelas(1)  # parcela 1 venceu 26/09; hoje 28/09 = 2 dias de atraso
     monkeypatch.setattr("apps.pagamentos.cora_api.criar_fatura", lambda p, k: _fatura("inv_1"))
     cobranca = obter_ou_criar_cobranca(contrato.vencimentos.get(numero=1), hoje=HOJE)
-    assert (cobranca.valor, cobranca.juros) == (Decimal("20.00"), Decimal("10.00"))
+    assert (cobranca.valor, cobranca.juros) == (Decimal("15.00"), Decimal("5.00"))
 
 
 @pytest.mark.django_db
@@ -297,13 +297,13 @@ def test_baixa_do_pix_registra_o_juros_a_parte_e_so_o_principal_abate_a_parcela(
     contrato = _contrato_com_parcelas(1)
     v1 = contrato.vencimentos.get(numero=1)
     monkeypatch.setattr("apps.pagamentos.cora_api.criar_fatura", lambda p, k: _fatura("inv_1"))
-    cobranca = obter_ou_criar_cobranca(v1, hoje=HOJE)  # R$ 10 + R$ 10 de juros
-    monkeypatch.setattr("apps.pagamentos.cora_api.consultar_fatura", lambda cid: _fatura(cid, "PAID", pago=2000))
+    cobranca = obter_ou_criar_cobranca(v1, hoje=HOJE)  # R$ 10 + R$ 5 de juros
+    monkeypatch.setattr("apps.pagamentos.cora_api.consultar_fatura", lambda cid: _fatura(cid, "PAID", pago=1500))
     monkeypatch.setattr("apps.pagamentos.pix_cora.ao_confirmar_pix", lambda *a, **k: None)
     sincronizar_cobranca(cobranca)
 
     pagamento = Pagamento.objects.get()
-    assert (pagamento.valor_pago, pagamento.juros_pago) == (Decimal("10.00"), Decimal("10.00"))
+    assert (pagamento.valor_pago, pagamento.juros_pago) == (Decimal("10.00"), Decimal("5.00"))
     v1.refresh_from_db()
     assert v1.status == "pago" and v1.valor_pago == Decimal("10.00")  # o juros não vira "troco" da parcela
     assert not CobrancaCora.objects.get(pk=cobranca.pk).duplicada
@@ -311,15 +311,15 @@ def test_baixa_do_pix_registra_o_juros_a_parte_e_so_o_principal_abate_a_parcela(
 
 @pytest.mark.django_db
 def test_pagar_o_qr_de_ontem_logo_cedo_nao_cai_em_revisao_manual(settings, monkeypatch):
-    """O juros cresce R$ 5 por dia: quem paga o QR de ontem antes da rotina refazê-lo é pagamento válido."""
+    """Uma nova diária atrasou: quem paga o QR de ontem ainda tem seu pagamento reconhecido."""
     settings.CORA_PROVIDER = "cora"
     contrato = _contrato_com_parcelas(3)
     v1 = contrato.vencimentos.get(numero=1)
     monkeypatch.setattr("apps.pagamentos.cora_api.criar_fatura", lambda p, k: _fatura("inv_1"))
-    cobranca = obter_ou_criar_cobranca(v1, hoje=HOJE)  # QR de R$ 45
+    cobranca = obter_ou_criar_cobranca(v1, hoje=HOJE)  # QR de R$ 40
     amanha = HOJE + datetime.timedelta(days=1)
     monkeypatch.setattr("apps.pagamentos.pix_cora.timezone.localdate", lambda: amanha)
-    monkeypatch.setattr("apps.pagamentos.cora_api.consultar_fatura", lambda cid: _fatura(cid, "PAID", pago=4500))
+    monkeypatch.setattr("apps.pagamentos.cora_api.consultar_fatura", lambda cid: _fatura(cid, "PAID", pago=4000))
     monkeypatch.setattr("apps.pagamentos.pix_cora.ao_confirmar_pix", lambda *a, **k: None)
     sincronizar_cobranca(cobranca)
 

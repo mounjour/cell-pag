@@ -117,6 +117,10 @@ def consultar_contrato(contrato_id=None, **_) -> dict:
     return {
         "contrato_id": contrato.pk, "cliente": contrato.cliente.nome, "apelido": contrato.apelido,
         "estrutura": contrato.get_estrutura_display(), "valor_da_parcela": str(contrato.valor_parcela or ""),
+        "regra_juros": (
+            "Acréscimo único por diária vencida; não multiplicar pelos dias de atraso da parcela."
+            if contrato.estrutura == Contrato.Estrutura.DIARIA else "Juros por dia de atraso da parcela."
+        ),
         "numero_de_parcelas": contrato.num_parcelas, "quitado": contrato.quitado,
         "dias_de_atraso": situacao.dias_atraso if situacao else 0,
         "situacao": situacao.status if situacao else None,
@@ -798,7 +802,8 @@ def validar_contrato_novo(p: dict) -> tuple[dict, str, list[str]]:
     resumo = (
         f"Criar contrato de {cliente.nome}: {c['aparelho']} ({c['apelido']}), {_brl(c['valor_total'])} em {c['num_parcelas']}x de "
         f"{_brl(contrato.valor_parcela)} ({Contrato.Estrutura(c['estrutura']).label.lower()}), compra em {c['data_inicio']:%d/%m/%Y}, "
-        f"primeira cobrança em {c['primeira_cobranca']:%d/%m/%Y}, juros {_brl(c['juros_diario'])}/dia"
+        f"primeira cobrança em {c['primeira_cobranca']:%d/%m/%Y}, juros {_brl(c['juros_diario'])}"
+        + (" uma vez por diária vencida" if c['estrutura'] == Contrato.Estrutura.DIARIA else "/dia")
         + (f", entrada de {_brl(c['entrada'])}" if c.get("entrada") else "") + "."
     )
     return dados, resumo, avisos
@@ -1232,7 +1237,7 @@ FERRAMENTAS = [
          "primeira_cobranca": {"type": "string", "description": "AAAA-MM-DD; se omitido, sai do dia de cobrança."},
          "dia_semana": {"type": "integer"}, "dia_mes": {"type": "integer"}, "dia_mes_2": {"type": "integer"},
          "quinzena": {"type": "string", "enum": ["semana", "dias_mes"]},
-         "juros_diario": {"type": "string", "description": "Padrão 5.00 por dia de atraso."},
+         "juros_diario": {"type": "string", "description": "Padrão 5.00. No regime diário: uma única vez por diária vencida, sem multiplicar pelos dias de atraso da parcela. Demais regimes: por dia de atraso."},
          "entrada": {"type": "string", "description": "Entrada recebida à vista (opcional)."}, "entrada_forma": {"type": "string", "enum": ["pix", "dinheiro", "outro"]},
          "parcelas_ja_pagas": {"type": "integer", "description": "Para contrato que já andava antes do sistema."}, "observacoes": {"type": "string"},
      }, ["cliente_id", "aparelho_id", "apelido", "valor_total", "num_parcelas", "estrutura"])},

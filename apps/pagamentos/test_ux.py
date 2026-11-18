@@ -29,14 +29,14 @@ def plano(db):
 def test_totais_iguais_em_agenda_cliente_contrato_e_baixa(plano, auth_client):
     resumo = montar_agenda_do_dia()["linhas"][0]["resumo"]
     assert resumo["principal"] == Decimal("120")
-    assert resumo["juros"] == Decimal("15")
-    assert _painel_do_contrato(plano)["a_cobrar"] == resumo["total"] == Decimal("135")
+    assert resumo["juros"] == Decimal("10")
+    assert _painel_do_contrato(plano)["a_cobrar"] == resumo["total"] == Decimal("130")
     for nome, kwargs in [
         ("pagamentos:cobrar_hoje", {}), ("clientes:detalhe", {"pk": plano.cliente_id}),
         ("contratos:detalhe", {"pk": plano.pk}), ("pagamentos:novo", {"contrato_pk": plano.pk}),
     ]:
         html = auth_client.get(reverse(nome, kwargs=kwargs)).content.decode()
-        assert "135,00" in html and "3 parcelas: R$ 120,00" in html and "juros: R$ 15,00" in html
+        assert "130,00" in html and "3 parcelas: R$ 120,00" in html and "juros: R$ 10,00" in html
 
 
 @pytest.mark.parametrize("valor,trecho,previstos", [

@@ -3,8 +3,8 @@
 O efeito vai direto na parcela (``Vencimento``), então a mensagem, o Pix e as telas já cobram o valor
 combinado, sem nenhum caminho paralelo:
 
-* **Perdoar juros** — ``juros_abonado`` sobe; o juros cobrado é o do atraso **menos** o perdoado
-  (o juros dos dias seguintes continua correndo).
+* **Perdoar juros** — ``juros_abonado`` sobe; o juros cobrado é o do atraso **menos** o perdoado.
+  No regime diário, o acréscimo é único; nos demais, os dias seguintes continuam acumulando.
 * **Nova data** — a data de cobrança da parcela muda e o juros passa a contar a partir dela; a
   data antiga fica em ``data_original``.
 
@@ -33,7 +33,7 @@ def juros_do_atraso(vencimento: Vencimento, hoje: datetime.date) -> Decimal:
     """Juros do atraso até hoje, antes de qualquer perdão."""
     contrato = vencimento.contrato
     dias = atraso.dias_de_atraso(vencimento.data_vencimento, hoje, contrato.estrutura)
-    return atraso.juros_acumulados(dias, contrato.juros_diario)
+    return atraso.juros_acumulados(dias, contrato.juros_diario, estrutura=contrato.estrutura)
 
 
 def juros_a_cobrar(vencimento: Vencimento, hoje: datetime.date) -> Decimal:

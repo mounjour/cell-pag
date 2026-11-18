@@ -38,7 +38,7 @@ def test_lista_so_o_que_ainda_vai_ser_cobrado_agrupado_por_data(auth_client, cli
     assert proximas_cobrancas(30)["quantidade"] == 4  # a janela maior inclui a de 20 dias
 
     html = auth_client.get(reverse("pagamentos:proximas_cobrancas")).content.decode()
-    assert "Próximas cobranças" in html and ct.apelido in html and "R$ 800,00" in html
+    assert "Próximas cobranças" in html and ct.apelido in html and "em atraso e juros" in html
     assert auth_client.get(reverse("pagamentos:proximas_cobrancas") + "?dias=99").status_code == 200
 
 
