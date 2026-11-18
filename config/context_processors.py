@@ -17,7 +17,6 @@ FAVICON_POR_PAGINA = {
     "pagamentos:historico": "favicon-pagamentos-historico.svg",
     "pagamentos:conexoes": "favicon-pagamentos-conexoes.svg",
     "relatorios:inicio": "favicon-relatorios-inicio.svg",
-    "relatorios:painel": "favicon-relatorios-painel.svg",
     "usuarios:login": "favicon-usuarios-login.svg",
 }
 

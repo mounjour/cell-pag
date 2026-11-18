@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Início{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/inicio.css' %}?v=2">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/inicio.css' %}?v=5">{% endblock %}
 
 {% block content %}
 <div class="ic">
@@ -13,8 +13,8 @@
       <div class="ic-sub">{% if hoje.a_cobrar_n %}{{ hoje.a_cobrar_n }} cobrança{{ hoje.a_cobrar_n|pluralize }} pendente{{ hoje.a_cobrar_n|pluralize }}, R$ {{ hoje.a_cobrar_valor|floatformat:"2g" }} para receber{% else %}Tudo em dia por hoje.{% endif %}</div>
     </div>
     <div class="ic-top-actions">
-      <a class="ic-btn" href="{% url 'pagamentos:cobrar_hoje' %}">Cobrar todos no WhatsApp</a>
-      <a class="ic-btn primary" href="{% url 'contratos:novo' %}">+ Nova cobrança</a>
+      <a class="ic-btn" href="{% url 'pagamentos:cobrar_hoje' %}">{% include "_icone.html" with nome="whatsapp" %}Cobrar todos no WhatsApp</a>
+      <a class="ic-btn primary" href="{% url 'contratos:novo' %}">{% include "_icone.html" with nome="adicionar" %}Nova cobrança</a>
     </div>
   </div>
 
@@ -46,10 +46,9 @@
           <div class="ic-amount num">{% if p.a_cobrar is not None %}R$ {{ p.a_cobrar|floatformat:"2g" }}{% else %}—{% endif %}<small>com juros até hoje</small></div>
         </div>
         <div class="ic-pr-actions">
-          <a class="ic-btn primary" href="{% url 'pagamentos:novo' p.contrato.pk %}">Registrar pagamento</a>
-          <a class="ic-btn" href="{{ p.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
-          <a class="ic-btn" href="tel:{{ p.contrato.cliente.telefone_whatsapp.as_e164 }}">Ligar</a>
-          {% if p.situacao.alertar_bloqueio and not p.bloqueado %}<a class="ic-btn" href="{% url 'aparelhos:bloqueios' %}">Registrar bloqueio</a>{% endif %}
+          <a class="ic-btn primary" href="{% url 'pagamentos:novo' p.contrato.pk %}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>
+          {% include "_contato_icones.html" with cliente=p.contrato.cliente %}
+          {% if p.situacao.alertar_bloqueio and not p.bloqueado %}<a class="ic-btn" href="{% url 'aparelhos:bloqueios' %}">{% include "_icone.html" with nome="bloqueio" %}Registrar bloqueio</a>{% endif %}
         </div>
       </article>
       {% endif %}
@@ -71,8 +70,8 @@
             <span class="ic-when{% if v.paga %} paid{% endif %}">{% if v.paga %}Paga{% else %}É hoje{% endif %}</span>
             <div class="ic-val num">R$ {{ v.valor_exibido|floatformat:"2g" }}</div>
             <div class="ic-acts">
-              <a class="ic-btn sm" href="{{ v.contrato.cliente.whatsapp_url }}" target="_blank" rel="noopener">WhatsApp</a>
-              {% if not v.paga %}<a class="ic-btn sm primary" href="{% url 'pagamentos:novo' v.contrato.pk %}">Registrar pagamento</a>{% endif %}
+              {% include "_contato_icones.html" with cliente=v.contrato.cliente %}
+              {% if not v.paga %}<a class="ic-btn sm primary" href="{% url 'pagamentos:novo' v.contrato.pk %}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>{% endif %}
             </div>
           </div>
         {% endfor %}

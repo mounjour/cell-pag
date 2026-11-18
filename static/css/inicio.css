@@ -209,3 +209,21 @@
   .ic-stk { transition: filter .18s ease; }
   .ic-list > [data-f]:not([hidden]), [data-ic-lista] .ic-mini[data-f]:not([hidden]) { animation: ic-troca .22s ease-out backwards; }
 }
+
+/* Ícones nos botões da tela inicial (nada de só texto); ligar e WhatsApp viram botões redondos só de ícone. */
+.ic-btn .icone { width: 18px; height: 18px; flex: none; }
+.ic-btn.sm .icone { width: 16px; height: 16px; }
+.ic-pr-actions .contato-vias, .ic-acts .contato-vias { display: inline-flex; gap: 8px; align-items: center; }
+.ic-pr-actions .icon-btn { width: 44px; height: 44px; }
+.ic-acts .icon-btn { width: 36px; height: 36px; }
+.ic-acts .icon-btn svg { width: 18px; height: 18px; }
+
+/* Botões redondos de ligar e WhatsApp nas cores desta tela: fundo branco, borda fina e ícone verde da marca. */
+.ic .icon-btn--phone, .ic .icon-btn--wa {
+  background: var(--ic-surface); border: 1px solid var(--ic-line); color: var(--ic-brand);
+}
+.ic .icon-btn--phone:hover, .ic .icon-btn--wa:hover { background: var(--ic-brand-soft); border-color: var(--ic-brand); color: var(--ic-brand); }
+.ic .ic-btn.primary .icone { color: inherit; }
+.ic-pr-row h2 a, .ic-device a, .ic-info b a { color: var(--ic-ink); }
+.ic-pr-row h2 a:hover, .ic-device a:hover, .ic-info b a:hover { color: var(--ic-brand); text-decoration: underline; }
+.ic-device a { color: var(--ic-muted); }

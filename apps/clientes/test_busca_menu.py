@@ -104,11 +104,11 @@ def test_menu_agrupado_com_historico_e_sem_admin_na_lista(client, logado, dados)
 @pytest.mark.django_db
 def test_relatorios_so_para_dono(client, logado, django_user_model):
     html = client.get(reverse("clientes:lista")).content.decode()
-    assert "Análise" not in html and f'href="{reverse("relatorios:painel")}"' not in html
+    assert "Análise" not in html and f'href="{reverse("relatorios:financeiro")}"' not in html
     logado.perfil = "dono"
     logado.save()
     html = client.get(reverse("clientes:lista")).content.decode()
-    assert "Análise" in html and f'href="{reverse("relatorios:painel")}"' in html
+    assert "Análise" in html and f'href="{reverse("relatorios:financeiro")}"' in html
 
 
 @pytest.mark.django_db
