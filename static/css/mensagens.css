@@ -98,3 +98,7 @@
 
 /* O card inteiro abre o contrato (links, botões e balões de dentro seguem funcionando). */
 .msg-item[data-href] { cursor: pointer; }
+
+.msg-detalhe { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.msg-tag { padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.msg-tag--grupo { background: var(--wa-wash); color: var(--ok-ink); }

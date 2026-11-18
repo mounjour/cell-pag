@@ -181,6 +181,10 @@ def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_
     dados_iniciais = dados_da_mensagem(linha)
     contrato = linha["contrato"]
     destinatario = contrato.cliente.destino_whatsapp  # o grupo, se o cliente tiver um; senão o telefone
+    logger.info(
+        "Cobrança do contrato %s (cliente %s): destino %s.",
+        contrato.pk, contrato.cliente_id, "grupo do WhatsApp" if "@" in str(destinatario) else "telefone do cliente",
+    )
     pix = (
         obter_ou_criar_cobranca(dados_iniciais["vencimento"], hoje=hoje)
         if dados_iniciais["vencimento"]

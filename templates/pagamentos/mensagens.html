@@ -57,7 +57,7 @@
           <span class="msg-avatar" aria-hidden="true">{{ c.contrato.cliente.nome|slice:":2"|upper }}</span>
           <div>
             <a class="msg-cliente" href="{% url 'clientes:detalhe' c.contrato.cliente.pk %}">{{ c.contrato.cliente.nome }}</a>
-            <span class="msg-detalhe"><a href="{% url 'contratos:detalhe' c.contrato.pk %}">{{ c.contrato.apelido }}</a></span>
+            <span class="msg-detalhe"><a href="{% url 'contratos:detalhe' c.contrato.pk %}">{{ c.contrato.apelido }}</a>{% if c.destinatario %}<span class="msg-tag{% if c.destinatario|slice:'-5:' == '@g.us' %} msg-tag--grupo{% endif %}" title="Para onde a mensagem foi">{% if c.destinatario|slice:'-5:' == '@g.us' %}Enviada no grupo{% else %}Enviada no privado{% endif %}</span>{% endif %}</span>
           </div>
         </div>
         <div class="msg-situacao">
