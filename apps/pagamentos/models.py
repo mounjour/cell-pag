@@ -245,10 +245,36 @@ class Pagamento(models.Model):
         if venc is None:
             return
 
+        self._abater_juros(+self.juros_pago)
+        venc.refresh_from_db()
         venc.aplicar_valor_pago(venc.valor_pago + self.valor_pago)
         restante = venc.valor_previsto - venc.valor_pago  # >0 ainda falta (fica nesta parcela) · <0 troco
         if restante < 0:
             self._transportar_saldo(restante)
+
+    def _abater_juros(self, valor: Decimal) -> None:
+        """Os juros recebidos quitam os juros das parcelas atrasadas, da mais antiga para a mais nova.
+
+        Sem isso, juros já pagos de parcelas que continuam em aberto (pagamento que cobre só parte do
+        atraso) voltariam a ser cobrados no dia seguinte. Entram em ``Vencimento.juros_abonado``, o
+        mesmo campo do perdão de juros, que ``agenda.parcelas_a_cobrar`` já desconta.
+        """
+        if not valor or valor <= 0:
+            return
+        from . import acordos
+
+        restante = valor
+        abertas = self.contrato.vencimentos.em_aberto().order_by("numero")
+        for parcela in abertas:
+            if restante <= 0:
+                break
+            devido = acordos.juros_a_cobrar(parcela, self.data_pagamento)
+            if devido <= 0:
+                continue
+            abatido = min(devido, restante)
+            parcela.juros_abonado = parcela.juros_abonado + abatido
+            parcela.save(update_fields=["juros_abonado", "atualizado_em"])
+            restante -= abatido
 
     def _transportar_saldo(self, restante: Decimal) -> None:
         """Distribui o troco (``restante`` negativo) pelas parcelas seguintes em aberto.
@@ -285,6 +311,20 @@ class Pagamento(models.Model):
             )
             self.contrato.save(update_fields=["saldo_transportado", "atualizado_em"])
 
+    def _devolver_juros(self) -> None:
+        """Desfaz o abatimento de juros desta baixa (da parcela mais nova para a mais antiga)."""
+        restante = self.juros_pago
+        if not restante or restante <= 0:
+            return
+        parcelas = self.contrato.vencimentos.filter(juros_abonado__gt=0).order_by("-numero")
+        for parcela in parcelas:
+            if restante <= 0:
+                break
+            volta = min(parcela.juros_abonado, restante)
+            parcela.juros_abonado = parcela.juros_abonado - volta
+            parcela.save(update_fields=["juros_abonado", "atualizado_em"])
+            restante -= volta
+
     def estornar(self) -> Decimal:
         """Desfaz a baixa: tira ``valor_pago`` da parcela e recalcula o status.
 
@@ -304,6 +344,7 @@ class Pagamento(models.Model):
                 venc.saldo_repassado = Decimal("0.00")
                 venc.save(update_fields=["saldo_repassado", "atualizado_em"])
             venc.aplicar_valor_pago(venc.valor_pago - self.valor_pago)
+        self._devolver_juros()
         self.delete()
         return restante_transportado
 
