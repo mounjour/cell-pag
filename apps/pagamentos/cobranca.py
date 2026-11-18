@@ -211,6 +211,10 @@ def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_
     )
     if criada:
         resultado["preparadas"] += 1
+    elif cobranca.destinatario != destinatario:
+        # O cliente ganhou (ou perdeu) o grupo depois que a mensagem foi preparada: vale o destino de agora.
+        cobranca.destinatario = destinatario
+        cobranca.save(update_fields=["destinatario", "atualizado_em"])
     if settings.CORA_PROVIDER == "cora" and (pix is None or not pix.pix_copia_e_cola):
         cobranca.status = Cobranca.Status.ERRO
         cobranca.erro = pix.erro if pix else "Não foi possível vincular a cobrança a uma parcela."
@@ -317,7 +321,11 @@ def mensagens_do_dia(dia: datetime.date, grupo: str = "") -> dict:
     return {"mensagens": mensagens, "contagem": contagem, "sem_mensagem": sem_mensagem}
 
 
-def enviar_agora(contrato, hoje: datetime.date | None = None) -> tuple[str, str]:
+def _destino_legivel(destinatario: str) -> str:
+    return "o grupo do WhatsApp" if "@" in str(destinatario) else "o telefone do cliente"
+
+
+def enviar_agora(contrato, hoje: datetime.date | None = None, reenviar: bool = False) -> tuple[str, str]:
     """Manda agora a cobrança de hoje e devolve ``(nível, texto)`` para a tela ou o chat.
 
     Nível: ``success``, ``warning`` (simulação), ``info`` (já enviada) ou ``error`` (nada saiu; o texto diz o motivo)."""
@@ -325,12 +333,23 @@ def enviar_agora(contrato, hoje: datetime.date | None = None) -> tuple[str, str]
     nome = contrato.cliente.nome
     if contrato.quitado:
         return "error", f"{nome}: contrato quitado, não há o que cobrar."
-    ja_enviada = Cobranca.objects.filter(
+    destino = contrato.cliente.destino_whatsapp
+    enviadas = list(Cobranca.objects.filter(
         contrato=contrato, data_alvo=hoje, canal=Cobranca.Canal.WHATSAPP,
         status__in=[Cobranca.Status.ENVIADO, Cobranca.Status.ENTREGUE, Cobranca.Status.LIDO],
-    ).exists()
-    if ja_enviada:
-        return "info", f"A cobrança de hoje de {nome} já foi enviada."
+    ))
+    if enviadas:
+        # Já saiu hoje. Só manda outra se pediram para reenviar ou se o destino mudou (foi no privado e agora o cliente tem grupo).
+        mudou = any(c.destinatario != destino for c in enviadas)
+        if not (reenviar or mudou):
+            return "info", (
+                f"A cobrança de hoje de {nome} já foi enviada para {_destino_legivel(enviadas[0].destinatario)}. "
+                "Se precisar mandar de novo, use Reenviar."
+            )
+        from .limpeza import reabrir_cobranca
+
+        for antiga in enviadas:
+            reabrir_cobranca(antiga)
     resultado = enviar_cobranca_do_contrato(contrato, hoje)
     cobranca = resultado["cobranca"]
     if resultado["ignoradas"] and (cobranca is None or cobranca.status != Cobranca.Status.ENVIADO):
