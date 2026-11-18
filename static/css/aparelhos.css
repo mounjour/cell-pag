@@ -1,0 +1,74 @@
+/* Lista de aparelhos: mesmo desenho de Clientes (sem cartão em volta, linhas separadas por uma linha fina). Tudo sob .apa. */
+.apa-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 14px; }
+.apa-topo h1 { margin: 0; }
+.apa-sub { margin: 6px 0 0; color: var(--ink-soft); }
+.apa-acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Busca cresce e as abas ficam no canto direito */
+.apa-controles { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 14px; }
+.apa-busca { position: relative; flex: 1 1 280px; margin: 0; }
+.apa-busca .icone { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--ink-faint); pointer-events: none; }
+.apa-busca input { width: 100%; min-height: 44px; padding: 10px 14px 10px 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; }
+.apa-busca input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+
+.apa-abas { position: relative; display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: auto; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.apa-aba { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 9px; color: var(--ink-soft); font-size: 14px; font-weight: 600; text-decoration: none; }
+.apa-aba:hover { color: var(--ink); text-decoration: none; background: var(--surface-2); }
+.apa-aba.ativo { background: var(--accent); color: var(--on-accent); }
+.segmentos-pronto .apa-aba.ativo { background: transparent; }
+.apa-n { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-variant-numeric: tabular-nums; }
+.apa-aba.ativo .apa-n { background: color-mix(in srgb, var(--on-accent) 22%, transparent); color: var(--on-accent); }
+.apa-abas .segmentos-fundo { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 9px; background: var(--accent); box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--accent) 60%, transparent); pointer-events: none; }
+.apa-abas .segmentos-fundo.sem-transicao { transition: none !important; }
+.apa-resultado { margin: 0 0 10px; font-size: 14px; color: var(--ink-soft); }
+
+/* Lista */
+.apa-cabecalho, .apa-item { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, .8fr) minmax(0, 1.1fr) 140px; gap: 18px; align-items: center; }
+.apa-cabecalho { padding: 0 18px 8px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.apa-col-num { text-align: right; }
+.apa-lista { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.apa-item { position: relative; padding: 16px 18px; border-radius: 12px; cursor: pointer; }
+.apa-item::after { content: ""; position: absolute; left: 18px; right: 18px; bottom: 0; border-bottom: 1px solid var(--line); }
+.apa-item:last-child::after { left: 0; right: 0; }
+.apa-quem { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.apa-quem > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.apa-ico { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--accent-wash); color: var(--accent-ink); }
+.apa-nome { font-weight: 650; color: var(--ink); overflow-wrap: anywhere; }
+.apa-nome:hover { color: var(--accent-ink); text-decoration: underline; }
+.apa-detalhe { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-faint); }
+.apa-tag { padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.apa-tag--zero { opacity: .7; }
+.apa-cliente { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.apa-cliente a { font-weight: 600; overflow-wrap: anywhere; }
+.apa-cliente small { font-size: 12px; color: var(--ink-faint); }
+.apa-custo { display: flex; justify-content: flex-end; text-align: right; }
+.apa-custo strong { font-size: 16px; }
+.apa-nada { font-size: 13px; color: var(--ink-faint); }
+.apa-vazio { display: grid; justify-items: center; gap: 12px; padding: 28px 16px; border: 1px dashed var(--line-strong); border-radius: 16px; text-align: center; color: var(--ink-faint); background: var(--surface); }
+.apa-vazio p { margin: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes apa-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .apa-topo, .apa-controles, .apa-lista { animation: apa-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .apa-controles { animation-delay: 40ms; }
+  .apa-lista { animation-delay: 90ms; }
+  .apa-abas .segmentos-fundo { transition: transform .32s cubic-bezier(.3, 1.1, .4, 1), width .32s cubic-bezier(.3, 1.1, .4, 1); }
+  .apa-aba, .apa-n { transition: color .2s ease, background-color .2s ease; }
+  .apa-item { transition: background-color .15s ease; }
+  .apa-item:hover { background: var(--surface-2); }
+  .apa-item:hover::after { opacity: 0; }
+}
+
+@media (max-width: 1000px) {
+  .apa-cabecalho { display: none; }
+  .apa-item { grid-template-columns: minmax(0, 1fr) auto; gap: 10px 14px; }
+  .apa-quem { grid-column: 1; }
+  .apa-custo { grid-column: 2; grid-row: 1; }
+  .apa-situacao { grid-column: 1; }
+  .apa-cliente { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .apa-abas { display: flex; width: 100%; margin-left: 0; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .apa-aba { flex: none; }
+  .apa-item { padding: 12px 14px; }
+}

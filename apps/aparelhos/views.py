@@ -43,6 +43,16 @@ class AparelhoListView(LoginRequiredMixin, ListView):
         ctx["status_atual"] = self.status
         ctx["status_opcoes"] = Aparelho.Status.choices
         ctx["total_disponiveis"] = Aparelho.objects.filter(contrato__isnull=True).count()
+        # Contagem de cada aba (respeita a busca, não o status escolhido).
+        base = Aparelho.objects.all()
+        if self.busca:
+            base = base.filter(Q(modelo__icontains=self.busca) | Q(imei__icontains=self.busca))
+        ctx["contagens"] = {
+            "todos": base.count(),
+            "disponivel": base.filter(contrato__isnull=True).count(),
+            "alocado": base.filter(contrato__isnull=False).exclude(contrato__status=Contrato.Status.QUITADO).count(),
+            "vendido": base.filter(contrato__status=Contrato.Status.QUITADO).count(),
+        }
         return ctx
 
 
