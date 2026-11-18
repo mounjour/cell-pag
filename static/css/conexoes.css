@@ -1,28 +1,100 @@
-/* Conexões: atalhos em cartões, iguais aos cartões do WhatsApp e da Cora. */
-.conexoes-atalhos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 0 0 14px; }
-.conexoes-atalhos .card { display: flex; flex-direction: column; gap: 10px; margin: 0; }
-.conexoes-atalhos .card h2 { margin: 0; }
-.conexao-atalho > p { flex: 1; margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.5; }
-.conexao-abrir {
-  display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px;
-  border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
-  font-weight: 600; font-size: 14px; color: var(--ink); text-decoration: none;
+/* Conexões: ferramentas em uma lista suave (sem caixas), com ícone, texto, estado e seta. */
+.conexoes-lista { display: flex; flex-direction: column; margin: 0 0 18px; border-top: 1px solid var(--line); }
+.conexao-linha {
+  position: relative; display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px;
+  color: var(--ink); text-decoration: none;
 }
-.conexao-abrir .icone { width: 18px; height: 18px; color: var(--accent-ink); flex: none; }
-.conexao-abrir > span { flex: 1; }
+.conexao-linha::after { content: ""; position: absolute; left: 16px; right: 16px; bottom: 0; border-bottom: 1px solid var(--line); }
+.conexao-linha:last-child::after { left: 0; right: 0; }
+.conexao-ico { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--accent-wash); color: var(--accent-ink); }
+.conexao-ico .icone { width: 22px; height: 22px; }
+.conexao-texto { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.conexao-texto strong { font-size: 15px; color: var(--ink); }
+.conexao-texto small { font-size: 13px; color: var(--ink-faint); line-height: 1.4; }
 .conexao-seta { flex: none; color: var(--ink-faint); }
-/* Hover: o cartão inteiro responde (sobe um pouco e mostra a borda azul); o botão só clareia e a seta avança. */
-.conexao-atalho:hover, .conexao-atalho:focus-within { border-color: var(--accent); box-shadow: 0 14px 28px -16px color-mix(in srgb, var(--accent) 55%, transparent); }
-.conexao-atalho:hover .conexao-abrir, .conexao-abrir:focus-visible { border-color: var(--accent); background: var(--accent-wash); color: var(--accent-ink); }
-.conexao-atalho:hover .conexao-seta, .conexao-abrir:focus-visible .conexao-seta { color: var(--accent-ink); }
-.conexao-abrir:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.conexao-linha, .conexao-linha:hover, .conexao-linha:focus, .conexao-linha:focus-visible, .conexao-linha:active { text-decoration: none; }
+.conexao-linha:hover, .conexao-linha:focus-visible { background: var(--surface-2); }
+.conexao-linha:hover::after, .conexao-linha:focus-visible::after { opacity: 0; }
+.conexao-linha:hover .conexao-seta, .conexao-linha:focus-visible .conexao-seta { color: var(--accent-ink); }
+.conexao-linha:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 @media (prefers-reduced-motion: no-preference) {
-  .conexao-atalho { transition: transform .22s cubic-bezier(.2, .8, .2, 1), border-color .2s ease, box-shadow .22s ease; }
-  .conexao-abrir { transition: border-color .2s ease, background-color .2s ease, color .2s ease; }
-  .conexao-seta { transition: transform .22s cubic-bezier(.2, .8, .2, 1), color .2s ease; }
-  .conexao-atalho:hover { transform: translateY(-3px); }
-  .conexao-atalho:hover .conexao-seta { transform: translateX(4px); }
+  .conexao-linha { transition: background-color .18s ease; }
+  .conexao-ico { transition: background-color .18s ease; }
+  .conexao-linha:hover .conexao-ico { background: color-mix(in srgb, var(--accent) 18%, var(--accent-wash)); }
+  .conexao-seta { transition: transform .2s cubic-bezier(.2, .8, .2, 1), color .18s ease; }
+  .conexao-linha:hover .conexao-seta { transform: translateX(3px); }
+}
+@media (max-width: 640px) {
+  .conexao-linha { flex-wrap: wrap; }
+  .conexao-linha .pill { order: 3; margin-left: 56px; }
 }
 
-/* Sem sublinhado no botão, em nenhum estado. */
-.conexao-abrir, .conexao-abrir:hover, .conexao-abrir:focus, .conexao-abrir:focus-visible, .conexao-abrir:active, .conexao-abrir span { text-decoration: none; }
+/* WhatsApp e Cora: blocos sem caixa, com cabeçalho (ícone, nome, estado) e o conteúdo logo abaixo. */
+.card.conexao-bloco { margin: 0; padding: 18px 0 20px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; }
+.card.conexao-bloco:hover { box-shadow: none; }
+.conexao-bloco .card-cronometro { border-radius: 0; }
+.conexao-cab { display: flex; align-items: center; gap: 14px; padding: 0 16px; }
+.conexao-cab-texto { flex: 1; min-width: 0; }
+.conexao-cab h2 { margin: 0; padding: 0; border: 0; font-size: 16px; font-weight: 650; text-transform: none; letter-spacing: 0; color: var(--ink); }
+.conexao-cab p { margin: 2px 0 0; font-size: 13px; color: var(--ink-faint); }
+.conexao-cab .pill { flex: none; }
+.conexao-corpo, .conexao-dados, .conexao-nota { margin-left: 72px; margin-right: 16px; }
+.conexao-corpo { margin-top: 14px; }
+.conexao-acoes { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-start; }
+.conexao-acao { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; max-width: 320px; margin: 0; }
+.conexao-acao .helptext { margin: 0; }
+.conexao-aviso { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.conexao-aviso--erro { color: var(--critical-ink); }
+.conexao-bloco .qrcode-conexao { justify-items: start; text-align: left; margin-top: 0; }
+.conexao-dados { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 14px; margin-bottom: 0; padding: 0; }
+.conexao-dados > div { padding: 0 18px; border-left: 1px solid var(--line); }
+.conexao-dados > div:first-child { padding-left: 0; border-left: 0; }
+.conexao-dados dt { margin: 0 0 4px; font-size: 13px; color: var(--ink-faint); }
+.conexao-dados dd { margin: 0; font-size: 15px; font-weight: 600; color: var(--ink); }
+.conexao-nota { margin-top: 12px; margin-bottom: 0; }
+@media (max-width: 760px) {
+  .conexao-corpo, .conexao-dados, .conexao-nota { margin-left: 16px; }
+  .conexao-dados { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .conexao-dados > div { padding: 0; border-left: 0; }
+}
+
+.conexao-ok { color: var(--ok-ink) !important; }
+.conexao-ruim { color: var(--critical-ink) !important; }
+
+/* ── Destaque do WhatsApp e da Cora: cartões de verdade, no topo, com o cabeçalho na cor do estado. ── */
+.card.conexao-bloco {
+  margin: 0 0 16px; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 18px;
+  background: var(--surface); box-shadow: var(--raise);
+}
+.card.conexao-bloco:hover { box-shadow: var(--raise); }
+.conexao-bloco .card-cronometro { border-radius: 0; }
+.conexao-bloco .conexao-cab { padding: 18px 22px; gap: 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.conexao-bloco--ok .conexao-cab { background: var(--ok-wash); border-bottom-color: transparent; }
+.conexao-bloco--ruim .conexao-cab { background: var(--critical-wash); border-bottom-color: transparent; }
+.conexao-bloco--aviso .conexao-cab { background: var(--amber-wash); border-bottom-color: transparent; }
+.conexao-bloco .conexao-ico { width: 52px; height: 52px; border-radius: 14px; background: var(--surface); box-shadow: var(--raise); }
+.conexao-bloco .conexao-ico .icone { width: 26px; height: 26px; }
+.conexao-bloco--ok .conexao-ico { color: var(--ok-ink); }
+.conexao-bloco--ruim .conexao-ico { color: var(--critical-ink); }
+.conexao-bloco--aviso .conexao-ico { color: var(--amber-ink); }
+.conexao-bloco .conexao-cab h2 { font-size: 19px; letter-spacing: -.01em; }
+.conexao-bloco .conexao-cab p { font-size: 14px; color: var(--ink-soft); }
+.conexao-bloco .conexao-cab .pill { padding: 6px 14px; font-size: 13px; background: var(--surface); }
+.conexao-bloco .conexao-corpo { margin: 0; padding: 18px 22px 20px; }
+.conexao-bloco .conexao-dados { margin: 0; padding: 18px 22px 0; }
+.conexao-bloco .conexao-nota { margin: 0; padding: 12px 22px 18px; }
+.conexao-bloco .conexao-dados dd { font-size: 16px; }
+@media (max-width: 760px) {
+  .conexao-bloco .conexao-cab { flex-wrap: wrap; padding: 14px 16px; }
+  .conexao-bloco .conexao-corpo, .conexao-bloco .conexao-dados, .conexao-bloco .conexao-nota { padding-left: 16px; padding-right: 16px; }
+}
+
+/* Título pequeno da lista de ferramentas, abaixo dos dois cartões */
+.conexoes-rotulo { margin: 22px 0 8px; font-size: 13px; letter-spacing: .08em; }
+.conexoes-lista { margin-bottom: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes conexao-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .card.conexao-bloco { animation: conexao-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .card.conexao-bloco + .card.conexao-bloco { animation-delay: 70ms; }
+}
