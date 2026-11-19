@@ -8,6 +8,7 @@ texto livre, então não há mais templates aprovados: a mensagem montada em
 import json
 import logging
 import re
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -155,6 +156,18 @@ def grupos_do_whatsapp(forcar: bool = False) -> list[dict] | None:
     guardado = cache.get("whatsapp_grupos")
     if guardado is not None:
         return guardado
+    # A Evolution pode levar vários segundos (ou até o timeout). Com uma cópia antiga em mãos, a página
+    # usa ela na hora e a lista é renovada em segundo plano; só a primeira vez de cada processo espera.
+    antigo = cache.get("whatsapp_grupos_antigo")
+    if antigo is not None and not forcar:
+        _renovar_grupos_em_segundo_plano()
+        return antigo
+    return _buscar_e_guardar_grupos()
+
+
+def _buscar_e_guardar_grupos() -> list[dict] | None:
+    from django.core.cache import cache
+
     try:
         grupos = consultar_grupos()["grupos"]
     except WhatsAppErro as exc:
@@ -162,7 +175,32 @@ def grupos_do_whatsapp(forcar: bool = False) -> list[dict] | None:
         return None
     grupos = grupos + _grupos_vistos_fora_da_lista({g["id"] for g in grupos})
     cache.set("whatsapp_grupos", grupos, 60)
+    cache.set("whatsapp_grupos_antigo", grupos, 60 * 60 * 24)
     return grupos
+
+
+_renovando_grupos = threading.Lock()
+
+
+def _renovar_grupos_em_segundo_plano() -> None:
+    """Renova a lista de grupos numa thread, sem segurar a página. Uma renovação por vez."""
+    if not _renovando_grupos.acquire(blocking=False):
+        return
+
+    def trabalho():
+        from django.core.cache import cache
+        from django.db import connection
+
+        try:
+            cache.set("whatsapp_grupos", cache.get("whatsapp_grupos_antigo"), 20)  # evita novas tentativas em enxurrada
+            _buscar_e_guardar_grupos()
+        except Exception:
+            logger.warning("Falha ao renovar a lista de grupos do WhatsApp.", exc_info=True)
+        finally:
+            connection.close()
+            _renovando_grupos.release()
+
+    threading.Thread(target=trabalho, daemon=True).start()
 
 
 def _grupos_vistos_fora_da_lista(ja_listados: set) -> list[dict]:
