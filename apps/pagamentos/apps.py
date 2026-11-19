@@ -29,3 +29,13 @@ class PagamentosConfig(AppConfig):
         for modelo in (Pagamento, Vencimento, Contrato, ContatoDeCobranca):
             post_save.connect(invalidar, sender=modelo, dispatch_uid=f"badge_{modelo.__name__}_save")
             post_delete.connect(invalidar, sender=modelo, dispatch_uid=f"badge_{modelo.__name__}_del")
+
+        # Servidor web (gunicorn): pré-carrega o que vem da Evolution, para nenhuma página esperar por isso.
+        import sys
+
+        if "gunicorn" in sys.argv[0]:
+            import threading
+
+            from .whatsapp import aquecer_whatsapp
+
+            threading.Timer(5, aquecer_whatsapp).start()
