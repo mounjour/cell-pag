@@ -332,6 +332,9 @@ class Contrato(models.Model):
         ``None`` quando o contrato ainda não tem vencimentos gerados (falta
         `valor_parcela`, ou o job diário ainda não rodou).
         """
+        abertas = getattr(self, "_abertas_prefetch", None)  # preenchido em lote pela agenda (evita 1 consulta por contrato)
+        if abertas is not None:
+            return abertas[0] if abertas else None
         return self.vencimentos.em_aberto().order_by("numero").first()
 
     def data_referencia_atraso(self):

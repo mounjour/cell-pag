@@ -45,7 +45,9 @@ def parcelas_a_cobrar(contrato, hoje: datetime.date) -> list[ParcelaACobrar]:
     """
     from apps.pagamentos import atraso
 
-    abertas = contrato.vencimentos.em_aberto().order_by("numero")
+    abertas = getattr(contrato, "_abertas_prefetch", None)
+    if abertas is None:
+        abertas = contrato.vencimentos.em_aberto().order_by("numero")
     itens = []
     for venc in abertas:
         dias = atraso.dias_de_atraso(venc.data_vencimento, hoje, contrato.estrutura)
@@ -106,6 +108,14 @@ def montar_agenda_do_dia(hoje: datetime.date | None = None, *, estrutura: str | 
     )
     if estrutura:
         contratos = contratos.filter(estrutura=estrutura)
+    # Parcelas em aberto de todos os contratos numa consulta só (antes eram várias por contrato).
+    from django.db.models import Prefetch
+
+    from apps.pagamentos.models import Vencimento
+
+    contratos = contratos.prefetch_related(
+        Prefetch("vencimentos", queryset=Vencimento.objects.em_aberto().select_related("cobranca_cora").order_by("numero"), to_attr="_abertas_prefetch")
+    )
 
     from apps.aparelhos.bloqueios import ids_dos_contratos_bloqueados
 

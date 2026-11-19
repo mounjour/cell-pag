@@ -99,14 +99,14 @@ def _extrair_id_mensagem(dados: dict) -> str:
     return identificador
 
 
-def _chamar_evolution_get(caminho: str, consulta: dict | None = None):
+def _chamar_evolution_get(caminho: str, consulta: dict | None = None, timeout: int = 15):
     base_url, api_key, instancia = _config_evolution()
     url = f"{base_url}{caminho}/{urllib.parse.quote(instancia)}"
     if consulta:
         url += "?" + urllib.parse.urlencode(consulta)
     requisicao = urllib.request.Request(url, headers={"apikey": api_key})
     try:
-        with urllib.request.urlopen(requisicao, timeout=15) as resposta:
+        with urllib.request.urlopen(requisicao, timeout=timeout) as resposta:
             return json.loads(resposta.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detalhe = exc.read().decode("utf-8", errors="replace")[:500]
@@ -156,13 +156,21 @@ def grupos_do_whatsapp(forcar: bool = False) -> list[dict] | None:
     guardado = cache.get("whatsapp_grupos")
     if guardado is not None:
         return guardado
-    # A Evolution pode levar vários segundos (ou até o timeout). Com uma cópia antiga em mãos, a página
-    # usa ela na hora e a lista é renovada em segundo plano; só a primeira vez de cada processo espera.
-    antigo = cache.get("whatsapp_grupos_antigo")
-    if antigo is not None and not forcar:
-        _renovar_grupos_em_segundo_plano()
-        return antigo
-    return _buscar_e_guardar_grupos()
+    if forcar:
+        return _buscar_e_guardar_grupos()
+    # A Evolution pode levar vários segundos (ou até o timeout): a página nunca espera. Com uma cópia antiga,
+    # usa ela na hora; sem nenhuma (processo recém-iniciado), cai no campo de texto. Nos dois casos a lista é
+    # renovada em segundo plano (e já é pré-carregada quando o servidor sobe: ver aquecer_whatsapp).
+    _renovar_grupos_em_segundo_plano()
+    return cache.get("whatsapp_grupos_antigo")
+
+
+def aquecer_whatsapp() -> None:
+    """Pré-carrega, em segundo plano, a lista de grupos e o estado do WhatsApp (chamado quando o servidor sobe)."""
+    from .badge import status_whatsapp
+
+    _renovar_grupos_em_segundo_plano()
+    status_whatsapp()
 
 
 def _buscar_e_guardar_grupos() -> list[dict] | None:
@@ -192,7 +200,9 @@ def _renovar_grupos_em_segundo_plano() -> None:
         from django.db import connection
 
         try:
-            cache.set("whatsapp_grupos", cache.get("whatsapp_grupos_antigo"), 20)  # evita novas tentativas em enxurrada
+            antigo = cache.get("whatsapp_grupos_antigo")
+            if antigo is not None:
+                cache.set("whatsapp_grupos", antigo, 20)  # evita novas tentativas em enxurrada
             _buscar_e_guardar_grupos()
         except Exception:
             logger.warning("Falha ao renovar a lista de grupos do WhatsApp.", exc_info=True)
@@ -229,7 +239,7 @@ def obter_status_conexao() -> str:
     """
     if settings.WHATSAPP_PROVIDER.lower().strip() != "evolution":
         return "simulado"
-    dados = _chamar_evolution_get("/instance/connectionState")
+    dados = _chamar_evolution_get("/instance/connectionState", timeout=6)
     return (dados.get("instance") or {}).get("state", "")
 
 
