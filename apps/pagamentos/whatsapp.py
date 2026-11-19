@@ -159,10 +159,15 @@ def grupos_do_whatsapp(forcar: bool = False) -> list[dict] | None:
     if forcar:
         return _buscar_e_guardar_grupos()
     # A Evolution pode levar vários segundos (ou até o timeout): a página nunca espera. Com uma cópia antiga,
-    # usa ela na hora; sem nenhuma (processo recém-iniciado), cai no campo de texto. Nos dois casos a lista é
+    # usa ela na hora; sem nenhuma (só logo após subir, antes da pré-carga), espera uma vez. A lista é
     # renovada em segundo plano (e já é pré-carregada quando o servidor sobe: ver aquecer_whatsapp).
-    _renovar_grupos_em_segundo_plano()
-    return cache.get("whatsapp_grupos_antigo")
+    antigo = cache.get("whatsapp_grupos_antigo")
+    if antigo is not None:
+        _renovar_grupos_em_segundo_plano()
+        return antigo
+    if cache.get("whatsapp_grupos_falhou"):
+        return None  # a Evolution acabou de falhar: não faz ninguém esperar de novo
+    return _buscar_e_guardar_grupos()
 
 
 def aquecer_whatsapp() -> None:
@@ -180,6 +185,7 @@ def _buscar_e_guardar_grupos() -> list[dict] | None:
         grupos = consultar_grupos()["grupos"]
     except WhatsAppErro as exc:
         logger.warning("Não consegui listar os grupos do WhatsApp: %s", exc)
+        cache.set("whatsapp_grupos_falhou", True, 30)
         return None
     grupos = grupos + _grupos_vistos_fora_da_lista({g["id"] for g in grupos})
     cache.set("whatsapp_grupos", grupos, 60)
