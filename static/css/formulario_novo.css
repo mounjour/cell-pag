@@ -1,18 +1,24 @@
 /* Telas de criação e edição simples (cliente, aparelho): cabeçalho com subtítulo, seções em cartões e campos em duas colunas. Tudo sob .nf. */
 .nf { max-width: 860px; margin-inline: auto; }
+.nf--cheio { max-width: none; }
+.nf--cheio .form-section { grid-template-columns: 1fr; max-width: 860px; }
+.nf > .note { max-width: 860px; }
 .nf-topo { margin: 4px 0 16px; }
 .nf-topo h1 { margin: 0; }
 .nf-sub { margin: 6px 0 0; color: var(--ink-soft); }
 
 /* O formulário vira uma pilha de seções; cada seção é um cartão */
-.nf .form-grid.form-page { gap: 14px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; max-width: none; }
+.nf .form-grid.form-page,
+.nf .form-grid--full { gap: 14px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; max-width: none; }
 .nf .form-section { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; align-items: start; padding: 18px 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--raise); }
 .nf .form-section + .form-section { margin: 0; border-top: 1px solid var(--line); padding-top: 18px; }
 .nf .form-section-title { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; font-weight: 650; text-transform: none; letter-spacing: -.01em; color: var(--ink); }
 .nf .form-section-title .icone { flex: none; width: 30px; height: 30px; padding: 6px; border-radius: 9px; background: var(--accent-wash); color: var(--accent-ink); box-sizing: border-box; }
 .nf .form-section-nota { grid-column: 1 / -1; margin: -6px 0 0; font-size: 13px; color: var(--ink-soft); }
 .nf .form-section > .form-row--cheio,
-.nf .form-section > .errorlist { grid-column: 1 / -1; }
+.nf .form-section > .errorlist,
+.nf .form-section > .form-row:has(textarea),
+.nf .form-section > .form-row:has(input[type=file]) { grid-column: 1 / -1; }
 
 .nf .form-row { gap: 6px; min-width: 0; }
 .nf .form-row label { color: var(--ink-soft); font-size: 13px; font-weight: 600; }

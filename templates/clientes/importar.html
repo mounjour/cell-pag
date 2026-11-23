@@ -1,13 +1,21 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Importar clientes{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/formulario_novo.css' %}?v=2">{% endblock %}
 {% block content %}
 {% url 'clientes:lista' as clientes_url %}{% include "_voltar.html" with url=clientes_url %}
-<div class="toolbar"><h1>Importar clientes (CSV)</h1></div>
+<div class="nf nf--cheio">
+<header class="nf-topo"><h1>{% include "_icone.html" with nome="clientes" %}Importar clientes (CSV)</h1></header>
 <p class="note">Só entram clientes com <strong>nome, CPF válido e telefone</strong>. Linhas com CPF incompleto ou inválido, sem telefone, repetidas ou de CPF já cadastrado ficam de fora, e a prévia mostra o motivo. CPF que perdeu o zero à esquerda na planilha é completado, desde que o resultado seja um CPF válido. Nenhum contrato é criado.</p>
-<form method="post" enctype="multipart/form-data" class="form-grid form-grid--full">
-  {% csrf_token %}{% include "_form.html" with form=form %}
-  <div class="form-actions"><button class="btn" type="submit">Analisar arquivo</button></div>
+<form method="post" enctype="multipart/form-data" class="form-grid form-page">
+  {% csrf_token %}
+  <div class="form-section">
+    <p class="form-section-title">{% include "_icone.html" with nome="anexo" %}Arquivo</p>
+    {% include "_form.html" with form=form %}
+  </div>
+  <div class="form-actions"><button class="btn" type="submit">{% include "_icone.html" with nome="baixar" %}Analisar arquivo</button></div>
 </form>
+</div>
 {% if erro %}<p class="msg error">{{ erro }}</p>{% endif %}
 {% if linhas is not None %}
   <h2>Prévia</h2>

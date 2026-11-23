@@ -1,4 +1,4 @@
-<h1>Registrar pagamento</h1>
+<header class="nf-topo"><h1>{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</h1></header>
 
 <dl class="meta">
   <div><dt>Cliente</dt><dd>{{ contrato.cliente.nome }}</dd></div>
@@ -22,7 +22,10 @@
   {% endif %}
   <form method="post" class="form-grid form-page" enctype="multipart/form-data" data-previsao-url="{% url 'pagamentos:previsao' contrato.pk %}">
     {% csrf_token %}
-    {% include "_form.html" %}
+    <div class="form-section">
+      <p class="form-section-title">{% include "_icone.html" with nome="editar" %}Dados do pagamento</p>
+      {% include "_form.html" %}
+    </div>
     <section class="note previsao-form" aria-labelledby="previsao-titulo">
       <h2 id="previsao-titulo">Como ficará este pagamento</h2>
       <p data-previsao-texto role="status" aria-live="polite">Preencha a parcela e os valores para conferir a baixa antes de registrar.</p>

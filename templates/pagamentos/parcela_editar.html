@@ -1,9 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Editar parcela {{ vencimento.numero }}{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/formulario_novo.css' %}?v=2">{% endblock %}
 
 {% block content %}
+<div class="form-centered nf">
 {% url 'contratos:detalhe' contrato.pk as volta_url %}{% include "_voltar.html" with url=volta_url %}
-<h1>Editar parcela {{ vencimento.numero }}</h1>
+<header class="nf-topo"><h1>{% include "_icone.html" with nome="proximas" %}Editar parcela {{ vencimento.numero }}</h1></header>
 <p class="note">{{ contrato.cliente.nome }}, {{ contrato.apelido }}. A mensagem de cobrança, o Pix e as telas passam a usar o valor e a data daqui. Se a parcela já tiver um Pix aberto, ele é cancelado (a Cora cobra R$ 0,30 por cancelamento) e a próxima rotina gera outro com o valor novo.</p>
 
 <dl class="meta meta--4col">
@@ -19,14 +22,18 @@
 <form method="post" class="form-grid form-page">
   {% csrf_token %}
   {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-  {% include "_field.html" with field=form.data_vencimento %}
-  {% include "_field.html" with field=form.valor_base %}
-  {% include "_field.html" with field=form.acrescimo %}
-  {% include "_field.html" with field=form.motivo %}
+  <div class="form-section">
+    <p class="form-section-title">{% include "_icone.html" with nome="editar" %}Dados da parcela</p>
+    {% include "_field.html" with field=form.data_vencimento %}
+    {% include "_field.html" with field=form.valor_base %}
+    {% include "_field.html" with field=form.acrescimo %}
+    {% include "_field.html" with field=form.motivo %}
+  </div>
   <div class="form-actions">
     <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Salvar parcela</button>
     <a class="btn cancelar" href="{{ volta_url }}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
   </div>
 </form>
 {% endif %}
+</div>
 {% endblock %}

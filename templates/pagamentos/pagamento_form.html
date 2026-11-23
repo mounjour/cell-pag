@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
+{% load static %}
 {% block title %}Registrar pagamento — {{ contrato }}{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/formulario_novo.css' %}?v=2">{% endblock %}
 
 {% block content %}
-<div class="form-centered">
+<div class="form-centered nf">
   {% url 'contratos:detalhe' contrato.pk as contrato_url %}{% include "_voltar.html" with url=contrato_url %}
   {% include "pagamentos/_pagamento_form_conteudo.html" %}
 </div>
