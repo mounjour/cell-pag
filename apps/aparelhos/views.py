@@ -108,7 +108,7 @@ class AparelhoExcluirView(LoginRequiredMixin, View):
         except ProtectedError:
             messages.error(
                 request,
-                f"{nome} está vinculado a um contrato e não pode ser excluído do estoque.",
+                f"{nome} está vinculado a um contrato. Exclua o contrato primeiro (o aparelho volta ao estoque) e depois exclua o aparelho.",
             )
             return redirect("aparelhos:detalhe", pk=pk)
         messages.success(request, f"{nome} excluído do estoque.")

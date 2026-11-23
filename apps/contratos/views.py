@@ -18,6 +18,7 @@ from apps.clientes.models import Cliente
 
 from .forms import ContratoForm, DocumentoContratoForm, PlanilhaPreviaForm, PrevisaoContratoForm, ResolverImportacaoForm, moeda_para_decimal
 from . import importacao as importacao_contratos
+from .exclusao import excluir_contrato
 from .models import Contrato, DocumentoContrato, ImportacaoContratoPendente
 from .resumo import resumo_do_cadastro
 
@@ -644,6 +645,17 @@ class ContratoQuitarView(LoginRequiredMixin, View):
             contrato.atualizar_data_prevista_quitacao()
             messages.success(request, "Contrato marcado como quitado. A cobrança para aqui.")
         return redirect("contratos:detalhe", pk=pk)
+
+
+class ContratoExcluirView(LoginRequiredMixin, View):
+    """Apaga o contrato de vez (POST), com parcelas, pagamentos e cobranças. O aparelho volta ao estoque."""
+
+    def post(self, request, pk):
+        contrato = get_object_or_404(Contrato, pk=pk)
+        cliente_pk, nome = contrato.cliente_id, contrato.apelido
+        excluir_contrato(contrato)
+        messages.success(request, f"Contrato {nome} excluído.")
+        return redirect("clientes:detalhe", pk=cliente_pk)
 
 
 class ContratoGerarVencimentosView(LoginRequiredMixin, View):

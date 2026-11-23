@@ -259,6 +259,11 @@
   <div class="form-actions"><button type="submit" class="btn">{% include "_icone.html" with nome="anexo" %}Anexar documento</button></div>
 </form>
 </div>
+<form method="post" action="{% url 'contratos:excluir' contrato.pk %}" class="form-actions"
+      onsubmit="return confirm('Excluir o contrato {{ contrato.apelido|escapejs }}? Parcelas, pagamentos e cobranças dele serão apagados para sempre e o aparelho volta ao estoque. Não dá para desfazer.')">
+  {% csrf_token %}
+  <button type="submit" class="btn-cancelar-pix">{% include "_icone.html" with nome="excluir" %}Excluir contrato</button>
+</form>
 {% endblock %}
 {% block scripts %}
   <script src="{% static 'js/contato_cobranca.js' %}" defer></script>

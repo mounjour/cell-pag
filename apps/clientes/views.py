@@ -3,11 +3,13 @@ from collections import Counter
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, ProtectedError, Q
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
+
+from apps.contratos.exclusao import excluir_cliente
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
 from apps.pagamentos.models import Cobranca, CobrancaCora, Pagamento
@@ -116,27 +118,14 @@ class ClienteReativarView(LoginRequiredMixin, View):
 
 
 class ClienteExcluirView(LoginRequiredMixin, View):
-    """Apaga o cliente de vez (POST) — só funciona sem nenhum contrato.
-
-    Com contrato (mesmo quitado), o banco protege o histórico financeiro
-    (`Contrato.cliente` é `on_delete=PROTECT`) e a exclusão é recusada com uma
-    mensagem explicando para usar "Arquivar" em vez de excluir.
-    """
+    """Apaga o cliente de vez (POST), junto com todos os contratos, parcelas e pagamentos dele."""
 
     def post(self, request, pk):
         cliente = get_object_or_404(Cliente, pk=pk)
         nome = cliente.nome
-        try:
-            cliente.delete()
-        except ProtectedError:
-            messages.error(
-                request,
-                f"{nome} tem contrato cadastrado (mesmo quitado) e não pode ser excluído — "
-                "isso apagaria o histórico de pagamentos. Use “Arquivar” para tirá-lo da lista "
-                "principal sem perder o histórico.",
-            )
-            return redirect("clientes:detalhe", pk=pk)
-        messages.success(request, f"{nome} excluído.")
+        contratos = excluir_cliente(cliente)
+        extra = f" e {contratos} contrato{'s' if contratos != 1 else ''}" if contratos else ""
+        messages.success(request, f"{nome}{extra} excluído{'s' if contratos else ''}.")
         return redirect("clientes:lista")
 
 
