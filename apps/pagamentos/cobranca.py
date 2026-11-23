@@ -9,7 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from .agenda import montar_agenda_do_dia
-from .models import Cobranca, CobrancaCora, ConfiguracaoCobranca
+from .models import Cobranca, CobrancaCora, ConfiguracaoCobranca, Vencimento
 from .pix_cora import obter_ou_criar_cobranca
 from .whatsapp import WhatsAppErro, conexao_caiu, enviar_imagem, enviar_mensagem, reiniciar_conexao
 
@@ -68,8 +68,33 @@ def _mensagem_varias_parcelas(base, parcelas, bloco_pix, *, alertar_bloqueio) ->
     return "\n\n".join(partes)
 
 
-def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
+def _aviso_de_pagamento(contrato, hoje) -> str:
+    """Frase curta que explica por que a mensagem chegou de novo: o cliente pagou hoje e ainda há pendência.
+
+    Vazia quando não houve pagamento de parcela hoje. Pagamento que não quitou parcela nenhuma (parcial) vira
+    um aviso genérico; o de entrada (sem parcela) não conta."""
+    if not contrato.pagamentos.filter(data_pagamento=hoje, vencimento__isnull=False).exists():
+        return ""
+    quitadas = Vencimento.objects.filter(
+        contrato=contrato, status=Vencimento.Status.PAGO, pagamentos__data_pagamento=hoje
+    ).distinct().count()
+    recebido = (
+        f"Recebi o pagamento de {quitadas} parcela{'s' if quitadas != 1 else ''}." if quitadas else "Recebi o seu pagamento."
+    )
+    return f"✅ {recebido} Aqui está o novo valor da sua pendência:"
+
+
+def _com_aviso(mensagem: str, aviso: str) -> str:
+    """Põe o aviso logo depois da saudação (a primeira linha da mensagem)."""
+    if not aviso:
+        return mensagem
+    saudacao, _, resto = mensagem.partition("\n\n")
+    return f"{saudacao}\n\n{aviso}\n\n{resto}"
+
+
+def dados_da_mensagem(linha: dict, *, chave_pix=None, hoje=None) -> dict:
     contrato = linha["contrato"]
+    hoje = hoje or timezone.localdate()
     situacao = linha["situacao"]
     vencimento = contrato.parcela_em_aberto()
     data_vencimento = vencimento.data_vencimento if vencimento else contrato.proximo_vencimento
@@ -149,6 +174,7 @@ def dados_da_mensagem(linha: dict, *, chave_pix=None) -> dict:
                 f"Depois é só me mandar o comprovante por aqui. 😊"
             ),
         )
+    base["mensagem"] = _com_aviso(base["mensagem"], _aviso_de_pagamento(contrato, hoje))
     base["vencimento"] = vencimento
     return base
 
@@ -178,7 +204,7 @@ def _enviar_com_recuperacao(enviar, resultado: dict, **dados):
 
 def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_preparar: bool) -> None:
     """Prepara e envia a cobrança de uma linha da agenda (Pix, mensagem e registro), somando em ``resultado``."""
-    dados_iniciais = dados_da_mensagem(linha)
+    dados_iniciais = dados_da_mensagem(linha, hoje=hoje)
     contrato = linha["contrato"]
     destinatario = contrato.cliente.destino_whatsapp  # o grupo, se o cliente tiver um; senão o telefone
     logger.info(
@@ -198,6 +224,7 @@ def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_
     dados = dados_da_mensagem(
         linha,
         chave_pix=pix.pix_copia_e_cola if pix and pix.pix_copia_e_cola else None,
+        hoje=hoje,
     )
     cobranca, criada = Cobranca.objects.get_or_create(
         contrato=contrato,
@@ -256,6 +283,10 @@ def _processar_linha(linha: dict, hoje: datetime.date, resultado: dict, somente_
         logger.exception("Falha na cobrança %s", cobranca.pk)
         return
 
+    # A mensagem pode ter sido reaberta depois de um pagamento: guarda o texto e a parcela de agora, para a
+    # baixa seguinte achar (e apagar) esta mensagem.
+    cobranca.mensagem = dados["mensagem"]
+    cobranca.vencimento = dados["vencimento"]
     cobranca.tentativas += 1
     if resposta["simulado"]:
         cobranca.erro = "Modo de simulação: mensagem não enviada."
