@@ -373,10 +373,14 @@ def _dar_baixa(cobranca: CobrancaCora) -> None:
         )
         return
     # O Pix é sempre parcela + juros: o juros vai para o campo próprio e só o principal
-    # abate a parcela. Se vier menos que o total, o juros é o primeiro a ser coberto.
-    juros_pago = min(cobranca.juros, cobranca.total_pago)
-    principal_pago = cobranca.total_pago - juros_pago
+    # abate a parcela. Se vier menos que o total, a parcela é coberta primeiro e o juros fica com o que sobrar.
     principal_esperado = cobranca.valor - cobranca.juros
+    if cobranca.total_pago >= cobranca.valor:
+        juros_pago = min(cobranca.juros, cobranca.total_pago)
+        principal_pago = cobranca.total_pago - juros_pago
+    else:
+        principal_pago = min(cobranca.total_pago, principal_esperado)
+        juros_pago = cobranca.total_pago - principal_pago
     # Compara o PRINCIPAL (não o total): o juros cresce a cada dia, então quem paga o QR de ontem
     # logo cedo, antes da rotina refazê-lo, não pode cair em revisão manual só por isso.
     principal_atual, _ = composicao_do_pix(vencimento, timezone.localdate())

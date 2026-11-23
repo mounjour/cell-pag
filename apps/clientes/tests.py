@@ -168,13 +168,13 @@ def test_excluir_cliente_sem_contrato_funciona(auth_client):
 
 
 @pytest.mark.django_db
-def test_excluir_cliente_com_contrato_e_recusado(auth_client):
+def test_excluir_cliente_com_contrato_apaga_tudo(auth_client):
     c = novo_cliente()
-    _contrato_quitado(c)
+    contrato = _contrato_quitado(c)
     assert c.pode_ser_excluido is False
-    resp = auth_client.post(reverse("clientes:excluir", args=[c.pk]), follow=True)
-    assert Cliente.objects.filter(pk=c.pk).exists()
-    assert "Arquivar" in resp.content.decode()
+    auth_client.post(reverse("clientes:excluir", args=[c.pk]), follow=True)
+    assert not Cliente.objects.filter(pk=c.pk).exists()
+    assert not type(contrato).objects.filter(pk=contrato.pk).exists()
 
 
 @pytest.mark.django_db
