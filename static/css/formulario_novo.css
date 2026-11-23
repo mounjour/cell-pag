@@ -1,0 +1,45 @@
+/* Telas de criação e edição simples (cliente, aparelho): cabeçalho com subtítulo, seções em cartões e campos em duas colunas. Tudo sob .nf. */
+.nf { max-width: 860px; margin-inline: auto; }
+.nf-topo { margin: 4px 0 16px; }
+.nf-topo h1 { margin: 0; }
+.nf-sub { margin: 6px 0 0; color: var(--ink-soft); }
+
+/* O formulário vira uma pilha de seções; cada seção é um cartão */
+.nf .form-grid.form-page { gap: 14px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; max-width: none; }
+.nf .form-section { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; align-items: start; padding: 18px 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--raise); }
+.nf .form-section + .form-section { margin: 0; border-top: 1px solid var(--line); padding-top: 18px; }
+.nf .form-section-title { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; font-weight: 650; text-transform: none; letter-spacing: -.01em; color: var(--ink); }
+.nf .form-section-title .icone { flex: none; width: 30px; height: 30px; padding: 6px; border-radius: 9px; background: var(--accent-wash); color: var(--accent-ink); box-sizing: border-box; }
+.nf .form-section-nota { grid-column: 1 / -1; margin: -6px 0 0; font-size: 13px; color: var(--ink-soft); }
+.nf .form-section > .form-row--cheio,
+.nf .form-section > .errorlist { grid-column: 1 / -1; }
+
+.nf .form-row { gap: 6px; min-width: 0; }
+.nf .form-row label { color: var(--ink-soft); font-size: 13px; font-weight: 600; }
+.nf .form-row .helptext { font-size: 12px; }
+.nf .form-row:has(.errorlist) input,
+.nf .form-row:has(.errorlist) select,
+.nf .form-row:has(.errorlist) textarea { border-color: var(--critical); }
+.nf input:focus, .nf select:focus, .nf textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+.nf input:where(:not([type=checkbox]):not([type=radio]):not([type=hidden])), .nf select, .nf textarea { border-radius: 12px; }
+
+/* Botões: sem a barra com divisória */
+.nf .form-page .form-actions { margin: 2px 0 0; padding: 0; border: 0; background: none; }
+@media (min-width: 640px) {
+  .nf .form-actions .btn { flex: 0 0 auto; min-width: 150px; }
+  .nf .form-actions .btn:first-child { min-width: 190px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes nf-sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .nf-topo, .nf .form-section, .nf .form-actions { animation: nf-sobe .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .nf .form-section:nth-of-type(2) { animation-delay: 50ms; }
+  .nf .form-section:nth-of-type(3) { animation-delay: 100ms; }
+  .nf .form-actions { animation-delay: 150ms; }
+}
+
+@media (max-width: 640px) {
+  .nf .form-section { grid-template-columns: 1fr; padding: 16px 14px; }
+  /* No celular os botões ficam fixos embaixo para não precisar rolar até o fim */
+  .nf .form-page .form-actions { position: sticky; bottom: 0; margin: 4px -16px 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--surface); border-top: 1px solid var(--line); z-index: 5; }
+}
