@@ -80,20 +80,11 @@
     {% include "_field.html" with field=form.observacoes %}
   </div>
 
-  {% if form.instance.pk %}
-  <section class="note previsao-form" aria-labelledby="previsao-titulo">
-    <h2 id="previsao-titulo">Confira o plano</h2>
-    <p data-previsao-texto role="status" aria-live="polite">Informe os valores e as datas para visualizar as parcelas antes de salvar.</p>
-    <p>Esta prévia descreve o plano informado. Parcelas já geradas mantêm seus valores e datas; confira-as no contrato após a edição.</p>
-    <noscript>Ative JavaScript para visualizar o resumo antes de salvar.</noscript>
-  </section>
-  {% endif %}
   <div class="form-actions">
     <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}{% if form.instance.pk %}Salvar{% else %}Revisar cadastro{% endif %}</button>
     <a class="btn cancelar" href="{% if form.instance.pk %}{% url 'contratos:detalhe' form.instance.pk %}{% else %}{% url 'contratos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
   </div>
 </form>
-{% if not form.instance.pk %}
 <aside class="contrato-resumo" aria-label="Resumo da cobrança ao vivo">
   <div data-previsao-card role="status" aria-live="polite">
     <section class="card resumo-cobranca">
@@ -101,9 +92,9 @@
       <p class="resumo-vazio">Preencha o valor total, a quantidade de parcelas, a frequência e o dia de cobrança: o resumo aparece aqui e se atualiza enquanto você digita.</p>
     </section>
   </div>
-  <noscript><p class="note">Ative o JavaScript para ver o resumo ao vivo. Ele também aparece na conferência, antes de confirmar.</p></noscript>
+  {% if form.instance.pk %}<p class="note">Esta prévia descreve o plano informado. Parcelas já geradas mantêm seus valores e datas; confira-as no contrato após salvar.</p>{% endif %}
+  <noscript><p class="note">Ative o JavaScript para ver o resumo ao vivo.{% if not form.instance.pk %} Ele também aparece na conferência, antes de confirmar.{% endif %}</p></noscript>
 </aside>
-{% endif %}
 </div>
 </div>
 {% endblock %}
