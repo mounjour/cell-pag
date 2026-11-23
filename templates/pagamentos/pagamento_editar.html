@@ -1,9 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Editar pagamento{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/formulario_novo.css' %}?v=2">{% endblock %}
 
 {% block content %}
+<div class="form-centered nf">
 {% url 'contratos:detalhe' contrato.pk as volta_url %}{% include "_voltar.html" with url=volta_url %}
-<h1>Editar pagamento</h1>
+<header class="nf-topo"><h1>{% include "_icone.html" with nome="dinheiro" %}Editar pagamento</h1></header>
 <p class="note">{{ contrato.cliente.nome }}, {{ contrato.apelido }}. Aqui você corrige a data, o juros, a forma e a observação. O valor da parcela recebido não muda por aqui: se ele estiver errado, estorne a baixa e lance de novo.</p>
 
 <dl class="meta meta--4col">
@@ -16,13 +19,17 @@
 <form method="post" class="form-grid form-page">
   {% csrf_token %}
   {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-  {% include "_field.html" with field=form.data_pagamento %}
-  {% include "_field.html" with field=form.juros_pago %}
-  {% include "_field.html" with field=form.forma %}
-  {% include "_field.html" with field=form.observacao %}
+  <div class="form-section">
+    <p class="form-section-title">{% include "_icone.html" with nome="editar" %}Dados do pagamento</p>
+    {% include "_field.html" with field=form.data_pagamento %}
+    {% include "_field.html" with field=form.juros_pago %}
+    {% include "_field.html" with field=form.forma %}
+    {% include "_field.html" with field=form.observacao %}
+  </div>
   <div class="form-actions">
     <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Salvar pagamento</button>
     <a class="btn cancelar" href="{{ volta_url }}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
   </div>
 </form>
+</div>
 {% endblock %}
