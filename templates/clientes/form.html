@@ -1,14 +1,40 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{% if form.instance.pk %}Editar cliente{% else %}Novo cliente{% endif %}{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/formulario_novo.css' %}?v=1">{% endblock %}
 
 {% block content %}
-<div class="form-centered centrado">
+<div class="form-centered nf">
   {% if form.instance.pk %}{% url 'clientes:detalhe' form.instance.pk as volta_url %}{% else %}{% url 'clientes:lista' as volta_url %}{% endif %}{% include "_voltar.html" with url=volta_url %}
-  <h1>{% if form.instance.pk %}Editar cliente{% else %}Novo cliente{% endif %}</h1>
+  <header class="nf-topo">
+    <h1>{% include "_icone.html" with nome="clientes" %}{% if form.instance.pk %}Editar cliente{% else %}Novo cliente{% endif %}</h1>
+    <p class="nf-sub">{% if form.instance.pk %}{{ form.instance.nome }}.{% else %}Cadastre quem vai comprar e como a cobrança chega até ele.{% endif %}</p>
+  </header>
 
   <form method="post" class="form-grid form-page">
     {% csrf_token %}
-    {% include "_form.html" %}
+    {% if form.non_field_errors %}
+      <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    {% endif %}
+
+    <div class="form-section">
+      <p class="form-section-title">{% include "_icone.html" with nome="clientes" %}Dados do cliente</p>
+      <div class="form-row--cheio">{% include "_field.html" with field=form.nome %}</div>
+      {% include "_field.html" with field=form.cpf %}
+      {% include "_field.html" with field=form.telefone_whatsapp %}
+    </div>
+
+    <div class="form-section">
+      <p class="form-section-title">{% include "_icone.html" with nome="whatsapp" %}Mensagens no WhatsApp</p>
+      <div class="form-row--cheio">{% include "_field.html" with field=form.grupo_whatsapp %}</div>
+      {% if form.grupo_whatsapp_manual %}<div class="form-row--cheio">{% include "_field.html" with field=form.grupo_whatsapp_manual %}</div>{% endif %}
+    </div>
+
+    <div class="form-section">
+      <p class="form-section-title">{% include "_icone.html" with nome="proximas" %}Endereço</p>
+      <div class="form-row--cheio">{% include "_field.html" with field=form.endereco %}</div>
+    </div>
+
     <div class="form-actions">
       <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Salvar</button>
       <a class="btn cancelar" href="{% if form.instance.pk %}{% url 'clientes:detalhe' form.instance.pk %}{% else %}{% url 'clientes:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>

@@ -1,14 +1,40 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{% if form.instance.pk %}Editar aparelho{% else %}Novo aparelho{% endif %}{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/formulario_novo.css' %}?v=1">{% endblock %}
 
 {% block content %}
-<div class="form-centered centrado">
+<div class="form-centered nf">
   {% if form.instance.pk %}{% url 'aparelhos:detalhe' form.instance.pk as volta_url %}{% else %}{% url 'aparelhos:lista' as volta_url %}{% endif %}{% include "_voltar.html" with url=volta_url %}
-  <h1>{% if form.instance.pk %}Editar aparelho{% else %}Novo aparelho{% endif %}</h1>
+  <header class="nf-topo">
+    <h1>{% include "_icone.html" with nome="aparelhos" %}{% if form.instance.pk %}Editar aparelho{% else %}Novo aparelho{% endif %}</h1>
+    <p class="nf-sub">{% if form.instance.pk %}{{ form.instance.modelo }}.{% else %}Cadastre o aparelho no estoque para vinculá-lo a um contrato depois.{% endif %}</p>
+  </header>
 
   <form method="post" class="form-grid form-page">
     {% csrf_token %}
-    {% include "_form.html" %}
+    {% if form.non_field_errors %}
+      <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    {% endif %}
+
+    <div class="form-section">
+      <p class="form-section-title">{% include "_icone.html" with nome="aparelhos" %}Identificação</p>
+      {% include "_field.html" with field=form.modelo %}
+      {% include "_field.html" with field=form.imei %}
+    </div>
+
+    <div class="form-section">
+      <p class="form-section-title">{% include "_icone.html" with nome="dinheiro" %}Compra</p>
+      {% include "_field.html" with field=form.custo %}
+      {% include "_field.html" with field=form.data_compra %}
+      <div class="form-row--cheio">{% include "_field.html" with field=form.fornecedor %}</div>
+    </div>
+
+    <div class="form-section">
+      <p class="form-section-title">{% include "_icone.html" with nome="editar" %}Observações</p>
+      <div class="form-row--cheio">{% include "_field.html" with field=form.observacoes %}</div>
+    </div>
+
     <div class="form-actions">
       <button type="submit" class="btn">{% include "_icone.html" with nome="salvar" %}Salvar</button>
       <a class="btn cancelar" href="{% if form.instance.pk %}{% url 'aparelhos:detalhe' form.instance.pk %}{% else %}{% url 'aparelhos:lista' %}{% endif %}">{% include "_icone.html" with nome="cancelar" %}Cancelar</a>
