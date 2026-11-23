@@ -193,7 +193,7 @@ def test_excluir_disponivel_funciona(auth_client):
 
 
 @pytest.mark.django_db
-def test_excluir_vendido_e_recusado(auth_client, cliente):
+def test_excluir_aparelho_com_contrato_e_recusado(auth_client, cliente):
     ap = Aparelho.objects.create(modelo="iPhone 11")
     Contrato.objects.create(
         cliente=cliente,
@@ -207,7 +207,7 @@ def test_excluir_vendido_e_recusado(auth_client, cliente):
     resp = auth_client.post(reverse("aparelhos:excluir", args=[ap.pk]), follow=True)
     assert resp.status_code == 200
     assert Aparelho.objects.filter(pk=ap.pk).exists()  # não apagou
-    assert "não pode ser excluído" in resp.content.decode()
+    assert "Exclua o contrato primeiro" in resp.content.decode()
 
 
 @pytest.mark.django_db
