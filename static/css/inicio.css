@@ -227,3 +227,10 @@
 .ic-pr-row h2 a, .ic-device a, .ic-info b a { color: var(--ic-ink); }
 .ic-pr-row h2 a:hover, .ic-device a:hover, .ic-info b a:hover { color: var(--ic-brand); text-decoration: underline; }
 .ic-device a { color: var(--ic-muted); }
+
+/* Cartão inteiro clicável: o link do nome cobre o cartão; os botões de ação ficam por cima. */
+.ic-item { position: relative; cursor: pointer; }
+.ic-item .ic-info b a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.ic-item .ic-acts { position: relative; z-index: 1; }
+.ic-item .ic-info b a:hover { text-decoration: none; }
+.ic-item:hover .ic-info b a { color: var(--ic-brand); }
