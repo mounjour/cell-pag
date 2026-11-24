@@ -94,10 +94,10 @@
       <section class="ic-card ic-integ">
         <h3>Status dos serviços</h3>
         <a class="ic-status{% if pix_alertas_n %} alerta{% endif %}" href="{% url 'pagamentos:pix_painel' %}">
-          <span><i class="ic-dot"></i>Pix</span><em>{% if pix_alertas_n %}{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix, Conferir pendências{% else %}Em dia{% endif %}</em>
+          <span><i class="ic-dot">{% include "_icone.html" with nome="pix" %}</i>Pix</span><em>{% if pix_alertas_n %}{{ pix_alertas_n }} pendência{{ pix_alertas_n|pluralize }} no Pix, Conferir pendências{% else %}Em dia{% endif %}</em>
         </a>
         <a class="ic-status{% if whatsapp_estado != 'open' and whatsapp_estado != 'simulado' %} alerta{% endif %}" href="{% url 'pagamentos:conexoes' %}" data-whatsapp-tile>
-          <span><i class="ic-dot"></i>WhatsApp</span>
+          <span><i class="ic-dot">{% include "_icone.html" with nome="whatsapp" %}</i>WhatsApp</span>
           <em data-whatsapp-tile-valor>{% if whatsapp_estado == 'open' %}Conectado{% elif whatsapp_estado == 'simulado' %}Simulação{% else %}Desconectado{% endif %}</em>
         </a>
       </section>
