@@ -197,6 +197,20 @@ class ImportacaoPendenciasView(LoginRequiredMixin, ListView):
         return super().get_queryset().filter(resolvida_em__isnull=True)
 
 
+class DescartarImportacaoView(LoginRequiredMixin, View):
+    """Tira pendências da lista sem criar contrato (já resolvidas por fora). Sem pk, descarta todas as abertas."""
+
+    def post(self, request, pk=None):
+        from django.utils import timezone
+
+        abertas = ImportacaoContratoPendente.objects.filter(resolvida_em__isnull=True)
+        if pk is not None:
+            abertas = abertas.filter(pk=pk)
+        n = abertas.update(resolvida_em=timezone.now())
+        messages.success(request, f"{n} pendência{'s' if n != 1 else ''} de importação descartada{'s' if n != 1 else ''}.")
+        return redirect("contratos:importacao_pendencias")
+
+
 class ResolverImportacaoView(LoginRequiredMixin, View):
     template_name = "contratos/resolver_importacao.html"
 
