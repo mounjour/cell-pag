@@ -81,12 +81,19 @@
 .conexao-bloco .conexao-cab p { font-size: 14px; color: var(--ink-soft); }
 .conexao-bloco .conexao-cab .pill { padding: 6px 14px; font-size: 13px; background: var(--surface); }
 .conexao-bloco .conexao-corpo { margin: 0; padding: 18px 22px 20px; }
-.conexao-bloco .conexao-dados { margin: 0; padding: 18px 22px 0; }
+.conexao-bloco .conexao-acoes { display: grid; grid-template-columns: repeat(2, minmax(0, 320px)); gap: 14px 32px; align-items: start; }
+.conexao-bloco .conexao-acao { max-width: none; }
+.conexao-bloco .conexao-acao .btn, .conexao-bloco .conexao-acao .btn-mini { min-height: 42px; padding: 0 18px; font-size: 14px; }
+@media (max-width: 760px) { .conexao-bloco .conexao-acoes { grid-template-columns: minmax(0, 1fr); } }
+.conexao-bloco .conexao-dados { margin: 0; padding: 18px 0 0; }
+.conexao-bloco .conexao-dados > div { padding: 0 22px; }
+.conexao-bloco .conexao-dados > div:first-child { padding-left: 22px; }
 .conexao-bloco .conexao-nota { margin: 0; padding: 12px 22px 18px; }
 .conexao-bloco .conexao-dados dd { font-size: 16px; }
 @media (max-width: 760px) {
   .conexao-bloco .conexao-cab { flex-wrap: wrap; padding: 14px 16px; }
-  .conexao-bloco .conexao-corpo, .conexao-bloco .conexao-dados, .conexao-bloco .conexao-nota { padding-left: 16px; padding-right: 16px; }
+  .conexao-bloco .conexao-corpo, .conexao-bloco .conexao-nota { padding-left: 16px; padding-right: 16px; }
+  .conexao-bloco .conexao-dados > div, .conexao-bloco .conexao-dados > div:first-child { padding: 0 16px; }
 }
 
 /* Título pequeno da lista de ferramentas, abaixo dos dois cartões */
