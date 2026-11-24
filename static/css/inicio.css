@@ -237,3 +237,8 @@
 
 /* Parcela já paga: mesmo tamanho e formato do botão "Registrar pagamento", mas cinza, opaco e sem ação. */
 .ic-feito { background: var(--ic-line); color: var(--ic-muted); border-color: var(--ic-line); opacity: .7; cursor: default; pointer-events: none; }
+
+/* Status dos serviços: ícone do serviço, verde quando está bem e vermelho em alerta (no lugar da bolinha). */
+.ic-status .ic-dot { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin-right: 10px; border-radius: 8px; background: var(--ic-ok-soft); color: var(--ic-ok); box-shadow: none; vertical-align: middle; }
+.ic-status .ic-dot .icone { width: 16px; height: 16px; }
+.ic-status.alerta .ic-dot { background: var(--ic-danger-soft); color: var(--ic-danger); box-shadow: none; }
