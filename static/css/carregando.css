@@ -1,0 +1,29 @@
+/* Efeito de sombreado (esqueleto com brilho) enquanto uma página ou uma busca carrega. */
+:root { --sk-base: #eceff3; --sk-brilho: #f8f9fb; }
+:root[data-tema="escuro"] { --sk-base: #232a34; --sk-brilho: #2f3845; }
+
+@keyframes sk-brilho { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Utilitário: qualquer elemento com .sk vira um bloco sombreado. */
+.sk {
+  display: block; min-height: 14px; border-radius: 8px; color: transparent !important; pointer-events: none;
+  background: linear-gradient(100deg, var(--sk-base) 30%, var(--sk-brilho) 50%, var(--sk-base) 70%) 0 0 / 200% 100%;
+  animation: sk-brilho 1.3s linear infinite;
+}
+
+/* Ao navegar (clique em link ou envio de formulário): o conteúdo vira sombras até a nova página chegar. */
+body.carregando #conteudo { pointer-events: none; cursor: progress; }
+body.carregando #conteudo :is(h1, h2, h3, p, dt, dd, td, th, label, small, strong, em, a, button, .pill, .btn, .btn-mini, .num, input, select, textarea) {
+  color: transparent !important; border-color: transparent !important; text-shadow: none !important; caret-color: transparent;
+  border-radius: 8px;
+  background: linear-gradient(100deg, var(--sk-base) 30%, var(--sk-brilho) 50%, var(--sk-base) 70%) 0 0 / 200% 100% !important;
+  animation: sk-brilho 1.3s linear infinite;
+}
+body.carregando #conteudo :is(svg, img, canvas) { opacity: 0; }
+body.carregando #conteudo ::placeholder { color: transparent; }
+/* Elementos de texto dentro de outros não empilham brilho: só o mais externo aparece sombreado. */
+body.carregando #conteudo :is(td, th, dd, p, h1, h2, h3, label) :is(a, strong, em, small, span, .num, .pill) { background: none !important; animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sk, body.carregando #conteudo :is(h1, h2, h3, p, dt, dd, td, th, label, small, strong, em, a, button, .pill, .btn, .btn-mini, .num, input, select, textarea) { animation: none; }
+}
