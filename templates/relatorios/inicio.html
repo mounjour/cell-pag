@@ -71,7 +71,7 @@
             <div class="ic-val num">R$ {{ v.valor_exibido|floatformat:"2g" }}</div>
             <div class="ic-acts">
               {% include "_contato_icones.html" with cliente=v.contrato.cliente %}
-              {% if not v.paga %}<a class="ic-btn sm primary" href="{% url 'pagamentos:novo' v.contrato.pk %}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>{% endif %}
+              {% if not v.paga %}<a class="ic-btn sm primary" href="{% url 'pagamentos:novo' v.contrato.pk %}">{% include "_icone.html" with nome="dinheiro" %}Registrar pagamento</a>{% else %}<span class="ic-btn sm primary ic-feito" aria-disabled="true">{% include "_icone.html" with nome="quitar" %}Pagamento efetuado</span>{% endif %}
             </div>
           </div>
         {% endfor %}

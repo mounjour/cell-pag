@@ -234,3 +234,6 @@
 .ic-item .ic-acts { position: relative; z-index: 1; }
 .ic-item .ic-info b a:hover { text-decoration: none; }
 .ic-item:hover .ic-info b a { color: var(--ic-brand); }
+
+/* Parcela já paga: mesmo botão de "Registrar pagamento", só que opaco e sem ação. */
+.ic-feito { opacity: .45; cursor: default; pointer-events: none; }
