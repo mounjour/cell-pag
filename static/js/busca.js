@@ -98,11 +98,26 @@
     ativo = -1;
   }
 
+  /* Enquanto a resposta não chega, mostra linhas sombreadas no lugar das sugestões. */
+  function esqueleto() {
+    lista.textContent = "";
+    itens = [];
+    for (var i = 0; i < 3; i++) {
+      var linha = document.createElement("div");
+      linha.className = "sk";
+      linha.style.cssText = "height:38px;margin:6px 10px;";
+      lista.appendChild(linha);
+    }
+    lista.hidden = false;
+    campo.setAttribute("aria-expanded", "true");
+  }
+
   function buscar() {
     var q = campo.value.trim();
     if (q.length < MINIMO) { fechar(); return; }
     if (pedido) pedido.abort();
     pedido = new AbortController();
+    esqueleto();
     fetch(urlSugestoes + "?q=" + encodeURIComponent(q), {
       credentials: "same-origin",
       headers: { Accept: "application/json" },
@@ -112,7 +127,7 @@
       .then(function (dados) {
         if (dados.q === campo.value.trim()) desenhar(dados); // ignora resposta velha
       })
-      .catch(function () { /* cancelada ou sem rede: o Enter ainda leva à página de resultados */ });
+      .catch(function (e) { if (!e || e.name !== "AbortError") fechar(); /* sem rede: o Enter ainda leva à página de resultados */ });
   }
 
   campo.addEventListener("input", function () {
