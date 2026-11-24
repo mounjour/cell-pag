@@ -1,5 +1,5 @@
 /* Sugestões da busca enquanto se digita (campo do topo, no computador).
-   - Só busca a partir de 2 caracteres, com espera de 200 ms entre as teclas;
+   - Só busca a partir de 2 caracteres, sem espera entre as teclas;
      uma resposta antiga nunca sobrescreve uma mais nova.
    - Teclado: ↓/↑ escolhem, Enter abre o escolhido (sem escolha, vai para a
      página de resultados), Esc fecha.
@@ -132,7 +132,7 @@
 
   campo.addEventListener("input", function () {
     clearTimeout(espera);
-    espera = setTimeout(buscar, 200);
+    buscar(); // sem espera: o sombreado aparece na hora e a resposta mais nova vence
   });
 
   campo.addEventListener("focus", function () {
