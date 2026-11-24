@@ -3,7 +3,7 @@
 {% block title %}{{ cliente.nome }}{% endblock %}
 {% block extra_head %}<script src="{% static 'js/confirmar_exclusao.js' %}?v=1" defer></script>{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/cliente_detalhe.css' %}?v=3">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/cliente_detalhe.css' %}?v=4">{% endblock %}
 
 {% block content %}
 <div class="cd">
@@ -58,13 +58,6 @@
     <p>O cadastro do cliente não inicia cobranças. Adicione um contrato, confira o resumo e confirme para liberar a cobrança automática.</p>
   </div>
 {% endif %}
-
-<div class="form-actions">
-  <form id="form-excluir-cliente" method="post" action="{% url 'clientes:excluir' cliente.pk %}">
-    {% csrf_token %}
-    <button type="button" class="btn-cancelar-pix" data-confirmar-exclusao>{% include "_icone.html" with nome="excluir" %}Excluir cliente</button>
-  </form>
-</div>
 
 <dialog class="dialog-confirmacao" id="dialog-excluir-cliente" aria-labelledby="titulo-excluir-cliente">
   <div class="dialog-confirmacao__conteudo">
@@ -180,5 +173,16 @@
 {% else %}
   <p class="empty">Nenhum pagamento registrado para este cliente.</p>
 {% endif %}
+
+<section class="cd-perigo" aria-label="Excluir cliente">
+  <div>
+    <strong>Excluir cliente</strong>
+    <span>Remove o cadastro de {{ cliente.nome }} para sempre. Para só tirá-lo da lista, use Arquivar.</span>
+  </div>
+  <form id="form-excluir-cliente" method="post" action="{% url 'clientes:excluir' cliente.pk %}">
+    {% csrf_token %}
+    <button type="button" class="btn-cancelar-pix" data-confirmar-exclusao>{% include "_icone.html" with nome="excluir" %}Excluir cliente</button>
+  </form>
+</section>
 </div>
 {% endblock %}

@@ -87,3 +87,10 @@
 .cd .aviso--info { border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); }
 .cd .painel-contrato { border-left-width: 1px; }
 .cd .cobranca-auto--ativa, .cd .cobranca-auto--suspensa { border-left: 0; }
+
+/* Exclusão no fim da página, discreta, separada do resto. */
+.cd-perigo { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; padding: 16px 0 4px; border-top: 1px solid var(--line); }
+.cd-perigo strong { display: block; font-size: 14px; color: var(--ink); }
+.cd-perigo span { font-size: 13px; color: var(--ink-faint); }
+.cd-perigo form { margin: 0; flex: none; }
+@media (max-width: 760px) { .cd-perigo { flex-direction: column; align-items: flex-start; } }
