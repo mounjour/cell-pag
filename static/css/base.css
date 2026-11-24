@@ -1491,6 +1491,9 @@ button.btn-mini { cursor: pointer; font-family: inherit; }
 .proximas-item .bloqueio-form { flex-wrap: nowrap; }
 .proximas-item .bloqueio-form input { width: 7.5rem; min-width: 0; }
 .proximas-item--rotina .proximas-item__cliente, .proximas-item--rotina .proximas-item__detalhe { white-space: normal; overflow: visible; text-overflow: clip; }
+/* Colunas fixas: o selo, a última execução e o esperado alinham em todas as linhas, inclusive na versão publicada. */
+.proximas-item--rotina { grid-template-columns: minmax(0, 1fr) 10rem 13rem 11rem; gap: .5rem 1.25rem; }
+.proximas-item--rotina .proximas-item__nota { text-align: left; }
 @media (max-width: 719px) { .proximas-item--rotina { grid-template-columns: minmax(0, 1fr); } .proximas-item--rotina > * { grid-column: 1; grid-row: auto; } }
 .painel-vazio pre { overflow-x: auto; padding: .75rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: .8rem; }
 .painel-vazio ol { margin: 0; padding-left: 1.2rem; line-height: 1.6; }

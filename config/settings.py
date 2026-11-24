@@ -265,7 +265,8 @@ PIX_CHAVE = env("WHATSAPP_PIX_CHAVE", default="")
 # (a Cora só informa os pagamentos pelo extrato); "fatura" = fatura Pix criada na Cora (modo antigo).
 PIX_MODO = env("PIX_MODO", default="fatura")
 # Commit publicado (o Dockerfile copia o SOURCE_COMMIT do Coolify) e repositório para conferir se está em dia com a main.
-VERSAO_PUBLICADA = env("VERSAO_PUBLICADA", default="")
+# Se o build não recebeu o argumento, usa o SOURCE_COMMIT que o Coolify também injeta no ambiente de execução.
+VERSAO_PUBLICADA = env("VERSAO_PUBLICADA", default="") or env("SOURCE_COMMIT", default="")
 REPOSITORIO_GITHUB = env("REPOSITORIO_GITHUB", default="mounjour/cell-pag")
 PIX_CHAVE = env("PIX_CHAVE", default="") or WHATSAPP_PIX_CHAVE
 PIX_RECEBEDOR_NOME = env("PIX_RECEBEDOR_NOME", default="ALISSON ERLLEN SANTOS")
