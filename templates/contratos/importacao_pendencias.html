@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Pendências de importação{% endblock %}
 {% block wrap_class %}wrap--wide{% endblock %}
-{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/contratos_importacao.css' %}?v=3">{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/contratos_importacao.css' %}?v=4">{% endblock %}
 {% block content %}
 <div class="ci">
 <header class="ci-topo">
@@ -11,6 +11,7 @@
     <p class="ci-sub">{% if pendencias %}{{ pendencias|length }} linha{{ pendencias|length|pluralize }} para resolver.{% else %}Nada a resolver agora.{% endif %}</p>
   </div>
   <div class="ci-acoes">
+    {% if pendencias %}<form method="post" action="{% url 'contratos:descartar_importacoes' %}" data-confirmar-envio="Descartar todas as {{ pendencias|length }} pendências? Nenhum contrato será criado.">{% csrf_token %}<button type="submit" class="btn secondary">{% include "_icone.html" with nome="excluir" %}Descartar todas</button></form>{% endif %}
     <a class="btn secondary" href="{% url 'contratos:importar_previa' %}">{% include "_icone.html" with nome="baixar" %}Importar planilha</a>
   </div>
 </header>
@@ -32,7 +33,10 @@
               {% if p.problemas|length > 1 %}<small class="pend-n">{{ p.problemas|length }} avisos</small>{% endif %}
             {% else %}<span class="nada">—</span>{% endif %}
           </td>
-          <td class="pend-acao"><a class="btn secondary" href="{% url 'contratos:resolver_importacao' p.pk %}">{% include "_icone.html" with nome="editar" %}Resolver</a></td>
+          <td class="pend-acao"><div class="pend-botoes">
+            <a class="btn secondary" href="{% url 'contratos:resolver_importacao' p.pk %}">{% include "_icone.html" with nome="editar" %}Resolver</a>
+            <form method="post" action="{% url 'contratos:descartar_importacao' p.pk %}" data-confirmar-envio="Descartar esta pendência? Nenhum contrato será criado.">{% csrf_token %}<button type="submit" class="btn secondary">{% include "_icone.html" with nome="excluir" %}Descartar</button></form>
+          </div></td>
         </tr>
       {% empty %}
         <tr><td colspan="5" class="ci-vazio">Nenhuma pendência aberta.</td></tr>

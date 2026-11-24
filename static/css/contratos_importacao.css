@@ -64,3 +64,8 @@
 .ci .tbl-wrap th, .ci .tbl-wrap td { white-space: normal; overflow-wrap: break-word; }
 .ci .tbl-wrap th:first-child, .ci .tbl-wrap td:first-child { min-width: 3.5rem; }
 .ci .tbl-wrap td.pend-acao { white-space: nowrap; }
+
+/* Resolver e Descartar lado a lado na linha da pendência. */
+.ci .pend-botoes { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+.ci .pend-botoes form, .ci-acoes form { margin: 0; }
+@media (max-width: 719px) { .ci .pend-botoes { justify-content: flex-start; } }
