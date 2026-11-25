@@ -26,6 +26,12 @@
 
     <div class="form-section">
       <p class="form-section-title">{% include "_icone.html" with nome="whatsapp" %}Mensagens no WhatsApp</p>
+      {% if form.grupos_indisponiveis %}
+      <div class="form-row--cheio aviso aviso--atencao" role="status">
+        Não foi possível carregar a lista de grupos do WhatsApp. Você pode tentar novamente mais tarde ou colar no campo abaixo o identificador do grupo (termina em @g.us).
+        <a href="{% url 'pagamentos:grupos_whatsapp' %}" target="_blank" rel="noopener">Consultar grupos e conexão em outra aba</a>.
+      </div>
+      {% endif %}
       <div class="form-row--cheio">{% include "_field.html" with field=form.grupo_whatsapp %}</div>
       {% if form.grupo_whatsapp_manual %}<div class="form-row--cheio">{% include "_field.html" with field=form.grupo_whatsapp_manual %}</div>{% endif %}
     </div>
