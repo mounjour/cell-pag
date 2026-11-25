@@ -7,6 +7,7 @@ app_name = "clientes"
 urlpatterns = [
     path("", views.ClienteListView.as_view(), name="lista"),
     path("novo/", views.ClienteCreateView.as_view(), name="novo"),
+    path("grupos-whatsapp/", views.GruposWhatsAppView.as_view(), name="grupos_whatsapp"),
     path("importar/", views.ClienteImportarView.as_view(), name="importar"),
     path("importar/confirmar/", views.ClienteImportarConfirmarView.as_view(), name="importar_confirmar"),
     path("<int:pk>/", views.ClienteDetailView.as_view(), name="detalhe"),

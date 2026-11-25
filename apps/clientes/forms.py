@@ -29,8 +29,17 @@ class ClienteForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.grupos_assincronos = kwargs.pop("grupos_assincronos", False)
         super().__init__(*args, **kwargs)
+        self._nome_grupo_atual = self.instance.grupo_whatsapp_nome
         self._nomes_dos_grupos = {}
+        if self.grupos_assincronos:
+            from django.core.cache import cache
+
+            self.fields["grupo_whatsapp_token"] = forms.CharField(required=False, widget=forms.HiddenInput)
+            grupos = cache.get("whatsapp_grupos_antigo") or []
+            self._nomes_dos_grupos = {g["id"]: g["nome"] for g in grupos}
+            return  # GET e POST do cliente nunca esperam pela API.
         from apps.pagamentos.whatsapp import grupos_do_whatsapp
 
         grupos = grupos_do_whatsapp()
@@ -73,15 +82,27 @@ class ClienteForm(forms.ModelForm):
     def save(self, commit=True):
         cliente = super().save(commit=False)
         grupo = self.cleaned_data.get("grupo_whatsapp") or ""
+        if self.grupos_assincronos and self.cleaned_data.get("grupo_whatsapp_token"):
+            from django.core import signing
+
+            try:
+                escolha = signing.loads(self.cleaned_data["grupo_whatsapp_token"], salt="cliente-grupo")
+                if escolha["id"] == grupo:
+                    self._nomes_dos_grupos[grupo] = escolha["nome"]
+            except signing.BadSignature:
+                pass
         if not grupo:
             cliente.grupo_whatsapp_nome = ""
         elif grupo in self._nomes_dos_grupos:
-            cliente.grupo_whatsapp_nome = self._nomes_dos_grupos[grupo]
-        elif self.cleaned_data.get("grupo_whatsapp_manual"):
+            cliente.grupo_whatsapp_nome = self._nomes_dos_grupos[grupo][:120]
+        elif self.cleaned_data.get("grupo_whatsapp_manual") or self.grupos_assincronos:
             from apps.pagamentos.models import GrupoWhatsApp
 
             visto = GrupoWhatsApp.objects.filter(jid=grupo).first()
-            cliente.grupo_whatsapp_nome = visto.nome if visto else ""
+            cliente.grupo_whatsapp_nome = visto.nome if visto else (
+                self._nome_grupo_atual
+                if grupo == self.initial.get("grupo_whatsapp") else ""
+            )
         if commit:
             cliente.save()
         return cliente

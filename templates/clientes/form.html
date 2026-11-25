@@ -26,6 +26,18 @@
 
     <div class="form-section">
       <p class="form-section-title">{% include "_icone.html" with nome="whatsapp" %}Mensagens no WhatsApp</p>
+      {% if form.grupos_assincronos %}
+      {{ form.grupo_whatsapp_token }}
+      <div class="form-row--cheio" data-grupos-url="{% url 'clientes:grupos_whatsapp' %}" data-grupo-nome="{{ form.instance.grupo_whatsapp_nome }}">
+        <div class="form-row" data-grupos-selecao hidden>
+          <label for="grupo_whatsapp_selecao">Grupo do WhatsApp</label>
+          <select id="grupo_whatsapp_selecao" aria-describedby="grupos-status" disabled><option value="">Carregando grupos…</option></select>
+        </div>
+        <p id="grupos-status" role="status" aria-live="polite"></p>
+        <button type="button" class="btn secundario" data-grupos-tentar hidden>Tentar novamente</button>
+        <noscript>Informe abaixo o identificador do grupo (termina em @g.us).</noscript>
+      </div>
+      {% endif %}
       {% if form.grupos_indisponiveis %}
       <div class="form-row--cheio aviso aviso--atencao" role="status">
         Não foi possível carregar a lista de grupos do WhatsApp. Você pode tentar novamente mais tarde ou colar no campo abaixo o identificador do grupo (termina em @g.us).
@@ -48,3 +60,4 @@
   </form>
 </div>
 {% endblock %}
+{% block scripts %}<script src="{% static 'js/cliente_grupos.js' %}?v=1" defer></script>{% endblock %}
