@@ -117,7 +117,7 @@ def _chamar_evolution_get(caminho: str, consulta: dict | None = None, timeout: i
         raise WhatsAppErro("Falha de comunicação com a Evolution API.") from exc
 
 
-def consultar_grupos() -> dict:
+def consultar_grupos(timeout: int = 15) -> dict:
     """Pergunta à Evolution quais grupos o número conectado tem, sem cache e **levantando** o erro (usado no diagnóstico).
 
     Devolve ``{"grupos": [{"id", "nome", "participantes"}] por nome, "recebidos": quantos itens a Evolution mandou,
@@ -125,7 +125,8 @@ def consultar_grupos() -> dict:
     if settings.WHATSAPP_PROVIDER.lower().strip() != "evolution":
         raise WhatsAppErro("Modo simulação (WHATSAPP_PROVIDER != evolution): não há grupos para listar.")
     inicio = time.monotonic()
-    dados = _chamar_evolution_get("/group/fetchAllGroups", {"getParticipants": "false"})
+    argumentos = {"timeout": timeout} if timeout != 15 else {}
+    dados = _chamar_evolution_get("/group/fetchAllGroups", {"getParticipants": "false"}, **argumentos)
     itens = dados if isinstance(dados, list) else []
     grupos = sorted(
         (

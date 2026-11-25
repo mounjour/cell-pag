@@ -180,7 +180,42 @@ def _painel_do_contrato(contrato) -> dict:
     }
 
 
-class ClienteCreateView(LoginRequiredMixin, CreateView):
+class GruposWhatsAppView(LoginRequiredMixin, View):
+    def get(self, request):
+        from django.core import signing
+        from django.core.cache import cache
+        from apps.pagamentos.models import GrupoWhatsApp
+        from apps.pagamentos.whatsapp import consultar_grupos, WhatsAppErro
+
+        grupos = cache.get("whatsapp_grupos")
+        if grupos is None:
+            try:
+                grupos = consultar_grupos(timeout=45)["grupos"]
+            except WhatsAppErro:
+                return JsonResponse({"erro": "Não foi possível carregar os grupos."}, status=503)
+            cache.set("whatsapp_grupos", grupos, 60)
+        por_id = {g["id"]: g for g in grupos}
+        for grupo in GrupoWhatsApp.objects.all():
+            por_id.setdefault(grupo.jid, {
+                "id": grupo.jid, "nome": grupo.nome or grupo.jid,
+                "participantes": grupo.participantes or 0,
+            })
+        grupos = sorted(por_id.values(), key=lambda g: g["nome"].lower())
+        cache.set("whatsapp_grupos_antigo", grupos, 86400)
+        return JsonResponse({"grupos": [
+            {**g, "token": signing.dumps({"id": g["id"], "nome": g["nome"]}, salt="cliente-grupo")}
+            for g in grupos
+        ]})
+
+
+class ClienteGruposMixin:
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["grupos_assincronos"] = True
+        return kwargs
+
+
+class ClienteCreateView(LoginRequiredMixin, ClienteGruposMixin, CreateView):
     model = Cliente
     form_class = ClienteForm
     template_name = "clientes/form.html"
@@ -193,7 +228,7 @@ class ClienteCreateView(LoginRequiredMixin, CreateView):
         return reverse("clientes:detalhe", args=[self.object.pk])
 
 
-class ClienteUpdateView(LoginRequiredMixin, UpdateView):
+class ClienteUpdateView(LoginRequiredMixin, ClienteGruposMixin, UpdateView):
     model = Cliente
     form_class = ClienteForm
     template_name = "clientes/form.html"
