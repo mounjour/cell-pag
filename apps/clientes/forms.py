@@ -34,6 +34,7 @@ class ClienteForm(forms.ModelForm):
         from apps.pagamentos.whatsapp import grupos_do_whatsapp
 
         grupos = grupos_do_whatsapp()
+        self.grupos_indisponiveis = grupos is None
         if grupos is None:
             return  # sem lista (simulação ou Evolution fora do ar): fica o campo de texto
         atual = self.instance.grupo_whatsapp if self.instance and self.instance.pk else ""
