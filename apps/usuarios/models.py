@@ -77,3 +77,83 @@ class Usuario(AbstractUser):
     def is_dono(self) -> bool:
         """Perfil dono (ou superusuário). Vê tudo que o financeiro vê e mais."""
         return self.is_superuser or self.perfil == self.Perfil.DONO
+
+
+class ConviteUsuario(models.Model):
+    """Código de convite para cadastro rápido: o dono gera, a pessoa convidada
+    usa a tela pública de cadastro uma única vez e cria o próprio usuário.
+
+    O código é curto (alfabeto sem caracteres que se confundem), vale uma vez e
+    expira. O perfil que a pessoa recebe é o escolhido na hora de gerar.
+    """
+
+    ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    TAMANHO = 8
+    VALIDADE_HORAS = 48
+
+    codigo = models.CharField("código", max_length=16, unique=True, editable=False)
+    perfil = models.CharField(
+        "perfil", max_length=20, choices=Usuario.Perfil.choices, default=Usuario.Perfil.FINANCEIRO
+    )
+    criado_por = models.ForeignKey(
+        Usuario, verbose_name="criado por", null=True, on_delete=models.SET_NULL, related_name="convites_criados"
+    )
+    criado_em = models.DateTimeField("criado em", auto_now_add=True)
+    expira_em = models.DateTimeField("expira em")
+    usado_em = models.DateTimeField("usado em", null=True, blank=True)
+    usado_por = models.ForeignKey(
+        Usuario, verbose_name="usado por", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="convite_de_cadastro",
+    )
+    revogado_em = models.DateTimeField("revogado em", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "convite de usuário"
+        verbose_name_plural = "convites de usuário"
+        ordering = ["-criado_em"]
+
+    def __str__(self) -> str:
+        return self.codigo
+
+    @classmethod
+    def normalizar(cls, texto: str) -> str:
+        """Aceita o código digitado com espaços, hífen ou minúsculas."""
+        return "".join(c for c in (texto or "").upper() if c.isalnum())
+
+    @classmethod
+    def gerar(cls, criado_por, perfil, horas=None):
+        import secrets
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        horas = horas or cls.VALIDADE_HORAS
+        while True:
+            codigo = "".join(secrets.choice(cls.ALFABETO) for _ in range(cls.TAMANHO))
+            if not cls.objects.filter(codigo=codigo).exists():
+                break
+        return cls.objects.create(
+            codigo=codigo, perfil=perfil, criado_por=criado_por,
+            expira_em=timezone.now() + timedelta(hours=horas),
+        )
+
+    @property
+    def codigo_formatado(self) -> str:
+        meio = len(self.codigo) // 2
+        return f"{self.codigo[:meio]}-{self.codigo[meio:]}"
+
+    @property
+    def situacao(self) -> str:
+        from django.utils import timezone
+
+        if self.usado_em:
+            return "usado"
+        if self.revogado_em:
+            return "cancelado"
+        if self.expira_em <= timezone.now():
+            return "expirado"
+        return "valido"
+
+    @property
+    def esta_valido(self) -> bool:
+        return self.situacao == "valido"

@@ -66,6 +66,7 @@
         </summary>
         <div class="menu-painel">
           <div class="menu-quem"><strong>{{ user.nome_completo }}</strong><span>{{ user.email }}</span></div>
+          {% if user.is_dono %}<a class="menu-item" href="{% url 'usuarios:convites' %}">{% include "_icone.html" with nome="adicionar" %}<span>Convidar usuário</span></a>{% endif %}
           {% if user.is_staff %}<a class="menu-item" href="/admin/">{% include "_icone.html" with nome="admin" %}<span>Administração</span></a>{% endif %}
           <a class="menu-item" href="{% url 'usuarios:ajuda' %}">{% include "_icone.html" with nome="busca" %}<span>Ajuda</span></a>
           <a class="menu-item" href="{% url 'usuarios:termos' %}">{% include "_icone.html" with nome="termos" %}<span>Termos e privacidade</span></a>
@@ -121,6 +122,7 @@
         </summary>
         <div class="menu-painel">
           <div class="menu-quem"><strong>{{ user.nome_completo }}</strong><span>{{ user.email }}</span></div>
+          {% if user.is_dono %}<a class="menu-item" href="{% url 'usuarios:convites' %}">{% include "_icone.html" with nome="adicionar" %}<span>Convidar usuário</span></a>{% endif %}
           {% if user.is_staff %}<a class="menu-item" href="/admin/">{% include "_icone.html" with nome="admin" %}<span>Administração</span></a>{% endif %}
           <a class="menu-item" href="{% url 'usuarios:ajuda' %}">{% include "_icone.html" with nome="busca" %}<span>Ajuda</span></a>
           <a class="menu-item" href="{% url 'usuarios:termos' %}">{% include "_icone.html" with nome="termos" %}<span>Termos e privacidade</span></a>

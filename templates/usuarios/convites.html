@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Convites de usuário{% endblock %}
+{% block extra_styles %}<link rel="stylesheet" href="{% static 'css/convites.css' %}?v=1">{% endblock %}
+
+{% block content %}
+<h1>{% include "_icone.html" with nome="adicionar" %}Convites de usuário</h1>
+<p class="note">Gere um código e envie para a pessoa. Ela abre o link (ou digita o código na tela de cadastro), cria o próprio usuário e já entra no sistema. Cada código vale uma única vez e expira em {{ validade_horas }} horas.</p>
+
+<section class="card convite-novo">
+  <h2>Gerar novo código</h2>
+  <form method="post" class="convite-gerar">
+    {% csrf_token %}
+    <div class="form-row">
+      <label for="id_perfil">Perfil de quem vai entrar</label>
+      <select name="perfil" id="id_perfil">
+        {% for valor, rotulo in perfis %}<option value="{{ valor }}"{% if valor == 'financeiro' %} selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn">{% include "_icone.html" with nome="gerar" %}Gerar código</button>
+  </form>
+  <p class="helptext">Financeiro vê o dia a dia das cobranças. Dono também vê Financeiro, Juros e as configurações.</p>
+</section>
+
+<section class="card">
+  <h2>Códigos gerados</h2>
+  {% if convites %}
+  <ul class="convite-lista">
+    {% for c in convites %}
+    <li class="convite-item{% if c.novo %} convite-item--novo{% endif %}">
+      <div class="convite-topo">
+        <strong class="convite-codigo">{{ c.codigo_formatado }}</strong>
+        {% if c.situacao == 'valido' %}<span class="pill pago">Válido</span>
+        {% elif c.situacao == 'usado' %}<span class="pill aberto">Usado</span>
+        {% elif c.situacao == 'expirado' %}<span class="pill inadimplente">Expirado</span>
+        {% else %}<span class="pill inadimplente">Cancelado</span>{% endif %}
+        <span class="convite-perfil">{{ c.get_perfil_display }}</span>
+      </div>
+      <p class="convite-meta">
+        Criado {{ c.criado_em|date:"d/m/Y H:i" }}{% if c.criado_por %} por {{ c.criado_por.nome_curto }}{% endif %}.
+        {% if c.situacao == 'usado' %}Usado {{ c.usado_em|date:"d/m/Y H:i" }}{% if c.usado_por %} por {{ c.usado_por.nome_completo }}{% endif %}.
+        {% elif c.situacao == 'valido' %}Vale até {{ c.expira_em|date:"d/m/Y H:i" }}.{% endif %}
+      </p>
+      {% if c.situacao == 'valido' %}
+      <div class="convite-link"><input type="text" readonly value="{{ c.link }}" aria-label="Link do convite" data-selecionar></div>
+      <div class="convite-acoes">
+        <button type="button" class="btn" data-copiar="{{ c.link }}" data-copiar-aviso="Link copiado.">{% include "_icone.html" with nome="copiar" %}Copiar link</button>
+        <button type="button" class="btn secondary" data-copiar="{{ c.codigo_formatado }}" data-copiar-aviso="Código copiado.">{% include "_icone.html" with nome="copiar" %}Copiar código</button>
+        <a class="btn secondary" href="{{ c.whatsapp }}" target="_blank" rel="noopener">{% include "_icone.html" with nome="whatsapp" %}Enviar por WhatsApp</a>
+        <form method="post" action="{% url 'usuarios:convite_cancelar' c.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn cancelar">{% include "_icone.html" with nome="cancelar" %}Cancelar</button>
+        </form>
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">Nenhum código gerado ainda.</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/convites.js' %}?v=1" defer></script>{% endblock %}

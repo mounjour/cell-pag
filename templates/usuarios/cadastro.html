@@ -1,0 +1,43 @@
+{% extends "usuarios/conta_base.html" %}
+{% load static %}
+{% block title %}Criar usuário - CellPage{% endblock %}
+{% block extra_styles %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/convites.css' %}?v=1">{% endblock %}
+{% block card_classe %}cadastro-card{% endblock %}
+{% block titulo %}{% if convite %}Criar seu usuário{% else %}Código de convite{% endif %}{% endblock %}
+{% block corpo %}
+{% if convite %}
+  <p class="login-description">Convite válido. Preencha os dados abaixo para criar o seu usuário e entrar no sistema.</p>
+  <form method="post" class="login-form" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="codigo" value="{{ convite.codigo }}">
+    {% if form.non_field_errors %}<p class="login-error" role="alert">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+    {% for field in form %}
+      {% if field.name == 'aceito' %}
+      <div class="login-field">
+        <label class="login-check">{{ field }} <span>Li e aceito os <a href="{% url 'usuarios:termos' %}" target="_blank" rel="noopener">Termos de uso e privacidade</a></span></label>
+        {% if field.errors %}<div class="login-field-error">{{ field.errors }}</div>{% endif %}
+      </div>
+      {% else %}
+      <div class="login-field">
+        {{ field.label_tag }}
+        <div class="login-input login-input--simples">{{ field }}</div>
+        {% if field.errors %}<div class="login-field-error">{{ field.errors }}</div>{% endif %}
+      </div>
+      {% endif %}
+    {% endfor %}
+    <button type="submit" class="login-submit">{% include "_icone.html" with nome="salvar" %}Criar usuário e entrar</button>
+  </form>
+{% else %}
+  <p class="login-description">Digite o código que você recebeu para criar o seu usuário.</p>
+  {% if erro %}<p class="login-error" role="alert">{{ erro }}</p>{% endif %}
+  <form method="post" class="login-form" action="{% url 'usuarios:cadastro' %}">
+    {% csrf_token %}
+    <div class="login-field">
+      <label for="id_codigo">Código de convite</label>
+      <div class="login-input login-input--simples"><input type="text" name="codigo" id="id_codigo" class="codigo-campo" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-2345" required autofocus></div>
+    </div>
+    <button type="submit" class="login-submit">{% include "_icone.html" with nome="proximo" %}Continuar</button>
+  </form>
+{% endif %}
+<p class="login-termos">Já tem usuário? <a href="{% url 'usuarios:login' %}">Entrar no sistema</a></p>
+{% endblock %}
