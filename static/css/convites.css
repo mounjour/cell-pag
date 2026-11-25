@@ -1,0 +1,24 @@
+/* Convites de usuário: tela do dono e cadastro público. */
+.convite-gerar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+.convite-gerar .form-row { margin: 0; min-width: 220px; }
+.convite-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.convite-item { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
+.convite-item--novo { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+.convite-topo { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.convite-codigo { font-size: 1.35rem; letter-spacing: .12em; font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.convite-perfil { color: var(--ink-soft); font-size: .85rem; }
+.convite-meta { margin: 6px 0 0; color: var(--ink-faint); font-size: .85rem; }
+.convite-link { margin-top: 10px; }
+.convite-link input { width: 100%; }
+.convite-acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.convite-acoes form { display: contents; }
+.convite-acoes .btn { width: auto; text-decoration: none; }
+
+/* Cadastro público */
+.cadastro-card .login-input--simples input { padding-left: 20px; }
+.cadastro-card .codigo-campo { text-transform: uppercase; letter-spacing: .15em; font-size: 1.2rem; text-align: center; }
+.cadastro-card .login-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.cadastro-card .login-submit .icone { width: 18px; height: 18px; }
+@media (max-width: 640px) {
+  .convite-acoes .btn { flex: 1 1 100%; justify-content: center; }
+}

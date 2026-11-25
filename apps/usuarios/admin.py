@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.urls import reverse
 
-from .models import Usuario
+from .models import ConviteUsuario, Usuario
 
 
 class UsuarioCriacaoForm(UserCreationForm):
@@ -65,3 +65,10 @@ class UsuarioAdmin(UserAdmin):
             },
         ),
     )
+
+
+@admin.register(ConviteUsuario)
+class ConviteUsuarioAdmin(admin.ModelAdmin):
+    list_display = ("codigo", "perfil", "criado_por", "criado_em", "expira_em", "usado_em", "usado_por")
+    list_filter = ("perfil",)
+    readonly_fields = ("codigo", "criado_por", "criado_em", "usado_em", "usado_por")
