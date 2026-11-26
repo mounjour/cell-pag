@@ -7,7 +7,7 @@
 <div class="form-centered nf">
 {% url 'contratos:detalhe' contrato.pk as volta_url %}{% include "_voltar.html" with url=volta_url %}
 <header class="nf-topo"><h1>{% include "_icone.html" with nome="proximas" %}Editar parcela {{ vencimento.numero }}</h1></header>
-<p class="note">{{ contrato.cliente.nome }}, {{ contrato.apelido }}. A mensagem de cobrança, o Pix e as telas passam a usar o valor e a data daqui. Se a parcela já tiver um Pix aberto, ele é cancelado (a Cora cobra R$ 0,30 por cancelamento) e a próxima rotina gera outro com o valor novo.</p>
+<p class="note">{{ contrato.cliente.nome }}, {{ contrato.apelido }}. A mensagem de cobrança, o Pix e as telas passam a usar o valor e a data daqui. {% if contrato.estrutura == 'quinzenal' and not contrato.dias_cobranca_mes %}Ao mudar a data, as próximas parcelas sem pagamento seguem a nova sequência de 15 em 15 dias. {% endif %}Se a parcela já tiver um Pix aberto, ele é cancelado (a Cora cobra R$ 0,30 por cancelamento) e a próxima rotina gera outro com o valor novo.</p>
 
 <dl class="meta meta--4col">
   <div><dt>Data de cobrança</dt><dd class="num">{{ vencimento.data_vencimento|date:"d/m/Y" }}{% if vencimento.data_original %} <small>(era {{ vencimento.data_original|date:"d/m/Y" }})</small>{% endif %}</dd></div>

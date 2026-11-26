@@ -60,9 +60,46 @@ def editar_parcela(
     vencimento.acrescimo_motivo = motivo.strip()[:120] if acrescimo else ""
     vencimento.aplicar_valor_pago(vencimento.valor_pago, salvar=False)
     vencimento.save()
+    avisos = []
+    if mudou_data:
+        avisos.extend(_reagendar_proximas_quinzenais(vencimento, autor))
     if mudou_valor or mudou_data:
-        return _renovar_pix(vencimento, "Parcela editada", autor)
-    return []
+        avisos.extend(_renovar_pix(vencimento, "Parcela editada", autor))
+    return avisos
+
+
+def _reagendar_proximas_quinzenais(vencimento: Vencimento, autor=None) -> list[Aviso]:
+    """Reagenda a sequência quinzenal a partir de uma parcela cuja data mudou.
+
+    A alteração passa a ser o novo marco do contrato, para que parcelas ainda não
+    geradas também respeitem o intervalo de 15 dias. Parcelas já pagas ou que já
+    receberam baixa mantêm o histórico registrado.
+    """
+    contrato = vencimento.contrato
+    if contrato.estrutura != contrato.Estrutura.QUINZENAL or contrato.dias_cobranca_mes:
+        return []
+
+    contrato.primeira_cobranca = vencimento.data_vencimento - datetime.timedelta(days=15 * (vencimento.numero - 1))
+    contrato.atualizar_data_prevista_quitacao(salvar=False)
+    contrato.save(update_fields=["primeira_cobranca", "data_prevista_quitacao", "atualizado_em"])
+
+    avisos = []
+    posteriores = (
+        Vencimento.objects.select_for_update()
+        .filter(contrato=contrato, numero__gt=vencimento.numero, pagamentos__isnull=True)
+        .exclude(status=Vencimento.Status.PAGO)
+        .order_by("numero")
+    )
+    for posterior in posteriores:
+        nova_data = contrato.data_da_parcela(posterior.numero)
+        if posterior.data_vencimento == nova_data:
+            continue
+        posterior.data_original = posterior.data_original or posterior.data_vencimento
+        posterior.data_vencimento = nova_data
+        posterior.juros_abonado = Decimal("0.00")
+        posterior.save(update_fields=["data_original", "data_vencimento", "juros_abonado", "atualizado_em"])
+        avisos.extend(_renovar_pix(posterior, "Calendário quinzenal alterado", autor))
+    return avisos
 
 
 def _pix_desatualizado(venc) -> bool:

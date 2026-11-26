@@ -23,7 +23,7 @@ contrato guarda a ``primeira_cobranca`` (data da parcela 1) e, quando preciso, o
 dias do mês (``dias_do_mes``, ex.: "15" ou "5,20"):
 
 * **Semanal**   — toda semana no dia da semana da primeira cobrança (7 em 7 dias).
-* **Quinzenal** — duas formas: *a cada 14 dias* no mesmo dia da semana, ou *dois dias
+* **Quinzenal** — duas formas: *a cada 15 dias*, ou *dois dias
   fixos do mês* (ex.: 5 e 20).
 * **Mensal**    — todo mês no dia escolhido (mês curto cai no último dia).
 
@@ -58,12 +58,12 @@ DIAS_DA_SEMANA = (
 )
 
 #: Passo, em dias, de cada frequência quando o contrato tem dia de cobrança
-#: (quinzenal por dia da semana = 14, para cair sempre no mesmo dia).
+#: (quinzenal = 15 dias; por isso as cobranças avançam um dia da semana a cada parcela).
 PASSO_COM_DIA_DE_COBRANCA = {
     Contrato.Estrutura.DIARIA: 1,
     Contrato.Estrutura.SEMANAL: 7,
     Contrato.Estrutura.DEZENA: 10,
-    Contrato.Estrutura.QUINZENAL: 14,
+    Contrato.Estrutura.QUINZENAL: 15,
 }
 
 #: Dias corridos entre parcelas, para as estruturas de passo fixo.
@@ -299,5 +299,5 @@ def descrever_dia_de_cobranca(
             return f"Dias {dias[0]} e {dias[1]} de cada mês"
         if primeira_cobranca is None:
             return "A cada 15 dias, a partir da compra"
-        return f"A cada 14 dias, sempre {DIAS_DA_SEMANA[base.weekday()]}"
+        return f"A cada 15 dias, a partir de {base:%d/%m/%Y}"
     return ""

@@ -21,10 +21,10 @@ def test_semanal_repete_o_dia_da_semana_da_primeira_cobranca():
     assert _datas("semanal", D(2026, 10, 5), n=3) == [D(2026, 10, 5), D(2026, 10, 12), D(2026, 10, 19)]
 
 
-def test_quinzenal_por_dia_da_semana_e_a_cada_14_dias():
+def test_quinzenal_por_dia_da_semana_e_a_cada_15_dias():
     datas = _datas("quinzenal", D(2026, 10, 7), n=3)
-    assert datas == [D(2026, 10, 7), D(2026, 10, 21), D(2026, 11, 4)]
-    assert {d.weekday() for d in datas} == {2}  # sempre quarta
+    assert datas == [D(2026, 10, 7), D(2026, 10, 22), D(2026, 11, 6)]
+    assert [d.weekday() for d in datas] == [2, 3, 4]
 
 
 def test_quinzenal_em_dois_dias_do_mes():
@@ -62,7 +62,7 @@ def test_sugestao_parte_de_um_periodo_depois_da_compra():
     # sexta 25/09: a semanal de sexta cai 7 dias depois; a mensal do dia 25, no mês seguinte
     assert sugerir_primeira_cobranca(D(2026, 9, 25), "semanal", dia_semana=4) == D(2026, 10, 2)
     assert sugerir_primeira_cobranca(D(2026, 9, 25), "mensal", dias_do_mes=[25]) == D(2026, 10, 25)
-    # compra em 22/07, dias 5 e 20: 14 dias depois (≥ 05/08) → 05/08
+    # Nos dois dias fixos do mês, vale o próximo dia escolhido após duas semanas.
     assert sugerir_primeira_cobranca(D(2026, 7, 22), "quinzenal", dias_do_mes=[5, 20]) == D(2026, 8, 5)
 
 
@@ -97,7 +97,7 @@ def test_interpretar_recusa_escolhas_incoerentes_com_mensagem_clara(kwargs, trec
 
 def test_descricao_em_linguagem_simples():
     assert descrever_dia_de_cobranca("semanal", D(2026, 9, 1), D(2026, 10, 5)) == "Toda segunda-feira"
-    assert descrever_dia_de_cobranca("quinzenal", D(2026, 9, 1), D(2026, 10, 7)) == "A cada 14 dias, sempre quarta-feira"
+    assert descrever_dia_de_cobranca("quinzenal", D(2026, 9, 1), D(2026, 10, 7)) == "A cada 15 dias, a partir de 07/10/2026"
     assert descrever_dia_de_cobranca("quinzenal", D(2026, 9, 1), D(2026, 10, 5), "5,20") == "Dias 5 e 20 de cada mês"
     assert descrever_dia_de_cobranca("mensal", D(2026, 9, 1), D(2026, 10, 15), "15") == "Todo dia 15"
     assert descrever_dia_de_cobranca("quinzenal", D(2026, 9, 1)) == "A cada 15 dias, a partir da compra"

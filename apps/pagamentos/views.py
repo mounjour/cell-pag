@@ -190,7 +190,14 @@ class ParcelaEditarView(LoginRequiredMixin, View):
             except parcelas.ParcelaInvalida as exc:
                 form.add_error(None, str(exc))
             else:
-                messages.success(request, f"Parcela {vencimento.numero} atualizada.")
+                texto = f"Parcela {vencimento.numero} atualizada."
+                if (
+                    form.cleaned_data["data_vencimento"] != vencimento.data_vencimento
+                    and vencimento.contrato.estrutura == Contrato.Estrutura.QUINZENAL
+                    and not vencimento.contrato.dias_cobranca_mes
+                ):
+                    texto += " As próximas parcelas sem pagamento foram ajustadas para a nova sequência quinzenal."
+                messages.success(request, texto)
                 for nivel, texto in avisos:
                     getattr(messages, nivel)(request, texto)
                 return redirect(reverse("contratos:detalhe", args=[vencimento.contrato_id]))

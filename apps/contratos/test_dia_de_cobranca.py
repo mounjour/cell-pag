@@ -60,13 +60,13 @@ def test_quinzenal_em_dois_dias_do_mes_grava_os_dias(cliente):
     assert [contrato.data_da_parcela(n) for n in (2, 3)] == [datetime.date(2026, 8, 20), datetime.date(2026, 9, 5)]
 
 
-def test_quinzenal_a_cada_14_dias_no_mesmo_dia_da_semana(cliente):
+def test_quinzenal_a_cada_15_dias(cliente):
     form = _form(cliente, estrutura="quinzenal", quinzena="semana", dia_semana="2", data_inicio="2026-09-23")
     assert form.is_valid(), form.errors
     contrato = form.save()
     assert contrato.dias_cobranca_mes == ""
     assert contrato.primeira_cobranca.weekday() == 2
-    assert (contrato.data_da_parcela(2) - contrato.data_da_parcela(1)).days == 14
+    assert (contrato.data_da_parcela(2) - contrato.data_da_parcela(1)).days == 15
 
 
 def test_mensal_guarda_o_dia_e_cai_no_ultimo_dia_do_mes_curto(cliente):
