@@ -325,6 +325,7 @@ class Pagamento(models.Model):
             parcela.save(update_fields=["juros_abonado", "atualizado_em"])
             restante -= volta
 
+    @transaction.atomic
     def estornar(self) -> Decimal:
         """Desfaz a baixa: tira ``valor_pago`` da parcela e recalcula o status.
 
@@ -339,6 +340,7 @@ class Pagamento(models.Model):
             restante = venc.valor_previsto - venc.valor_pago
             if restante < 0:
                 restante_transportado = -restante
+                self._devolver_credito_transportado(restante_transportado)
             if venc.saldo_repassado:
                 restante_transportado = venc.saldo_repassado
                 venc.saldo_repassado = Decimal("0.00")
@@ -347,6 +349,32 @@ class Pagamento(models.Model):
         self._devolver_juros()
         self.delete()
         return restante_transportado
+
+    def _devolver_credito_transportado(self, valor: Decimal) -> None:
+        """Devolve às parcelas seguintes o crédito criado por esta baixa.
+
+        Um pagamento maior que a parcela reduz os valores das parcelas seguintes;
+        as que chegam a zero aparecem pagas, mas não têm uma baixa própria. Ao
+        estornar a baixa que criou esse crédito, essas parcelas precisam voltar ao
+        valor original e ficar abertas novamente.
+        """
+        restante = valor
+        seguintes = (
+            self.contrato.vencimentos.filter(numero__gt=self.vencimento.numero, pagamentos__isnull=True)
+            .order_by("numero")
+        )
+        for alvo in seguintes:
+            if restante <= 0:
+                break
+            valor_original = self.contrato.valor_parcela + alvo.acrescimo
+            falta_restaurar = valor_original - alvo.valor_previsto
+            if falta_restaurar <= 0:
+                continue
+            devolvido = min(restante, falta_restaurar)
+            alvo.valor_previsto += devolvido
+            alvo.aplicar_valor_pago(alvo.valor_pago, salvar=False)
+            alvo.save(update_fields=["valor_previsto", "valor_pago", "status", "atualizado_em"])
+            restante -= devolvido
 
 
 class Cobranca(models.Model):

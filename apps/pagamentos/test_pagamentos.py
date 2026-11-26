@@ -252,6 +252,23 @@ def test_estornar_uma_das_baixas_reabre_o_saldo(cliente):
 
 
 @pytest.mark.django_db
+def test_estorno_de_pagamento_maior_reabre_todas_as_parcelas_que_ele_quitou(cliente):
+    ct = _contrato_com_parcelas(cliente, num_parcelas=4)
+    pagamento = _baixa(ct, 1, "100.00")
+    segunda = ct.vencimentos.get(numero=2)
+    terceira = ct.vencimentos.get(numero=3)
+    assert segunda.status == Vencimento.Status.PAGO and segunda.valor_previsto == Decimal("0.00")
+    assert terceira.status == Vencimento.Status.ABERTO and terceira.valor_previsto == Decimal("20.00")
+
+    assert pagamento.estornar() == Decimal("60.00")
+
+    segunda.refresh_from_db()
+    terceira.refresh_from_db()
+    assert segunda.status == Vencimento.Status.ABERTO and segunda.valor_previsto == Decimal("40.00")
+    assert terceira.status == Vencimento.Status.ABERTO and terceira.valor_previsto == Decimal("40.00")
+
+
+@pytest.mark.django_db
 def test_valor_pago_precisa_ser_positivo(cliente):
     ct = _contrato_com_parcelas(cliente)
     with pytest.raises(IntegrityError):
