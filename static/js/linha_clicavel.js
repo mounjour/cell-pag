@@ -7,6 +7,7 @@
     if (window.getSelection && String(window.getSelection())) return; // não rouba seleção de texto
     const destino = alvo.dataset.href;
     if (evento.ctrlKey || evento.metaKey) window.open(destino, "_blank", "noopener");
+    else if (window.navegarCarregando) window.navegarCarregando(destino);
     else window.location.assign(destino);
   });
 })();

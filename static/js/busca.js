@@ -156,7 +156,8 @@
       marcar(ativo <= 0 ? itens.length - 1 : ativo - 1);
     } else if (ev.key === "Enter" && ativo >= 0) {
       ev.preventDefault();
-      window.location.href = itens[ativo].href;
+      if (window.navegarCarregando) window.navegarCarregando(itens[ativo].href);
+      else window.location.href = itens[ativo].href;
     }
   });
 
