@@ -74,6 +74,29 @@ def test_tela_de_edicao_da_parcela(auth_client, parcela):
     assert _recarrega(parcela).valor_previsto == Decimal("325.50")
 
 
+def test_mudar_parcela_quinzenal_reagenda_as_posteriores(cliente):
+    contrato = novo_contrato(
+        cliente, estrutura=Contrato.Estrutura.QUINZENAL, valor_parcela="300.00", num_parcelas=4,
+        data_inicio=datetime.date(2026, 1, 1), primeira_cobranca=datetime.date(2026, 2, 4),
+    )
+    primeira = Vencimento.objects.create(
+        contrato=contrato, numero=1, data_vencimento=datetime.date(2026, 2, 4), valor_previsto=Decimal("300.00")
+    )
+    for numero, data in enumerate((datetime.date(2026, 2, 18), datetime.date(2026, 3, 4), datetime.date(2026, 3, 18)), 2):
+        Vencimento.objects.create(contrato=contrato, numero=numero, data_vencimento=data, valor_previsto=Decimal("300.00"))
+
+    parcelas.editar_parcela(
+        primeira, data_vencimento=datetime.date(2026, 2, 10), valor_base=Decimal("300.00")
+    )
+
+    assert list(contrato.vencimentos.order_by("numero").values_list("data_vencimento", flat=True)) == [
+        datetime.date(2026, 2, 10), datetime.date(2026, 2, 25),
+        datetime.date(2026, 3, 12), datetime.date(2026, 3, 27),
+    ]
+    contrato.refresh_from_db()
+    assert contrato.primeira_cobranca == datetime.date(2026, 2, 10)
+
+
 def test_recalculo_do_contrato_mantem_o_valor_a_mais(parcela):
     parcelas.editar_parcela(
         parcela, data_vencimento=parcela.data_vencimento, valor_base=Decimal("300.00"), acrescimo=Decimal("80.00"),

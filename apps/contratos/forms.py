@@ -13,9 +13,9 @@ from apps.pagamentos.recorrencia import DIAS_DA_SEMANA, interpretar_dia_de_cobra
 
 from .models import Contrato, DocumentoContrato
 
-#: Duas formas de cobrar quinzenalmente: a cada 14 dias (mesmo dia da semana) ou em dois dias fixos do mês.
+#: Duas formas de cobrar quinzenalmente: a cada 15 dias ou em dois dias fixos do mês.
 QUINZENAS = [
-    ("semana", "A cada 14 dias, no mesmo dia da semana"),
+    ("semana", "A cada 15 dias"),
     ("dias_mes", "Dois dias fixos do mês (ex.: 5 e 20)"),
 ]
 
@@ -162,7 +162,7 @@ class ContratoForm(forms.ModelForm):
             "Dia em que vence a parcela 1. O sistema sugere a data a partir do dia de cobrança; "
             "altere se a primeira cobrança foi combinada em outra data."
         )
-        self.fields["dia_semana"].help_text = "Dia da semana em que a parcela vence."
+        self.fields["dia_semana"].help_text = "Dia da semana da primeira cobrança. Nas seguintes, a data avança 15 dias."
         self.fields["dia_mes"].help_text = "Em meses mais curtos, a cobrança cai no último dia do mês."
         self._valores_iniciais_do_dia_de_cobranca()
         # Estoque: só aparelhos ainda não vendidos — mais o já vinculado a este

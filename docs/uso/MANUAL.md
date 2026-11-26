@@ -55,7 +55,7 @@ data da **primeira cobrança**. As demais parcelas seguem a partir dela.
 |---|---|---|
 | **Diária** | não tem: cobra todo dia, domingo incluído | uma parcela por dia. A primeira é o dia seguinte à compra (dá para alterar) |
 | **Semanal** | um dia da semana (ex.: segunda) | toda semana nesse dia. O atraso só começa **na segunda-feira** depois do domingo que fecha a semana |
-| **Quinzenal — a cada 14 dias** | um dia da semana (ex.: quarta) | de 14 em 14 dias, sempre no mesmo dia da semana |
+| **Quinzenal — a cada 15 dias** | dia da semana da primeira cobrança | de 15 em 15 dias |
 | **Quinzenal — dois dias do mês** | dois dias (ex.: 5 e 20) | todo mês nesses dois dias |
 | **Mensal** | um dia do mês (ex.: 15) | todo mês nesse dia. Mês curto cai no último dia (31 → 28/02) |
 
@@ -387,7 +387,7 @@ Ao **editar o contrato** os campos de entrada aparecem preenchidos: corrija o va
 |---|---|---|
 | **Data da compra** | Sim | dia em que o aparelho foi vendido |
 | **Frequência de pagamento** | Sim | diária / semanal / quinzenal / mensal |
-| **Como é a cobrança quinzenal?** | Só no quinzenal | "a cada 14 dias, no mesmo dia da semana" ou "dois dias fixos do mês" |
+| **Como é a cobrança quinzenal?** | Só no quinzenal | "a cada 15 dias" ou "dois dias fixos do mês" |
 | **Dia da semana** / **Dia do mês** | Sim | o dia de cobrança (um ou dois dias, conforme a frequência) |
 | **Primeira cobrança** | Sugerida | data da parcela 1; o sistema sugere, você pode alterar |
 

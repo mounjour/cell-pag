@@ -79,7 +79,7 @@ def test_previa_sem_parcela_pede_correcao(plano, auth_client):
 
 @pytest.mark.parametrize("estrutura,dia,primeira,ultima", [
     ("semanal", {"dia_semana": "5"}, "07/02/2026", "14/02/2026"),  # sábados
-    ("quinzenal", {"quinzena": "semana", "dia_semana": "5"}, "14/02/2026", "28/02/2026"),  # a cada 14 dias
+    ("quinzenal", {"quinzena": "semana", "dia_semana": "5"}, "21/02/2026", "08/03/2026"),  # a cada 15 dias
     ("quinzenal", {"quinzena": "dias_mes", "dia_mes": "5", "dia_mes_2": "20"}, "20/02/2026", "05/03/2026"),
     ("mensal", {"dia_mes": "31"}, "28/02/2026", "31/03/2026"),
 ])
