@@ -75,6 +75,7 @@
         <input type="hidden" name="next" value="{{ next }}">
       </form>
       <p class="login-termos">Esqueceu a senha? Peça a quem administra o sistema para redefini-la.</p>
+      <p class="login-termos"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="vertical-align:-2px;margin-right:4px"><circle cx="10" cy="8" r="4"/><path d="M3 21v-1a7 7 0 0 1 13-3.5M19 8v6M16 11h6"/></svg>Recebeu um código de convite? <a href="{% url 'usuarios:cadastro' %}">Criar meu usuário</a></p>
       <p class="login-termos">Ao entrar, você concorda com os <a href="{% url 'usuarios:termos' %}">Termos de uso e privacidade</a>.</p>
     </section>
   </main>
