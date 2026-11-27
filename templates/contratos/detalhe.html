@@ -259,12 +259,23 @@
   <div class="form-actions"><button type="submit" class="btn">{% include "_icone.html" with nome="anexo" %}Anexar documento</button></div>
 </form>
 </div>
-<form method="post" action="{% url 'contratos:excluir' contrato.pk %}" class="form-actions"
-      onsubmit="return confirm('Excluir o contrato {{ contrato.apelido|escapejs }}? Parcelas, pagamentos e cobranças dele serão apagados para sempre e o aparelho volta ao estoque. Não dá para desfazer.')">
-  {% csrf_token %}
-  <button type="submit" class="btn-cancelar-pix">{% include "_icone.html" with nome="excluir" %}Excluir contrato</button>
-</form>
+<div class="form-actions">
+  <button type="button" class="btn-cancelar-pix" id="abrir-excluir-contrato">{% include "_icone.html" with nome="excluir" %}Excluir contrato</button>
+</div>
+<dialog class="dialog-confirmacao" id="dialog-excluir-contrato" aria-labelledby="titulo-excluir-contrato" aria-describedby="descricao-excluir-contrato">
+  <form method="post" action="{% url 'contratos:excluir' contrato.pk %}" class="dialog-confirmacao__conteudo" data-ajax>
+    {% csrf_token %}
+    <h2 id="titulo-excluir-contrato">Excluir o contrato {{ contrato.apelido }}?</h2>
+    <p id="descricao-excluir-contrato">Parcelas, pagamentos e cobranças dele serão apagados para sempre e o aparelho volta ao estoque. Não dá para desfazer.</p>
+    <p data-erro-exclusao role="alert" hidden></p>
+    <div class="form-actions">
+      <button type="button" class="btn cancelar" data-cancelar-exclusao autofocus>Cancelar</button>
+      <button type="submit" class="btn-cancelar-pix">Excluir contrato</button>
+    </div>
+  </form>
+</dialog>
 {% endblock %}
 {% block scripts %}
+  <script src="{% static 'js/excluir_contrato.js' %}" defer></script>
   <script src="{% static 'js/contato_cobranca.js' %}" defer></script>
 {% endblock %}

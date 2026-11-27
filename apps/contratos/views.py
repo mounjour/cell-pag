@@ -1,4 +1,5 @@
 import datetime
+import logging
 import uuid
 
 from django.contrib import messages
@@ -667,8 +668,18 @@ class ContratoExcluirView(LoginRequiredMixin, View):
     def post(self, request, pk):
         contrato = get_object_or_404(Contrato, pk=pk)
         cliente_pk, nome = contrato.cliente_id, contrato.apelido
-        excluir_contrato(contrato)
+        try:
+            excluir_contrato(contrato)
+        except Exception:
+            logging.getLogger(__name__).exception("Falha ao excluir contrato %s", pk)
+            mensagem = "Não foi possível excluir o contrato. Tente novamente."
+            if request.headers.get("Accept") == "application/json":
+                return JsonResponse({"erro": mensagem}, status=500)
+            messages.error(request, mensagem)
+            return redirect("contratos:detalhe", pk=pk)
         messages.success(request, f"Contrato {nome} excluído.")
+        if request.headers.get("Accept") == "application/json":
+            return JsonResponse({"redirect_url": reverse("clientes:detalhe", args=[cliente_pk])})
         return redirect("clientes:detalhe", pk=cliente_pk)
 
 
